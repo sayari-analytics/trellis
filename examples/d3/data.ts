@@ -1,4 +1,4 @@
-export default {
+export const data = {
   "nodes": [
     {"id": "Myriel", "group": 1},
     {"id": "Napoleon", "group": 1},
@@ -334,4 +334,81 @@ export default {
     {"source": "Mme.Hucheloup", "target": "Gavroche", "value": 1},
     {"source": "Mme.Hucheloup", "target": "Enjolras", "value": 1}
   ]
+}
+
+export const mediumSm = {
+  nodes: data.nodes
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '1' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '2' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '3' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '4' }))),
+  links: data.links
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '', target: link.target + '1' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '1', target: link.target + '2' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '2', target: link.target + '3' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '3', target: link.target + '4' })))
+}
+
+export const mediumLg = {
+  nodes: data.nodes
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '1' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '2' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '3' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '4' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '5' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '6' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '7' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '8' }))),
+  links: data.links
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '', target: link.target + '1' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '1', target: link.target + '2' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '2', target: link.target + '3' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '3', target: link.target + '4' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '4', target: link.target + '5' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '5', target: link.target + '6' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '6', target: link.target + '7' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '7', target: link.target + '8' })))
+}
+
+export const large = {
+  nodes: data.nodes
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '1' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '2' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '3' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '4' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '5' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '6' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '7' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '8' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '9' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '10' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '11' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '12' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '13' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '14' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '15' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '16' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '17' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '18' })))
+    .concat(data.nodes.map((node) => ({ ...node, id: node.id + '19' }))),
+  links: data.links
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '', target: link.target + '1' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '1', target: link.target + '2' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '2', target: link.target + '3' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '3', target: link.target + '4' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '4', target: link.target + '5' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '5', target: link.target + '6' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '6', target: link.target + '7' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '7', target: link.target + '8' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '8', target: link.target + '9' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '9', target: link.target + '10' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '10', target: link.target + '11' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '11', target: link.target + '12' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '12', target: link.target + '13' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '13', target: link.target + '14' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '14', target: link.target + '15' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '15', target: link.target + '16' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '16', target: link.target + '17' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '17', target: link.target + '18' })))
+    .concat(data.links.map((link) => ({ ...link, source: link.source + '18', target: link.target + '19' })))
 }

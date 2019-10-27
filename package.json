@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
+    "dev": "npx parcel examples/d3/index.html",
     "build": "rm -rf ./dist/ && tsc --outDir ./dist"
   },
   "author": "",
