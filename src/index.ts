@@ -28,18 +28,19 @@ export class Graph {
   simulation = forceSimulation<SimulatedNode, SimulatedEdge>()
     .force('charge', forceManyBody().strength(-this.options.nodeRepulsion))
     .force('center', forceCenter())
+    .stop()
 
   layout(props: {
     nodes?: { [key: string]: Node },
     edges?: { [key: string]: Edge },
     options?: Partial<Options>
   } = {}) {
-    let reheat = false
+    let update = false
 
     if (props.options !== undefined && props.options !== this.options) {
       if (props.options.nodeRepulsion && props.options.nodeRepulsion !== this.options.nodeRepulsion) {
         this.simulation.force('charge', forceManyBody().strength(-props.options.nodeRepulsion))
-        reheat = true
+        update = true
       }
       
       this.options = { ...this.options, ...props.options }
@@ -50,11 +51,11 @@ export class Graph {
         if (this.nodeMap[nodeId] === undefined) {
           // enter
           this.nodes[nodeId] = { ...props.nodes[nodeId] }
-          reheat = true
+          update = true
         } else if (this.nodeMap[nodeId] !== props.nodes[nodeId]) {
           // update
           this.nodes[nodeId] = { ...this.nodes[nodeId], ...props.nodes[nodeId] }
-          reheat = true
+          update = true
         }
       }
 
@@ -62,7 +63,7 @@ export class Graph {
         if (props.nodes[nodeId] === undefined) {
           // exit
           delete this.nodes[nodeId]
-          reheat = true
+          update = true
         }
       }
 
@@ -79,7 +80,7 @@ export class Graph {
             source: this.nodes[props.edges[edgeId].source],
             target: this.nodes[props.edges[edgeId].target]
           }
-          reheat = true
+          update = true
         } else if (this.edgeMap[edgeId] !== props.edges[edgeId]) {
           // update
           this.edges[edgeId] = {
@@ -88,14 +89,14 @@ export class Graph {
             source: this.nodes[props.edges[edgeId].source],
             target: this.nodes[props.edges[edgeId].target]
           }
-          reheat = true
+          update = true
         }
       }
 
       for (const edgeId in this.edges) {
         if (props.edges[edgeId] === undefined) {
           delete this.edges[edgeId]
-          reheat = true
+          update = true
         }
       }
 
@@ -103,11 +104,11 @@ export class Graph {
     }
 
     
-    if (reheat) {
+    if (update) {
       this.simulation
         .nodes(Object.values(this.nodes))
         .force('link', forceLink<SimulatedNode, SimulatedEdge>(Object.values(this.edges)).id((node) => node.id))
-        .alphaTarget(0.3)
+        .alpha(1)
     }
 
     return this.simulation

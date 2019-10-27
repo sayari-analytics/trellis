@@ -1,16 +1,16 @@
 import { interval } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { Graph, Node, Edge } from '../../src/index'
-import { D3Renderer } from '../../src/renderers/d3Render'
+import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from './data'
 
 const render = D3Renderer(new Graph(), 'graph')
 
-const NODES_PER_TICK = 1
+const NODES_PER_TICK = 10
 
-const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
+const nodes = mediumLg.nodes.map(({ id }) => ({ id }))
 
-const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
+const edges = mediumLg.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
 
 interval(100).pipe(
   map((idx) => {

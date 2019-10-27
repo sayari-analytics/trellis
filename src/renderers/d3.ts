@@ -34,7 +34,8 @@ export const D3Renderer = (
   const edgeContainer = container
     .append('g')
     .attr('stroke-width', 1)
-    .attr('stroke', '#666')
+    .attr('stroke', '#222')
+    .attr('stroke-opacity', 0.6)
 
   const nodesContainer = container
     .append('g')
@@ -71,27 +72,27 @@ export const D3Renderer = (
     nodes: { [key: string]: Node },
     edges: { [key: string]: Edge },
   ) => {
-    graph.layout({ nodes, edges }).on('tick', () => {
-      edgeContainer
-        .selectAll<SVGLineElement, SimulatedEdge>('line')
-        .data(Object.values(graph.edges), (d) => d.id)
-        .join('line')
-        .attr('x1', (d) => d.source.x!)
-        .attr('y1', (d) => d.source.y!)
-        .attr('x2', (d) => d.target.x!)
-        .attr('y2', (d) => d.target.y!)
+    graph.layout({ nodes, edges })
+      .restart()
+      .on('tick', () => {
+        edgeContainer
+          .selectAll<SVGLineElement, SimulatedEdge>('line')
+          .data(Object.values(graph.edges), (d) => d.id)
+          .join('line')
+          .attr('x1', (d) => d.source.x!)
+          .attr('y1', (d) => d.source.y!)
+          .attr('x2', (d) => d.target.x!)
+          .attr('y2', (d) => d.target.y!)
 
-      nodesContainer
-        .selectAll<SVGLineElement, SimulatedNode>('circle')
-        .data<SimulatedNode>(Object.values(graph.nodes), (d) => d.id)
-        .join('circle')
-        .attr('r', r)
-        // .attr('cx', (d) => (d.fx = d.x, d.x!))
-        // .attr('cy', (d) => (d.fy = d.y, d.y!))
-        .attr('cx', (d) => d.x!)
-        .attr('cy', (d) => d.y!)
-        .style('cursor', 'pointer')
-        .call(dragNode())
-    })
+        nodesContainer
+          .selectAll<SVGLineElement, SimulatedNode>('circle')
+          .data<SimulatedNode>(Object.values(graph.nodes), (d) => d.id)
+          .join('circle')
+          .attr('r', r)
+          .attr('cx', (d) => d.x!)
+          .attr('cy', (d) => d.y!)
+          .style('cursor', 'pointer')
+          .call(dragNode())
+      })
   }
 }
