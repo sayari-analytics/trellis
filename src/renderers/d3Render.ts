@@ -9,18 +9,9 @@ export type Options = {
 }
 
 const DEFAULT_OPTIONS = {
-  r: 5
+  r: 6
 }
 
-
-/**
- * TODO
- * - drag handlers
- * - click/hover handlers
- * - data updates
- * - styles (default, per-node)
- * - tooltips
- */
 
 export const D3Renderer = (
   graph: Graph,
@@ -55,39 +46,52 @@ export const D3Renderer = (
   svg.call(zoomBehavior.on('zoom', () => container.attr('transform', event.transform)))
   zoomBehavior.translateBy(svg, parentElement.offsetWidth / 2, parentElement.offsetHeight / 2)
   
+  function dragStart (d: SimulatedNode) {
+    d.fx = event.x
+    d.fy = event.y
+  }
+
   function dragged (d: SimulatedNode) {
     d.fx = event.x
     d.fy = event.y
     graph.simulation.restart().tick(1)
   }
 
+  function dragEnd (d: SimulatedNode) {
+    d.fx = null
+    d.fy = null
+  }
+
   const dragNode = () => drag<any, SimulatedNode>()
+    .on('start', dragStart)
     .on('drag', dragged)
+    .on('end', dragEnd)
 
   return (
     nodes: { [key: string]: Node },
     edges: { [key: string]: Edge },
   ) => {
-    return graph.layout({ nodes, edges }).subscribe({
-      next: ({ nodes, edges }) => {
-        edgeContainer
-          .selectAll<SVGLineElement, SimulatedEdge>('line')
-          .data(Object.values(edges), (d) => d.id)
-          .join('line')
-          .attr('x1', (d) => d.source.x!)
-          .attr('y1', (d) => d.source.y!)
-          .attr('x2', (d) => d.target.x!)
-          .attr('y2', (d) => d.target.y!)
+    graph.layout({ nodes, edges }).on('tick', () => {
+      edgeContainer
+        .selectAll<SVGLineElement, SimulatedEdge>('line')
+        .data(Object.values(graph.edges), (d) => d.id)
+        .join('line')
+        .attr('x1', (d) => d.source.x!)
+        .attr('y1', (d) => d.source.y!)
+        .attr('x2', (d) => d.target.x!)
+        .attr('y2', (d) => d.target.y!)
 
-        nodesContainer
-          .selectAll<SVGLineElement, SimulatedNode>('circle')
-          .data<SimulatedNode>(Object.values(nodes), (d) => d.id)
-          .join('circle')
-          .attr('r', r)
-          .attr('cx', (d) => (d.fx = d.x, d.x!))
-          .attr('cy', (d) => (d.fy = d.y, d.y!))
-          .call(dragNode())
-      }
+      nodesContainer
+        .selectAll<SVGLineElement, SimulatedNode>('circle')
+        .data<SimulatedNode>(Object.values(graph.nodes), (d) => d.id)
+        .join('circle')
+        .attr('r', r)
+        // .attr('cx', (d) => (d.fx = d.x, d.x!))
+        // .attr('cy', (d) => (d.fy = d.y, d.y!))
+        .attr('cx', (d) => d.x!)
+        .attr('cy', (d) => d.y!)
+        .style('cursor', 'pointer')
+        .call(dragNode())
     })
   }
 }

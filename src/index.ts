@@ -1,5 +1,4 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum, SimulationLinkDatum } from 'd3-force'
-import { Observable, BehaviorSubject } from 'rxjs'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum } from 'd3-force'
 
 
 export type Node = { id: string, label?: string } // TODO add style properties
@@ -19,8 +18,8 @@ const DEFAULT_OPTIONS = {
 
 export class Graph {
 
-  previousNodes: { [key: string]: Node } = {}
-  previousEdges: { [key: string]: Edge } = {}
+  nodeMap: { [key: string]: Node } = {}
+  edgeMap: { [key: string]: Edge } = {}
 
   nodes: { [key: string]: SimulatedNode } = {}
   edges: { [key: string]: SimulatedEdge } = {}
@@ -29,34 +28,33 @@ export class Graph {
   simulation = forceSimulation<SimulatedNode, SimulatedEdge>()
     .force('charge', forceManyBody().strength(-this.options.nodeRepulsion))
     .force('center', forceCenter())
-    .stop()
-
-  source = new BehaviorSubject({ nodes: this.nodes, edges: this.edges })
 
   layout(props: {
     nodes?: { [key: string]: Node },
     edges?: { [key: string]: Edge },
     options?: Partial<Options>
-  } = {}): Observable<{
-    nodes: { [key: string]: SimulatedNode },
-    edges: { [key: string]: SimulatedEdge },
-  }> {
+  } = {}) {
+    let reheat = false
+
     if (props.options !== undefined && props.options !== this.options) {
       if (props.options.nodeRepulsion && props.options.nodeRepulsion !== this.options.nodeRepulsion) {
         this.simulation.force('charge', forceManyBody().strength(-props.options.nodeRepulsion))
+        reheat = true
       }
       
       this.options = { ...this.options, ...props.options }
     }
 
-    if (props.nodes && props.nodes !== this.previousNodes) {
+    if (props.nodes && props.nodes !== this.nodeMap) {
       for (const nodeId in props.nodes) {
-        if (this.previousNodes[nodeId] === undefined) {
+        if (this.nodeMap[nodeId] === undefined) {
           // enter
           this.nodes[nodeId] = { ...props.nodes[nodeId] }
-        } else if (this.previousNodes[nodeId] !== props.nodes[nodeId]) {
+          reheat = true
+        } else if (this.nodeMap[nodeId] !== props.nodes[nodeId]) {
           // update
-          this.nodes[nodeId] = { ...props.nodes[nodeId] }
+          this.nodes[nodeId] = { ...this.nodes[nodeId], ...props.nodes[nodeId] }
+          reheat = true
         }
       }
 
@@ -64,15 +62,16 @@ export class Graph {
         if (props.nodes[nodeId] === undefined) {
           // exit
           delete this.nodes[nodeId]
+          reheat = true
         }
       }
 
-      this.previousNodes = props.nodes
+      this.nodeMap = props.nodes
     }
 
-    if (props.edges && props.edges !== this.previousEdges) {
+    if (props.edges && props.edges !== this.edgeMap) {
       for (const edgeId in props.edges) {
-        if (this.previousEdges[edgeId] === undefined) {
+        if (this.edgeMap[edgeId] === undefined) {
           // enter
           this.edges[edgeId] = {
             id: props.edges[edgeId].id,
@@ -80,7 +79,8 @@ export class Graph {
             source: this.nodes[props.edges[edgeId].source],
             target: this.nodes[props.edges[edgeId].target]
           }
-        } else if (this.previousEdges[edgeId] !== props.edges[edgeId]) {
+          reheat = true
+        } else if (this.edgeMap[edgeId] !== props.edges[edgeId]) {
           // update
           this.edges[edgeId] = {
             id: props.edges[edgeId].id,
@@ -88,31 +88,28 @@ export class Graph {
             source: this.nodes[props.edges[edgeId].source],
             target: this.nodes[props.edges[edgeId].target]
           }
+          reheat = true
         }
       }
 
       for (const edgeId in this.edges) {
         if (props.edges[edgeId] === undefined) {
           delete this.edges[edgeId]
+          reheat = true
         }
       }
 
-      this.previousEdges = props.edges
+      this.edgeMap = props.edges
     }
 
-    this.simulation
-      .nodes(Object.values(this.nodes))
-      .force('link', forceLink<SimulatedNode, SimulatedEdge>(Object.values(this.edges)).id((node) => node.id))
-      // .on('tick', () => this.source.next({ nodes: this.nodes, edges: this.edges, progress: 0 }))
-      // .on('end', () => this.source.next({ nodes: this.nodes, edges: this.edges, progress: 1 }))
-      .on('tick', () => {
-        this.source.next({ nodes: this.nodes, edges: this.edges })
-      })
-      .stop()
-      .tick(this.options.iterations)
+    
+    if (reheat) {
+      this.simulation
+        .nodes(Object.values(this.nodes))
+        .force('link', forceLink<SimulatedNode, SimulatedEdge>(Object.values(this.edges)).id((node) => node.id))
+        .alphaTarget(0.3)
+    }
 
-    this.source.next({ nodes: this.nodes, edges: this.edges })
-
-    return this.source
+    return this.simulation
   }
 }
