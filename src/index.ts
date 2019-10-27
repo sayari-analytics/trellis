@@ -1,4 +1,4 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum, Simulation } from 'd3-force'
 
 
 export type Node = { id: string, label?: string } // TODO add style properties
@@ -7,12 +7,10 @@ export type SimulatedNode = Node & SimulationNodeDatum
 export type SimulatedEdge = { id: string, label?: string, source: SimulatedNode, target: SimulatedNode, index?: number }
 export type Options = {
   nodeRepulsion: number
-  iterations: number
 }
 
 const DEFAULT_OPTIONS = {
   nodeRepulsion: 250,
-  iterations: 300,
 }
 
 
@@ -30,6 +28,9 @@ export class Graph {
     .force('center', forceCenter())
     .stop()
 
+  /**
+   * TODO - need convey status of update to caller, either via callback or by returning { simulation, nodes, edges, update }
+   */
   layout(props: {
     nodes?: { [key: string]: Node },
     edges?: { [key: string]: Edge },
@@ -105,12 +106,14 @@ export class Graph {
 
     
     if (update) {
-      this.simulation
-        .nodes(Object.values(this.nodes))
-        .force('link', forceLink<SimulatedNode, SimulatedEdge>(Object.values(this.edges)).id((node) => node.id))
-        .alpha(1)
+      return new Promise<Simulation<SimulatedNode, SimulatedEdge>>((resolve) => {
+        resolve(this.simulation
+          .nodes(Object.values(this.nodes))
+          .force('link', forceLink<SimulatedNode, SimulatedEdge>(Object.values(this.edges)).id((node) => node.id))
+          .alpha(1))
+      })
     }
 
-    return this.simulation
+    return new Promise<Simulation<SimulatedNode, SimulatedEdge>>(() => {})
   }
 }

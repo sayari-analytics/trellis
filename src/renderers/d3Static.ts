@@ -5,18 +5,20 @@ import { Graph, Edge, Node, SimulatedNode, SimulatedEdge } from '../index'
 
 
 export type Options = {
+  iterations?: number
   r?: number
 }
 
 const DEFAULT_OPTIONS = {
-  r: 6
+  iterations: 300,
+  r: 6,
 }
 
 
-export const D3Renderer = (
+export const D3StaticRenderer = (
   graph: Graph,
   id: string,
-  { r = DEFAULT_OPTIONS.r }: Options = {}
+  { iterations = DEFAULT_OPTIONS.iterations, r = DEFAULT_OPTIONS.r }: Options = {}
 ) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
@@ -70,8 +72,10 @@ export const D3Renderer = (
 
   return (nodes: { [key: string]: Node }, edges: { [key: string]: Edge }) => {
     graph.layout({ nodes, edges }).then((simulation) => {
+      simulation.tick(iterations)
       simulation
         .restart()
+        .alpha(0)
         .on('tick', () => {
           edgeContainer
             .selectAll<SVGLineElement, SimulatedEdge>('line')
@@ -81,7 +85,7 @@ export const D3Renderer = (
             .attr('y1', (d) => d.source.y!)
             .attr('x2', (d) => d.target.x!)
             .attr('y2', (d) => d.target.y!)
-
+      
           nodesContainer
             .selectAll<SVGLineElement, SimulatedNode>('circle')
             .data(Object.values(graph.nodes), (d) => d.id)
