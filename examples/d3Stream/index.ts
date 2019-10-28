@@ -4,13 +4,13 @@ import { Graph, Node, Edge } from '../../src/index'
 import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from './data'
 
-const render = D3Renderer(new Graph(), 'graph')
+const render = D3Renderer(new Graph(), 'graph', { synchronous: false })
 
 const NODES_PER_TICK = 10
 
-const nodes = mediumLg.nodes.map(({ id }) => ({ id }))
+const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
 
-const edges = mediumLg.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
+const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
 
 interval(100).pipe(
   map((idx) => {

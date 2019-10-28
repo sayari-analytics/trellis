@@ -1,10 +1,10 @@
 import { interval } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { Graph, Node, Edge } from '../../src/index'
-import { D3StaticRenderer } from '../../src/renderers/d3Static'
+import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from './data'
 
-const render = D3StaticRenderer(new Graph(), 'graph')
+const render = D3Renderer(new Graph(), 'graph')
 
 const NODES_PER_TICK = 10
 

@@ -1,22 +1,24 @@
 import { select, event } from 'd3-selection'
 import { zoom } from 'd3-zoom'
 import { drag } from 'd3-drag'
-import { Graph, Edge, Node, SimulatedNode, SimulatedEdge } from '../index'
+import { Graph, Edge, Node, PositionedNode, PositionedEdge } from '../index'
 
 
 export type Options = {
-  r?: number
+  r: number
+  synchronous?: number | false
 }
 
-const DEFAULT_OPTIONS = {
-  r: 6
+const DEFAULT_OPTIONS: Options = {
+  r: 6,
+  synchronous: 300,
 }
 
 
 export const D3Renderer = (
   graph: Graph,
   id: string,
-  { r = DEFAULT_OPTIONS.r }: Options = {}
+  { r = DEFAULT_OPTIONS.r, synchronous = DEFAULT_OPTIONS.synchronous }: Partial<Options> = {}
 ) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
@@ -47,51 +49,49 @@ export const D3Renderer = (
   svg.call(zoomBehavior.on('zoom', () => container.attr('transform', event.transform)))
   zoomBehavior.translateBy(svg, parentElement.offsetWidth / 2, parentElement.offsetHeight / 2)
   
-  function dragStart (d: SimulatedNode) {
+  function dragStart (d: PositionedNode) {
     d.fx = event.x
     d.fy = event.y
   }
 
-  function dragged (d: SimulatedNode) {
+  function dragged (d: PositionedNode) {
     d.fx = event.x
     d.fy = event.y
     graph.simulation.restart().tick(1)
   }
 
-  function dragEnd (d: SimulatedNode) {
+  function dragEnd (d: PositionedNode) {
     d.fx = null
     d.fy = null
   }
 
-  const dragNode = () => drag<any, SimulatedNode>()
+  const dragNode = () => drag<any, PositionedNode>()
     .on('start', dragStart)
     .on('drag', dragged)
     .on('end', dragEnd)
 
   return (nodes: { [key: string]: Node }, edges: { [key: string]: Edge }) => {
-    graph.layout({ nodes, edges }).then((simulation) => {
-      simulation
-        .restart()
-        .on('tick', () => {
-          edgeContainer
-            .selectAll<SVGLineElement, SimulatedEdge>('line')
-            .data(Object.values(graph.edges), (d) => d.id)
-            .join('line')
-            .attr('x1', (d) => d.source.x!)
-            .attr('y1', (d) => d.source.y!)
-            .attr('x2', (d) => d.target.x!)
-            .attr('y2', (d) => d.target.y!)
+    graph.layout({ nodes, edges, options: { synchronous } }).subscribe({
+      next: ({ nodes, edges }) => {
+        edgeContainer
+          .selectAll<SVGLineElement, PositionedEdge>('line')
+          .data(Object.values(edges), (d) => d.id)
+          .join('line')
+          .attr('x1', (d) => d.source.x!)
+          .attr('y1', (d) => d.source.y!)
+          .attr('x2', (d) => d.target.x!)
+          .attr('y2', (d) => d.target.y!)
 
-          nodesContainer
-            .selectAll<SVGLineElement, SimulatedNode>('circle')
-            .data(Object.values(graph.nodes), (d) => d.id)
-            .join('circle')
-            .attr('r', r)
-            .attr('cx', (d) => d.x!)
-            .attr('cy', (d) => d.y!)
-            .style('cursor', 'pointer')
-            .call(dragNode())
-        })
+        nodesContainer
+          .selectAll<SVGLineElement, PositionedNode>('circle')
+          .data(Object.values(nodes), (d) => d.id)
+          .join('circle')
+          .attr('r', r)
+          .attr('cx', (d) => d.x!)
+          .attr('cy', (d) => d.y!)
+          .style('cursor', 'pointer')
+          .call(dragNode())
+      }
     })
   }
 }

@@ -1,16 +1,19 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum, Simulation } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum } from 'd3-force'
+import { Subject } from 'rxjs'
 
 
 export type Node = { id: string, label?: string } // TODO add style properties
 export type Edge = { id: string, label?: string, source: string, target: string } // TODO add style properties
-export type SimulatedNode = Node & SimulationNodeDatum
-export type SimulatedEdge = { id: string, label?: string, source: SimulatedNode, target: SimulatedNode, index?: number }
+export type PositionedNode = Node & SimulationNodeDatum
+export type PositionedEdge = { id: string, label?: string, source: PositionedNode, target: PositionedNode, index?: number }
 export type Options = {
   nodeRepulsion: number
+  synchronous: number | false
 }
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS: Options = {
   nodeRepulsion: 250,
+  synchronous: 300,
 }
 
 
@@ -19,101 +22,118 @@ export class Graph {
   nodeMap: { [key: string]: Node } = {}
   edgeMap: { [key: string]: Edge } = {}
 
-  nodes: { [key: string]: SimulatedNode } = {}
-  edges: { [key: string]: SimulatedEdge } = {}
+  nodes: { [key: string]: PositionedNode } = {}
+  edges: { [key: string]: PositionedEdge } = {}
   options: Options = DEFAULT_OPTIONS
 
-  simulation = forceSimulation<SimulatedNode, SimulatedEdge>()
+  simulation = forceSimulation<PositionedNode, PositionedEdge>()
     .force('charge', forceManyBody().strength(-this.options.nodeRepulsion))
     .force('center', forceCenter())
     .stop()
 
-  /**
-   * TODO - need convey status of update to caller, either via callback or by returning { simulation, nodes, edges, update }
-   */
-  layout(props: {
+  layout$: Subject<{ nodes: { [id: string]: PositionedNode }, edges: { [id: string]: PositionedEdge } }> = new Subject()
+
+  layout = ({ nodes, edges, options: { nodeRepulsion = DEFAULT_OPTIONS.nodeRepulsion, synchronous = DEFAULT_OPTIONS.synchronous } = {} }: {
     nodes?: { [key: string]: Node },
     edges?: { [key: string]: Edge },
     options?: Partial<Options>
-  } = {}) {
+  } = {}) => {
+    this.layout$.complete()
+    this.layout$ = new Subject()
+
     let update = false
 
-    if (props.options !== undefined && props.options !== this.options) {
-      if (props.options.nodeRepulsion && props.options.nodeRepulsion !== this.options.nodeRepulsion) {
-        this.simulation.force('charge', forceManyBody().strength(-props.options.nodeRepulsion))
-        update = true
-      }
-      
-      this.options = { ...this.options, ...props.options }
+    if (nodeRepulsion !== this.options.nodeRepulsion) {
+      this.simulation.force('charge', forceManyBody().strength(-nodeRepulsion))
+      this.options = { ...this.options, nodeRepulsion }
+      update = true
     }
 
-    if (props.nodes && props.nodes !== this.nodeMap) {
-      for (const nodeId in props.nodes) {
+    if (synchronous !== this.options.synchronous) {
+      this.options = { ...this.options, synchronous }
+      update = true
+    }
+
+    if (nodes && nodes !== this.nodeMap) {
+      for (const nodeId in nodes) {
         if (this.nodeMap[nodeId] === undefined) {
           // enter
-          this.nodes[nodeId] = { ...props.nodes[nodeId] }
+          this.nodes[nodeId] = { ...nodes[nodeId] }
           update = true
-        } else if (this.nodeMap[nodeId] !== props.nodes[nodeId]) {
+        } else if (this.nodeMap[nodeId] !== nodes[nodeId]) {
           // update
-          this.nodes[nodeId] = { ...this.nodes[nodeId], ...props.nodes[nodeId] }
+          this.nodes[nodeId] = { ...this.nodes[nodeId], ...nodes[nodeId] }
           update = true
         }
       }
 
       for (const nodeId in this.nodes) {
-        if (props.nodes[nodeId] === undefined) {
+        if (nodes[nodeId] === undefined) {
           // exit
           delete this.nodes[nodeId]
           update = true
         }
       }
 
-      this.nodeMap = props.nodes
+      this.nodeMap = nodes
     }
 
-    if (props.edges && props.edges !== this.edgeMap) {
-      for (const edgeId in props.edges) {
+    if (edges && edges !== this.edgeMap) {
+      for (const edgeId in edges) {
         if (this.edgeMap[edgeId] === undefined) {
           // enter
           this.edges[edgeId] = {
-            id: props.edges[edgeId].id,
-            label: props.edges[edgeId].label,
-            source: this.nodes[props.edges[edgeId].source],
-            target: this.nodes[props.edges[edgeId].target]
+            id: edges[edgeId].id,
+            label: edges[edgeId].label,
+            source: this.nodes[edges[edgeId].source],
+            target: this.nodes[edges[edgeId].target]
           }
           update = true
-        } else if (this.edgeMap[edgeId] !== props.edges[edgeId]) {
+        } else if (this.edgeMap[edgeId] !== edges[edgeId]) {
           // update
           this.edges[edgeId] = {
-            id: props.edges[edgeId].id,
-            label: props.edges[edgeId].label,
-            source: this.nodes[props.edges[edgeId].source],
-            target: this.nodes[props.edges[edgeId].target]
+            id: edges[edgeId].id,
+            label: edges[edgeId].label,
+            source: this.nodes[edges[edgeId].source],
+            target: this.nodes[edges[edgeId].target]
           }
           update = true
         }
       }
 
       for (const edgeId in this.edges) {
-        if (props.edges[edgeId] === undefined) {
+        if (edges[edgeId] === undefined) {
           delete this.edges[edgeId]
           update = true
         }
       }
 
-      this.edgeMap = props.edges
+      this.edgeMap = edges
     }
 
-    
     if (update) {
-      return new Promise<Simulation<SimulatedNode, SimulatedEdge>>((resolve) => {
-        resolve(this.simulation
+      if (this.options.synchronous) {
+        this.simulation
           .nodes(Object.values(this.nodes))
-          .force('link', forceLink<SimulatedNode, SimulatedEdge>(Object.values(this.edges)).id((node) => node.id))
-          .alpha(1))
-      })
+          .force('link', forceLink<PositionedNode, PositionedEdge>(Object.values(this.edges)).id((node) => node.id))
+          .alpha(1)
+          .tick(this.options.synchronous)
+
+        // to allow the simulation to be restarted without calling the layout function
+        this.simulation
+          .restart()
+          .alpha(0)
+          .on('tick', () => this.layout$.next({ nodes: this.nodes, edges: this.edges }))
+      } else {
+        this.simulation
+          .nodes(Object.values(this.nodes))
+          .force('link', forceLink<PositionedNode, PositionedEdge>(Object.values(this.edges)).id((node) => node.id))
+          .alpha(1)
+          .restart()
+          .on('tick', () => this.layout$.next({ nodes: this.nodes, edges: this.edges }))
+      }
     }
 
-    return new Promise<Simulation<SimulatedNode, SimulatedEdge>>(() => {})
+    return this.layout$
   }
 }

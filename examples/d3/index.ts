@@ -2,15 +2,19 @@ import { Graph, Node, Edge } from '../../src/index'
 import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from './data'
 
-const render = D3Renderer(new Graph(), 'graph')
+const render = D3Renderer(new Graph(), 'graph', { synchronous: false })
+
+const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
+
+const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
 
 render(
-  mediumSm.nodes.reduce<{ [id: string]: Node }>((nodeMap, { id }) => {
-    nodeMap[id] = { id }
+  nodes.reduce<{ [id: string]: Node }>((nodeMap, node) => {
+    nodeMap[node.id] = node
     return nodeMap
   }, {}),
-  mediumSm.links.reduce<{ [id: string]: Edge }>((edgeMap, { source, target }) => {
-    edgeMap[`${source}|${target}`] = { id: `${source}|${target}`, source, target }
+  edges.reduce<{ [id: string]: Edge }>((edgeMap, edge) => {
+    edgeMap[edge.id] = edge
     return edgeMap
   }, {})
 )
