@@ -73,15 +73,6 @@ export const D3Renderer = (
   return (nodes: { [key: string]: Node }, edges: { [key: string]: Edge }) => {
     graph.layout({ nodes, edges, options: { synchronous } }).subscribe({
       next: ({ nodes, edges }) => {
-        edgeContainer
-          .selectAll<SVGLineElement, PositionedEdge>('line')
-          .data(Object.values(edges), (d) => d.id)
-          .join('line')
-          .attr('x1', (d) => d.source.x!)
-          .attr('y1', (d) => d.source.y!)
-          .attr('x2', (d) => d.target.x!)
-          .attr('y2', (d) => d.target.y!)
-
         nodesContainer
           .selectAll<SVGLineElement, PositionedNode>('circle')
           .data(Object.values(nodes), (d) => d.id)
@@ -91,6 +82,15 @@ export const D3Renderer = (
           .attr('cy', (d) => d.y!)
           .style('cursor', 'pointer')
           .call(dragNode())
+
+        edgeContainer
+          .selectAll<SVGLineElement, PositionedEdge>('line')
+          .data(Object.values(edges), (d) => d.id)
+          .join('line')
+          .attr('x1', (d) => d.source.x!)
+          .attr('y1', (d) => d.source.y!)
+          .attr('x2', (d) => d.target.x!)
+          .attr('y2', (d) => d.target.y!)
       }
     })
   }
