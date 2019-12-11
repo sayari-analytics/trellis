@@ -3,18 +3,60 @@ import { throttleAnimationFrame } from './utils'
 import { simulation } from './simulation'
 
 
-export type Node = { id: string, label?: string } // TODO add style properties
-export type Edge = { id: string, label?: string, source: string, target: string } // TODO add style properties
+export type NodeStyle = {
+  width: number
+  strokeWidth: number
+  fill: string
+  stroke: string
+  fillOpacity: number
+  strokeOpacity: number
+}
+export type EdgeStyle = {
+  width: number
+  stroke: string
+  strokeOpacity: number
+}
+
+export type Node = {
+  id: string
+  label?: string
+  style?: Partial<NodeStyle>
+}
+export type Edge = {
+  id: string
+  source: string
+  target: string
+  label?: string
+  style?: Partial<EdgeStyle>
+}
+
 export type PositionedNode = Node & SimulationNodeDatum
-export type PositionedEdge = { id: string, label?: string, source: PositionedNode, target: PositionedNode, index?: number }
+export type PositionedEdge = { id: string, label?: string, source: PositionedNode, target: PositionedNode, index?: number, style?: Partial<EdgeStyle> }
+
 export type Options = {
   strength: number
   synchronous: number | false
 }
 
+
 const DEFAULT_OPTIONS: Options = {
   strength: 250,
   synchronous: 300,
+}
+
+export const DEFAULT_NODE_STYLES: NodeStyle = {
+  width: 12,
+  strokeWidth: 1,
+  fill: '#ff4b4b',
+  stroke: '#bb0000',
+  fillOpacity: 1,
+  strokeOpacity: 1,
+}
+
+export const DEFAULT_EDGE_STYLES: EdgeStyle = {
+  width: 1,
+  stroke: '#444',
+  strokeOpacity: 0.6
 }
 
 

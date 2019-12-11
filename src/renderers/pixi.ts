@@ -1,7 +1,7 @@
 import { select, event } from 'd3-selection'
 import { zoom } from 'd3-zoom'
 import { drag as dragBehavior } from 'd3-drag'
-import { Graph, Edge, Node, PositionedNode, PositionedEdge, NodeStyle, DEFAULT_NODE_STYLES, EdgeStyle, DEFAULT_EDGE_STYLES } from '../index'
+import { Graph, Edge, Node, PositionedNode, PositionedEdge } from '../index'
 
 
 export type Options = {
@@ -9,25 +9,15 @@ export type Options = {
   synchronous?: number | false
 }
 
-const nodeStyleSelector = <T extends keyof NodeStyle>(attribute: T) => (node: PositionedNode): NodeStyle[T] => {
-  if (node.style === undefined || node.style![attribute] === undefined) {
-    return DEFAULT_NODE_STYLES[attribute]
-  }
-
-  return node.style[attribute] as NodeStyle[T]
+const DEFAULT_OPTIONS: Options = {
+  r: 6,
+  synchronous: false,
 }
 
-const edgeStyleSelector = <T extends keyof EdgeStyle>(attribute: T) => (edge: PositionedEdge): EdgeStyle[T] => {
-  if (edge.style === undefined || edge.style![attribute] === undefined) {
-    return DEFAULT_EDGE_STYLES[attribute]
-  }
 
-  return edge.style[attribute] as NodeStyle[T]
-}
-
-export const D3Renderer = (
+export const PixiRenderer = (
   id: string,
-  { synchronous = 300 }: Partial<Options> = {}
+  { r = DEFAULT_OPTIONS.r, synchronous = DEFAULT_OPTIONS.synchronous }: Partial<Options> = {}
 ) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
@@ -43,9 +33,17 @@ export const D3Renderer = (
 
   const container = svg.append('g')
 
-  const edgeContainer = container.append('g')
+  const edgeContainer = container
+    .append('g')
+    .attr('stroke-width', 1)
+    .attr('stroke', '#222')
+    .attr('stroke-opacity', 0.6)
 
-  const nodesContainer = container.append('g')
+  const nodesContainer = container
+    .append('g')
+    .attr('fill', '#ff4b4b')
+    .attr('stroke', '#bb0000')
+    .attr('stroke-width', 1)
     
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
   svg.call(zoomBehavior.on('zoom', () => container.attr('transform', event.transform)))
@@ -57,31 +55,15 @@ export const D3Renderer = (
     .on('drag', drag)
     .on('end', dragEnd)
 
-  const _nodeWidthSelector = nodeStyleSelector('width')
-  const nodeWidthSelector = (node: PositionedNode) => _nodeWidthSelector(node) / 2
-  const nodeStrokeWidthSelector = nodeStyleSelector('strokeWidth')
-  const nodeFillSelector = nodeStyleSelector('fill')
-  const nodeStrokeSelector = nodeStyleSelector('stroke')
-  const nodeFillOpacitySelector = nodeStyleSelector('fillOpacity')
-  const nodeStrokeOpacitySelector = nodeStyleSelector('strokeOpacity')
-  const edgeStrokeSelector = edgeStyleSelector('stroke')
-  const edgeWidthSelector = edgeStyleSelector('width')
-  const edgeStrokeOpacitySelector = edgeStyleSelector('strokeOpacity')
-
   const graph = new Graph(({ nodes, edges }) => {
     nodesContainer
       .selectAll<SVGLineElement, PositionedNode>('circle')
       .data(Object.values(nodes), (d) => d.id)
       .join('circle')
+      .attr('r', r)
       .attr('cx', (d) => d.x!)
       .attr('cy', (d) => d.y!)
       .style('cursor', 'pointer')
-      .attr('r', nodeWidthSelector)
-      .style('stroke-width', nodeStrokeWidthSelector)
-      .style('fill', nodeFillSelector)
-      .style('stroke', nodeStrokeSelector)
-      .style('fill-opacity', nodeFillOpacitySelector)
-      .style('stroke-opacity', nodeStrokeOpacitySelector)
       .call(dragNode())
 
     edgeContainer
@@ -92,9 +74,6 @@ export const D3Renderer = (
       .attr('y1', (d) => d.source.y!)
       .attr('x2', (d) => d.target.x!)
       .attr('y2', (d) => d.target.y!)
-      .style('stroke', edgeStrokeSelector)
-      .style('stroke-width', edgeWidthSelector)
-      .style('stroke-opacity', edgeStrokeOpacitySelector)
   })
 
   function dragStart (d: PositionedNode) {

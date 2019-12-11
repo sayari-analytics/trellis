@@ -15,3 +15,6 @@ export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => 
     }
   };
 };
+
+
+export const identity = <T>(value: T) => value

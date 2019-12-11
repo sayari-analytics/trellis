@@ -119,7 +119,8 @@ const worker = (() => {
           id: data.edges[edgeId].id,
           label: data.edges[edgeId].label,
           source: nodes[data.edges[edgeId].source as unknown as string],
-          target: nodes[data.edges[edgeId].target as unknown as string]
+          target: nodes[data.edges[edgeId].target as unknown as string],
+          style: data.edges[edgeId].style,
         }
         update = true
       } else if (edges[edgeId] !== data.edges[edgeId]) { // TODO - referential equality won't work here
@@ -129,7 +130,8 @@ const worker = (() => {
           id: data.edges[edgeId].id,
           label: data.edges[edgeId].label,
           source: nodes[data.edges[edgeId].source as unknown as string],
-          target: nodes[data.edges[edgeId].target as unknown as string]
+          target: nodes[data.edges[edgeId].target as unknown as string],
+          style: data.edges[edgeId].style,
         }
       }
     }
