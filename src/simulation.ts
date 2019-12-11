@@ -23,45 +23,50 @@ declare const d3: {
 
 declare const self: Worker
 
-type TypedMessageEvent<T = unknown> = {
+export type TypedMessageEvent<T = unknown> = {
   [K in keyof MessageEvent]: K extends 'data' ? T : MessageEvent[K]
 }
 
-type LayoutEvent = {
+export type LayoutEvent = {
   type: 'layout',
   nodes: { [key: string]: PositionedNode }
   edges: { [key: string]: PositionedEdge }
   options: Options
 }
 
-type DragStartEvent = {
+export type DragStartEvent = {
   type: 'dragStart'
   id: string
   x: number
   y: number
 }
 
-type DragEvent = {
+export type DragEvent = {
   type: 'drag'
   id: string
   x: number
   y: number
 }
 
-type DragEndEvent = {
+export type DragEndEvent = {
   type: 'dragEnd'
   id: string
 }
 
-type TickEvent = {
+export type TickEvent = {
   type: 'tick'
 }
 
-type Event = LayoutEvent
+export type Event = LayoutEvent
   | DragStartEvent
   | DragEvent
   | DragEndEvent
   | TickEvent
+
+export type LayoutResultEvent = {
+  nodes: { [key: string]: PositionedNode }
+  edges: { [key: string]: PositionedEdge }
+}
 
 
 const worker = (() => {

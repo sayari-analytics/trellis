@@ -1,34 +1,33 @@
 import { select, event } from 'd3-selection'
 import { zoom } from 'd3-zoom'
 import { drag as dragBehavior } from 'd3-drag'
-import { Graph, Edge, Node, PositionedNode, PositionedEdge, NodeStyle, DEFAULT_NODE_STYLES, EdgeStyle, DEFAULT_EDGE_STYLES } from '../index'
+import { Graph, Edge, Node, PositionedNode, PositionedEdge } from '../index'
+import { NodeStyle, DEFAULT_NODE_STYLES, EdgeStyle, DEFAULT_EDGE_STYLES, Options, DEFAULT_OPTIONS } from './options'
 
 
-export type Options = {
-  r: number
-  synchronous?: number | false
-}
-
-const nodeStyleSelector = <T extends keyof NodeStyle>(attribute: T) => (node: PositionedNode): NodeStyle[T] => {
+const nodeStyleSelector = <T extends keyof NodeStyle>(nodeStyles: NodeStyle, attribute: T) => (node: PositionedNode): NodeStyle[T] => {
   if (node.style === undefined || node.style![attribute] === undefined) {
-    return DEFAULT_NODE_STYLES[attribute]
+    return nodeStyles[attribute]
   }
 
   return node.style[attribute] as NodeStyle[T]
 }
 
-const edgeStyleSelector = <T extends keyof EdgeStyle>(attribute: T) => (edge: PositionedEdge): EdgeStyle[T] => {
+const edgeStyleSelector = <T extends keyof EdgeStyle>(edgeStyles: EdgeStyle, attribute: T) => (edge: PositionedEdge): EdgeStyle[T] => {
   if (edge.style === undefined || edge.style![attribute] === undefined) {
-    return DEFAULT_EDGE_STYLES[attribute]
+    return edgeStyles[attribute]
   }
 
   return edge.style[attribute] as NodeStyle[T]
 }
 
-export const D3Renderer = (
-  id: string,
-  { synchronous = 300 }: Partial<Options> = {}
-) => {
+
+export const D3Renderer = ({
+  id,
+  synchronous = DEFAULT_OPTIONS.synchronous,
+  nodeStyles = {},
+  edgeStyles = {},
+}: Options) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
   if (parentElement === null) {
@@ -57,16 +56,22 @@ export const D3Renderer = (
     .on('drag', drag)
     .on('end', dragEnd)
 
-  const _nodeWidthSelector = nodeStyleSelector('width')
+  const NODE_STYLES = { ...DEFAULT_NODE_STYLES, ...nodeStyles }
+  const EDGE_STYLES = { ...DEFAULT_EDGE_STYLES, ...edgeStyles }
+  const _nodeWidthSelector = nodeStyleSelector(NODE_STYLES, 'width')
   const nodeWidthSelector = (node: PositionedNode) => _nodeWidthSelector(node) / 2
-  const nodeStrokeWidthSelector = nodeStyleSelector('strokeWidth')
-  const nodeFillSelector = nodeStyleSelector('fill')
-  const nodeStrokeSelector = nodeStyleSelector('stroke')
-  const nodeFillOpacitySelector = nodeStyleSelector('fillOpacity')
-  const nodeStrokeOpacitySelector = nodeStyleSelector('strokeOpacity')
-  const edgeStrokeSelector = edgeStyleSelector('stroke')
-  const edgeWidthSelector = edgeStyleSelector('width')
-  const edgeStrokeOpacitySelector = edgeStyleSelector('strokeOpacity')
+  const nodeStrokeWidthSelector = nodeStyleSelector(NODE_STYLES, 'strokeWidth')
+  const nodeFillSelector = nodeStyleSelector(NODE_STYLES, 'fill')
+  const nodeStrokeSelector = nodeStyleSelector(NODE_STYLES, 'stroke')
+  const nodeFillOpacitySelector = nodeStyleSelector(NODE_STYLES, 'fillOpacity')
+  const nodeStrokeOpacitySelector = nodeStyleSelector(NODE_STYLES, 'strokeOpacity')
+  const edgeStrokeSelector = edgeStyleSelector(EDGE_STYLES, 'stroke')
+  const edgeWidthSelector = edgeStyleSelector(EDGE_STYLES, 'width')
+  const edgeStrokeOpacitySelector = edgeStyleSelector(EDGE_STYLES, 'strokeOpacity')
+
+  // const nodeClickHandler = (d: PositionedNode) => console.log('click', d.id)
+  // const nodeMouseEnterHandler = (d: PositionedNode) => console.log('mouseenter', d.id)
+  // const nodeMouseLeaveHandler = (d: PositionedNode) => console.log('mouseleave', d.id)
 
   const graph = new Graph(({ nodes, edges }) => {
     nodesContainer
@@ -82,6 +87,9 @@ export const D3Renderer = (
       .style('stroke', nodeStrokeSelector)
       .style('fill-opacity', nodeFillOpacitySelector)
       .style('stroke-opacity', nodeStrokeOpacitySelector)
+      // .on('click', nodeClickHandler)
+      // .on('mouseenter', nodeMouseEnterHandler)
+      // .on('mouseleave', nodeMouseLeaveHandler)
       .call(dragNode())
 
     edgeContainer

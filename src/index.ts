@@ -1,21 +1,8 @@
 import { SimulationNodeDatum } from 'd3-force'
 import { throttleAnimationFrame } from './utils'
-import { simulation } from './simulation'
+import { simulation, LayoutResultEvent, TypedMessageEvent } from './simulation'
+import { NodeStyle, EdgeStyle } from './renderers/options'
 
-
-export type NodeStyle = {
-  width: number
-  strokeWidth: number
-  fill: string
-  stroke: string
-  fillOpacity: number
-  strokeOpacity: number
-}
-export type EdgeStyle = {
-  width: number
-  stroke: string
-  strokeOpacity: number
-}
 
 export type Node = {
   id: string
@@ -38,25 +25,9 @@ export type Options = {
   synchronous: number | false
 }
 
-
-const DEFAULT_OPTIONS: Options = {
+export const DEFAULT_OPTIONS: Options = {
   strength: 250,
   synchronous: 300,
-}
-
-export const DEFAULT_NODE_STYLES: NodeStyle = {
-  width: 12,
-  strokeWidth: 1,
-  fill: '#ff4b4b',
-  stroke: '#bb0000',
-  fillOpacity: 1,
-  strokeOpacity: 1,
-}
-
-export const DEFAULT_EDGE_STYLES: EdgeStyle = {
-  width: 1,
-  stroke: '#444',
-  strokeOpacity: 0.6
 }
 
 
@@ -74,7 +45,7 @@ export class Graph {
     this.workerUrl = URL.createObjectURL(simulation)
     this.worker = new Worker(this.workerUrl)
     this.handler = throttleAnimationFrame(handler)
-    this.worker.onmessage = (event) => {
+    this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
       this.nodes = event.data.nodes
       this.edges = event.data.edges
       this.handler(event.data)
@@ -87,6 +58,7 @@ export class Graph {
     options?: Partial<Options>
   }) => {
     // TODO - noop on nodes/edges/options equality
+    // TODO - does it make sense to only serialize node ids and edge id/source/target? e.g. drop style and remerge 
     this.worker.postMessage({ type: 'layout', nodes, edges, options: { strength, synchronous } })
     return this
   }

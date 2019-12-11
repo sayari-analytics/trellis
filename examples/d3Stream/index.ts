@@ -7,7 +7,7 @@ import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
 
 
-const render = D3Renderer('graph', { synchronous: false })
+const render = D3Renderer({ id: 'graph', synchronous: false, nodeStyles: { stroke: '#fff' } })
 
 const NODES_PER_TICK = 20
 
@@ -16,9 +16,8 @@ const colorScale = scaleOrdinal(schemeCategory10)
 const nodes: Node[] = mediumSm.nodes.map<Node>(({ id, group }) => ({
   id,
   style: {
-    width: (group + 4) * 2.4,
+    width: (group + 3) * 3,
     fill: colorScale(group.toString()),
-    stroke: '#fff',
   }
 }))
 
