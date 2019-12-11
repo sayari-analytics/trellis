@@ -1,6 +1,6 @@
 import { select, event } from 'd3-selection'
 import { zoom } from 'd3-zoom'
-import { drag } from 'd3-drag'
+import { drag as dragBehavior } from 'd3-drag'
 import { Graph, Edge, Node, PositionedNode, PositionedEdge } from '../index'
 
 
@@ -11,12 +11,11 @@ export type Options = {
 
 const DEFAULT_OPTIONS: Options = {
   r: 6,
-  synchronous: 300,
+  synchronous: false,
 }
 
 
 export const D3Renderer = (
-  graph: Graph,
   id: string,
   { r = DEFAULT_OPTIONS.r, synchronous = DEFAULT_OPTIONS.synchronous }: Partial<Options> = {}
 ) => {
@@ -30,6 +29,7 @@ export const D3Renderer = (
     .append('svg')
     .attr('height', '100%')
     .attr('width', '100%')
+    .style('cursor', 'move')
 
   const container = svg.append('g')
 
@@ -44,54 +44,51 @@ export const D3Renderer = (
     .attr('fill', '#ff4b4b')
     .attr('stroke', '#bb0000')
     .attr('stroke-width', 1)
-
+    
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
   svg.call(zoomBehavior.on('zoom', () => container.attr('transform', event.transform)))
   zoomBehavior.translateBy(svg, parentElement.offsetWidth / 2, parentElement.offsetHeight / 2)
-  
+
+  // is the closure necessary here?  why recreate the dragBehavior on every render
+  const dragNode = () => dragBehavior<any, PositionedNode>()
+    .on('start', dragStart)
+    .on('drag', drag)
+    .on('end', dragEnd)
+
+  const graph = new Graph(({ nodes, edges }) => {
+    nodesContainer
+      .selectAll<SVGLineElement, PositionedNode>('circle')
+      .data(Object.values(nodes), (d) => d.id)
+      .join('circle')
+      .attr('r', r)
+      .attr('cx', (d) => d.x!)
+      .attr('cy', (d) => d.y!)
+      .style('cursor', 'pointer')
+      .call(dragNode())
+
+    edgeContainer
+      .selectAll<SVGLineElement, PositionedEdge>('line')
+      .data(Object.values(edges), (d) => d.id)
+      .join('line')
+      .attr('x1', (d) => d.source.x!)
+      .attr('y1', (d) => d.source.y!)
+      .attr('x2', (d) => d.target.x!)
+      .attr('y2', (d) => d.target.y!)
+  })
+
   function dragStart (d: PositionedNode) {
-    d.fx = event.x
-    d.fy = event.y
+    graph.dragStart(d.id, event.x, event.y)
   }
 
-  function dragged (d: PositionedNode) {
-    d.fx = event.x
-    d.fy = event.y
-    graph.simulation.restart().tick(1)
+  function drag (d: PositionedNode) {
+    graph.drag(d.id, event.x, event.y)
   }
 
   function dragEnd (d: PositionedNode) {
-    d.fx = null
-    d.fy = null
+    graph.dragEnd(d.id)
   }
 
-  const dragNode = () => drag<any, PositionedNode>()
-    .on('start', dragStart)
-    .on('drag', dragged)
-    .on('end', dragEnd)
-
   return (nodes: { [key: string]: Node }, edges: { [key: string]: Edge }) => {
-    graph.layout({ nodes, edges, options: { synchronous } }).subscribe({
-      next: ({ nodes, edges }) => {
-        nodesContainer
-          .selectAll<SVGLineElement, PositionedNode>('circle')
-          .data(Object.values(nodes), (d) => d.id)
-          .join('circle')
-          .attr('r', r)
-          .attr('cx', (d) => d.x!)
-          .attr('cy', (d) => d.y!)
-          .style('cursor', 'pointer')
-          .call(dragNode())
-
-        edgeContainer
-          .selectAll<SVGLineElement, PositionedEdge>('line')
-          .data(Object.values(edges), (d) => d.id)
-          .join('line')
-          .attr('x1', (d) => d.source.x!)
-          .attr('y1', (d) => d.source.y!)
-          .attr('x2', (d) => d.target.x!)
-          .attr('y2', (d) => d.target.y!)
-      }
-    })
+    graph.layout({ nodes, edges, options: { synchronous } })
   }
 }

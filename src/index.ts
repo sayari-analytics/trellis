@@ -1,7 +1,6 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, SimulationNodeDatum } from 'd3-force'
-import { Subject, Observable } from 'rxjs'
-import { switchMap } from 'rxjs/operators'
-import { Simulation } from './simulation'
+import { SimulationNodeDatum } from 'd3-force'
+import { throttleAnimationFrame } from './utils'
+import { simulation } from './simulation'
 
 
 export type Node = { id: string, label?: string } // TODO add style properties
@@ -19,98 +18,62 @@ const DEFAULT_OPTIONS: Options = {
 }
 
 
-// convert this from object to function?
 export class Graph {
 
-  nodeMap: { [key: string]: Node } = {}
-  edgeMap: { [key: string]: Edge } = {}
+  workerUrl: string
+  worker: Worker
+  handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => void
 
   nodes: { [key: string]: PositionedNode } = {}
   edges: { [key: string]: PositionedEdge } = {}
   options: Options = DEFAULT_OPTIONS
 
-  simulation: (nodeMap: { [key: string]: PositionedNode }, edgeMap: { [key: string]: PositionedEdge }, options: Options, update: boolean) => Subject<{ nodes: PositionedNode[], edges: PositionedEdge[] }>
-
-  constructor() {
-    const { simulation, dispose } = Simulation()
-    this.simulation = simulation
+  constructor(handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => void) {
+    this.workerUrl = URL.createObjectURL(simulation)
+    this.worker = new Worker(this.workerUrl)
+    this.handler = throttleAnimationFrame(handler)
+    this.worker.onmessage = (event) => {
+      this.nodes = event.data.nodes
+      this.edges = event.data.edges
+      this.handler(event.data)
+    }
   }
 
   layout = ({ nodes, edges, options: { strength = DEFAULT_OPTIONS.strength, synchronous = DEFAULT_OPTIONS.synchronous } = {} }: {
-    nodes?: { [key: string]: Node },
-    edges?: { [key: string]: Edge },
+    nodes: { [key: string]: Node },
+    edges: { [key: string]: Edge },
     options?: Partial<Options>
-  } = {}) => {
-    let update = false
+  }) => {
+    // TODO - noop on nodes/edges/options equality
+    this.worker.postMessage({ type: 'layout', nodes, edges, options: { strength, synchronous } })
+    return this
+  }
 
-    if (strength !== this.options.strength) {
-      this.options = { ...this.options, strength }
-      update = true
-    }
+  dragStart = (id: string, x: number, y: number) => {
+    this.worker.postMessage({ type: 'dragStart', id, x, y })
+    return this
+  }
 
-    if (synchronous !== this.options.synchronous) {
-      this.options = { ...this.options, synchronous }
-      update = true
-    }
+  drag = (id: string, x: number, y: number) => {
+    this.nodes[id].x = x
+    this.nodes[id].y = y
+    this.handler({ nodes: this.nodes, edges: this.edges })
+    this.worker.postMessage({ type: 'drag', id, x, y })
+    return this
+  }
 
-    if (nodes && nodes !== this.nodeMap) {
-      for (const nodeId in nodes) {
-        if (this.nodeMap[nodeId] === undefined) {
-          // enter
-          this.nodes[nodeId] = { ...nodes[nodeId] }
-          update = true
-        } else if (this.nodeMap[nodeId] !== nodes[nodeId]) {
-          // update
-          this.nodes[nodeId] = { ...this.nodes[nodeId], ...nodes[nodeId] }
-          update = true
-        }
-      }
+  dragEnd = (id: string) => {
+    this.worker.postMessage({ type: 'dragEnd', id })
+    return this
+  }
 
-      for (const nodeId in this.nodes) {
-        if (nodes[nodeId] === undefined) {
-          // exit
-          delete this.nodes[nodeId]
-          update = true
-        }
-      }
+  tick = () => {
+    this.worker.postMessage({ type: 'tick' })
+    return this
+  }
 
-      this.nodeMap = nodes
-    }
-
-    if (edges && edges !== this.edgeMap) {
-      for (const edgeId in edges) {
-        if (this.edgeMap[edgeId] === undefined) {
-          // enter
-          this.edges[edgeId] = {
-            id: edges[edgeId].id,
-            label: edges[edgeId].label,
-            source: this.nodes[edges[edgeId].source],
-            target: this.nodes[edges[edgeId].target]
-          }
-          update = true
-        } else if (this.edgeMap[edgeId] !== edges[edgeId]) {
-          // update
-          this.edges[edgeId] = {
-            id: edges[edgeId].id,
-            label: edges[edgeId].label,
-            source: this.nodes[edges[edgeId].source],
-            target: this.nodes[edges[edgeId].target]
-          }
-          update = true
-        }
-      }
-
-      for (const edgeId in this.edges) {
-        if (edges[edgeId] === undefined) {
-          delete this.edges[edgeId]
-          update = true
-        }
-      }
-
-      this.edgeMap = edges
-    }
-
-
-    return this.simulation(this.nodes, this.edges, this.options, update)
+  dispose = () => {
+    this.worker.terminate()
+    URL.revokeObjectURL(this.workerUrl)
   }
 }

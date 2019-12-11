@@ -1,18 +1,18 @@
 import { interval } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { Graph, Node, Edge } from '../../src/index'
+import { Node, Edge } from '../../src/index'
 import { D3Renderer } from '../../src/renderers/d3'
-import { data, large, mediumLg, mediumSm } from './data'
+import { data, large, mediumLg, mediumSm } from '../data'
 
-const render = D3Renderer(new Graph(), 'graph', { synchronous: false })
+const render = D3Renderer('graph', { synchronous: false })
 
-const NODES_PER_TICK = 10
+const NODES_PER_TICK = 15
 
 const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
 
 const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
 
-interval(100).pipe(
+interval(500).pipe(
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)

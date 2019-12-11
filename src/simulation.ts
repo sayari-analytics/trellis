@@ -1,16 +1,8 @@
-import { Observable, BehaviorSubject, Subject } from "rxjs"
-import { multicast, refCount, switchMap, withLatestFrom, filter } from "rxjs/operators"
-import { Node, Edge, PositionedNode, PositionedEdge } from "./index"
-import { forceSimulation, forceManyBody, forceCenter, forceLink } from "d3-force"
+import { forceSimulation, forceManyBody, forceCenter, forceLink } from 'd3-force'
+import { PositionedNode, PositionedEdge, Options } from './index'
 
-type Options = {
-  strength: number
-  synchronous: number | false
-}
 
-const noop = () => {}
-
-const script = `
+const d3ForceScript = `
 // https://d3js.org/d3-dispatch/ v1.0.5 Copyright 2018 Mike Bostock
 !function(n,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e(n.d3=n.d3||{})}(this,function(n){"use strict";var e={value:function(){}};function t(){for(var n,e=0,t=arguments.length,o={};e<t;++e){if(!(n=arguments[e]+"")||n in o)throw new Error("illegal type: "+n);o[n]=[]}return new r(o)}function r(n){this._=n}function o(n,e){for(var t,r=0,o=n.length;r<o;++r)if((t=n[r]).name===e)return t.value}function i(n,t,r){for(var o=0,i=n.length;o<i;++o)if(n[o].name===t){n[o]=e,n=n.slice(0,o).concat(n.slice(o+1));break}return null!=r&&n.push({name:t,value:r}),n}r.prototype=t.prototype={constructor:r,on:function(n,e){var t,r,f=this._,l=(r=f,(n+"").trim().split(/^|\s+/).map(function(n){var e="",t=n.indexOf(".");if(t>=0&&(e=n.slice(t+1),n=n.slice(0,t)),n&&!r.hasOwnProperty(n))throw new Error("unknown type: "+n);return{type:n,name:e}})),a=-1,u=l.length;if(!(arguments.length<2)){if(null!=e&&"function"!=typeof e)throw new Error("invalid callback: "+e);for(;++a<u;)if(t=(n=l[a]).type)f[t]=i(f[t],n.name,e);else if(null==e)for(t in f)f[t]=i(f[t],n.name,null);return this}for(;++a<u;)if((t=(n=l[a]).type)&&(t=o(f[t],n.name)))return t},copy:function(){var n={},e=this._;for(var t in e)n[t]=e[t].slice();return new r(n)},call:function(n,e){if((t=arguments.length-2)>0)for(var t,r,o=new Array(t),i=0;i<t;++i)o[i]=arguments[i+2];if(!this._.hasOwnProperty(n))throw new Error("unknown type: "+n);for(i=0,t=(r=this._[n]).length;i<t;++i)r[i].value.apply(e,o)},apply:function(n,e,t){if(!this._.hasOwnProperty(n))throw new Error("unknown type: "+n);for(var r=this._[n],o=0,i=r.length;o<i;++o)r[o].value.apply(e,t)}},n.dispatch=t,Object.defineProperty(n,"__esModule",{value:!0})});
 // https://d3js.org/d3-quadtree/ v1.0.6 Copyright 2019 Mike Bostock
@@ -19,240 +11,187 @@ const script = `
 !function(t,n){"object"==typeof exports&&"undefined"!=typeof module?n(exports):"function"==typeof define&&define.amd?define(["exports"],n):n(t.d3=t.d3||{})}(this,function(t){"use strict";var n,e,o=0,i=0,r=0,u=1e3,l=0,c=0,a=0,f="object"==typeof performance&&performance.now?performance:Date,s="object"==typeof window&&window.requestAnimationFrame?window.requestAnimationFrame.bind(window):function(t){setTimeout(t,17)};function _(){return c||(s(m),c=f.now()+a)}function m(){c=0}function p(){this._call=this._time=this._next=null}function w(t,n,e){var o=new p;return o.restart(t,n,e),o}function d(){_(),++o;for(var t,e=n;e;)(t=c-e._time)>=0&&e._call.call(null,t),e=e._next;--o}function h(){c=(l=f.now())+a,o=i=0;try{d()}finally{o=0,function(){var t,o,i=n,r=1/0;for(;i;)i._call?(r>i._time&&(r=i._time),t=i,i=i._next):(o=i._next,i._next=null,i=t?t._next=o:n=o);e=t,v(r)}(),c=0}}function y(){var t=f.now(),n=t-l;n>u&&(a-=n,l=t)}function v(t){o||(i&&(i=clearTimeout(i)),t-c>24?(t<1/0&&(i=setTimeout(h,t-f.now()-a)),r&&(r=clearInterval(r))):(r||(l=f.now(),r=setInterval(y,u)),o=1,s(h)))}p.prototype=w.prototype={constructor:p,restart:function(t,o,i){if("function"!=typeof t)throw new TypeError("callback is not a function");i=(null==i?_():+i)+(null==o?0:+o),this._next||e===this||(e?e._next=this:n=this,e=this),this._call=t,this._time=i,v()},stop:function(){this._call&&(this._call=null,this._time=1/0,v())}},t.now=_,t.timer=w,t.timerFlush=d,t.timeout=function(t,n,e){var o=new p;return n=null==n?0:+n,o.restart(function(e){o.stop(),t(e+n)},n,e),o},t.interval=function(t,n,e){var o=new p,i=n;return null==n?(o.restart(t,n,e),o):(n=+n,e=null==e?_():+e,o.restart(function r(u){u+=i,o.restart(r,i+=n,e),t(u)},n,e),o)},Object.defineProperty(t,"__esModule",{value:!0})});
 // https://d3js.org/d3-force/ v2.0.1 Copyright 2019 Mike Bostock
 !function(n,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports,require("d3-quadtree"),require("d3-dispatch"),require("d3-timer")):"function"==typeof define&&define.amd?define(["exports","d3-quadtree","d3-dispatch","d3-timer"],t):t(n.d3=n.d3||{},n.d3,n.d3,n.d3)}(this,function(n,t,r,e){"use strict";function i(n){return function(){return n}}function u(){return 1e-6*(Math.random()-.5)}function o(n){return n.x+n.vx}function f(n){return n.y+n.vy}function a(n){return n.index}function c(n,t){var r=n.get(t);if(!r)throw new Error("missing: "+t);return r}function l(n){return n.x}function h(n){return n.y}var v=10,y=Math.PI*(3-Math.sqrt(5));n.forceCenter=function(n,t){var r;function e(){var e,i,u=r.length,o=0,f=0;for(e=0;e<u;++e)o+=(i=r[e]).x,f+=i.y;for(o=o/u-n,f=f/u-t,e=0;e<u;++e)(i=r[e]).x-=o,i.y-=f}return null==n&&(n=0),null==t&&(t=0),e.initialize=function(n){r=n},e.x=function(t){return arguments.length?(n=+t,e):n},e.y=function(n){return arguments.length?(t=+n,e):t},e},n.forceCollide=function(n){var r,e,a=1,c=1;function l(){for(var n,i,l,v,y,d,x,g=r.length,s=0;s<c;++s)for(i=t.quadtree(r,o,f).visitAfter(h),n=0;n<g;++n)l=r[n],d=e[l.index],x=d*d,v=l.x+l.vx,y=l.y+l.vy,i.visit(p);function p(n,t,r,e,i){var o=n.data,f=n.r,c=d+f;if(!o)return t>v+c||e<v-c||r>y+c||i<y-c;if(o.index>l.index){var h=v-o.x-o.vx,g=y-o.y-o.vy,s=h*h+g*g;s<c*c&&(0===h&&(s+=(h=u())*h),0===g&&(s+=(g=u())*g),s=(c-(s=Math.sqrt(s)))/s*a,l.vx+=(h*=s)*(c=(f*=f)/(x+f)),l.vy+=(g*=s)*c,o.vx-=h*(c=1-c),o.vy-=g*c)}}}function h(n){if(n.data)return n.r=e[n.data.index];for(var t=n.r=0;t<4;++t)n[t]&&n[t].r>n.r&&(n.r=n[t].r)}function v(){if(r){var t,i,u=r.length;for(e=new Array(u),t=0;t<u;++t)i=r[t],e[i.index]=+n(i,t,r)}}return"function"!=typeof n&&(n=i(null==n?1:+n)),l.initialize=function(n){r=n,v()},l.iterations=function(n){return arguments.length?(c=+n,l):c},l.strength=function(n){return arguments.length?(a=+n,l):a},l.radius=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),v(),l):n},l},n.forceLink=function(n){var t,r,e,o,f,l=a,h=function(n){return 1/Math.min(o[n.source.index],o[n.target.index])},v=i(30),y=1;function d(e){for(var i=0,o=n.length;i<y;++i)for(var a,c,l,h,v,d,x,g=0;g<o;++g)c=(a=n[g]).source,h=(l=a.target).x+l.vx-c.x-c.vx||u(),v=l.y+l.vy-c.y-c.vy||u(),h*=d=((d=Math.sqrt(h*h+v*v))-r[g])/d*e*t[g],v*=d,l.vx-=h*(x=f[g]),l.vy-=v*x,c.vx+=h*(x=1-x),c.vy+=v*x}function x(){if(e){var i,u,a=e.length,h=n.length,v=new Map(e.map((n,t)=>[l(n,t,e),n]));for(i=0,o=new Array(a);i<h;++i)(u=n[i]).index=i,"object"!=typeof u.source&&(u.source=c(v,u.source)),"object"!=typeof u.target&&(u.target=c(v,u.target)),o[u.source.index]=(o[u.source.index]||0)+1,o[u.target.index]=(o[u.target.index]||0)+1;for(i=0,f=new Array(h);i<h;++i)u=n[i],f[i]=o[u.source.index]/(o[u.source.index]+o[u.target.index]);t=new Array(h),g(),r=new Array(h),s()}}function g(){if(e)for(var r=0,i=n.length;r<i;++r)t[r]=+h(n[r],r,n)}function s(){if(e)for(var t=0,i=n.length;t<i;++t)r[t]=+v(n[t],t,n)}return null==n&&(n=[]),d.initialize=function(n){e=n,x()},d.links=function(t){return arguments.length?(n=t,x(),d):n},d.id=function(n){return arguments.length?(l=n,d):l},d.iterations=function(n){return arguments.length?(y=+n,d):y},d.strength=function(n){return arguments.length?(h="function"==typeof n?n:i(+n),g(),d):h},d.distance=function(n){return arguments.length?(v="function"==typeof n?n:i(+n),s(),d):v},d},n.forceManyBody=function(){var n,r,e,o,f=i(-30),a=1,c=1/0,v=.81;function y(i){var u,o=n.length,f=t.quadtree(n,l,h).visitAfter(x);for(e=i,u=0;u<o;++u)r=n[u],f.visit(g)}function d(){if(n){var t,r,e=n.length;for(o=new Array(e),t=0;t<e;++t)r=n[t],o[r.index]=+f(r,t,n)}}function x(n){var t,r,e,i,u,f=0,a=0;if(n.length){for(e=i=u=0;u<4;++u)(t=n[u])&&(r=Math.abs(t.value))&&(f+=t.value,a+=r,e+=r*t.x,i+=r*t.y);n.x=e/a,n.y=i/a}else{(t=n).x=t.data.x,t.y=t.data.y;do{f+=o[t.data.index]}while(t=t.next)}n.value=f}function g(n,t,i,f){if(!n.value)return!0;var l=n.x-r.x,h=n.y-r.y,y=f-t,d=l*l+h*h;if(y*y/v<d)return d<c&&(0===l&&(d+=(l=u())*l),0===h&&(d+=(h=u())*h),d<a&&(d=Math.sqrt(a*d)),r.vx+=l*n.value*e/d,r.vy+=h*n.value*e/d),!0;if(!(n.length||d>=c)){(n.data!==r||n.next)&&(0===l&&(d+=(l=u())*l),0===h&&(d+=(h=u())*h),d<a&&(d=Math.sqrt(a*d)));do{n.data!==r&&(y=o[n.data.index]*e/d,r.vx+=l*y,r.vy+=h*y)}while(n=n.next)}}return y.initialize=function(t){n=t,d()},y.strength=function(n){return arguments.length?(f="function"==typeof n?n:i(+n),d(),y):f},y.distanceMin=function(n){return arguments.length?(a=n*n,y):Math.sqrt(a)},y.distanceMax=function(n){return arguments.length?(c=n*n,y):Math.sqrt(c)},y.theta=function(n){return arguments.length?(v=n*n,y):Math.sqrt(v)},y},n.forceRadial=function(n,t,r){var e,u,o,f=i(.1);function a(n){for(var i=0,f=e.length;i<f;++i){var a=e[i],c=a.x-t||1e-6,l=a.y-r||1e-6,h=Math.sqrt(c*c+l*l),v=(o[i]-h)*u[i]*n/h;a.vx+=c*v,a.vy+=l*v}}function c(){if(e){var t,r=e.length;for(u=new Array(r),o=new Array(r),t=0;t<r;++t)o[t]=+n(e[t],t,e),u[t]=isNaN(o[t])?0:+f(e[t],t,e)}}return"function"!=typeof n&&(n=i(+n)),null==t&&(t=0),null==r&&(r=0),a.initialize=function(n){e=n,c()},a.strength=function(n){return arguments.length?(f="function"==typeof n?n:i(+n),c(),a):f},a.radius=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),c(),a):n},a.x=function(n){return arguments.length?(t=+n,a):t},a.y=function(n){return arguments.length?(r=+n,a):r},a},n.forceSimulation=function(n){var t,i=1,u=.001,o=1-Math.pow(u,1/300),f=0,a=.6,c=new Map,l=e.timer(d),h=r.dispatch("tick","end");function d(){x(),h.call("tick",t),i<u&&(l.stop(),h.call("end",t))}function x(r){var e,u,l=n.length;void 0===r&&(r=1);for(var h=0;h<r;++h)for(i+=(f-i)*o,c.forEach(function(n){n(i)}),e=0;e<l;++e)null==(u=n[e]).fx?u.x+=u.vx*=a:(u.x=u.fx,u.vx=0),null==u.fy?u.y+=u.vy*=a:(u.y=u.fy,u.vy=0);return t}function g(){for(var t,r=0,e=n.length;r<e;++r){if((t=n[r]).index=r,null!=t.fx&&(t.x=t.fx),null!=t.fy&&(t.y=t.fy),isNaN(t.x)||isNaN(t.y)){var i=v*Math.sqrt(r),u=r*y;t.x=i*Math.cos(u),t.y=i*Math.sin(u)}(isNaN(t.vx)||isNaN(t.vy))&&(t.vx=t.vy=0)}}function s(t){return t.initialize&&t.initialize(n),t}return null==n&&(n=[]),g(),t={tick:x,restart:function(){return l.restart(d),t},stop:function(){return l.stop(),t},nodes:function(r){return arguments.length?(n=r,g(),c.forEach(s),t):n},alpha:function(n){return arguments.length?(i=+n,t):i},alphaMin:function(n){return arguments.length?(u=+n,t):u},alphaDecay:function(n){return arguments.length?(o=+n,t):+o},alphaTarget:function(n){return arguments.length?(f=+n,t):f},velocityDecay:function(n){return arguments.length?(a=1-n,t):1-a},force:function(n,r){return arguments.length>1?(null==r?c.delete(n):c.set(n,s(r)),t):c.get(n)},find:function(t,r,e){var i,u,o,f,a,c=0,l=n.length;for(null==e?e=1/0:e*=e,c=0;c<l;++c)(o=(i=t-(f=n[c]).x)*i+(u=r-f.y)*u)<e&&(a=f,e=o);return a},on:function(n,r){return arguments.length>1?(h.on(n,r),t):h.on(n)}}},n.forceX=function(n){var t,r,e,u=i(.1);function o(n){for(var i,u=0,o=t.length;u<o;++u)(i=t[u]).vx+=(e[u]-i.x)*r[u]*n}function f(){if(t){var i,o=t.length;for(r=new Array(o),e=new Array(o),i=0;i<o;++i)r[i]=isNaN(e[i]=+n(t[i],i,t))?0:+u(t[i],i,t)}}return"function"!=typeof n&&(n=i(null==n?0:+n)),o.initialize=function(n){t=n,f()},o.strength=function(n){return arguments.length?(u="function"==typeof n?n:i(+n),f(),o):u},o.x=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),f(),o):n},o},n.forceY=function(n){var t,r,e,u=i(.1);function o(n){for(var i,u=0,o=t.length;u<o;++u)(i=t[u]).vy+=(e[u]-i.y)*r[u]*n}function f(){if(t){var i,o=t.length;for(r=new Array(o),e=new Array(o),i=0;i<o;++i)r[i]=isNaN(e[i]=+n(t[i],i,t))?0:+u(t[i],i,t)}}return"function"!=typeof n&&(n=i(null==n?0:+n)),o.initialize=function(n){t=n,f()},o.strength=function(n){return arguments.length?(u="function"==typeof n?n:i(+n),f(),o):u},o.y=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),f(),o):n},o},Object.defineProperty(n,"__esModule",{value:!0})});
-
-var strength = 250
-var simulation = d3.forceSimulation()
-  .force('charge', d3.forceManyBody().strength(-strength))
-  .force('center', d3.forceCenter())
-  .stop()
-
-self.onmessage = function(event) {
-  var nodes = event.data.nodes
-  var edges = event.data.edges
-  var options = event.data.options
-
-  if (options.strength !== strength) {
-    simulation.force('charge', d3.forceManyBody().strength(-options.strength))
-    strength = options.strength
-  }
-
-  simulation
-    .nodes(d3.forceLink(edges).id(function (node) { return node.id }))
-    .force('link', force)
-    .alpha(1)
-
-  if (options.synchronous) {
-    simulation.stop().tick(options.synchronous)
-
-    // to allow the simulation to be restarted without calling the layout function
-    // if that doesn't need to be supported, then just call:
-    // self.postMessage({ nodes: nodes, edges: edges })
-    simulation
-      .restart()
-      .alpha(0)
-      .on('tick', function () {
-        self.postMessage({ nodes: nodes, edges: edges })
-      })
-  } else {
-    simulation
-      .restart()
-      .on('tick', function () {
-        self.postMessage({ nodes: nodes, edges: edges })
-      })
-  }
-}
 `
 
-/**
- * make this simpler
- * - when calling, need to unsubscribe from previous simulation
- * - would it instead be possible create a multicasted subject that only permits a single subscription at a time?
- */
-export const Simulation = (): {
-  simulation: (nodeMap: { [id: string]: PositionedNode }, edgeMap: { [id: string]: PositionedEdge }, options: Options, update: boolean) => Subject<{ nodes: PositionedNode[], edges: PositionedEdge[] }>
-  dispose: () => void
-} => {
-  let simulation$: Subject<{ nodes: PositionedNode[], edges: PositionedEdge[] }> = new Subject()
 
-  if (!!window.Worker) {
-    const workerBlob = new Blob([script], { type: 'application/javascript' })
-    const workerUrl = URL.createObjectURL(workerBlob)
-    const worker = new Worker(workerUrl)
+declare const d3: {
+  forceSimulation: typeof forceSimulation
+  forceManyBody: typeof forceManyBody
+  forceCenter: typeof forceCenter
+  forceLink: typeof forceLink
+}
 
-    return {
-      simulation: (nodeMap: { [id: string]: PositionedNode }, edgeMap: { [id: string]: PositionedEdge }, options: Options, update: boolean) => {
-        simulation$.complete()
-        simulation$ = new Subject()
+declare const self: Worker
 
-        if (!update) {
-          worker.onmessage = (event) => simulation$.next(event.data) // TODO - update nodeMap/edgeMap w/ new nodes/edges
-          return simulation$
-        }
+type TypedMessageEvent<T = unknown> = {
+  [K in keyof MessageEvent]: K extends 'data' ? T : MessageEvent[K]
+}
 
-        worker.postMessage({ nodes: Object.values(nodeMap), edges: Object.values(edgeMap), options })
-        worker.onmessage = (event) => simulation$.next(event.data) // TODO - update nodeMap/edgeMap w/ new nodes/edges
-        return simulation$
-      },
-      dispose: () => {
-        worker.terminate()
-        URL.revokeObjectURL(workerUrl)
+type LayoutEvent = {
+  type: 'layout',
+  nodes: { [key: string]: PositionedNode }
+  edges: { [key: string]: PositionedEdge }
+  options: Options
+}
+
+type DragStartEvent = {
+  type: 'dragStart'
+  id: string
+  x: number
+  y: number
+}
+
+type DragEvent = {
+  type: 'drag'
+  id: string
+  x: number
+  y: number
+}
+
+type DragEndEvent = {
+  type: 'dragEnd'
+  id: string
+}
+
+type TickEvent = {
+  type: 'tick'
+}
+
+type Event = LayoutEvent
+  | DragStartEvent
+  | DragEvent
+  | DragEndEvent
+  | TickEvent
+
+
+const worker = (() => {
+  const options: Options = {
+    strength: 250,
+    synchronous: -1,
+  } // TODO - are all Options passed?  or partial w/ defaults
+  let nodes: { [key: string]: PositionedNode } = {}
+  let edges: { [key: string]: PositionedEdge } = {}
+
+  const simulation = d3.forceSimulation()
+    .force('charge', d3.forceManyBody().strength(-options.strength))
+    .force('center', d3.forceCenter())
+    .stop()
+    .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
+  const forceLink = d3.forceLink<PositionedNode, PositionedEdge>().id((node) => node.id)
+  
+  const layout = (data: LayoutEvent) => {
+    let update = false
+
+    if (data.options.strength !== options.strength) {
+      simulation.force('charge', d3.forceManyBody().strength(-data.options.strength))
+      options.strength = data.options.strength
+      update = true
+    }
+
+    if (data.options.synchronous !== options.synchronous) {
+      options.synchronous = data.options.synchronous
+      update = true
+    }
+
+    for (const nodeId in data.nodes) {
+      if (nodes[nodeId] === undefined) {
+        // enter
+        nodes[nodeId] = data.nodes[nodeId]
+        update = true
+      } else if (nodes[nodeId] !== data.nodes[nodeId]) { // TODO - referential equality won't work here?  what level of equality is necessary
+        // update
+        nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId])
       }
     }
-  } else {
-    let strength = 250
-    const simulation = forceSimulation()
-      .force('charge', forceManyBody().strength(-strength))
-      .force('center', forceCenter())
-      .stop()
 
-    return {
-      simulation: (nodeMap: { [id: string]: PositionedNode }, edgeMap: { [id: string]: PositionedEdge }, options: Options, update: boolean) => {
-        simulation$.complete()
-        simulation$ = new Subject()
-        const nodes = Object.values(nodeMap)
-        const edges = Object.values(edgeMap)
+    for (const nodeId in nodes) {
+      if (data.nodes[nodeId] === undefined) {
+        // exit
+        delete nodes[nodeId]
+        update = true
+      }
+    }
 
-        if (!update) {
-          simulation.on('tick', () => simulation$.next({ nodes, edges }))
-          return simulation$
+    for (const edgeId in data.edges) {
+      if (edges[edgeId] === undefined) {
+        // enter
+        edges[edgeId] = {
+          id: data.edges[edgeId].id,
+          label: data.edges[edgeId].label,
+          source: nodes[data.edges[edgeId].source as unknown as string],
+          target: nodes[data.edges[edgeId].target as unknown as string]
         }
-
-
-        if (options.strength !== strength) {
-          simulation.force('charge', forceManyBody().strength(-options.strength))
-          strength = options.strength
+        update = true
+      } else if (edges[edgeId] !== data.edges[edgeId]) { // TODO - referential equality won't work here
+        // update
+        // TODO - add edge style properties
+        edges[edgeId] = {
+          id: data.edges[edgeId].id,
+          label: data.edges[edgeId].label,
+          source: nodes[data.edges[edgeId].source as unknown as string],
+          target: nodes[data.edges[edgeId].target as unknown as string]
         }
+      }
+    }
 
-        simulation
-          .nodes(nodes)
-          .force('link', forceLink<PositionedNode, PositionedEdge>(edges).id((node) => node.id))
-          .alpha(1)
-      
-        if (options.synchronous) {
-          simulation.stop().tick(options.synchronous)
-      
-          // to allow the simulation to be restarted without calling the layout function
-          // if that doesn't need to be supported, then just call:
-          // self.postMessage({ nodes: nodes, edges: edges })
-          simulation
-            .restart()
-            .alpha(0)
-            .on('tick', () => simulation$.next({ nodes, edges }))
-        } else {
-          simulation
-            .restart()
-            .on('tick', () => simulation$.next({ nodes, edges }))
-        }
+    for (const edgeId in edges) {
+      if (data.edges[edgeId] === undefined) {
+        delete edges[edgeId]
+        update = true
+      }
+    }
 
-        return simulation$
-      },
-      dispose: noop
+    if (update) {
+      simulation
+        .nodes(Object.values(nodes))
+        .force('link', forceLink.links(Object.values(edges)))
+        .alpha(1)
+
+      if (options.synchronous) {
+        simulation.stop().tick(options.synchronous)
+        self.postMessage({ nodes: nodes, edges: edges })
+        // simulation.restart().alpha(0)
+      } else {
+        simulation.restart()
+      }
+    } else {
+      simulation.tick(1)
     }
   }
-}
-
-export const Simulation11 = () => {
-  const synchronous = 300
-  const simulation$ = new Subject<{ nodeMap: { [id: string]: PositionedNode }, edgeMap: { [id: string]: PositionedEdge } }>()
-  const simulation = forceSimulation()
-    .force('charge', forceManyBody().strength(-250))
-    .force('center', forceCenter())
-    .stop()
-
-  const result$ = simulation$.pipe(
-    switchMap(({ nodeMap, edgeMap }) => {
-      return new Observable<{ nodes: PositionedNode[], edges: PositionedEdge[] }>((observer) => {
-        const nodes = Object.values(nodeMap)
-        const edges = Object.values(edgeMap)
-
-        simulation
-          .nodes(nodes)
-          .force('link', forceLink<PositionedNode, PositionedEdge>(edges).id((node) => node.id))
-          .alpha(1)
-
-        if (synchronous) {
-          simulation.stop().tick(synchronous)
-      
-          // to allow the simulation to be restarted without calling the layout function
-          // if that doesn't need to be supported, then just call:
-          // self.postMessage({ nodes: nodes, edges: edges })
-          simulation
-            .restart()
-            .alpha(0)
-            .on('tick', () => observer.next({ nodes, edges }))
-        } else {
-          simulation
-            .restart()
-            .on('tick', () => observer.next({ nodes, edges }))
-        }
-      })
-    }),
-  )
-
-  return {
-    simulation: (nodeMap: { [id: string]: PositionedNode }, edgeMap: { [id: string]: PositionedEdge }): Observable<{ nodes: PositionedNode[], edges: PositionedEdge[] }> => {
-      simulation$.next({ nodeMap, edgeMap })
-      return result$
-    },
-    dispose: noop
-  }
-}
-
-export const Simulation2 = () => {
-  const worker$ = new Observable<Worker>((observer) => {
-    const workerBlob = new Blob([script], { type: 'application/javascript' })
-    const workerUrl = URL.createObjectURL(workerBlob)
-    const worker = new Worker(workerUrl)
-
-    observer.next(worker)
   
-    return () => {
-      worker.terminate()
-      URL.revokeObjectURL(workerUrl)
-    }
-  }).pipe(multicast(new BehaviorSubject<Worker | undefined>(undefined)), refCount(), filter((worker): worker is Worker => worker !== undefined))
-
-  return (nodes: Node[], edges: Edge[], options: {}) => {
-    return worker$.pipe(switchMap((worker) => {
-      return new Observable((observer) => {
-        worker.postMessage({ nodes, edges, options })
-        worker.onmessage = (data) => observer.next(data)
-      })
-    }))
+  const dragStart = (data: DragStartEvent) => {
+    nodes[data.id].fx = data.x
+    nodes[data.id].fy = data.y
   }
-}
-
-export const Simulation3 = () => {
-  const worker$ = new Observable<Worker>((observer) => {
-    const workerBlob = new Blob([script], { type: 'application/javascript' })
-    const workerUrl = URL.createObjectURL(workerBlob)
-    const worker = new Worker(workerUrl)
-
-    observer.next(worker)
   
-    return () => {
-      /**
-       * when does the unsubscribe logic get called?
-       * it's likely that when subscribing to a new layout stream, there is a moment when the stream has 0 subscribers,
-       * which would force the worker to be reinitialized
-       * 
-       * const layout1 = layout().subscribe()
-       * // some time later
-       * layout1.unsubscribe()
-       * const layout2 = layout().subscribe()
-       */
-      worker.terminate()
-      URL.revokeObjectURL(workerUrl)
+  const drag = (data: DragEvent) => {
+    nodes[data.id].fx = data.x
+    nodes[data.id].fy = data.y
+  }
+  
+  const dragEnd = (data: DragEndEvent) => {
+    nodes[data.id].fx = null
+    nodes[data.id].fy = null
+  }
+  
+  const tick = (data: TickEvent) => {
+    simulation.restart().tick(1)
+  }
+  
+  self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
+    if (data.type === 'layout') {
+      layout(data)
+    } else if (data.type === 'dragStart') {
+      dragStart(data)
+    } else if (data.type === 'drag') {
+      drag(data)
+    } else if (data.type === 'dragEnd') {
+      dragEnd(data)
+    } else if (data.type === 'tick') {
+      tick(data)
     }
-  }).pipe(multicast(new BehaviorSubject<Worker | undefined>(undefined)), refCount(), filter((worker): worker is Worker => worker !== undefined))
+  }
+}).toString()
 
-  return (props$: Observable<{nodes: Node[], edges: Edge[], options: {}}>) => props$.pipe(
-    withLatestFrom(worker$),
-    switchMap(([{ nodes, edges, options }, worker]) => {
-      return new Observable((observer) => {
-        worker.postMessage({ nodes, edges, options })
-        worker.onmessage = (event) => observer.next(event.data)
-      })
-    })
-  )
-}
+
+export const simulation = new Blob([`${d3ForceScript}(${worker})()`], { type: 'application/javascript' })

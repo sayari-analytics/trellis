@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
-    "dev": "npx parcel examples/d3/index.html",
+    "dev": "parcel examples/d3Stream/index.html",
     "build": "rm -rf ./dist/ && tsc --outDir ./dist"
   },
   "author": "",
@@ -16,6 +16,7 @@
     "d3-force": "^2.0.1",
     "d3-selection": "^1.4.0",
     "d3-zoom": "^1.8.3",
+    "raf": "^3.4.1",
     "rxjs": "^6.5.3"
   },
   "devDependencies": {
@@ -23,11 +24,12 @@
     "@types/d3-force": "^1.2.1",
     "@types/d3-selection": "^1.4.1",
     "@types/d3-zoom": "^1.7.4",
+    "@types/raf": "^3.4.0",
     "@typescript-eslint/eslint-plugin": "^2.5.0",
     "@typescript-eslint/parser": "^2.5.0",
     "eslint": "^6.6.0",
     "parcel-bundler": "^1.12.4",
-    "typescript": "^3.6.4",
+    "typescript": "^3.7.3",
     "webpack": "^4.41.2"
   }
 }
