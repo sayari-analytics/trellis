@@ -72,7 +72,7 @@ export type LayoutResultEvent = {
 const worker = (() => {
   const options: Options = {
     strength: 250,
-    synchronous: -1,
+    tick: -1,
   } // TODO - are all Options passed?  or partial w/ defaults
   let nodes: { [key: string]: PositionedNode } = {}
   let edges: { [key: string]: PositionedEdge } = {}
@@ -93,19 +93,20 @@ const worker = (() => {
       update = true
     }
 
-    if (data.options.synchronous !== options.synchronous) {
-      options.synchronous = data.options.synchronous
+    if (data.options.tick !== options.tick) {
+      options.tick = data.options.tick
       update = true
     }
 
+    // debugger
     for (const nodeId in data.nodes) {
       if (nodes[nodeId] === undefined) {
         // enter
-        nodes[nodeId] = data.nodes[nodeId]
+        nodes[nodeId] = Object.assign(data.nodes[nodeId])
         update = true
       } else if (nodes[nodeId] !== data.nodes[nodeId]) { // TODO - referential equality won't work here?  what level of equality is necessary
         // update
-        nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId])
+        nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId], { x0: nodes[nodeId].x, y0: nodes[nodeId].y })
       }
     }
 
@@ -154,8 +155,8 @@ const worker = (() => {
         .force('link', forceLink.links(Object.values(edges)))
         .alpha(1)
 
-      if (options.synchronous) {
-        simulation.stop().tick(options.synchronous)
+      if (options.tick !== null) {
+        simulation.stop().tick(options.tick)
         self.postMessage({ nodes: nodes, edges: edges })
         // simulation.restart().alpha(0)
       } else {

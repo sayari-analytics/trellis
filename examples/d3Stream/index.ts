@@ -7,7 +7,7 @@ import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
 
 
-const render = D3Renderer({ id: 'graph', synchronous: false, nodeStyles: { stroke: '#fff' } })
+const render = D3Renderer({ id: 'graph', tick: null, nodeStyles: { stroke: '#fff' } })
 
 const NODES_PER_TICK = 20
 
@@ -30,7 +30,8 @@ const edges: Edge[] = mediumSm.links.map<Edge>(({ source, target, value }) => ({
   }
 }))
 
-interval(500).pipe(
+
+interval(1000).pipe(
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)

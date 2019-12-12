@@ -3,16 +3,35 @@ import { map } from 'rxjs/operators'
 import { Node, Edge } from '../../src/index'
 import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from '../data'
+import { scaleOrdinal } from 'd3-scale'
+import { schemeCategory10 } from 'd3-scale-chromatic'
 
-const render = D3Renderer({ id: 'graph', synchronous: 300 })
 
-const NODES_PER_TICK = 15
+const render = D3Renderer({ id: 'graph', nodeStyles: { stroke: '#fff' } })
 
-const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
+const NODES_PER_TICK = 10
 
-const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
+const colorScale = scaleOrdinal(schemeCategory10)
 
-interval(1000).pipe(
+const nodes: Node[] = mediumLg.nodes.map<Node>(({ id, group }) => ({
+  id,
+  style: {
+    width: (group + 3) * 3,
+    fill: colorScale(group.toString()),
+  }
+}))
+
+const edges: Edge[] = mediumLg.links.map<Edge>(({ source, target, value }) => ({
+  id: `${source}|${target}`,
+  source,
+  target,
+  style: {
+    width: Math.max(1, value * 0.2),
+  }
+}))
+
+
+interval(800).pipe(
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)

@@ -18,7 +18,7 @@ export type EdgeStyle = {
 
 export type Options = {
   id: string
-  synchronous?: number | false
+  tick?: number | null
   nodeStyles?: Partial<NodeStyle>
   edgeStyles?: Partial<EdgeStyle>
 }
@@ -39,5 +39,5 @@ export const DEFAULT_EDGE_STYLES: EdgeStyle = {
 }
 
 export const DEFAULT_OPTIONS = {
-  synchronous: DEFAULT_GRAPH_OPTIONS.synchronous
+  tick: DEFAULT_GRAPH_OPTIONS.tick
 }

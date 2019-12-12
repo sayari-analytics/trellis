@@ -17,17 +17,26 @@ export type Edge = {
   style?: Partial<EdgeStyle>
 }
 
-export type PositionedNode = Node & SimulationNodeDatum
-export type PositionedEdge = { id: string, label?: string, source: PositionedNode, target: PositionedNode, index?: number, style?: Partial<EdgeStyle> }
+export type PositionedNode = Node
+  & SimulationNodeDatum
+  & { x0?: number, y0?: number }
+export type PositionedEdge = {
+  id: string
+  label?: string
+  source: PositionedNode
+  target: PositionedNode
+  index?: number
+  style?: Partial<EdgeStyle>
+}
 
 export type Options = {
   strength: number
-  synchronous: number | false
+  tick: number | null
 }
 
 export const DEFAULT_OPTIONS: Options = {
   strength: 250,
-  synchronous: 300,
+  tick: 300,
 }
 
 
@@ -52,14 +61,14 @@ export class Graph {
     }
   }
 
-  layout = ({ nodes, edges, options: { strength = DEFAULT_OPTIONS.strength, synchronous = DEFAULT_OPTIONS.synchronous } = {} }: {
+  layout = ({ nodes, edges, options: { strength = DEFAULT_OPTIONS.strength, tick = DEFAULT_OPTIONS.tick } = {} }: {
     nodes: { [key: string]: Node },
     edges: { [key: string]: Edge },
     options?: Partial<Options>
   }) => {
     // TODO - noop on nodes/edges/options equality
     // TODO - does it make sense to only serialize node ids and edge id/source/target? e.g. drop style and remerge 
-    this.worker.postMessage({ type: 'layout', nodes, edges, options: { strength, synchronous } })
+    this.worker.postMessage({ type: 'layout', nodes, edges, options: { strength, tick } })
     return this
   }
 

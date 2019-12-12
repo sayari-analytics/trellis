@@ -3,6 +3,8 @@ import { zoom } from 'd3-zoom'
 import { drag as dragBehavior } from 'd3-drag'
 import { Graph, Edge, Node, PositionedNode, PositionedEdge } from '../index'
 import { NodeStyle, DEFAULT_NODE_STYLES, EdgeStyle, DEFAULT_EDGE_STYLES, Options, DEFAULT_OPTIONS } from './options'
+import { interpolateDuration } from '../utils'
+import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 
 
 const nodeStyleSelector = <T extends keyof NodeStyle>(nodeStyles: NodeStyle, attribute: T) => (node: PositionedNode): NodeStyle[T] => {
@@ -24,7 +26,7 @@ const edgeStyleSelector = <T extends keyof EdgeStyle>(edgeStyles: EdgeStyle, att
 
 export const D3Renderer = ({
   id,
-  synchronous = DEFAULT_OPTIONS.synchronous,
+  tick = DEFAULT_OPTIONS.tick,
   nodeStyles = {},
   edgeStyles = {},
 }: Options) => {
@@ -50,11 +52,11 @@ export const D3Renderer = ({
   svg.call(zoomBehavior.on('zoom', () => container.attr('transform', event.transform)))
   zoomBehavior.translateBy(svg, parentElement.offsetWidth / 2, parentElement.offsetHeight / 2)
 
-  // is the closure necessary here?  why recreate the dragBehavior on every render
-  const dragNode = () => dragBehavior<any, PositionedNode>()
-    .on('start', dragStart)
-    .on('drag', drag)
-    .on('end', dragEnd)
+  let dragging = false
+  const dragNode = dragBehavior<any, PositionedNode>()
+    .on('start', (d) => (dragging = true, graph.dragStart(d.id, event.x, event.y)))
+    .on('drag', (d) => graph.drag(d.id, event.x, event.y))
+    .on('end', (d) => (dragging = false, graph.dragEnd(d.id)))
 
   const NODE_STYLES = { ...DEFAULT_NODE_STYLES, ...nodeStyles }
   const EDGE_STYLES = { ...DEFAULT_EDGE_STYLES, ...edgeStyles }
@@ -73,51 +75,48 @@ export const D3Renderer = ({
   // const nodeMouseEnterHandler = (d: PositionedNode) => console.log('mouseenter', d.id)
   // const nodeMouseLeaveHandler = (d: PositionedNode) => console.log('mouseleave', d.id)
 
-  const graph = new Graph(({ nodes, edges }) => {
-    nodesContainer
-      .selectAll<SVGLineElement, PositionedNode>('circle')
-      .data(Object.values(nodes), (d) => d.id)
-      .join('circle')
-      .attr('cx', (d) => d.x!)
-      .attr('cy', (d) => d.y!)
-      .style('cursor', 'pointer')
-      .attr('r', nodeWidthSelector)
-      .style('stroke-width', nodeStrokeWidthSelector)
-      .style('fill', nodeFillSelector)
-      .style('stroke', nodeStrokeSelector)
-      .style('fill-opacity', nodeFillOpacitySelector)
-      .style('stroke-opacity', nodeStrokeOpacitySelector)
-      // .on('click', nodeClickHandler)
-      // .on('mouseenter', nodeMouseEnterHandler)
-      // .on('mouseleave', nodeMouseLeaveHandler)
-      .call(dragNode())
+  const interpolateLayout = interpolateDuration(400)
+  const synchronousLayout = (cb: (n: number) => void) => cb(1)
+  const interpolatePosition = (start: number, end: number, percent: number) => {
+    const interpolate = interpolateNumber(start, end)
+    return interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])(percent)
+  }
 
-    edgeContainer
-      .selectAll<SVGLineElement, PositionedEdge>('line')
-      .data(Object.values(edges), (d) => d.id)
-      .join('line')
-      .attr('x1', (d) => d.source.x!)
-      .attr('y1', (d) => d.source.y!)
-      .attr('x2', (d) => d.target.x!)
-      .attr('y2', (d) => d.target.y!)
-      .style('stroke', edgeStrokeSelector)
-      .style('stroke-width', edgeWidthSelector)
-      .style('stroke-opacity', edgeStrokeOpacitySelector)
+  const graph = new Graph(({ nodes, edges }) => {
+    (dragging || tick === null ? synchronousLayout : interpolateLayout)((n: number) => {
+      nodesContainer
+        .selectAll<SVGLineElement, PositionedNode>('circle')
+        .data(Object.values(nodes), (d) => d.id)
+        .join('circle')
+        .attr('cx', (d) => interpolatePosition(d.x0 || 0, d.x!, n))
+        .attr('cy', (d) => interpolatePosition(d.y0 || 0, d.y!, n))
+        .style('cursor', 'pointer')
+        .attr('r', nodeWidthSelector)
+        .style('stroke-width', nodeStrokeWidthSelector)
+        .style('fill', nodeFillSelector)
+        .style('stroke', nodeStrokeSelector)
+        .style('fill-opacity', nodeFillOpacitySelector)
+        .style('stroke-opacity', nodeStrokeOpacitySelector)
+        // .on('click', nodeClickHandler)
+        // .on('mouseenter', nodeMouseEnterHandler)
+        // .on('mouseleave', nodeMouseLeaveHandler)
+        .call(dragNode)
+
+      edgeContainer
+        .selectAll<SVGLineElement, PositionedEdge>('line')
+        .data(Object.values(edges), (d) => d.id)
+        .join('line')
+        .attr('x1', (d) => interpolatePosition(d.source.x0 || 0, d.source.x!, n))
+        .attr('y1', (d) => interpolatePosition(d.source.y0 || 0, d.source.y!, n))
+        .attr('x2', (d) => interpolatePosition(d.target.x0 || 0, d.target.x!, n))
+        .attr('y2', (d) => interpolatePosition(d.target.y0 || 0, d.target.y!, n))
+        .style('stroke', edgeStrokeSelector)
+        .style('stroke-width', edgeWidthSelector)
+        .style('stroke-opacity', edgeStrokeOpacitySelector)
+    })
   })
 
-  function dragStart (d: PositionedNode) {
-    graph.dragStart(d.id, event.x, event.y)
-  }
-
-  function drag (d: PositionedNode) {
-    graph.drag(d.id, event.x, event.y)
-  }
-
-  function dragEnd (d: PositionedNode) {
-    graph.dragEnd(d.id)
-  }
-
   return (nodes: { [key: string]: Node }, edges: { [key: string]: Edge }) => {
-    graph.layout({ nodes, edges, options: { synchronous } })
+    graph.layout({ nodes, edges, options: { tick } })
   }
 }
