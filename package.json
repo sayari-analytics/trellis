@@ -6,10 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
-    "dev": "parcel examples/d3StaticStream/index.html",
+    "dev": "parcel examples/index.html",
     "build": "rm -rf ./dist/ && tsc --outDir ./dist"
   },
-  "author": "",
+  "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
   "dependencies": {
     "d3-drag": "^1.2.4",
