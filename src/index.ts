@@ -1,5 +1,4 @@
 import { SimulationNodeDatum } from 'd3-force'
-import { throttleAnimationFrame } from './utils'
 import { simulation, LayoutResultEvent, TypedMessageEvent } from './simulation'
 import { NodeStyle, EdgeStyle } from './renderers/options'
 
@@ -53,7 +52,7 @@ export class Graph {
   constructor(handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => void) {
     this.workerUrl = URL.createObjectURL(simulation)
     this.worker = new Worker(this.workerUrl)
-    this.handler = throttleAnimationFrame(handler)
+    this.handler = handler
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
       this.nodes = event.data.nodes
       this.edges = event.data.edges
