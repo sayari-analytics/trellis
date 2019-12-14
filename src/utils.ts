@@ -1,20 +1,71 @@
-import raf from 'raf';
+import raf from 'raf'
+
+
+// TODO - move to renderers/utils.ts?
+export const throttle = <T extends unknown[]>(cb: (...args: T) => void, duration: number) => {
+  let clear = true
+
+  return (...args: T) => {
+    if (clear) {
+      setTimeout(() => {
+        cb(...args)
+        clear = true
+      }, duration)
+
+      clear = false
+    }
+  }
+}
+
+
+export const batch = <T extends unknown>(cb: (args: T[]) => void, duration: number) => {
+  let values: T[] = []
+  let clear = true
+
+  return (arg: T) => {
+    if (clear) {
+      setTimeout(() => {
+        cb(values)
+        values = []
+        clear = true
+      }, duration)
+
+      clear = false
+    }
+
+    values.push(arg)
+  }
+}
+
+
+export const animationFrameLoop = (cb: () => void) => {
+  let frame: number
+
+  const tick = () => {
+    cb()
+    frame = raf(tick)
+  }
+
+  frame = raf(tick)
+
+  return () => raf.cancel(frame)
+}
 
 
 export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => void) => {
-  let clear = true;
+  let clear = true
 
   return (...args: T) => {
     if (clear) {
       raf(() => {
-        cb(...args);
-        clear = true;
-      });
+        cb(...args)
+        clear = true
+      })
 
-      clear = false;
+      clear = false
     }
-  };
-};
+  }
+}
 
 
 export const identity = <T>(value: T) => value

@@ -1,19 +1,19 @@
 import { interval } from 'rxjs'
-import { map } from 'rxjs/operators'
+import { map, take } from 'rxjs/operators'
 import { Node, Edge } from '../../src/index'
-import { D3Renderer } from '../../src/renderers/d3'
+import { PixiRenderer } from '../../src/renderers/pixi'
 import { data, large, mediumLg, mediumSm } from '../data'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
 
 
-const render = D3Renderer({ id: 'graph', nodeStyles: { stroke: '#fff' } })
+const render = PixiRenderer({ id: 'graph', nodeStyles: { stroke: '#fff' } })
 
-const NODES_PER_TICK = 15
+const NODES_PER_TICK = 20
 
 const colorScale = scaleOrdinal(schemeCategory10)
 
-const nodes: Node[] = mediumSm.nodes.map<Node>(({ id, group }) => ({
+const nodes: Node[] = data.nodes.map<Node>(({ id, group }) => ({
   id,
   style: {
     width: (group + 3) * 3,
@@ -21,7 +21,7 @@ const nodes: Node[] = mediumSm.nodes.map<Node>(({ id, group }) => ({
   }
 }))
 
-const edges: Edge[] = mediumSm.links.map<Edge>(({ source, target, value }) => ({
+const edges: Edge[] = data.links.map<Edge>(({ source, target, value }) => ({
   id: `${source}|${target}`,
   source,
   target,
@@ -32,6 +32,7 @@ const edges: Edge[] = mediumSm.links.map<Edge>(({ source, target, value }) => ({
 
 
 interval(800).pipe(
+  // take(3),
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)
@@ -50,3 +51,14 @@ interval(800).pipe(
 ).subscribe({
   next: ({ nodes, edges }) => render(nodes, edges)
 })
+
+// render(
+//   nodes.reduce<{ [id: string]: Node }>((nodeMap, node) => {
+//     nodeMap[node.id] = node
+//     return nodeMap
+//   }, {}),
+//   edges.reduce<{ [id: string]: Edge }>((edgeMap, edge) => {
+//     edgeMap[edge.id] = edge
+//     return edgeMap
+//   }, {})
+// )
