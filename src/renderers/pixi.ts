@@ -3,8 +3,8 @@ import { Viewport } from 'pixi-viewport'
 // import * as GStats from 'gstats'
 import { Options, DEFAULT_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
 import { Edge, Node, Graph, PositionedNode, PositionedEdge } from '../index'
-import { throttleAnimationFrame } from '../utils'
-import { edgeStyleSelector, nodeStyleSelector, pixiFrameRate } from './utils'
+import { animationFrameLoop } from '../utils'
+import { edgeStyleSelector, nodeStyleSelector } from './utils'
 import { color } from 'd3-color'
 
 
@@ -48,7 +48,6 @@ export const PixiRenderer = ({
   const RESOLUTION = window.devicePixelRatio * 2
   const LABEL_FONT_FAMILY = 'Helvetica'
   const LABEL_FONT_SIZE = 12
-  const LABEL_TEXT = (node: PositionedNode) => node.id
   const LABEL_X_PADDING = 2
   const LABEL_Y_PADDING = 1
 
@@ -62,8 +61,6 @@ export const PixiRenderer = ({
   })
 
   app.view.style.width = `${SCREEN_WIDTH}px`
-
-  const render = throttleAnimationFrame(() => app.render())
   
   const viewport = new Viewport({
     screenWidth: SCREEN_WIDTH,
@@ -73,26 +70,7 @@ export const PixiRenderer = ({
     interaction: app.renderer.plugins.interaction
   })
 
-  // pixiFrameRate(viewport)
-  // var pixiHooks = new GStats.PIXIHooks(app)
-  // var stats = new GStats.StatsJSAdapter(pixiHooks)
-  // document.body.appendChild(stats.stats.dom || stats.stats.domElement)
-  // app.ticker.add(stats.update)
-
-	app.stage.addChild(
-    viewport
-      .drag()
-      .pinch()
-      .wheel()
-      .decelerate()
-      // this seems weirdly slow...
-      .on('frame-end' as any, throttleAnimationFrame(() => { // TODO - typings?
-        if (viewport.dirty) {
-          app.render()
-          viewport.dirty = false
-        }
-      }))
-  )
+	app.stage.addChild(viewport.drag().pinch().wheel().decelerate())
 
   viewport.center = new PIXI.Point(WORLD_WIDTH / 6, WORLD_HEIGHT / 6)
   viewport.setZoom(0.5, true)
@@ -100,7 +78,6 @@ export const PixiRenderer = ({
 
   const linksLayer = new PIXI.Graphics()
   let nodesLayer = new PIXI.Container() // Graphics vs Container layer?
-  // const nodesLayer = new PIXI.Graphics()
   const labelsLayer = new PIXI.Container()
   const frontLayer = new PIXI.Container()
   viewport.addChild(linksLayer)
@@ -108,10 +85,40 @@ export const PixiRenderer = ({
   viewport.addChild(labelsLayer)
   viewport.addChild(frontLayer)
 
-  // does PIXI have better mechanisms for lookups?
+  let dirtyData = false
   const nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
+  let edgesById: { [key: string]: PositionedEdge } = {}
   let hoveredNode: PositionedNode | undefined
   let clickedNode: PositionedNode | undefined
+
+  animationFrameLoop(() => {
+    if (dirtyData) {
+      linksLayer.clear()
+      linksLayer.alpha = 0.6
+      for (const edge in edgesById) {
+        linksLayer.lineStyle(1, 0x999999)
+        linksLayer.moveTo(edgesById[edge].source.x!, edgesById[edge].source.y!)
+        linksLayer.lineTo(edgesById[edge].target.x!, edgesById[edge].target.y!)
+      }
+      linksLayer.endFill()
+  
+      for (const nodeId in nodesById) {
+        const node = nodesById[nodeId].node
+        const nodeGfx = nodesById[nodeId].nodeGfx
+        const labelGfx = nodesById[nodeId].labelGfx
+        // is the below necessary
+        nodeGfx.position = new PIXI.Point(node.x, node.y)
+        labelGfx.position = new PIXI.Point(node.x, node.y)
+      }
+
+      dirtyData = false
+      viewport.dirty = false
+      app.render()
+    } else if (viewport.dirty) {
+      viewport.dirty = false
+      app.render()
+    }
+  })
 
 
   // prevent body scrolling
@@ -124,7 +131,7 @@ export const PixiRenderer = ({
     if (clickedNode !== undefined) {
       return
     }
-
+    
     if (hoveredNode === node) {
       return
     }
@@ -134,12 +141,12 @@ export const PixiRenderer = ({
     
     const nodeGfx = nodesById[node.id].nodeGfx
     const labelGfx = nodesById[node.id].labelGfx
-
+    
     nodesLayer.removeChild(nodeGfx)
     frontLayer.addChild(nodeGfx)
     labelsLayer.removeChild(labelGfx)
     frontLayer.addChild(labelGfx)
-
+    
     const circleBorder = new PIXI.Graphics()
     circleBorder.name = 'hoverBorder'
     circleBorder.x = 0
@@ -147,18 +154,20 @@ export const PixiRenderer = ({
     circleBorder.lineStyle(nodeStrokeWidthSelector(node), 0x000000)
     circleBorder.drawCircle(0, 0, radius)
     nodeGfx.addChild(circleBorder)
-    
-    render()
+    dirtyData = true
   }
 
   const unhoverNode = (event: PIXI.interaction.InteractionEvent) => {
     const node = nodesById[event.currentTarget.name].node
+
     if (clickedNode) {
       return
     }
+
     if (hoveredNode !== node) {
       return
     }
+
     
     hoveredNode = undefined
     
@@ -169,72 +178,57 @@ export const PixiRenderer = ({
     nodesLayer.addChild(nodeGfx)
     frontLayer.removeChild(labelGfx)
     labelsLayer.addChild(labelGfx)
-
-    nodeGfx.removeChild(nodeGfx.getChildByName('hoverBorder'))
     
-    render()
+    nodeGfx.removeChild(nodeGfx.getChildByName('hoverBorder'))
+    dirtyData = true
   }
 
   const clickNode = (event: PIXI.interaction.InteractionEvent) => {
+    const { x, y } = viewport.toWorld(event.data.global)
+    graph.dragStart(event.currentTarget.name, x, y)
+
     clickedNode = nodesById[event.currentTarget.name].node
     app.renderer.plugins.interaction.on('mousemove', appMouseMove)
     viewport.pause = true
+    dirtyData = true
   }
 
   const unclickNode = () => {
+    if (clickedNode !== undefined) {
+      graph.dragEnd(clickedNode.id)
+    }
+
     clickedNode = undefined
     app.renderer.plugins.interaction.off('mousemove', appMouseMove)
     viewport.pause = false
+    dirtyData = true
   }
 
-  const appMouseMove = (event: any) => {
-    if (!clickedNode) {
+  const appMouseMove = (event: PIXI.interaction.InteractionEvent) => {
+    if (clickedNode === undefined) {
       return
     }
 
     const { x, y } = viewport.toWorld(event.data.global)
+    graph.drag(clickedNode.id, x, y)
+
     clickedNode.x = x
     clickedNode.y = y
-    
-    updatePositions()
-  }
-
-  let nodes: PositionedNode[]
-  let edges: PositionedEdge[]
-
-  const updatePositions = () => {
-    linksLayer.clear()
-    linksLayer.alpha = 0.6
-
-    edges.forEach((edge) => {
-      linksLayer.lineStyle(1, 0x999999)
-      linksLayer.moveTo(edge.source.x!, edge.source.y!)
-      linksLayer.lineTo(edge.target.x!, edge.target.y!)
-    })
-    linksLayer.endFill()
-
-    // TODO - split into add/update/remove nodes, updateEdges, then call render()
-    nodes.forEach((node) => {
-      const nodeGfx = nodesById[node.id].nodeGfx
-      const labelGfx = nodesById[node.id].labelGfx
-      // is the below necessary
-      nodeGfx.position = new PIXI.Point(node.x, node.y)
-      labelGfx.position = new PIXI.Point(node.x, node.y)
-    })
-    
-    render()
+    dirtyData = true
   }
 
 
-  const graph = new Graph(({ nodes: nodeMap, edges: edgeMap }) => {
-    nodes = Object.values(nodeMap)
-    edges = Object.values(edgeMap)
+  const graph = new Graph(({ nodes, edges }) => {
+    dirtyData = true
+    edgesById = edges
 
-    nodes.forEach((node) => {
-      if (nodesById[node.id] !== undefined) {
-        nodesById[node.id] = { ...nodesById[node.id], node }
-        return
+    for (const nodeId in nodes) {
+      if (nodesById[nodeId] !== undefined) {
+        nodesById[nodeId] = { ...nodesById[nodeId], node: nodes[nodeId] }
+        continue
       }
+
+      const node = nodes[nodeId]
 
       const radius = nodeWidthSelector(node) / 2
 
@@ -293,9 +287,7 @@ export const PixiRenderer = ({
       labelGfx.position = new PIXI.Point(node.x, node.y)
 
       nodesById[node.id] = { node, nodeGfx, labelGfx }
-    })
-
-    updatePositions()
+    }
   })
 
 
