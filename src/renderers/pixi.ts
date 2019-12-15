@@ -112,8 +112,6 @@ export const PixiRenderer = ({
   const nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
   let hoveredNode: PositionedNode | undefined
   let clickedNode: PositionedNode | undefined
-  let hoveredNodeGfxOriginalChildren: PIXI.DisplayObject[] | undefined
-  let hoveredLabelGfxOriginalChildren: PIXI.DisplayObject[] | undefined
 
 
   // prevent body scrolling
@@ -137,18 +135,13 @@ export const PixiRenderer = ({
     const nodeGfx = nodesById[node.id].nodeGfx
     const labelGfx = nodesById[node.id].labelGfx
 
-    // move to front layer
     nodesLayer.removeChild(nodeGfx)
     frontLayer.addChild(nodeGfx)
     labelsLayer.removeChild(labelGfx)
     frontLayer.addChild(labelGfx)
-    
-    // add hover effect
-    hoveredNodeGfxOriginalChildren = [...nodeGfx.children]
-    hoveredLabelGfxOriginalChildren = [...labelGfx.children]
 
-    // circle border
     const circleBorder = new PIXI.Graphics()
+    circleBorder.name = 'hoverBorder'
     circleBorder.x = 0
     circleBorder.y = 0
     circleBorder.lineStyle(nodeStrokeWidthSelector(node), 0x000000)
@@ -159,7 +152,6 @@ export const PixiRenderer = ({
   }
 
   const unhoverNode = (event: PIXI.interaction.InteractionEvent) => {
-    // TODO - updating graph while node is hovered leaves node in hover state
     const node = nodesById[event.currentTarget.name].node
     if (clickedNode) {
       return
@@ -173,46 +165,25 @@ export const PixiRenderer = ({
     const nodeGfx = nodesById[node.id].nodeGfx
     const labelGfx = nodesById[node.id].labelGfx
     
-    // move back from front layer
     frontLayer.removeChild(nodeGfx)
     nodesLayer.addChild(nodeGfx)
     frontLayer.removeChild(labelGfx)
     labelsLayer.addChild(labelGfx)
 
-    // clear hover effect
-    const nodeGfxChildren = [...nodeGfx.children]
-    for (let child of nodeGfxChildren) {
-      if (!hoveredNodeGfxOriginalChildren!.includes(child)) {
-        nodeGfx.removeChild(child)
-      }
-    }
-    hoveredNodeGfxOriginalChildren = undefined
-    const labelGfxChildren = [...labelGfx.children]
-    for (let child of labelGfxChildren) {
-      if (!hoveredLabelGfxOriginalChildren!.includes(child)) {
-        labelGfx.removeChild(child)
-      }
-    }
-    hoveredLabelGfxOriginalChildren = undefined
+    nodeGfx.removeChild(nodeGfx.getChildByName('hoverBorder'))
     
     render()
   }
 
   const clickNode = (event: PIXI.interaction.InteractionEvent) => {
     clickedNode = nodesById[event.currentTarget.name].node
-    
-    // enable node dragging
     app.renderer.plugins.interaction.on('mousemove', appMouseMove)
-    // disable viewport dragging
     viewport.pause = true
   }
 
   const unclickNode = () => {
     clickedNode = undefined
-    
-    // disable node dragging
     app.renderer.plugins.interaction.off('mousemove', appMouseMove)
-    // enable viewport dragging
     viewport.pause = false
   }
 
