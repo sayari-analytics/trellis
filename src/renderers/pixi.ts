@@ -17,84 +17,6 @@ const colorToNumber = (colorString: string): number => {
   return parseInt(c.hex().slice(1), 16)
 }
 
-// const createNode = (
-//   node: PositionedNode,
-//   width: number,
-//   fill: string,
-//   fillOpacity: number,
-//   stroke: string,
-//   strokeWidth: number,
-//   strokeOpacity: number,
-//   mouseover: (event: PIXI.interaction.InteractionEvent) => void,
-//   mouseout: (event: PIXI.interaction.InteractionEvent) => void,
-//   mousedown: (event: PIXI.interaction.InteractionEvent) => void,
-//   mouseup: (event: PIXI.interaction.InteractionEvent) => void,
-// ) => {
-//   const radius = nodeWidthSelector(node) / 2
-
-//   const nodeGfx = new PIXI.Container()
-//   nodeGfx.x = node.x!
-//   nodeGfx.y = node.y!
-//   nodeGfx.interactive = true
-//   nodeGfx.buttonMode = true
-//   nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
-//   nodeGfx.on('mouseover', (event: PIXI.interaction.InteractionEvent) => (
-//     hoverNode(nodeGfxToNode.get(event.currentTarget as PIXI.Container)!)
-//   ))
-//   nodeGfx.on('mouseout', (event: PIXI.interaction.InteractionEvent) => (
-//     unhoverNode(nodeGfxToNode.get(event.currentTarget as PIXI.Container)!)
-//   ))
-//   nodeGfx.on('mousedown', (event: PIXI.interaction.InteractionEvent) => (
-//     clickNode(nodeGfxToNode.get(event.currentTarget  as PIXI.Container)!)
-//   ))
-//   nodeGfx.on('mouseup', () => unclickNode())
-//   nodeGfx.on('mouseupoutside', () => unclickNode())
-
-//   const circle = new PIXI.Graphics()
-//   circle.x = 0
-//   circle.y = 0
-//   circle.beginFill(colorToNumber(nodeFillSelector(node)))
-//   circle.alpha = nodeFillOpacitySelector(node)
-//   circle.drawCircle(0, 0, radius)
-//   nodeGfx.addChild(circle)
-
-//   const circleBorder = new PIXI.Graphics()
-//   circle.x = 0
-//   circle.y = 0
-//   circleBorder.lineStyle(nodeStrokeWidthSelector(node), colorToNumber(nodeStrokeSelector(node)))
-//   circleBorder.drawCircle(0, 0, radius)
-//   nodeGfx.addChild(circleBorder)
-
-//   const labelGfx = new PIXI.Container()
-//   labelGfx.x = node.x!
-//   labelGfx.y = node.y!
-//   labelGfx.interactive = true
-//   labelGfx.buttonMode = true
-
-//   const labelText = new PIXI.Text(LABEL_TEXT(node), {
-//     fontFamily: LABEL_FONT_FAMILY,
-//     fontSize: LABEL_FONT_SIZE,
-//     fill: 0x333333,
-//     lineJoin: "round",
-//     stroke: "#fafafaee",
-//     strokeThickness: 2,
-//   })
-//   labelText.x = 0
-//   labelText.y = radius + 5 + LABEL_Y_PADDING
-//   labelText.anchor.set(0.5, 0)
-//   labelGfx.addChild(labelText)
-
-//   nodesLayer.addChild(nodeGfx)
-//   labelsLayer.addChild(labelGfx)
-
-//   nodeGfx.position = new PIXI.Point(node.x, node.y)
-//   labelGfx.position = new PIXI.Point(node.x, node.y)
-// }
-
-// const updateNode = () => {
-
-// }
-
 
 export const PixiRenderer = ({
   id,
@@ -188,10 +110,6 @@ export const PixiRenderer = ({
 
   // does PIXI have better mechanisms for lookups?
   const nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
-  // let nodeToNodeGfx = new WeakMap<PositionedNode, PIXI.Container>()
-  const nodeGfxToNode = new WeakMap<PIXI.Container, PositionedNode>()
-  // let nodeToLabelGfx = new WeakMap<PositionedNode, PIXI.Container>()
-  let labelGfxToNode = new WeakMap<PIXI.Container, PositionedNode>()
   let hoveredNode: PositionedNode | undefined
   let clickedNode: PositionedNode | undefined
   let hoveredNodeGfxOriginalChildren: PIXI.DisplayObject[] | undefined
@@ -203,7 +121,8 @@ export const PixiRenderer = ({
 
   container.appendChild(app.view)
 
-  const hoverNode = (node: PositionedNode) => {
+  const hoverNode = (event: PIXI.interaction.InteractionEvent) => {
+    const node = nodesById[event.currentTarget.name].node
     if (clickedNode !== undefined) {
       return
     }
@@ -232,14 +151,16 @@ export const PixiRenderer = ({
     const circleBorder = new PIXI.Graphics()
     circleBorder.x = 0
     circleBorder.y = 0
-    circleBorder.lineStyle(1.5, 0x000000)
+    circleBorder.lineStyle(nodeStrokeWidthSelector(node), 0x000000)
     circleBorder.drawCircle(0, 0, radius)
     nodeGfx.addChild(circleBorder)
     
     render()
   }
 
-  const unhoverNode = (node: PositionedNode) => {
+  const unhoverNode = (event: PIXI.interaction.InteractionEvent) => {
+    // TODO - updating graph while node is hovered leaves node in hover state
+    const node = nodesById[event.currentTarget.name].node
     if (clickedNode) {
       return
     }
@@ -277,8 +198,8 @@ export const PixiRenderer = ({
     render()
   }
 
-  const clickNode = (node: PositionedNode) => {
-    clickedNode = node
+  const clickNode = (event: PIXI.interaction.InteractionEvent) => {
+    clickedNode = nodesById[event.currentTarget.name].node
     
     // enable node dragging
     app.renderer.plugins.interaction.on('mousemove', appMouseMove)
@@ -341,31 +262,23 @@ export const PixiRenderer = ({
     nodes.forEach((node) => {
       if (nodesById[node.id] !== undefined) {
         nodesById[node.id] = { ...nodesById[node.id], node }
-        nodeGfxToNode.set(nodesById[node.id].nodeGfx, node)
-        labelGfxToNode.set(nodesById[node.id].labelGfx, node)
         return
       }
 
       const radius = nodeWidthSelector(node) / 2
 
       const nodeGfx = new PIXI.Container()
+      nodeGfx.name = node.id
       nodeGfx.x = node.x!
       nodeGfx.y = node.y!
       nodeGfx.interactive = true
       nodeGfx.buttonMode = true
       nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
-      nodeGfx.on('mouseover', (event: PIXI.interaction.InteractionEvent) => (
-        // TODO - better way to get the original node than using nodeGfxToNode?  Does event.currentTarget have access to the node id?
-        hoverNode(nodeGfxToNode.get(event.currentTarget as PIXI.Container)!)
-      ))
-      nodeGfx.on('mouseout', (event: PIXI.interaction.InteractionEvent) => (
-        unhoverNode(nodeGfxToNode.get(event.currentTarget as PIXI.Container)!)
-      ))
-      nodeGfx.on('mousedown', (event: PIXI.interaction.InteractionEvent) => (
-        clickNode(nodeGfxToNode.get(event.currentTarget  as PIXI.Container)!)
-      ))
-      nodeGfx.on('mouseup', () => unclickNode())
-      nodeGfx.on('mouseupoutside', () => unclickNode())
+      nodeGfx.on('mouseover', hoverNode)
+      nodeGfx.on('mouseout', unhoverNode)
+      nodeGfx.on('mousedown', clickNode)
+      nodeGfx.on('mouseup', unclickNode)
+      nodeGfx.on('mouseupoutside', unclickNode)
 
       const circle = new PIXI.Graphics()
       circle.x = 0
@@ -382,13 +295,14 @@ export const PixiRenderer = ({
       circleBorder.drawCircle(0, 0, radius)
       nodeGfx.addChild(circleBorder)
 
+      // TODO - don't render label if doesn't exist
       const labelGfx = new PIXI.Container()
       labelGfx.x = node.x!
       labelGfx.y = node.y!
       labelGfx.interactive = true
       labelGfx.buttonMode = true
 
-      const labelText = new PIXI.Text(node.label || '', { // TODO - don't render label if doesn't exist
+      const labelText = new PIXI.Text(node.label || '', {
         fontFamily: LABEL_FONT_FAMILY,
         fontSize: LABEL_FONT_SIZE,
         fill: 0x333333,
@@ -408,8 +322,6 @@ export const PixiRenderer = ({
       labelGfx.position = new PIXI.Point(node.x, node.y)
 
       nodesById[node.id] = { node, nodeGfx, labelGfx }
-      nodeGfxToNode.set(nodeGfx, node)
-      labelGfxToNode.set(labelGfx, node)
     })
 
     updatePositions()

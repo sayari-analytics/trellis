@@ -15,6 +15,7 @@ const colorScale = scaleOrdinal(schemeCategory10)
 
 const nodes: Node[] = data.nodes.map<Node>(({ id, group }) => ({
   id,
+  label: id,
   style: {
     width: (group + 3) * 3,
     fill: colorScale(group.toString()),
