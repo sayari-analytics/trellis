@@ -4,7 +4,7 @@ import { Viewport } from 'pixi-viewport'
 import { Options, DEFAULT_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
 import { Edge, Node, Graph, PositionedNode, PositionedEdge } from '../index'
 import { animationFrameLoop } from '../utils'
-import { edgeStyleSelector, nodeStyleSelector } from './utils'
+import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
 import { color } from 'd3-color'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 
@@ -19,28 +19,313 @@ const colorToNumber = (colorString: string): number => {
 }
 
 
+class Renderer {
+
+  nodeStyleSelector: NodeStyleSelector
+  edgeStyle: EdgeStyleSelector
+  hoveredNode?: PositionedNode
+  clickedNode?: PositionedNode
+  dirtyData = false
+  ANIMATION_DURATION = 800
+  updateTransition = this.ANIMATION_DURATION
+  updateTime = Date.now()
+  linksLayer = new PIXI.Graphics()
+  nodesLayer = new PIXI.Container()
+  labelsLayer = new PIXI.Container()
+  frontLayer = new PIXI.Container()
+  nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
+  edgesById: { [key: string]: PositionedEdge } = {}
+
+  graph: Graph
+  app: PIXI.Application
+  viewport: Viewport
+
+  constructor({ id, tick = DEFAULT_OPTIONS.tick, nodeStyle = DEFAULT_OPTIONS.nodeStyle, edgeStyle = DEFAULT_OPTIONS.edgeStyle }: Options) {
+    this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
+    this.edgeStyle = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
+
+    const container = document.getElementById(id)
+    if (container === null) {
+      throw new Error(`Element #${id} not found`)
+    }
+
+    const SCREEN_WIDTH = container.offsetWidth
+    const SCREEN_HEIGHT = container.offsetHeight
+    const WORLD_WIDTH = SCREEN_WIDTH // * 2
+    const WORLD_HEIGHT = SCREEN_HEIGHT // * 2
+    const RESOLUTION = window.devicePixelRatio // * 2
+
+    this.graph = new Graph(this.update)
+
+    this.app = new PIXI.Application({
+      width: SCREEN_WIDTH,
+      height: SCREEN_HEIGHT,
+      resolution: RESOLUTION,
+      transparent: true,
+      antialias: true,
+      autoStart: false
+    })
+    this.app.view.style.width = `${SCREEN_WIDTH}px`
+    this.labelsLayer.interactiveChildren = false
+    
+    this.viewport = new Viewport({
+      screenWidth: SCREEN_WIDTH,
+      screenHeight: SCREEN_HEIGHT,
+      worldWidth: WORLD_WIDTH,
+      worldHeight: WORLD_HEIGHT,
+      interaction: this.app.renderer.plugins.interaction
+    })
+  
+    this.app.stage.addChild(this.viewport.drag().pinch().wheel().decelerate())
+  
+    this.viewport.center = new PIXI.Point(WORLD_WIDTH / 6, WORLD_HEIGHT / 6)
+    this.viewport.setZoom(0.5, true)
+    this.viewport.addChild(this.linksLayer)
+    this.viewport.addChild(this.nodesLayer)
+    this.viewport.addChild(this.labelsLayer)
+    this.viewport.addChild(this.frontLayer)
+    this.app.view.addEventListener('wheel', (event) => { event.preventDefault() }) // prevent body scrolling
+
+    container.appendChild(this.app.view)
+  
+    animationFrameLoop(this.animate)
+  }
+
+  layout = (graph: {
+    nodes: { [key: string]: Node },
+    edges: { [key: string]: Edge },
+    options?: Partial<Options>
+  }) => this.graph.layout(graph)
+
+  private update = ({ nodes, edges }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => {
+    this.edgesById = edges
+
+    for (const nodeId in nodes) {
+      if (this.nodesById[nodeId] !== undefined) {
+        this.nodesById[nodeId] = { ...this.nodesById[nodeId], node: nodes[nodeId] }
+        continue
+      }
+
+      const node = nodes[nodeId]
+
+      const radius = this.nodeStyleSelector(node, 'width') / 2
+
+      const nodeGfx = new PIXI.Container()
+      nodeGfx.name = node.id
+      nodeGfx.x = node.x!
+      nodeGfx.y = node.y!
+      nodeGfx.interactive = true
+      nodeGfx.buttonMode = true
+      nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
+      nodeGfx.on('mouseover', this.hoverNode)
+      nodeGfx.on('mouseout', this.unhoverNode)
+      nodeGfx.on('mousedown', this.clickNode)
+      nodeGfx.on('mouseup', this.unclickNode)
+      nodeGfx.on('mouseupoutside', this.unclickNode)
+
+      const circle = new PIXI.Graphics()
+      circle.x = 0
+      circle.y = 0
+      circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
+      circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
+      circle.drawCircle(0, 0, radius)
+      nodeGfx.addChild(circle)
+
+      const circleBorder = new PIXI.Graphics()
+      circle.x = 0
+      circle.y = 0
+      circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), colorToNumber(this.nodeStyleSelector(node, 'stroke')))
+      circleBorder.drawCircle(0, 0, radius)
+      nodeGfx.addChild(circleBorder)
+
+      // TODO - don't render label if doesn't exist
+      const labelGfx = new PIXI.Container()
+      labelGfx.x = node.x!
+      labelGfx.y = node.y!
+      labelGfx.interactive = true
+      labelGfx.buttonMode = true
+
+      const labelText = new PIXI.Text(node.label || '', {
+        fontFamily: 'Helvetica',
+        fontSize: 12,
+        fill: 0x333333,
+        lineJoin: "round",
+        stroke: "#fafafaee",
+        strokeThickness: 2,
+      })
+      labelText.x = 0
+      labelText.y = radius + 5 + 1 // LABEL_Y_PADDING
+      labelText.anchor.set(0.5, 0)
+      labelGfx.addChild(labelText)
+
+      this.nodesLayer.addChild(nodeGfx)
+      this.labelsLayer.addChild(labelGfx)
+
+      this.nodesById[node.id] = { node, nodeGfx, labelGfx }
+
+      this.dirtyData = true
+      this.updateTransition = 0
+    }
+  }
+
+  private animate = () => {
+    const updateTime2 = Date.now()
+    const deltaTime = Math.min(100, Math.max(0, updateTime2 - this.updateTime))
+    // const deltaTime = updateTime2 - this.updateTime
+    this.updateTime = updateTime2
+    this.updateTransition += deltaTime
+    const deltaPercent = Math.min(1, this.updateTransition / this.ANIMATION_DURATION)
+
+    if (this.dirtyData || deltaPercent < 1) {
+      this.linksLayer.clear()
+      this.linksLayer.alpha = 0.6
+      for (const edge in this.edgesById) {
+        this.linksLayer.lineStyle(1, 0x999999)
+        this.linksLayer.moveTo(
+          interpolatePosition(this.edgesById[edge].source.x0 || 0, this.edgesById[edge].source.x!, deltaPercent),
+          interpolatePosition(this.edgesById[edge].source.y0 || 0, this.edgesById[edge].source.y!, deltaPercent)
+        )
+        this.linksLayer.lineTo(
+          interpolatePosition(this.edgesById[edge].target.x0 || 0, this.edgesById[edge].target.x!, deltaPercent),
+          interpolatePosition(this.edgesById[edge].target.y0 || 0, this.edgesById[edge].target.y!, deltaPercent)
+        )
+      }
+      this.linksLayer.endFill()
+  
+      for (const nodeId in this.nodesById) {
+        const node = this.nodesById[nodeId].node
+        const nodeGfx = this.nodesById[nodeId].nodeGfx
+        const labelGfx = this.nodesById[nodeId].labelGfx
+        /**
+         * TODO
+         * - ensure that if a node's position changes while it is in transition, it's movement is interpolated from it's current position, not it's new starting position (x0/y0)
+         * - ensure that if a node is being dragged, it's drag position is used (fx/fy?)
+         */
+        const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
+        const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
+        nodeGfx.position = new PIXI.Point(x, y)
+        labelGfx.position = new PIXI.Point(x, y)
+      }
+
+      this.dirtyData = false
+      this.viewport.dirty = false
+      this.app.render()
+    } else if (this.viewport.dirty) {
+      this.viewport.dirty = false
+      this.app.render()
+    }
+  }
+
+  /**
+   * these should be reevaluated every tick, so that stale hover nodes never are rendered
+   */
+  private hoverNode = (event: PIXI.interaction.InteractionEvent) => {
+    const node = this.nodesById[event.currentTarget.name].node
+    if (this.clickedNode !== undefined) {
+      return
+    }
+    
+    if (this.hoveredNode === node) {
+      return
+    }
+    
+    this.hoveredNode = node
+    const radius = this.nodeStyleSelector(node, 'width') / 2
+    
+    const nodeGfx = this.nodesById[node.id].nodeGfx
+    const labelGfx = this.nodesById[node.id].labelGfx
+    
+    this.nodesLayer.removeChild(nodeGfx)
+    this.frontLayer.addChild(nodeGfx)
+    this.labelsLayer.removeChild(labelGfx)
+    this.frontLayer.addChild(labelGfx)
+    
+    const circleBorder = new PIXI.Graphics()
+    circleBorder.name = 'hoverBorder'
+    circleBorder.x = 0
+    circleBorder.y = 0
+    circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), 0x000000)
+    circleBorder.drawCircle(0, 0, radius)
+    nodeGfx.addChild(circleBorder)
+    this.dirtyData = true
+  }
+
+  private unhoverNode = (event: PIXI.interaction.InteractionEvent) => {
+    const node = this.nodesById[event.currentTarget.name].node
+
+    if (this.clickedNode) {
+      return
+    }
+
+    if (this.hoveredNode !== node) {
+      return
+    }
+
+    
+    this.hoveredNode = undefined
+    
+    const nodeGfx = this.nodesById[node.id].nodeGfx
+    const labelGfx = this.nodesById[node.id].labelGfx
+    
+    this.frontLayer.removeChild(nodeGfx)
+    this.nodesLayer.addChild(nodeGfx)
+    this.frontLayer.removeChild(labelGfx)
+    this.labelsLayer.addChild(labelGfx)
+    
+    nodeGfx.removeChild(nodeGfx.getChildByName('hoverBorder'))
+    this.dirtyData = true
+  }
+
+  private clickNode = (event: PIXI.interaction.InteractionEvent) => {
+    const { x, y } = this.viewport.toWorld(event.data.global)
+    this.graph.dragStart(event.currentTarget.name, x, y)
+
+    this.clickedNode = this.nodesById[event.currentTarget.name].node
+    this.app.renderer.plugins.interaction.on('mousemove', this.appMouseMove)
+    this.viewport.pause = true
+    this.dirtyData = true
+  }
+
+  private unclickNode = () => {
+    if (this.clickedNode !== undefined) {
+      this.graph.dragEnd(this.clickedNode.id)
+    }
+
+    this.clickedNode = undefined
+    this.app.renderer.plugins.interaction.off('mousemove', this.appMouseMove)
+    this.viewport.pause = false
+    this.dirtyData = true
+  }
+
+  private appMouseMove = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.clickedNode === undefined) {
+      return
+    }
+
+    const { x, y } = this.viewport.toWorld(event.data.global)
+    this.graph.drag(this.clickedNode.id, x, y)
+
+    this.clickedNode.x = x
+    this.clickedNode.y = y
+    this.dirtyData = true
+  }
+}
+
+export const PixiRenderer2 = (options: Options) => new Renderer(options)
+
 export const PixiRenderer = ({
   id,
   tick = DEFAULT_OPTIONS.tick,
-  nodeStyles = {},
-  edgeStyles = {},
+  nodeStyle = {},
+  edgeStyle = {},
 }: Options) => {
   const container = document.getElementById(id)
   if (container === null) {
     throw new Error(`Element #${id} not found`)
   }
 
-  const NODE_STYLES = { ...DEFAULT_NODE_STYLES, ...nodeStyles }
-  const EDGE_STYLES = { ...DEFAULT_EDGE_STYLES, ...edgeStyles }
-  const nodeWidthSelector = nodeStyleSelector(NODE_STYLES, 'width')
-  const nodeStrokeWidthSelector = nodeStyleSelector(NODE_STYLES, 'strokeWidth')
-  const nodeFillSelector = nodeStyleSelector(NODE_STYLES, 'fill')
-  const nodeStrokeSelector = nodeStyleSelector(NODE_STYLES, 'stroke')
-  const nodeFillOpacitySelector = nodeStyleSelector(NODE_STYLES, 'fillOpacity')
-  const nodeStrokeOpacitySelector = nodeStyleSelector(NODE_STYLES, 'strokeOpacity')
-  const edgeStrokeSelector = edgeStyleSelector(EDGE_STYLES, 'stroke')
-  const edgeWidthSelector = edgeStyleSelector(EDGE_STYLES, 'width')
-  const edgeStrokeOpacitySelector = edgeStyleSelector(EDGE_STYLES, 'strokeOpacity')
+  const _nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
+  const _edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
 
   const SCREEN_WIDTH = container.offsetWidth
   const SCREEN_HEIGHT = container.offsetHeight
@@ -107,12 +392,13 @@ export const PixiRenderer = ({
 
   animationFrameLoop(() => {
     const updateTime2 = Date.now()
-    const deltaTime = Math.min(500, Math.max(0, updateTime2 - updateTime))
+    const deltaTime = Math.min(100, Math.max(0, updateTime2 - updateTime))
     updateTime = updateTime2
     updateTransition += deltaTime
     const deltaPercent = Math.min(1, updateTransition / ANIMATION_DURATION)
 
     if (dirtyData || deltaPercent < 1) {
+      // console.log(deltaTime)
       linksLayer.clear()
       linksLayer.alpha = 0.6
       for (const edge in edgesById) {
@@ -132,6 +418,9 @@ export const PixiRenderer = ({
         const node = nodesById[nodeId].node
         const nodeGfx = nodesById[nodeId].nodeGfx
         const labelGfx = nodesById[nodeId].labelGfx
+        /**
+         * TODO - ensure that if a node's position changes while it is in transition, it's movement is interpolated from it's current position, not it's new starting position (x0/y0)
+         */
         const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
         const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
         nodeGfx.position = new PIXI.Point(x, y)
@@ -162,7 +451,7 @@ export const PixiRenderer = ({
     }
     
     hoveredNode = node
-    const radius = nodeWidthSelector(node) / 2
+    const radius = _nodeStyleSelector(node, 'width') / 2
     
     const nodeGfx = nodesById[node.id].nodeGfx
     const labelGfx = nodesById[node.id].labelGfx
@@ -176,7 +465,7 @@ export const PixiRenderer = ({
     circleBorder.name = 'hoverBorder'
     circleBorder.x = 0
     circleBorder.y = 0
-    circleBorder.lineStyle(nodeStrokeWidthSelector(node), 0x000000)
+    circleBorder.lineStyle(_nodeStyleSelector(node, 'strokeWidth'), 0x000000)
     circleBorder.drawCircle(0, 0, radius)
     nodeGfx.addChild(circleBorder)
     dirtyData = true
@@ -254,7 +543,7 @@ export const PixiRenderer = ({
 
       const node = nodes[nodeId]
 
-      const radius = nodeWidthSelector(node) / 2
+      const radius = _nodeStyleSelector(node, 'width') / 2
 
       const nodeGfx = new PIXI.Container()
       nodeGfx.name = node.id
@@ -272,15 +561,15 @@ export const PixiRenderer = ({
       const circle = new PIXI.Graphics()
       circle.x = 0
       circle.y = 0
-      circle.beginFill(colorToNumber(nodeFillSelector(node)))
-      circle.alpha = nodeFillOpacitySelector(node)
+      circle.beginFill(colorToNumber(_nodeStyleSelector(node, 'fill')))
+      circle.alpha = _nodeStyleSelector(node, 'fillOpacity')
       circle.drawCircle(0, 0, radius)
       nodeGfx.addChild(circle)
 
       const circleBorder = new PIXI.Graphics()
       circle.x = 0
       circle.y = 0
-      circleBorder.lineStyle(nodeStrokeWidthSelector(node), colorToNumber(nodeStrokeSelector(node)))
+      circleBorder.lineStyle(_nodeStyleSelector(node, 'strokeWidth'), colorToNumber(_nodeStyleSelector(node, 'stroke')))
       circleBorder.drawCircle(0, 0, radius)
       nodeGfx.addChild(circleBorder)
 

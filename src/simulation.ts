@@ -101,18 +101,18 @@ const worker = (() => {
     // debugger
     for (const nodeId in data.nodes) {
       if (nodes[nodeId] === undefined) {
-        // enter
+        // enter node
         nodes[nodeId] = Object.assign(data.nodes[nodeId])
         update = true
       } else if (nodes[nodeId] !== data.nodes[nodeId]) { // TODO - referential equality won't work here?  what level of equality is necessary
-        // update
+        // update node
         nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId], { x0: nodes[nodeId].x, y0: nodes[nodeId].y })
       }
     }
 
     for (const nodeId in nodes) {
       if (data.nodes[nodeId] === undefined) {
-        // exit
+        // exit node
         delete nodes[nodeId]
         update = true
       }
@@ -120,7 +120,7 @@ const worker = (() => {
 
     for (const edgeId in data.edges) {
       if (edges[edgeId] === undefined) {
-        // enter
+        // enter edge
         edges[edgeId] = {
           id: data.edges[edgeId].id,
           label: data.edges[edgeId].label,
@@ -130,7 +130,7 @@ const worker = (() => {
         }
         update = true
       } else if (edges[edgeId] !== data.edges[edgeId]) { // TODO - referential equality won't work here
-        // update
+        // update edge
         // TODO - add edge style properties
         edges[edgeId] = {
           id: data.edges[edgeId].id,
@@ -144,6 +144,7 @@ const worker = (() => {
 
     for (const edgeId in edges) {
       if (data.edges[edgeId] === undefined) {
+        // exit edge
         delete edges[edgeId]
         update = true
       }

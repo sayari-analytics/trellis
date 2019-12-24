@@ -19,8 +19,8 @@ export type EdgeStyle = {
 export type Options = {
   id: string
   tick?: number | null
-  nodeStyles?: Partial<NodeStyle>
-  edgeStyles?: Partial<EdgeStyle>
+  nodeStyle?: Partial<NodeStyle>
+  edgeStyle?: Partial<EdgeStyle>
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {
@@ -39,5 +39,7 @@ export const DEFAULT_EDGE_STYLES: EdgeStyle = {
 }
 
 export const DEFAULT_OPTIONS = {
-  tick: DEFAULT_GRAPH_OPTIONS.tick
+  tick: DEFAULT_GRAPH_OPTIONS.tick,
+  nodeStyle: {},
+  edgeStyle: {},
 }

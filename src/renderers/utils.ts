@@ -2,9 +2,11 @@ import { NodeStyle, EdgeStyle } from './options'
 import { PositionedNode, PositionedEdge } from '..'
 import { Viewport } from 'pixi-viewport'
 import { throttleAnimationFrame, throttle, batch } from '../utils'
+import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 
 
-export const nodeStyleSelector = <T extends keyof NodeStyle>(nodeStyles: NodeStyle, attribute: T) => (node: PositionedNode): NodeStyle[T] => {
+export type NodeStyleSelector = <T extends keyof NodeStyle>(node: PositionedNode, attribute: T) => NodeStyle[T]
+export const nodeStyleSelector = (nodeStyles: NodeStyle): NodeStyleSelector => <T extends keyof NodeStyle>(node: PositionedNode, attribute: T) => {
   if (node.style === undefined || node.style![attribute] === undefined) {
     return nodeStyles[attribute]
   }
@@ -12,13 +14,22 @@ export const nodeStyleSelector = <T extends keyof NodeStyle>(nodeStyles: NodeSty
   return node.style[attribute] as NodeStyle[T]
 }
 
-export const edgeStyleSelector = <T extends keyof EdgeStyle>(edgeStyles: EdgeStyle, attribute: T) => (edge: PositionedEdge): EdgeStyle[T] => {
+
+export type EdgeStyleSelector = <T extends keyof EdgeStyle>(edge: PositionedEdge, attribute: T) => EdgeStyle[T]
+export const edgeStyleSelector = (edgeStyles: EdgeStyle): EdgeStyleSelector => <T extends keyof EdgeStyle>(edge: PositionedEdge, attribute: T) => {
   if (edge.style === undefined || edge.style![attribute] === undefined) {
     return edgeStyles[attribute]
   }
 
   return edge.style[attribute] as NodeStyle[T]
 }
+
+
+export const interpolatePosition = (start: number, end: number, percent: number) => {
+  const interpolate = interpolateNumber(start, end)
+  return interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])(percent)
+}
+
 
 export const pixiFrameRate = (viewport: Viewport) => {
   const el = document.createElement('div')

@@ -12,8 +12,8 @@ import { nodeStyleSelector, edgeStyleSelector } from './utils'
 export const D3Renderer = ({
   id,
   tick = DEFAULT_OPTIONS.tick,
-  nodeStyles = {},
-  edgeStyles = {},
+  nodeStyle = {},
+  edgeStyle = {},
 }: Options) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
@@ -43,18 +43,17 @@ export const D3Renderer = ({
     .on('drag', (d) => graph.drag(d.id, event.x, event.y))
     .on('end', (d) => (draggedNode = undefined, graph.dragEnd(d.id)))
 
-  const NODE_STYLES = { ...DEFAULT_NODE_STYLES, ...nodeStyles }
-  const EDGE_STYLES = { ...DEFAULT_EDGE_STYLES, ...edgeStyles }
-  const _nodeWidthSelector = nodeStyleSelector(NODE_STYLES, 'width')
-  const nodeWidthSelector = (node: PositionedNode) => _nodeWidthSelector(node) / 2
-  const nodeStrokeWidthSelector = nodeStyleSelector(NODE_STYLES, 'strokeWidth')
-  const nodeFillSelector = nodeStyleSelector(NODE_STYLES, 'fill')
-  const nodeStrokeSelector = nodeStyleSelector(NODE_STYLES, 'stroke')
-  const nodeFillOpacitySelector = nodeStyleSelector(NODE_STYLES, 'fillOpacity')
-  const nodeStrokeOpacitySelector = nodeStyleSelector(NODE_STYLES, 'strokeOpacity')
-  const edgeStrokeSelector = edgeStyleSelector(EDGE_STYLES, 'stroke')
-  const edgeWidthSelector = edgeStyleSelector(EDGE_STYLES, 'width')
-  const edgeStrokeOpacitySelector = edgeStyleSelector(EDGE_STYLES, 'strokeOpacity')
+  const _nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
+  const _edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
+  const nodeWidthSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'width') / 2
+  const nodeStrokeWidthSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'strokeWidth')
+  const nodeFillSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'fill')
+  const nodeStrokeSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'stroke')
+  const nodeFillOpacitySelector = (node: PositionedNode) => _nodeStyleSelector(node, 'fillOpacity')
+  const nodeStrokeOpacitySelector = (node: PositionedNode) => _nodeStyleSelector(node, 'strokeOpacity')
+  const edgeStrokeSelector = (edge: PositionedEdge) => _edgeStyleSelector(edge, 'stroke')
+  const edgeWidthSelector = (edge: PositionedEdge) => _edgeStyleSelector(edge, 'width')
+  const edgeStrokeOpacitySelector = (edge: PositionedEdge) => _edgeStyleSelector(edge, 'strokeOpacity')
 
   // const nodeClickHandler = (d: PositionedNode) => console.log('click', d.id)
   // const nodeMouseEnterHandler = (d: PositionedNode) => console.log('mouseenter', d.id)

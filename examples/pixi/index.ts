@@ -1,13 +1,13 @@
 import { interval } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 import { Node, Edge } from '../../src/index'
-import { PixiRenderer } from '../../src/renderers/pixi'
+import { PixiRenderer, PixiRenderer2 } from '../../src/renderers/pixi'
 import { data, large, mediumLg, mediumSm } from '../data'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
 
 
-const render = PixiRenderer({ id: 'graph', nodeStyles: { stroke: '#fff' } })
+const render = PixiRenderer2({ id: 'graph', nodeStyle: { stroke: '#fff' } })
 
 const NODES_PER_TICK = 20
 
@@ -50,7 +50,7 @@ interval(1000).pipe(
       }, { nodes: {}, edges: {} })
   }),
 ).subscribe({
-  next: ({ nodes, edges }) => render(nodes, edges),
+  next: (graph) => render.layout(graph),
   error: (err) => console.error(err),
   complete: () => console.log('complete'),
 })
