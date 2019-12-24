@@ -55,13 +55,13 @@ interval(1000).pipe(
   complete: () => console.log('complete'),
 })
 
-// render(
-//   nodes.reduce<{ [id: string]: Node }>((nodeMap, node) => {
+// render.layout({
+//   nodes: nodes.reduce<{ [id: string]: Node }>((nodeMap, node) => {
 //     nodeMap[node.id] = node
 //     return nodeMap
 //   }, {}),
-//   edges.reduce<{ [id: string]: Edge }>((edgeMap, edge) => {
+//   edges: edges.reduce<{ [id: string]: Edge }>((edgeMap, edge) => {
 //     edgeMap[edge.id] = edge
 //     return edgeMap
 //   }, {})
-// )
+// })

@@ -32,7 +32,8 @@ class Renderer {
   linksLayer = new PIXI.Graphics()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
-  frontLayer = new PIXI.Container()
+  frontNodeLayer = new PIXI.Container()
+  frontLabelLayer = new PIXI.Container()
   nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
   edgesById: { [key: string]: PositionedEdge } = {}
 
@@ -83,7 +84,8 @@ class Renderer {
     this.viewport.addChild(this.linksLayer)
     this.viewport.addChild(this.nodesLayer)
     this.viewport.addChild(this.labelsLayer)
-    this.viewport.addChild(this.frontLayer)
+    this.viewport.addChild(this.frontNodeLayer)
+    this.viewport.addChild(this.frontLabelLayer)
     this.app.view.addEventListener('wheel', (event) => { event.preventDefault() }) // prevent body scrolling
 
     container.appendChild(this.app.view)
@@ -179,6 +181,7 @@ class Renderer {
     if (this.dirtyData || deltaPercent < 1) {
       this.linksLayer.clear()
       this.linksLayer.alpha = 0.6
+
       for (const edge in this.edgesById) {
         this.linksLayer.lineStyle(1, 0x999999)
         this.linksLayer.moveTo(
@@ -207,6 +210,39 @@ class Renderer {
         labelGfx.position = new PIXI.Point(x, y)
       }
 
+      // unhover
+      for (const nodeGfx of this.frontNodeLayer.children) {
+        this.frontNodeLayer.removeChild(nodeGfx);
+        (nodeGfx as PIXI.Graphics).removeChild((nodeGfx as PIXI.Graphics).getChildByName('hoverBorder'))
+        this.nodesLayer.addChild(nodeGfx)
+      }
+
+      for (const labelGfx of this.frontLabelLayer.children) {
+        this.frontLabelLayer.removeChild(labelGfx)
+        this.labelsLayer.addChild(labelGfx)
+      }
+
+      // hover
+      if (this.hoveredNode !== undefined) {
+        const radius = this.nodeStyleSelector(this.hoveredNode, 'width') / 2
+      
+        const nodeGfx = this.nodesById[this.hoveredNode.id].nodeGfx
+        const labelGfx = this.nodesById[this.hoveredNode.id].labelGfx
+        
+        this.nodesLayer.removeChild(nodeGfx)
+        this.labelsLayer.removeChild(labelGfx)
+        this.frontNodeLayer.addChild(nodeGfx)
+        this.frontLabelLayer.addChild(labelGfx)
+        
+        const circleBorder = new PIXI.Graphics()
+        circleBorder.name = 'hoverBorder'
+        circleBorder.x = 0
+        circleBorder.y = 0
+        circleBorder.lineStyle(this.nodeStyleSelector(this.hoveredNode, 'strokeWidth'), 0x000000)
+        circleBorder.drawCircle(0, 0, radius)
+        nodeGfx.addChild(circleBorder)
+      }
+
       this.dirtyData = false
       this.viewport.dirty = false
       this.app.render()
@@ -216,64 +252,21 @@ class Renderer {
     }
   }
 
-  /**
-   * these should be reevaluated every tick, so that stale hover nodes never are rendered
-   */
   private hoverNode = (event: PIXI.interaction.InteractionEvent) => {
-    const node = this.nodesById[event.currentTarget.name].node
-    if (this.clickedNode !== undefined) {
-      return
+    if (this.clickedNode === undefined) {
+      this.hoveredNode = this.nodesById[event.currentTarget.name].node
+      this.dirtyData = true
     }
-    
-    if (this.hoveredNode === node) {
-      return
-    }
-    
-    this.hoveredNode = node
-    const radius = this.nodeStyleSelector(node, 'width') / 2
-    
-    const nodeGfx = this.nodesById[node.id].nodeGfx
-    const labelGfx = this.nodesById[node.id].labelGfx
-    
-    this.nodesLayer.removeChild(nodeGfx)
-    this.frontLayer.addChild(nodeGfx)
-    this.labelsLayer.removeChild(labelGfx)
-    this.frontLayer.addChild(labelGfx)
-    
-    const circleBorder = new PIXI.Graphics()
-    circleBorder.name = 'hoverBorder'
-    circleBorder.x = 0
-    circleBorder.y = 0
-    circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), 0x000000)
-    circleBorder.drawCircle(0, 0, radius)
-    nodeGfx.addChild(circleBorder)
-    this.dirtyData = true
   }
 
   private unhoverNode = (event: PIXI.interaction.InteractionEvent) => {
-    const node = this.nodesById[event.currentTarget.name].node
-
-    if (this.clickedNode) {
-      return
+    if (
+      this.clickedNode === undefined &&
+      this.hoveredNode === this.nodesById[event.currentTarget.name].node
+    ) {
+      this.hoveredNode = undefined
+      this.dirtyData = true
     }
-
-    if (this.hoveredNode !== node) {
-      return
-    }
-
-    
-    this.hoveredNode = undefined
-    
-    const nodeGfx = this.nodesById[node.id].nodeGfx
-    const labelGfx = this.nodesById[node.id].labelGfx
-    
-    this.frontLayer.removeChild(nodeGfx)
-    this.nodesLayer.addChild(nodeGfx)
-    this.frontLayer.removeChild(labelGfx)
-    this.labelsLayer.addChild(labelGfx)
-    
-    nodeGfx.removeChild(nodeGfx.getChildByName('hoverBorder'))
-    this.dirtyData = true
   }
 
   private clickNode = (event: PIXI.interaction.InteractionEvent) => {
@@ -311,7 +304,11 @@ class Renderer {
   }
 }
 
-export const PixiRenderer2 = (options: Options) => new Renderer(options)
+export const PixiRenderer2 = (options: Options) => {
+  const pixi = new Renderer(options);
+  (window as unknown as { pixi: any }).pixi = pixi
+  return pixi
+}
 
 export const PixiRenderer = ({
   id,
