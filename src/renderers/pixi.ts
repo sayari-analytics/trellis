@@ -6,6 +6,7 @@ import { Edge, Node, Graph, PositionedNode, PositionedEdge } from '../index'
 import { animationFrameLoop } from '../utils'
 import { edgeStyleSelector, nodeStyleSelector } from './utils'
 import { color } from 'd3-color'
+import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 
 
 const colorToNumber = (colorString: string): number => {
@@ -43,9 +44,10 @@ export const PixiRenderer = ({
 
   const SCREEN_WIDTH = container.offsetWidth
   const SCREEN_HEIGHT = container.offsetHeight
-  const WORLD_WIDTH = SCREEN_WIDTH * 2
-  const WORLD_HEIGHT = SCREEN_HEIGHT * 2
-  const RESOLUTION = window.devicePixelRatio * 2
+  const WORLD_WIDTH = SCREEN_WIDTH // * 2
+  const WORLD_HEIGHT = SCREEN_HEIGHT // * 2
+  const RESOLUTION = window.devicePixelRatio // * 2
+  const ANIMATION_DURATION = 800
   const LABEL_FONT_FAMILY = 'Helvetica'
   const LABEL_FONT_SIZE = 12
   const LABEL_X_PADDING = 2
@@ -79,26 +81,50 @@ export const PixiRenderer = ({
   const linksLayer = new PIXI.Graphics()
   let nodesLayer = new PIXI.Container() // Graphics vs Container layer?
   const labelsLayer = new PIXI.Container()
+  labelsLayer.interactiveChildren = false
   const frontLayer = new PIXI.Container()
   viewport.addChild(linksLayer)
   viewport.addChild(nodesLayer)
   viewport.addChild(labelsLayer)
   viewport.addChild(frontLayer)
 
+  app.view.addEventListener('wheel', (event) => { event.preventDefault() }) // prevent body scrolling
+  container.appendChild(app.view)
+
+
   let dirtyData = false
+  let updateTransition = ANIMATION_DURATION
+  let updateTime = Date.now()
   const nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
   let edgesById: { [key: string]: PositionedEdge } = {}
   let hoveredNode: PositionedNode | undefined
   let clickedNode: PositionedNode | undefined
 
+  const interpolatePosition = (start: number, end: number, percent: number) => {
+    const interpolate = interpolateNumber(start, end)
+    return interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])(percent)
+  }
+
   animationFrameLoop(() => {
-    if (dirtyData) {
+    const updateTime2 = Date.now()
+    const deltaTime = Math.min(500, Math.max(0, updateTime2 - updateTime))
+    updateTime = updateTime2
+    updateTransition += deltaTime
+    const deltaPercent = Math.min(1, updateTransition / ANIMATION_DURATION)
+
+    if (dirtyData || deltaPercent < 1) {
       linksLayer.clear()
       linksLayer.alpha = 0.6
       for (const edge in edgesById) {
         linksLayer.lineStyle(1, 0x999999)
-        linksLayer.moveTo(edgesById[edge].source.x!, edgesById[edge].source.y!)
-        linksLayer.lineTo(edgesById[edge].target.x!, edgesById[edge].target.y!)
+        linksLayer.moveTo(
+          interpolatePosition(edgesById[edge].source.x0 || 0, edgesById[edge].source.x!, deltaPercent),
+          interpolatePosition(edgesById[edge].source.y0 || 0, edgesById[edge].source.y!, deltaPercent)
+        )
+        linksLayer.lineTo(
+          interpolatePosition(edgesById[edge].target.x0 || 0, edgesById[edge].target.x!, deltaPercent),
+          interpolatePosition(edgesById[edge].target.y0 || 0, edgesById[edge].target.y!, deltaPercent)
+        )
       }
       linksLayer.endFill()
   
@@ -106,9 +132,10 @@ export const PixiRenderer = ({
         const node = nodesById[nodeId].node
         const nodeGfx = nodesById[nodeId].nodeGfx
         const labelGfx = nodesById[nodeId].labelGfx
-        // is the below necessary
-        nodeGfx.position = new PIXI.Point(node.x, node.y)
-        labelGfx.position = new PIXI.Point(node.x, node.y)
+        const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
+        const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
+        nodeGfx.position = new PIXI.Point(x, y)
+        labelGfx.position = new PIXI.Point(x, y)
       }
 
       dirtyData = false
@@ -121,11 +148,9 @@ export const PixiRenderer = ({
   })
 
 
-  // prevent body scrolling
-  app.view.addEventListener('wheel', (event) => { event.preventDefault() })
-
-  container.appendChild(app.view)
-
+  /**
+   * these should be reevaluated every tick, so that stale hover nodes never are rendered
+   */
   const hoverNode = (event: PIXI.interaction.InteractionEvent) => {
     const node = nodesById[event.currentTarget.name].node
     if (clickedNode !== undefined) {
@@ -219,7 +244,6 @@ export const PixiRenderer = ({
 
 
   const graph = new Graph(({ nodes, edges }) => {
-    dirtyData = true
     edgesById = edges
 
     for (const nodeId in nodes) {
@@ -283,10 +307,11 @@ export const PixiRenderer = ({
       nodesLayer.addChild(nodeGfx)
       labelsLayer.addChild(labelGfx)
 
-      nodeGfx.position = new PIXI.Point(node.x, node.y)
-      labelGfx.position = new PIXI.Point(node.x, node.y)
-
       nodesById[node.id] = { node, nodeGfx, labelGfx }
+
+      dirtyData = true
+      updateTransition = 0
+
     }
   })
 

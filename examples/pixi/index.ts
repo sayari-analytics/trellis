@@ -13,7 +13,7 @@ const NODES_PER_TICK = 20
 
 const colorScale = scaleOrdinal(schemeCategory10)
 
-const nodes: Node[] = data.nodes.map<Node>(({ id, group }) => ({
+const nodes: Node[] = mediumLg.nodes.map<Node>(({ id, group }) => ({
   id,
   label: id,
   style: {
@@ -22,7 +22,7 @@ const nodes: Node[] = data.nodes.map<Node>(({ id, group }) => ({
   }
 }))
 
-const edges: Edge[] = data.links.map<Edge>(({ source, target, value }) => ({
+const edges: Edge[] = mediumLg.links.map<Edge>(({ source, target, value }) => ({
   id: `${source}|${target}`,
   source,
   target,
@@ -32,8 +32,8 @@ const edges: Edge[] = data.links.map<Edge>(({ source, target, value }) => ({
 }))
 
 
-interval(800).pipe(
-  // take(3),
+interval(1000).pipe(
+  take(Math.ceil(nodes.length / NODES_PER_TICK)),
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)
@@ -50,7 +50,9 @@ interval(800).pipe(
       }, { nodes: {}, edges: {} })
   }),
 ).subscribe({
-  next: ({ nodes, edges }) => render(nodes, edges)
+  next: ({ nodes, edges }) => render(nodes, edges),
+  error: (err) => console.error(err),
+  complete: () => console.log('complete'),
 })
 
 // render(

@@ -88,7 +88,7 @@ export const interpolateInterval = (count: number, duration: number) => {
       }
 
       cb(i / count)
-    }, duration / count)
+    }, duration / count) as unknown as number
   }
 }
 

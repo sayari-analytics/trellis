@@ -5,9 +5,9 @@ import { data, large, mediumLg, mediumSm } from '../data'
 
 const render = D3Renderer({ id: 'graph' })
 
-const nodes = large.nodes.map(({ id }) => ({ id }))
+const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
 
-const edges = large.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
+const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
 
 
 render(
