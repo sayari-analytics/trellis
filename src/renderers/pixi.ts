@@ -19,6 +19,9 @@ const colorToNumber = (colorString: string): number => {
   return parseInt(c.hex().slice(1), 16)
 }
 
+const LABEL_X_PADDING = 4
+const LABEL_Y_PADDING = 1
+
 
 class Renderer {
 
@@ -35,8 +38,8 @@ class Renderer {
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
-  edgesById: { [key: string]: { edge: PositionedEdge, edgeGfx: PIXI.Graphics } } = {}
+  nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container } } = {}
+  edgesById: { [key: string]: { edge: PositionedEdge, edgeGfx: PIXI.Graphics, labelGfx: PIXI.Container } } = {}
 
   graph: Graph
   app: PIXI.Application
@@ -115,9 +118,27 @@ class Renderer {
 
       const edgeGfx = new PIXI.Graphics()
 
-      this.linksLayer.addChild(edgeGfx)
+      const labelGfx = new PIXI.Container()
+      // labelGfx.interactive = true
+      // labelGfx.buttonMode = true
 
-      this.edgesById[edge.id] = { edge, edgeGfx }
+      // TODO - don't render label if doesn't exist
+      const labelText = new PIXI.Text(edge.label || '', {
+        fontFamily: 'Helvetica',
+        fontSize: 10,
+        fill: 0x444444,
+        lineJoin: "round",
+        stroke: "#fafafaee",
+        strokeThickness: 2,
+      })
+      labelText.name = 'text'
+      labelText.anchor.set(0.5, 0.5)
+      labelGfx.addChild(labelText)
+
+      this.linksLayer.addChild(edgeGfx)
+      this.linksLayer.addChild(labelGfx)
+
+      this.edgesById[edge.id] = { edge, edgeGfx, labelGfx }
 
       this.dirtyData = true
       this.updateTransition = 0
@@ -161,8 +182,8 @@ class Renderer {
 
       // TODO - don't render label if doesn't exist
       const labelGfx = new PIXI.Container()
-      labelGfx.interactive = true
-      labelGfx.buttonMode = true
+      // labelGfx.interactive = true
+      // labelGfx.buttonMode = true
 
       const labelText = new PIXI.Text(node.label || '', {
         fontFamily: 'Helvetica',
@@ -173,7 +194,7 @@ class Renderer {
         strokeThickness: 2,
       })
       labelText.x = 0
-      labelText.y = radius + 5 + 1 // LABEL_Y_PADDING
+      labelText.y = radius + 1 // LABEL_Y_PADDING
       labelText.anchor.set(0.5, 0)
       labelGfx.addChild(labelText)
 
@@ -198,24 +219,65 @@ class Renderer {
     if (this.dirtyData || deltaPercent < 1) {
       for (const edgeId in this.edgesById) {
         const edge = this.edgesById[edgeId].edge
-        let edgeGfx = this.edgesById[edgeId].edgeGfx
+        const edgeGfx = this.edgesById[edgeId].edgeGfx
+        const labelGfx = this.edgesById[edgeId].labelGfx
 
+        /**
+         * Is there a way to just move the line, rather than clearing it and rerendering?
+         * if so, the styling and handlers can move to the update phase
+         * also, when dragging a node, only a few edges are moving.  current implementation inefficiently clears + redraws all edges
+         */
         edgeGfx.clear()
+        // edgeGfx.interactive = true
+        // edgeGfx.buttonMode = true
+        // edgeGfx.hitArea = new PIXI.Circle(0, 0, 20 + 5)
+        // edgeGfx.on('mouseover', () => console.log('line'))
+        // edgeGfx.on('mouseout', () => console.log('line'))
+        // edgeGfx.on('mousedown', () => console.log('line'))
+        // edgeGfx.on('mouseup', () => console.log('line'))
+        // edgeGfx.on('mouseupoutside', () => console.log('line'))
+
         edgeGfx.lineStyle(
           this.edgeStyleSelector(edge, 'width'),
           colorToNumber(this.edgeStyleSelector(edge, 'stroke')),
           this.edgeStyleSelector(edge, 'strokeOpacity')
         )
 
-        edgeGfx.moveTo(
-          interpolatePosition(edge.source.x0 || 0, edge.source.x!, deltaPercent),
-          interpolatePosition(edge.source.y0 || 0, edge.source.y!, deltaPercent)
-        )
-        edgeGfx.lineTo(
-          interpolatePosition(edge.target.x0 || 0, edge.target.x!, deltaPercent),
-          interpolatePosition(edge.target.y0 || 0, edge.target.y!, deltaPercent)
-        )
+        const xStart = interpolatePosition(edge.source.x0 || 0, edge.source.x!, deltaPercent)
+        const yStart = interpolatePosition(edge.source.y0 || 0, edge.source.y!, deltaPercent)
+        const xEnd = interpolatePosition(edge.target.x0 || 0, edge.target.x!, deltaPercent)
+        const yEnd = interpolatePosition(edge.target.y0 || 0, edge.target.y!, deltaPercent)
+        edgeGfx.moveTo(xStart, yStart)
+        edgeGfx.lineTo(xEnd, yEnd)
         edgeGfx.endFill()
+
+        labelGfx.position = new PIXI.Point(xStart + (xEnd - xStart) * 0.5, yStart + (yEnd - yStart) * 0.5)
+        const rotation = Math.atan2(yEnd - yStart, xEnd - xStart)
+        if (rotation > (Math.PI / 2)) {
+          labelGfx.rotation = rotation - Math.PI
+        } else if (rotation < (Math.PI / 2) * -1) {
+          labelGfx.rotation = rotation + Math.PI
+        } else {
+          labelGfx.rotation = rotation
+        }
+
+        /**
+         * hide label if line is too long 
+         * TODO
+         * - truncate text, rather than hiding
+         * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
+         */
+        const text = labelGfx.getChildByName('text') as PIXI.Text
+        // const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2)) -
+        //   (this.nodeStyleSelector(edge.source, 'width') / 2) - 
+        //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
+        //   (LABEL_X_PADDING * 2)
+        const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2))
+        if (text.width > edgeLength) {
+          text.visible = false
+        } else {
+          text.visible = true
+        }
       }
   
       for (const nodeId in this.nodesById) {
@@ -226,6 +288,8 @@ class Renderer {
          * TODO
          * - ensure that if a node's position changes while it is in transition, it's movement is interpolated from it's current position, not it's new starting position (x0/y0)
          * - ensure that if a node is being dragged, it's drag position is used (fx/fy?)
+         * - in simulation, when a new node enters, set it's position to either one of it's neighbors, or the rough centroid of some/all of its neighbors (will require an adjacency lookup table)
+         *   - does keylines do this automatically?  or are we doing on insert (though if so, how do we do it w/o an adjacency lookup?)
          */
         const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
         const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
@@ -355,8 +419,6 @@ export const PixiRenderer = ({
   const ANIMATION_DURATION = 800
   const LABEL_FONT_FAMILY = 'Helvetica'
   const LABEL_FONT_SIZE = 12
-  const LABEL_X_PADDING = 2
-  const LABEL_Y_PADDING = 1
 
   const app = new PIXI.Application({
     width: SCREEN_WIDTH,

@@ -1,4 +1,4 @@
-import { DEFAULT_OPTIONS as DEFAULT_GRAPH_OPTIONS } from '../index'
+import { DEFAULT_OPTIONS as DEFAULT_GRAPH_OPTIONS, PositionedNode, PositionedEdge } from '../index'
 
 
 export type NodeStyle = {
@@ -19,8 +19,13 @@ export type EdgeStyle = {
 export type Options = {
   id: string
   tick?: number | null
+  strength?: number
   nodeStyle?: Partial<NodeStyle>
   edgeStyle?: Partial<EdgeStyle>
+  onNodeHover?: (node: PositionedNode) => void
+  onNodeClick?: (node: PositionedNode) => void
+  onEdgeHover?: (edge: PositionedEdge) => void
+  onEdgeClick?: (edge: PositionedEdge) => void
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {
