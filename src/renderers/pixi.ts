@@ -23,20 +23,20 @@ const colorToNumber = (colorString: string): number => {
 class Renderer {
 
   nodeStyleSelector: NodeStyleSelector
-  edgeStyle: EdgeStyleSelector
+  edgeStyleSelector: EdgeStyleSelector
   hoveredNode?: PositionedNode
   clickedNode?: PositionedNode
   dirtyData = false
   ANIMATION_DURATION = 800
   updateTransition = this.ANIMATION_DURATION
   updateTime = Date.now()
-  linksLayer = new PIXI.Graphics()
+  linksLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
   nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container} } = {}
-  edgesById: { [key: string]: PositionedEdge } = {}
+  edgesById: { [key: string]: { edge: PositionedEdge, edgeGfx: PIXI.Graphics } } = {}
 
   graph: Graph
   app: PIXI.Application
@@ -44,7 +44,7 @@ class Renderer {
 
   constructor({ id, tick = DEFAULT_OPTIONS.tick, nodeStyle = DEFAULT_OPTIONS.nodeStyle, edgeStyle = DEFAULT_OPTIONS.edgeStyle }: Options) {
     this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
-    this.edgeStyle = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
+    this.edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
 
     const container = document.getElementById(id)
     if (container === null) {
@@ -105,7 +105,23 @@ class Renderer {
   }) => this.graph.layout(graph)
 
   private update = ({ nodes, edges }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => {
-    this.edgesById = edges
+    for (const edgeId in edges) {
+      if (this.edgesById[edgeId] !== undefined) {
+        this.edgesById[edgeId] = { ...this.edgesById[edgeId], edge: edges[edgeId] }
+        continue        
+      }
+
+      const edge = edges[edgeId]
+
+      const edgeGfx = new PIXI.Graphics()
+
+      this.linksLayer.addChild(edgeGfx)
+
+      this.edgesById[edge.id] = { edge, edgeGfx }
+
+      this.dirtyData = true
+      this.updateTransition = 0
+    }
 
     for (const nodeId in nodes) {
       if (this.nodesById[nodeId] !== undefined) {
@@ -119,8 +135,6 @@ class Renderer {
 
       const nodeGfx = new PIXI.Container()
       nodeGfx.name = node.id
-      nodeGfx.x = node.x!
-      nodeGfx.y = node.y!
       nodeGfx.interactive = true
       nodeGfx.buttonMode = true
       nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
@@ -147,8 +161,6 @@ class Renderer {
 
       // TODO - don't render label if doesn't exist
       const labelGfx = new PIXI.Container()
-      labelGfx.x = node.x!
-      labelGfx.y = node.y!
       labelGfx.interactive = true
       labelGfx.buttonMode = true
 
@@ -184,21 +196,27 @@ class Renderer {
     const deltaPercent = Math.min(1, this.updateTransition / this.ANIMATION_DURATION)
 
     if (this.dirtyData || deltaPercent < 1) {
-      this.linksLayer.clear()
-      this.linksLayer.alpha = 0.6
+      for (const edgeId in this.edgesById) {
+        const edge = this.edgesById[edgeId].edge
+        let edgeGfx = this.edgesById[edgeId].edgeGfx
 
-      for (const edge in this.edgesById) {
-        this.linksLayer.lineStyle(1, 0x999999)
-        this.linksLayer.moveTo(
-          interpolatePosition(this.edgesById[edge].source.x0 || 0, this.edgesById[edge].source.x!, deltaPercent),
-          interpolatePosition(this.edgesById[edge].source.y0 || 0, this.edgesById[edge].source.y!, deltaPercent)
+        edgeGfx.clear()
+        edgeGfx.lineStyle(
+          this.edgeStyleSelector(edge, 'width'),
+          colorToNumber(this.edgeStyleSelector(edge, 'stroke')),
+          this.edgeStyleSelector(edge, 'strokeOpacity')
         )
-        this.linksLayer.lineTo(
-          interpolatePosition(this.edgesById[edge].target.x0 || 0, this.edgesById[edge].target.x!, deltaPercent),
-          interpolatePosition(this.edgesById[edge].target.y0 || 0, this.edgesById[edge].target.y!, deltaPercent)
+
+        edgeGfx.moveTo(
+          interpolatePosition(edge.source.x0 || 0, edge.source.x!, deltaPercent),
+          interpolatePosition(edge.source.y0 || 0, edge.source.y!, deltaPercent)
         )
+        edgeGfx.lineTo(
+          interpolatePosition(edge.target.x0 || 0, edge.target.x!, deltaPercent),
+          interpolatePosition(edge.target.y0 || 0, edge.target.y!, deltaPercent)
+        )
+        edgeGfx.endFill()
       }
-      this.linksLayer.endFill()
   
       for (const nodeId in this.nodesById) {
         const node = this.nodesById[nodeId].node
