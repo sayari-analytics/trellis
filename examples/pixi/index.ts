@@ -1,10 +1,11 @@
 import { interval } from 'rxjs'
 import { map, take } from 'rxjs/operators'
+import { scaleOrdinal } from 'd3-scale'
+import { schemeCategory10 } from 'd3-scale-chromatic'
 import { Node, Edge } from '../../src/index'
 import { PixiRenderer, PixiRenderer2 } from '../../src/renderers/pixi'
 import { data, large, mediumLg, mediumSm } from '../data'
-import { scaleOrdinal } from 'd3-scale'
-import { schemeCategory10 } from 'd3-scale-chromatic'
+import { stats } from '../../src/stats'
 
 
 const render = PixiRenderer2({ id: 'graph', nodeStyle: { stroke: '#fff' } })

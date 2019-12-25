@@ -1,12 +1,13 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
-// import * as GStats from 'gstats'
+import * as GStats from 'gstats'
 import { Options, DEFAULT_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
 import { Edge, Node, Graph, PositionedNode, PositionedEdge } from '../index'
 import { animationFrameLoop } from '../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
 import { color } from 'd3-color'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
+import { stats } from '../stats'
 
 
 const colorToNumber = (colorString: string): number => {
@@ -68,6 +69,10 @@ class Renderer {
     })
     this.app.view.style.width = `${SCREEN_WIDTH}px`
     this.labelsLayer.interactiveChildren = false
+
+    const pixiHooks = new GStats.PIXIHooks(this.app)
+    const gstats = new GStats.StatsJSAdapter(pixiHooks, stats)
+    document.body.appendChild(gstats.stats.dom || gstats.stats.domElement)
     
     this.viewport = new Viewport({
       screenWidth: SCREEN_WIDTH,
@@ -172,7 +177,7 @@ class Renderer {
 
   private animate = () => {
     const updateTime2 = Date.now()
-    const deltaTime = Math.min(100, Math.max(0, updateTime2 - this.updateTime))
+    const deltaTime = Math.min(20, Math.max(0, updateTime2 - this.updateTime))
     // const deltaTime = updateTime2 - this.updateTime
     this.updateTime = updateTime2
     this.updateTransition += deltaTime
