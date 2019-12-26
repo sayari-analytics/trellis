@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import * as GStats from 'gstats'
-import { Options, DEFAULT_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
+import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
 import { Edge, Node, Graph, PositionedNode, PositionedEdge } from '../index'
 import { animationFrameLoop } from '../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
@@ -45,7 +45,7 @@ class Renderer {
   app: PIXI.Application
   viewport: Viewport
 
-  constructor({ id, tick = DEFAULT_OPTIONS.tick, nodeStyle = DEFAULT_OPTIONS.nodeStyle, edgeStyle = DEFAULT_OPTIONS.edgeStyle }: Options) {
+  constructor({ id, tick = DEFAULT_RENDERER_OPTIONS.tick, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle }: RendererOptions) {
     this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
     this.edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
 
@@ -87,6 +87,7 @@ class Renderer {
   
     this.app.stage.addChild(this.viewport.drag().pinch().wheel().decelerate())
   
+    this.viewport.clampZoom({ minWidth: 600, maxWidth: 50000 })
     this.viewport.center = new PIXI.Point(WORLD_WIDTH / 6, WORLD_HEIGHT / 6)
     this.viewport.setZoom(0.5, true)
     this.viewport.addChild(this.linksLayer)
@@ -104,7 +105,7 @@ class Renderer {
   layout = (graph: {
     nodes: { [key: string]: Node },
     edges: { [key: string]: Edge },
-    options?: Partial<Options>
+    options?: Partial<RendererOptions>
   }) => this.graph.layout(graph)
 
   private update = ({ nodes, edges }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => {
@@ -119,19 +120,21 @@ class Renderer {
       const edgeGfx = new PIXI.Graphics()
 
       const labelGfx = new PIXI.Container()
-      // labelGfx.interactive = true
-      // labelGfx.buttonMode = true
 
-      // TODO - don't render label if doesn't exist
+      /**
+       * TODO
+       * - don't render label if doesn't exist
+       */
       const labelText = new PIXI.Text(edge.label || '', {
         fontFamily: 'Helvetica',
-        fontSize: 10,
+        fontSize: 10 * 2,
         fill: 0x444444,
         lineJoin: "round",
         stroke: "#fafafaee",
-        strokeThickness: 2,
+        strokeThickness: 2 * 2,
       })
       labelText.name = 'text'
+      labelText.scale.set(0.5)
       labelText.anchor.set(0.5, 0.5)
       labelGfx.addChild(labelText)
 
@@ -154,6 +157,9 @@ class Renderer {
 
       const radius = this.nodeStyleSelector(node, 'width') / 2
 
+      /**
+       * TODO - implement occlusion for nodes and node text
+       */
       const nodeGfx = new PIXI.Container()
       nodeGfx.name = node.id
       nodeGfx.interactive = true
@@ -182,19 +188,18 @@ class Renderer {
 
       // TODO - don't render label if doesn't exist
       const labelGfx = new PIXI.Container()
-      // labelGfx.interactive = true
-      // labelGfx.buttonMode = true
 
       const labelText = new PIXI.Text(node.label || '', {
         fontFamily: 'Helvetica',
-        fontSize: 12,
+        fontSize: 12 * 2,
         fill: 0x333333,
         lineJoin: "round",
         stroke: "#fafafaee",
-        strokeThickness: 2,
+        strokeThickness: 2 * 2,
       })
       labelText.x = 0
-      labelText.y = radius + 1 // LABEL_Y_PADDING
+      labelText.y = radius + LABEL_Y_PADDING
+      labelText.scale.set(0.5)
       labelText.anchor.set(0.5, 0)
       labelGfx.addChild(labelText)
 
@@ -222,11 +227,6 @@ class Renderer {
         const edgeGfx = this.edgesById[edgeId].edgeGfx
         const labelGfx = this.edgesById[edgeId].labelGfx
 
-        /**
-         * Is there a way to just move the line, rather than clearing it and rerendering?
-         * if so, the styling and handlers can move to the update phase
-         * also, when dragging a node, only a few edges are moving.  current implementation inefficiently clears + redraws all edges
-         */
         edgeGfx.clear()
         // edgeGfx.interactive = true
         // edgeGfx.buttonMode = true
@@ -261,13 +261,30 @@ class Renderer {
           labelGfx.rotation = rotation
         }
 
+        const text = labelGfx.getChildByName('text') as PIXI.Text
+        // labelGfx.visible = false
+        /**
+         * TODO
+         * - only double text resolution at high zoom, using occlusion (edge can't be occluded, but edge label can)
+         * - half text resolution at low zoom
+         * - though dynamically changing font size has really bad performance... maybe separate text objects should be created on initialization, and they are swapped on zoom
+         */
+        // if (this.viewport.scale.x > 1) {
+        //   text.style.fontSize *= 2
+        //   text.style.strokeThickness *= 2
+        //   text.scale.set(0.5)
+        // } else {
+        //   text.style.fontSize /= 2
+        //   text.style.strokeThickness /= 2
+        //   text.scale.set(1)
+        // }
+
         /**
          * hide label if line is too long 
          * TODO
          * - truncate text, rather than hiding, or shrink size
          * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
          */
-        const text = labelGfx.getChildByName('text') as PIXI.Text
         // const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2)) -
         //   (this.nodeStyleSelector(edge.source, 'width') / 2) - 
         //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
@@ -284,6 +301,7 @@ class Renderer {
         const node = this.nodesById[nodeId].node
         const nodeGfx = this.nodesById[nodeId].nodeGfx
         const labelGfx = this.nodesById[nodeId].labelGfx
+        // labelGfx.visible = false
         /**
          * TODO
          * - ensure that if a node's position changes while it is in transition, it's movement is interpolated from it's current position, not it's new starting position (x0/y0)
@@ -334,6 +352,7 @@ class Renderer {
       this.viewport.dirty = false
       this.app.render()
     } else if (this.viewport.dirty) {
+      // console.log(this.viewport.scale.x, this.viewport.scale.y)
       this.viewport.dirty = false
       this.app.render()
     }
@@ -391,7 +410,7 @@ class Renderer {
   }
 }
 
-export const PixiRenderer2 = (options: Options) => {
+export const PixiRenderer2 = (options: RendererOptions) => {
   const pixi = new Renderer(options);
   (window as unknown as { pixi: any }).pixi = pixi
   return pixi
@@ -399,10 +418,10 @@ export const PixiRenderer2 = (options: Options) => {
 
 export const PixiRenderer = ({
   id,
-  tick = DEFAULT_OPTIONS.tick,
+  tick = DEFAULT_RENDERER_OPTIONS.tick,
   nodeStyle = {},
   edgeStyle = {},
-}: Options) => {
+}: RendererOptions) => {
   const container = document.getElementById(id)
   if (container === null) {
     throw new Error(`Element #${id} not found`)

@@ -3,7 +3,7 @@ import { zoom } from 'd3-zoom'
 import { drag as dragBehavior } from 'd3-drag'
 import raf from 'raf'
 import { Graph, Edge, Node, PositionedNode, PositionedEdge } from '../index'
-import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, Options, DEFAULT_OPTIONS } from './options'
+import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererOptions, DEFAULT_RENDERER_OPTIONS } from './options'
 import { interpolateDuration } from '../utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { nodeStyleSelector, edgeStyleSelector } from './utils'
@@ -11,10 +11,10 @@ import { nodeStyleSelector, edgeStyleSelector } from './utils'
 
 export const D3Renderer = ({
   id,
-  tick = DEFAULT_OPTIONS.tick,
+  tick = DEFAULT_RENDERER_OPTIONS.tick,
   nodeStyle = {},
   edgeStyle = {},
-}: Options) => {
+}: RendererOptions) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
   if (parentElement === null) {

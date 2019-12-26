@@ -1,5 +1,5 @@
 import { SimulationNodeDatum } from 'd3-force'
-import { Simulation, LayoutResultEvent, TypedMessageEvent } from './simulation'
+import { Simulation, LayoutResultEvent, TypedMessageEvent, DEFAULT_SIMULATION_OPTIONS, SimulationOptions } from './simulation'
 import { NodeStyle, EdgeStyle } from './renderers/options'
 
 
@@ -28,32 +28,21 @@ export type PositionedEdge = {
   style?: Partial<EdgeStyle>
 }
 
-export type Options = {
-  strength: number
-  distance: number
-  tick: number | null
-}
-
-export const DEFAULT_OPTIONS: Options = {
-  strength: 400,
-  distance: 300,
-  tick: 300,
-}
-
 
 export class Graph {
 
-  workerUrl: string
   worker: Worker
+  dispose: () => void
   handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => void
 
   nodes: { [key: string]: PositionedNode } = {}
   edges: { [key: string]: PositionedEdge } = {}
-  options: Options = DEFAULT_OPTIONS
+  options: SimulationOptions = DEFAULT_SIMULATION_OPTIONS
 
   constructor(handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => void) {
-    this.workerUrl = URL.createObjectURL(Simulation())
-    this.worker = new Worker(this.workerUrl)
+    const { worker, dispose } = Simulation()
+    this.worker = worker
+    this.dispose = dispose
     this.handler = handler
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
       this.nodes = event.data.nodes
@@ -62,10 +51,10 @@ export class Graph {
     }
   }
 
-  layout = ({ nodes, edges, options: { strength = DEFAULT_OPTIONS.strength, tick = DEFAULT_OPTIONS.tick } = {} }: {
+  layout = ({ nodes, edges, options: { strength = DEFAULT_SIMULATION_OPTIONS.strength, tick = DEFAULT_SIMULATION_OPTIONS.tick } = {} }: {
     nodes: { [key: string]: Node },
     edges: { [key: string]: Edge },
-    options?: Partial<Options>
+    options?: Partial<SimulationOptions>
   }) => {
     // TODO - noop on nodes/edges/options equality
     // TODO - does it make sense to only serialize node ids and edge id/source/target? e.g. drop style and remerge 
@@ -94,10 +83,5 @@ export class Graph {
   tick = () => {
     this.worker.postMessage({ type: 'tick' })
     return this
-  }
-
-  dispose = () => {
-    this.worker.terminate()
-    URL.revokeObjectURL(this.workerUrl)
   }
 }

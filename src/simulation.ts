@@ -1,5 +1,18 @@
 import { forceSimulation, forceManyBody, forceCenter, forceLink } from 'd3-force'
-import { PositionedNode, PositionedEdge, Options, DEFAULT_OPTIONS } from './index'
+import { PositionedNode, PositionedEdge } from './index'
+
+
+export type SimulationOptions = {
+  strength: number
+  distance: number
+  tick: number | null
+}
+
+export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
+  strength: 400,
+  distance: 300,
+  tick: 300,
+}
 
 
 const d3ForceScript = `
@@ -31,7 +44,7 @@ export type LayoutEvent = {
   type: 'layout',
   nodes: { [key: string]: PositionedNode }
   edges: { [key: string]: PositionedEdge }
-  options: Options
+  options: SimulationOptions
 }
 
 export type DragStartEvent = {
@@ -69,8 +82,8 @@ export type LayoutResultEvent = {
 }
 
 
-const worker = ((DEFAULT_OPTIONS: Options) => {
-  const options: Options = {
+const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
+  const options: SimulationOptions = {
     strength: DEFAULT_OPTIONS.strength,
     distance: DEFAULT_OPTIONS.distance,
     tick: -1,
@@ -78,21 +91,28 @@ const worker = ((DEFAULT_OPTIONS: Options) => {
   let nodes: { [key: string]: PositionedNode } = {}
   let edges: { [key: string]: PositionedEdge } = {}
 
-  const simulation = d3.forceSimulation()
-    .force('charge', d3.forceManyBody().strength(-options.strength))
-    .force('center', d3.forceCenter())
-    .stop()
-    .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
   const forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
     .id((node) => node.id)
     .distance(options.distance)
+  const forceManyBody = d3.forceManyBody().strength(-options.strength)
+  const simulation = d3.forceSimulation()
+    .force('charge', forceManyBody)
+    .force('center', d3.forceCenter())
+    .stop()
+    .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
   
   const layout = (data: LayoutEvent) => {
     let update = false
 
     if (data.options.strength !== options.strength) {
-      simulation.force('charge', d3.forceManyBody().strength(-data.options.strength))
+      forceManyBody.strength(-data.options.strength)
       options.strength = data.options.strength
+      update = true
+    }
+
+    if (data.options.distance !== options.distance) {
+      forceLink.distance(options.distance)
+      options.distance = data.options.distance
       update = true
     }
 
@@ -203,7 +223,25 @@ const worker = ((DEFAULT_OPTIONS: Options) => {
       tick(data)
     }
   }
-}).toString()
+}
 
 
-export const Simulation = () => new Blob([`${d3ForceScript}(${worker})(${JSON.stringify(DEFAULT_OPTIONS)})`], { type: 'application/javascript' })
+export const Simulation = () => {
+  const workerUrl = URL.createObjectURL(
+    new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)})`], { type: 'application/javascript' })
+  )
+  const worker = new Worker(workerUrl)
+
+  /**
+   * TODO
+   * - return { simulation: Simulation, dispose: () => void }, where Simulation fully implements d3.Simulation,
+   *   with additional methods to update nodes/edges in place (e.g. so renderer can implement dragStart, drag, and dragEnd)
+   */
+  return {
+    worker,
+    dispose: () => {
+      worker.terminate()
+      URL.revokeObjectURL(workerUrl)
+    }
+  }
+}
