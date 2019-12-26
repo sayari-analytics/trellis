@@ -125,9 +125,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     for (const nodeId in data.nodes) {
       if (nodes[nodeId] === undefined) {
         // enter node
-        nodes[nodeId] = Object.assign(data.nodes[nodeId])
+        nodes[nodeId] = data.nodes[nodeId]
         update = true
-      } else if (nodes[nodeId] !== data.nodes[nodeId]) { // TODO - referential equality won't work here?  what level of equality is necessary
+      // } else if (nodes[nodeId] !== data.nodes[nodeId]) { // TODO - referential equality won't work here?  what level of equality is necessary
+      } else {
         // update node
         nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId], { x0: nodes[nodeId].x, y0: nodes[nodeId].y })
       }

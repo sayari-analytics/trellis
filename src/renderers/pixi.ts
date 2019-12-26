@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import * as GStats from 'gstats'
 import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
-import { Edge, Node, Graph, PositionedNode, PositionedEdge } from '../index'
+import { Graph, PositionedNode, PositionedEdge } from '../index'
 import { animationFrameLoop } from '../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
 import { color } from 'd3-color'
@@ -21,6 +21,7 @@ const colorToNumber = (colorString: string): number => {
 
 const LABEL_X_PADDING = 4
 const LABEL_Y_PADDING = 2
+const ANIMATION_DURATION = 800
 
 
 class Renderer {
@@ -30,8 +31,8 @@ class Renderer {
   hoveredNode?: PositionedNode
   clickedNode?: PositionedNode
   dirtyData = false
-  ANIMATION_DURATION = 800
-  updateTransition = this.ANIMATION_DURATION
+  updateTransition = ANIMATION_DURATION
+  deltaPercent = 1
   updateTime = Date.now()
   linksLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
@@ -86,7 +87,7 @@ class Renderer {
   
     this.app.stage.addChild(this.viewport.drag().pinch().wheel().decelerate())
   
-    this.viewport.clampZoom({ minWidth: 600, maxWidth: 50000 })
+    this.viewport.clampZoom({ minWidth: 600, maxWidth: 60000 })
     this.viewport.center = new PIXI.Point(WORLD_WIDTH / 6, WORLD_HEIGHT / 6)
     this.viewport.setZoom(0.5, true)
     this.viewport.addChild(this.linksLayer)
@@ -104,7 +105,7 @@ class Renderer {
   layout = ({ nodes, edges }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => {
     for (const edgeId in edges) {
       if (this.edgesById[edgeId] !== undefined) {
-        this.edgesById[edgeId] = { ...this.edgesById[edgeId], edge: edges[edgeId] }
+        this.edgesById[edgeId].edge = edges[edgeId]
         continue        
       }
 
@@ -142,7 +143,12 @@ class Renderer {
 
     for (const nodeId in nodes) {
       if (this.nodesById[nodeId] !== undefined) {
-        this.nodesById[nodeId] = { ...this.nodesById[nodeId], node: nodes[nodeId] }
+        // if nodes are currently animating to their new location, don't update node interpolation start position
+        if (this.deltaPercent < 1) {
+          nodes[nodeId].x0 = this.nodesById[nodeId].nodeGfx.position.x
+          nodes[nodeId].y0 = this.nodesById[nodeId].nodeGfx.position.y
+        }
+        this.nodesById[nodeId].node = nodes[nodeId]
         continue
       }
 
@@ -212,9 +218,9 @@ class Renderer {
     // const deltaTime = updateTime2 - this.updateTime
     this.updateTime = updateTime2
     this.updateTransition += deltaTime
-    const deltaPercent = Math.min(1, this.updateTransition / this.ANIMATION_DURATION)
+    this.deltaPercent = Math.min(1, this.updateTransition / ANIMATION_DURATION)
 
-    if (this.dirtyData || deltaPercent < 1) {
+    if (this.dirtyData || this.deltaPercent < 1) {
       for (const edgeId in this.edgesById) {
         const edge = this.edgesById[edgeId].edge
         const edgeGfx = this.edgesById[edgeId].edgeGfx
@@ -236,10 +242,10 @@ class Renderer {
           this.edgeStyleSelector(edge, 'strokeOpacity')
         )
 
-        const xStart = interpolatePosition(edge.source.x0 || 0, edge.source.x!, deltaPercent)
-        const yStart = interpolatePosition(edge.source.y0 || 0, edge.source.y!, deltaPercent)
-        const xEnd = interpolatePosition(edge.target.x0 || 0, edge.target.x!, deltaPercent)
-        const yEnd = interpolatePosition(edge.target.y0 || 0, edge.target.y!, deltaPercent)
+        const xStart = interpolatePosition(edge.source.x0 || 0, edge.source.x!, this.deltaPercent)
+        const yStart = interpolatePosition(edge.source.y0 || 0, edge.source.y!, this.deltaPercent)
+        const xEnd = interpolatePosition(edge.target.x0 || 0, edge.target.x!, this.deltaPercent)
+        const yEnd = interpolatePosition(edge.target.y0 || 0, edge.target.y!, this.deltaPercent)
         edgeGfx.moveTo(xStart, yStart)
         edgeGfx.lineTo(xEnd, yEnd)
         edgeGfx.endFill()
@@ -302,8 +308,8 @@ class Renderer {
          * - in simulation, when a new node enters, set it's position to either one of it's neighbors, or the rough centroid of some/all of its neighbors (will require an adjacency lookup table)
          *   - does keylines do this automatically?  or are we doing on insert (though if so, how do we do it w/o an adjacency lookup?)
          */
-        const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
-        const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
+        const x = interpolatePosition(node.x0 || 0, node.x!, this.deltaPercent)
+        const y = interpolatePosition(node.y0 || 0, node.y!, this.deltaPercent)
         nodeGfx.position = new PIXI.Point(x, y)
         labelGfx.position = new PIXI.Point(x, y)
       }
