@@ -1,13 +1,15 @@
 import { interval } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { Node, Edge } from '../../src/index'
+import { Node, Edge, Graph } from '../../src/index'
 import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from '../data'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
 
 
-const render = D3Renderer({ id: 'graph', nodeStyles: { stroke: '#fff' } })
+const graph = new Graph()
+const renderer = D3Renderer({ id: 'graph', graph, nodeStyle: { stroke: '#fff' } })
+graph.onLayout(renderer)
 
 const NODES_PER_TICK = 15
 
@@ -48,5 +50,5 @@ interval(800).pipe(
       }, { nodes: {}, edges: {} })
   }),
 ).subscribe({
-  next: ({ nodes, edges }) => render(nodes, edges)
+  next: (graphData) => graph.layout(graphData)
 })

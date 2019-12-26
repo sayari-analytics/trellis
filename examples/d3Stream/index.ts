@@ -1,13 +1,17 @@
 import { interval } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { Node, Edge } from '../../src/index'
+import { Node, Edge, Graph } from '../../src/index'
 import { D3Renderer } from '../../src/renderers/d3'
 import { data, large, mediumLg, mediumSm } from '../data'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
+import { SimulationOptions } from '../../src/simulation'
 
 
-const render = D3Renderer({ id: 'graph', tick: null, nodeStyles: { stroke: '#fff' } })
+const graph = new Graph()
+const renderer = D3Renderer({ id: 'graph', graph, nodeStyle: { stroke: '#fff' } })
+graph.onLayout(renderer)
+
 
 const NODES_PER_TICK = 20
 
@@ -35,7 +39,7 @@ interval(1000).pipe(
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)
-      .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge } }>((graph, node) => {
+      .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge }, options: Partial<SimulationOptions> }>((graph, node) => {
         graph.nodes[node.id] = node
 
         edges.forEach((edge) => {
@@ -45,8 +49,8 @@ interval(1000).pipe(
         })
 
         return graph
-      }, { nodes: {}, edges: {} })
+      }, { nodes: {}, edges: {}, options: { tick: null } })
   }),
 ).subscribe({
-  next: ({ nodes, edges }) => render(nodes, edges)
+  next: (graphData) => graph.layout(graphData)
 })

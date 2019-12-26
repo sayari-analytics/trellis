@@ -7,11 +7,12 @@ import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererOptions, DEFAULT_REND
 import { interpolateDuration } from '../utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { nodeStyleSelector, edgeStyleSelector } from './utils'
+import { SimulationOptions } from '../simulation'
 
 
 export const D3Renderer = ({
   id,
-  tick = DEFAULT_RENDERER_OPTIONS.tick,
+  graph,
   nodeStyle = {},
   edgeStyle = {},
 }: RendererOptions) => {
@@ -66,13 +67,13 @@ export const D3Renderer = ({
     return interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])(percent)
   }
 
-  const graph = new Graph(({ nodes, edges }) => {
+  return ({ nodes, edges, options }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge }, options: SimulationOptions }) => {
     /**
      * interpolation animations are disabled while dragging, which means adding new nodes while dragging is weirdly jerky
      * why does interpolating layout while dragging not really work? should node position interpolation be disabled only for the single node?
      * or should we split selection/rendering between dragged nodes and other nodes
      */
-    (draggedNode !== undefined || tick === null ? synchronousLayout : interpolateLayout)((n: number) => {
+    (draggedNode !== undefined || options.tick === null ? synchronousLayout : interpolateLayout)((n: number) => {
       nodesContainer
         .selectAll<SVGLineElement, PositionedNode>('circle')
         .data(Object.values(nodes), (d) => d.id)
@@ -109,9 +110,5 @@ export const D3Renderer = ({
         .style('stroke-width', edgeWidthSelector)
         .style('stroke-opacity', edgeStrokeOpacitySelector)
     })
-  })
-
-  return (nodes: { [key: string]: Node }, edges: { [key: string]: Edge }) => {
-    graph.layout({ nodes, edges, options: { tick } })
   }
 }

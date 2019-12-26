@@ -226,10 +226,11 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
 }
 
 
+const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)})`], { type: 'application/javascript' })
+
+
 export const Simulation = () => {
-  const workerUrl = URL.createObjectURL(
-    new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)})`], { type: 'application/javascript' })
-  )
+  const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
 
   /**

@@ -1,7 +1,9 @@
 import raf from 'raf'
 
 
-// TODO - move to renderers/utils.ts?
+export const noop = () => {}
+
+
 export const throttle = <T extends unknown[]>(cb: (...args: T) => void, duration: number) => {
   let clear = true
 

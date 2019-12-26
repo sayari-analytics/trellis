@@ -2,28 +2,54 @@ import { interval } from 'rxjs'
 import { map, take } from 'rxjs/operators'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
-import { Node, Edge } from '../../src/index'
-import { PixiRenderer, PixiRenderer2 } from '../../src/renderers/pixi'
+import { Node, Edge, Graph } from '../../src/index'
+import { PixiRenderer } from '../../src/renderers/pixi'
 import { data, large, mediumLg, mediumSm } from '../data'
+// import graph from '../../tmp-data'
 import { stats } from '../../src/stats'
 
 
-const render = PixiRenderer2({ id: 'graph', nodeStyle: { stroke: '#fff' } })
+const graph = new Graph()
+const renderer = PixiRenderer({ id: 'graph', graph })
+graph.onLayout(renderer.layout)
 
 const NODES_PER_TICK = 20
 
 const colorScale = scaleOrdinal(schemeCategory10)
 
-const nodes: Node[] = data.nodes.map<Node>(({ id, group }) => ({
+// const nodes: Node[] = Object.values(graph.nodes).map<Node>(({ id, label, type }) => ({
+//   id,
+//   label,
+//   style: {
+//     width: 62,
+//     fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
+//     stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
+//     strokeWidth: 4,
+//   }
+// }))
+
+// const edges: Edge[] = Object.entries(graph.edges).map<Edge>(([id, { field, source, target }]) => ({
+//   id,
+//   source,
+//   target,
+//   label: field.replace(/_/g, ' '),
+// }))
+
+const nodes: Node[] = mediumSm.nodes.map<Node>(({ id, group }) => ({
   id,
   label: id,
   style: {
-    width: (group + 3) * 3,
+    width: (group + 3) * 5,
     fill: colorScale(group.toString()),
+    stroke: '#fff',
+    // width: 62,
+    // fill: group > 3 ? '#ffaf1d' : '#7CBBF3',
+    // stroke: group > 3 ? '#F7CA4D' : '#90D7FB',
+    // strokeWidth: 4,
   }
 }))
 
-const edges: Edge[] = data.links.map<Edge>(({ source, target, value }) => ({
+const edges: Edge[] = mediumSm.links.map<Edge>(({ source, target, value }) => ({
   id: `${source}|${target}`,
   source,
   target,
@@ -34,39 +60,36 @@ const edges: Edge[] = data.links.map<Edge>(({ source, target, value }) => ({
 }))
 
 
-// interval(1000).pipe(
-//   take(Math.ceil(nodes.length / NODES_PER_TICK)),
-//   map((idx) => {
-//     return nodes
-//       .slice(0, (idx + 1) * NODES_PER_TICK)
-//       .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge } }>((graph, node) => {
-//         graph.nodes[node.id] = node
+interval(1000).pipe(
+  take(Math.ceil(nodes.length / NODES_PER_TICK)),
+  map((idx) => {
+    return nodes
+      .slice(0, (idx + 1) * NODES_PER_TICK)
+      .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge } }>((graph, node) => {
+        graph.nodes[node.id] = node
 
-//         edges.forEach((edge) => {
-//           if (graph.nodes[edge.source] && graph.nodes[edge.target]) {
-//             graph.edges[edge.id] = edge
-//           }
-//         })
+        edges.forEach((edge) => {
+          if (graph.nodes[edge.source] && graph.nodes[edge.target]) {
+            graph.edges[edge.id] = edge
+          }
+        })
 
-//         return graph
-//       }, { nodes: {}, edges: {} })
-//   }),
-// ).subscribe({
-//   next: (graph) => render.layout(graph),
-//   error: (err) => console.error(err),
-//   complete: () => console.log('complete'),
-// })
-
-render.layout({
-  nodes: nodes.reduce<{ [id: string]: Node }>((nodeMap, node) => {
-    nodeMap[node.id] = node
-    return nodeMap
-  }, {}),
-  edges: edges.reduce<{ [id: string]: Edge }>((edgeMap, edge) => {
-    edgeMap[edge.id] = edge
-    return edgeMap
-  }, {}),
-  options: {
-    strength: 500,
-  }
+        return graph
+      }, { nodes: {}, edges: {} })
+  }),
+).subscribe({
+  next: (graphData) => graph.layout(graphData),
+  error: (err) => console.error(err),
+  complete: () => console.log('complete'),
 })
+
+// graph.layout({
+//   nodes: nodes.reduce<{ [id: string]: Node }>((nodeMap, node) => {
+//     nodeMap[node.id] = node
+//     return nodeMap
+//   }, {}),
+//   edges: edges.reduce<{ [id: string]: Edge }>((edgeMap, edge) => {
+//     edgeMap[edge.id] = edge
+//     return edgeMap
+//   }, {}),
+// })

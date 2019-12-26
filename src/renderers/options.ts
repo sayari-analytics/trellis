@@ -1,5 +1,4 @@
-import { PositionedNode, PositionedEdge } from '../index'
-import { DEFAULT_SIMULATION_OPTIONS } from '../simulation'
+import { PositionedNode, PositionedEdge, Graph } from '../index'
 
 
 export type NodeStyle = {
@@ -19,7 +18,7 @@ export type EdgeStyle = {
 
 export type RendererOptions = {
   id: string
-  tick?: number | null
+  graph: Graph
   strength?: number
   nodeStyle?: Partial<NodeStyle>
   edgeStyle?: Partial<EdgeStyle>
@@ -31,7 +30,7 @@ export type RendererOptions = {
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {
   width: 62,
-  strokeWidth: 4,
+  strokeWidth: 2,
   fill: '#ff4b4b',
   stroke: '#bb0000',
   fillOpacity: 1,
@@ -44,8 +43,7 @@ export const DEFAULT_EDGE_STYLES: EdgeStyle = {
   strokeOpacity: 1,
 }
 
-export const DEFAULT_RENDERER_OPTIONS = {
-  tick: DEFAULT_SIMULATION_OPTIONS.tick, // TODO - if Graph is initialized outside of renderer, SimulationOptions doesn't need to include any RendererOptions 
+export const DEFAULT_RENDERER_OPTIONS: Partial<RendererOptions> = {
   nodeStyle: {},
   edgeStyle: {},
 }
