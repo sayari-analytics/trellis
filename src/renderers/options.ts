@@ -29,8 +29,8 @@ export type Options = {
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {
-  width: 12,
-  strokeWidth: 2,
+  width: 62,
+  strokeWidth: 4,
   fill: '#ff4b4b',
   stroke: '#bb0000',
   fillOpacity: 1,
@@ -39,7 +39,7 @@ export const DEFAULT_NODE_STYLES: NodeStyle = {
 
 export const DEFAULT_EDGE_STYLES: EdgeStyle = {
   width: 1,
-  stroke: '#888',
+  stroke: '#ccc',
   strokeOpacity: 1,
 }
 

@@ -20,7 +20,7 @@ const colorToNumber = (colorString: string): number => {
 }
 
 const LABEL_X_PADDING = 4
-const LABEL_Y_PADDING = 1
+const LABEL_Y_PADDING = 2
 
 
 class Renderer {
@@ -264,7 +264,7 @@ class Renderer {
         /**
          * hide label if line is too long 
          * TODO
-         * - truncate text, rather than hiding
+         * - truncate text, rather than hiding, or shrink size
          * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
          */
         const text = labelGfx.getChildByName('text') as PIXI.Text
@@ -662,6 +662,12 @@ export const PixiRenderer = ({
       labelGfx.interactive = true
       labelGfx.buttonMode = true
 
+      // const labelText = new PIXI.BitmapText(node.label || '', {
+      //   font: {
+      //     name: LABEL_FONT_FAMILY,
+      //     size: LABEL_FONT_SIZE,          
+      //   }
+      // })
       const labelText = new PIXI.Text(node.label || '', {
         fontFamily: LABEL_FONT_FAMILY,
         fontSize: LABEL_FONT_SIZE,

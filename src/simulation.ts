@@ -1,5 +1,5 @@
 import { forceSimulation, forceManyBody, forceCenter, forceLink } from 'd3-force'
-import { PositionedNode, PositionedEdge, Options } from './index'
+import { PositionedNode, PositionedEdge, Options, DEFAULT_OPTIONS } from './index'
 
 
 const d3ForceScript = `
@@ -69,9 +69,10 @@ export type LayoutResultEvent = {
 }
 
 
-const worker = (() => {
+const worker = ((DEFAULT_OPTIONS: Options) => {
   const options: Options = {
-    strength: 250,
+    strength: DEFAULT_OPTIONS.strength,
+    distance: DEFAULT_OPTIONS.distance,
     tick: -1,
   } // TODO - are all Options passed?  or partial w/ defaults
   let nodes: { [key: string]: PositionedNode } = {}
@@ -82,7 +83,9 @@ const worker = (() => {
     .force('center', d3.forceCenter())
     .stop()
     .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
-  const forceLink = d3.forceLink<PositionedNode, PositionedEdge>().id((node) => node.id)
+  const forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
+    .id((node) => node.id)
+    .distance(options.distance)
   
   const layout = (data: LayoutEvent) => {
     let update = false
@@ -203,4 +206,4 @@ const worker = (() => {
 }).toString()
 
 
-export const simulation = new Blob([`${d3ForceScript}(${worker})()`], { type: 'application/javascript' })
+export const Simulation = () => new Blob([`${d3ForceScript}(${worker})(${JSON.stringify(DEFAULT_OPTIONS)})`], { type: 'application/javascript' })

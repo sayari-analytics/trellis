@@ -1,5 +1,5 @@
 import { SimulationNodeDatum } from 'd3-force'
-import { simulation, LayoutResultEvent, TypedMessageEvent } from './simulation'
+import { Simulation, LayoutResultEvent, TypedMessageEvent } from './simulation'
 import { NodeStyle, EdgeStyle } from './renderers/options'
 
 
@@ -30,11 +30,13 @@ export type PositionedEdge = {
 
 export type Options = {
   strength: number
+  distance: number
   tick: number | null
 }
 
 export const DEFAULT_OPTIONS: Options = {
-  strength: 250,
+  strength: 400,
+  distance: 300,
   tick: 300,
 }
 
@@ -50,7 +52,7 @@ export class Graph {
   options: Options = DEFAULT_OPTIONS
 
   constructor(handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => void) {
-    this.workerUrl = URL.createObjectURL(simulation)
+    this.workerUrl = URL.createObjectURL(Simulation())
     this.worker = new Worker(this.workerUrl)
     this.handler = handler
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
