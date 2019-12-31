@@ -9,8 +9,8 @@ export type SimulationOptions = {
 }
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-  strength: 400,
-  distance: 300,
+  strength: 250, // 400,
+  distance: 120, // 300,
   tick: 300,
 }
 

@@ -1,4 +1,4 @@
-import { PositionedNode, PositionedEdge, Graph } from '../index'
+import { PositionedNode, PositionedEdge } from '../index'
 
 
 export type NodeStyle = {
@@ -18,14 +18,16 @@ export type EdgeStyle = {
 
 export type RendererOptions = {
   id: string
-  graph: Graph
   strength?: number
   nodeStyle?: Partial<NodeStyle>
   edgeStyle?: Partial<EdgeStyle>
-  onNodeHover?: (node: PositionedNode) => void
-  onNodeClick?: (node: PositionedNode) => void
-  onEdgeHover?: (edge: PositionedEdge) => void
-  onEdgeClick?: (edge: PositionedEdge) => void
+  onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeMouseDown?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onEdgeHover?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeClick?: (edge: PositionedEdge, details: { x: number, y: number }) => void
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {

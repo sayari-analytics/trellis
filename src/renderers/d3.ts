@@ -4,7 +4,7 @@ import { drag as dragBehavior } from 'd3-drag'
 import raf from 'raf'
 import { PositionedNode, PositionedEdge } from '../index'
 import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererOptions } from './options'
-import { interpolateDuration } from '../utils'
+import { interpolateDuration, noop } from '../utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { nodeStyleSelector, edgeStyleSelector } from './utils'
 import { SimulationOptions } from '../simulation'
@@ -12,9 +12,13 @@ import { SimulationOptions } from '../simulation'
 
 export const D3Renderer = ({
   id,
-  graph,
   nodeStyle = {},
   edgeStyle = {},
+  onNodeMouseEnter = noop,
+  onNodeMouseDown = noop,
+  onNodeDrag = noop,
+  onNodeMouseUp = noop,
+  onNodeMouseLeave = noop,
 }: RendererOptions) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
@@ -40,9 +44,9 @@ export const D3Renderer = ({
 
   let draggedNode: string | undefined
   const dragNode = dragBehavior<any, PositionedNode>()
-    .on('start', (d) => (draggedNode = d.id, graph.dragStart(d.id, event.x, event.y)))
-    .on('drag', (d) => graph.drag(d.id, event.x, event.y))
-    .on('end', (d) => (draggedNode = undefined, graph.dragEnd(d.id)))
+    .on('start', (d) => (draggedNode = d.id, onNodeMouseDown(d, { x: event.x, y: event.y })))
+    .on('drag', (d) => onNodeDrag(d, { x: event.x, y: event.y }))
+    .on('end', (d) => (draggedNode = undefined, onNodeMouseUp(d, { x: event.x, y: event.y })))
 
   const _nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
   const _edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })

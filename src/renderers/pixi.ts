@@ -2,8 +2,8 @@ import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import * as GStats from 'gstats'
 import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
-import { Graph, PositionedNode, PositionedEdge } from '../index'
-import { animationFrameLoop } from '../utils'
+import { PositionedNode, PositionedEdge } from '../index'
+import { animationFrameLoop, noop } from '../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
 import { color } from 'd3-color'
 import { stats } from '../stats'
@@ -26,6 +26,12 @@ const ANIMATION_DURATION = 800
 
 class Renderer {
 
+  onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeMouseDown?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
+
   nodeStyleSelector: NodeStyleSelector
   edgeStyleSelector: EdgeStyleSelector
   hoveredNode?: PositionedNode
@@ -42,14 +48,21 @@ class Renderer {
   nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container } } = {}
   edgesById: { [key: string]: { edge: PositionedEdge, edgeGfx: PIXI.Graphics, labelGfx: PIXI.Container } } = {}
 
-  graph: Graph
   app: PIXI.Application
   viewport: Viewport
 
-  constructor({ id, graph, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle }: RendererOptions) {
-    this.graph = graph
+  constructor({
+    id, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle,
+    onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
+  }: RendererOptions) {
+    this.onNodeMouseEnter = onNodeMouseEnter
+    this.onNodeMouseDown = onNodeMouseDown
+    this.onNodeDrag = onNodeDrag
+    this.onNodeMouseUp = onNodeMouseUp
+    this.onNodeMouseLeave = onNodeMouseLeave
     this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
     this.edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
+
 
     const container = document.getElementById(id)
     if (container === null) {
@@ -164,11 +177,11 @@ class Renderer {
       nodeGfx.interactive = true
       nodeGfx.buttonMode = true
       nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
-      nodeGfx.on('mouseover', this.hoverNode)
-      nodeGfx.on('mouseout', this.unhoverNode)
-      nodeGfx.on('mousedown', this.clickNode)
-      nodeGfx.on('mouseup', this.unclickNode)
-      nodeGfx.on('mouseupoutside', this.unclickNode)
+      nodeGfx.on('mouseover', this.nodeMouseOver)
+      nodeGfx.on('mouseout', this.nodeMouseOut)
+      nodeGfx.on('mousedown', this.nodeMouseDown)
+      nodeGfx.on('mouseup', this.nodeMouseUp)
+      nodeGfx.on('mouseupoutside', this.nodeMouseUp)
 
       const circle = new PIXI.Graphics()
       circle.x = 0
@@ -357,55 +370,62 @@ class Renderer {
     }
   }
 
-  private hoverNode = (event: PIXI.interaction.InteractionEvent) => {
+  private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
     if (this.clickedNode === undefined) {
-      this.hoveredNode = this.nodesById[event.currentTarget.name].node
+      const node = this.nodesById[event.currentTarget.name].node
+      this.hoveredNode = node
       this.dirtyData = true
+      const { x, y } = this.viewport.toWorld(event.data.global)
+      this.onNodeMouseEnter && this.onNodeMouseEnter(node, { x, y })
     }
   }
 
-  private unhoverNode = (event: PIXI.interaction.InteractionEvent) => {
-    if (
-      this.clickedNode === undefined &&
-      this.hoveredNode === this.nodesById[event.currentTarget.name].node
-    ) {
+  private nodeMouseOut = (event: PIXI.interaction.InteractionEvent) => {
+    const node = this.nodesById[event.currentTarget.name].node
+    if (this.clickedNode === undefined && this.hoveredNode === node) {
       this.hoveredNode = undefined
       this.dirtyData = true
+      const { x, y } = this.viewport.toWorld(event.data.global)
+      this.onNodeMouseLeave && this.onNodeMouseLeave(node, { x, y })
     }
   }
 
-  private clickNode = (event: PIXI.interaction.InteractionEvent) => {
-    const { x, y } = this.viewport.toWorld(event.data.global)
-    this.graph.dragStart(event.currentTarget.name, x, y)
-
+  private nodeMouseDown = (event: PIXI.interaction.InteractionEvent) => {
     this.clickedNode = this.nodesById[event.currentTarget.name].node
-    this.app.renderer.plugins.interaction.on('mousemove', this.appMouseMove)
+    this.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
     this.viewport.pause = true
     this.dirtyData = true
-  }
-
-  private unclickNode = () => {
-    if (this.clickedNode !== undefined) {
-      this.graph.dragEnd(this.clickedNode.id)
-    }
-
-    this.clickedNode = undefined
-    this.app.renderer.plugins.interaction.off('mousemove', this.appMouseMove)
-    this.viewport.pause = false
-    this.dirtyData = true
-  }
-
-  private appMouseMove = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.clickedNode === undefined) {
-      return
-    }
-
     const { x, y } = this.viewport.toWorld(event.data.global)
-    this.graph.drag(this.clickedNode.id, x, y)
+    this.onNodeMouseDown && this.onNodeMouseDown(this.nodesById[event.currentTarget.name].node, { x, y })
+  }
 
-    this.clickedNode.x = x
-    this.clickedNode.y = y
-    this.dirtyData = true
+  private nodeMouseUp = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.clickedNode !== undefined) {
+      const node = this.nodesById[this.clickedNode.id].node
+      this.clickedNode = undefined
+      this.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
+      this.viewport.pause = false
+      this.dirtyData = true
+      const { x, y } = this.viewport.toWorld(event.data.global)
+      this.onNodeMouseUp && this.onNodeMouseUp(node, { x, y })
+    }
+
+  }
+
+  private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.clickedNode !== undefined) {
+      const node = this.nodesById[this.clickedNode.id].node
+      const { x, y } = this.viewport.toWorld(event.data.global)
+      /**
+       * TODO
+       * - should renderers mutate data?  Or should the renderer depend on only the Graph/Simulation to properly mutate data?
+       * - we might be able to get rid of Graph entirely if the renderer can be relied on properly know how/when to mutate PositionedNodes
+       */
+      this.clickedNode.x = x
+      this.clickedNode.y = y
+      this.dirtyData = true
+      this.onNodeDrag && this.onNodeDrag(node, { x, y })
+    }
   }
 }
 

@@ -9,7 +9,13 @@ import { SimulationOptions } from '../../src/simulation'
 
 
 const graph = new Graph()
-const renderer = D3Renderer({ id: 'graph', graph, nodeStyle: { stroke: '#fff' } })
+const renderer = D3Renderer({
+  id: 'graph',
+  onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
+  onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
+  onNodeMouseUp: (({ id }) => graph.dragEnd(id)),
+  nodeStyle: { stroke: '#fff' }
+})
 graph.onLayout(renderer)
 
 

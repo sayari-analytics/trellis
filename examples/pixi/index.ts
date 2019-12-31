@@ -10,7 +10,12 @@ import { stats } from '../../src/stats'
 
 
 const graph = new Graph()
-const renderer = PixiRenderer({ id: 'graph', graph })
+const renderer = PixiRenderer({
+  id: 'graph',
+  onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
+  onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
+  onNodeMouseUp: (({ id }) => graph.dragEnd(id)),
+})
 graph.onLayout(renderer.layout)
 
 const NODES_PER_TICK = 20
@@ -60,8 +65,9 @@ const edges: Edge[] = mediumSm.links.map<Edge>(({ source, target, value }) => ({
 }))
 
 
-interval(1000).pipe(
+interval(1400).pipe(
   take(Math.ceil(nodes.length / NODES_PER_TICK)),
+  // take(4),
   map((idx) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)

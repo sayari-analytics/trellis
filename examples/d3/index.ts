@@ -4,7 +4,12 @@ import { data, large, mediumLg, mediumSm } from '../data'
 
 
 const graph = new Graph()
-const renderer = D3Renderer({ id: 'graph', graph })
+const renderer = D3Renderer({
+  id: 'graph',
+  onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
+  onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
+  onNodeMouseUp: (({ id }) => graph.dragEnd(id)),
+})
 graph.onLayout(renderer)
 
 const nodes = large.nodes.map(({ id }) => ({ id }))
