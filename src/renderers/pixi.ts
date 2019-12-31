@@ -38,7 +38,6 @@ class Renderer {
   clickedNode?: PositionedNode
   dirtyData = false
   updateTransition = ANIMATION_DURATION
-  deltaPercent = 1
   updateTime = Date.now()
   linksLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
@@ -157,7 +156,7 @@ class Renderer {
     for (const nodeId in nodes) {
       if (this.nodesById[nodeId] !== undefined) {
         // if nodes are currently animating to their new location, don't update node interpolation start position
-        if (this.deltaPercent < 1) {
+        if (this.updateTransition <= ANIMATION_DURATION) {
           nodes[nodeId].x0 = this.nodesById[nodeId].nodeGfx.position.x
           nodes[nodeId].y0 = this.nodesById[nodeId].nodeGfx.position.y
         }
@@ -227,13 +226,38 @@ class Renderer {
 
   private animate = () => {
     const updateTime2 = Date.now()
-    const deltaTime = Math.min(20, Math.max(0, updateTime2 - this.updateTime))
-    // const deltaTime = updateTime2 - this.updateTime
+    const deltaTime = Math.min(16, Math.max(0, updateTime2 - this.updateTime))
     this.updateTime = updateTime2
-    this.updateTransition += deltaTime
-    this.deltaPercent = Math.min(1, this.updateTransition / ANIMATION_DURATION)
 
-    if (this.dirtyData || this.deltaPercent < 1) {
+    /**
+     * TODO
+     * - node interpolated position needs to be calculated once after crossing the deltaPercent threshold
+     * - calculate node position per node (and lose updateTransition, deltaPercent)
+     * ```
+     * node.nodePostion = (deltaTime: number) => {
+     *   this.previousPosition = if no prev position: initialize prev position to x/y, or to position of a related node, or to avg position of all related nodes
+     * 
+     *   if (this.previousPosition != this.targetPosition) {
+     *     // if position changed: reinit node's animation duration and interpolation function
+     *     this.targetPosition = new targetPostion
+     *     this.animationTime = 0
+     *     const interpolate = interpolateNumber(start, end)
+     *     this.interpolatePosition = interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])
+     *   }
+     * 
+     *   if (animationTime <= ANIMATION_DURATION) {
+     *     node.{ x, y } = this.interpolatePosition(this.animationTime / ANIMATION_DURATION)
+     *   }
+     * 
+     *   this.animationTime += deltaTime
+     * }
+     * 
+     * const node = node.nodePosition(deltaTime)
+     * ```
+     */
+    if (this.dirtyData || this.updateTransition <= ANIMATION_DURATION) {
+      const deltaPercent = Math.min(1, this.updateTransition / ANIMATION_DURATION)
+
       for (const edgeId in this.edgesById) {
         const edge = this.edgesById[edgeId].edge
         const edgeGfx = this.edgesById[edgeId].edgeGfx
@@ -255,10 +279,10 @@ class Renderer {
           this.edgeStyleSelector(edge, 'strokeOpacity')
         )
 
-        const xStart = interpolatePosition(edge.source.x0 || 0, edge.source.x!, this.deltaPercent)
-        const yStart = interpolatePosition(edge.source.y0 || 0, edge.source.y!, this.deltaPercent)
-        const xEnd = interpolatePosition(edge.target.x0 || 0, edge.target.x!, this.deltaPercent)
-        const yEnd = interpolatePosition(edge.target.y0 || 0, edge.target.y!, this.deltaPercent)
+        const xStart = interpolatePosition(edge.source.x0 || 0, edge.source.x!, deltaPercent)
+        const yStart = interpolatePosition(edge.source.y0 || 0, edge.source.y!, deltaPercent)
+        const xEnd = interpolatePosition(edge.target.x0 || 0, edge.target.x!, deltaPercent)
+        const yEnd = interpolatePosition(edge.target.y0 || 0, edge.target.y!, deltaPercent)
         edgeGfx.moveTo(xStart, yStart)
         edgeGfx.lineTo(xEnd, yEnd)
         edgeGfx.endFill()
@@ -321,8 +345,8 @@ class Renderer {
          * - in simulation, when a new node enters, set it's position to either one of it's neighbors, or the rough centroid of some/all of its neighbors (will require an adjacency lookup table)
          *   - does keylines do this automatically?  or are we doing on insert (though if so, how do we do it w/o an adjacency lookup?)
          */
-        const x = interpolatePosition(node.x0 || 0, node.x!, this.deltaPercent)
-        const y = interpolatePosition(node.y0 || 0, node.y!, this.deltaPercent)
+        const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
+        const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
         nodeGfx.position = new PIXI.Point(x, y)
         labelGfx.position = new PIXI.Point(x, y)
       }
@@ -363,6 +387,8 @@ class Renderer {
       this.dirtyData = false
       this.viewport.dirty = false
       this.app.render()
+
+      this.updateTransition += deltaTime
     } else if (this.viewport.dirty) {
       // console.log(this.viewport.scale.x, this.viewport.scale.y)
       this.viewport.dirty = false
