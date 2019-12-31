@@ -54,7 +54,14 @@ export class Graph {
   layout = ({
     nodes,
     edges,
-    options: { strength = DEFAULT_SIMULATION_OPTIONS.strength, tick = DEFAULT_SIMULATION_OPTIONS.tick, distance = DEFAULT_SIMULATION_OPTIONS.distance } = {}
+    options: {
+      strength = DEFAULT_SIMULATION_OPTIONS.strength,
+      tick = DEFAULT_SIMULATION_OPTIONS.tick,
+      distance = DEFAULT_SIMULATION_OPTIONS.distance,
+      nodeWidth = DEFAULT_SIMULATION_OPTIONS.nodeWidth,
+      nodeStrokeWidth = DEFAULT_SIMULATION_OPTIONS.nodeStrokeWidth,
+      nodePadding = DEFAULT_SIMULATION_OPTIONS.nodePadding,
+    } = {}
   }: {
     nodes: { [key: string]: Node },
     edges: { [key: string]: Edge },
@@ -62,7 +69,7 @@ export class Graph {
   }) => {
     // TODO - noop on nodes/edges/options equality
     // TODO - does it make sense to only serialize node ids and edge id/source/target? e.g. drop style and remerge
-    this.options = { strength, tick, distance }
+    this.options = { strength, tick, distance, nodeWidth, nodeStrokeWidth, nodePadding }
     this.worker.postMessage({ type: 'layout', nodes, edges, options: this.options })
     return this
   }

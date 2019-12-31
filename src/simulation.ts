@@ -1,16 +1,23 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide } from 'd3-force'
 import { PositionedNode, PositionedEdge } from './index'
+import { DEFAULT_NODE_STYLES } from './renderers/options'
 
 
 export type SimulationOptions = {
   strength: number
   distance: number
+  nodeWidth: number
+  nodeStrokeWidth: number
+  nodePadding: number
   tick: number | null
 }
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-  strength: 250, // 400,
-  distance: 120, // 300,
+  strength: 400,
+  distance: 300,
+  nodeWidth: DEFAULT_NODE_STYLES.width,
+  nodeStrokeWidth: DEFAULT_NODE_STYLES.strokeWidth,
+  nodePadding: 8,
   tick: 300,
 }
 
@@ -32,6 +39,7 @@ declare const d3: {
   forceManyBody: typeof forceManyBody
   forceCenter: typeof forceCenter
   forceLink: typeof forceLink
+  forceCollide: typeof forceCollide
 }
 
 declare const self: Worker
@@ -86,6 +94,9 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
   const options: SimulationOptions = {
     strength: DEFAULT_OPTIONS.strength,
     distance: DEFAULT_OPTIONS.distance,
+    nodeWidth: DEFAULT_OPTIONS.nodeWidth,
+    nodeStrokeWidth: DEFAULT_OPTIONS.nodeStrokeWidth,
+    nodePadding: DEFAULT_OPTIONS.nodePadding,
     tick: -1,
   } // TODO - are all Options passed?  or partial w/ defaults
   let nodes: { [key: string]: PositionedNode } = {}
@@ -95,9 +106,19 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     .id((node) => node.id)
     .distance(options.distance)
   const forceManyBody = d3.forceManyBody().strength(-options.strength)
+  const forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
+    const radius = node.style === undefined || node.style.width === undefined ?
+      options.nodeWidth * 0.5 :
+      node.style.width * 0.5
+    const strokeWidth = node.style === undefined || node.style.strokeWidth === undefined ?
+      options.nodeStrokeWidth * 0.5 :
+      node.style.strokeWidth * 0.5
+    return radius + strokeWidth + options.nodePadding
+  })
   const simulation = d3.forceSimulation()
-    .force('charge', forceManyBody)
     .force('center', d3.forceCenter())
+    .force('charge', forceManyBody)
+    .force('collision', forceCollide)
     .stop()
     .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
   
