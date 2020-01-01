@@ -7,6 +7,109 @@ import { animationFrameLoop, noop } from '../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
 import { color } from 'd3-color'
 import { stats } from '../stats'
+import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
+
+
+class NodeContainer extends PIXI.Container {
+
+  labelContainer: PIXI.Container = new PIXI.Container()
+  
+  radius: number = DEFAULT_NODE_STYLES.width / 2
+
+  label?: string
+
+  animationTime: number = 0
+
+  private nodeStyleSelector: NodeStyleSelector
+  private startX: number = 0 // TODO - initialize prev position to position of a related node, or to avg position of all related nodes
+  private startY: number = 0
+  private endX: number = 0
+  private endY: number = 0
+  private interpolateX: (percent: number) => number = () => this.endX
+  private interpolateY: (percent: number) => number = () => this.endY
+
+  constructor(nodeStyleSelector: NodeStyleSelector) {
+    super()
+    this.nodeStyleSelector = nodeStyleSelector
+  }
+
+  updateStyle = (node: PositionedNode) => {
+    this.radius = this.nodeStyleSelector(node, 'width') / 2
+
+    if (node.label !== this.label) {
+      this.label = node.label
+
+      if (node.label) {
+        const labelText = new PIXI.Text(node.label || '', {
+          fontFamily: 'Helvetica',
+          fontSize: 12 * 2,
+          fill: 0x333333,
+          lineJoin: "round",
+          stroke: "#fafafaee",
+          strokeThickness: 2 * 2,
+        })
+        labelText.x = 0
+        labelText.y = this.radius + LABEL_Y_PADDING
+        labelText.scale.set(0.5)
+        labelText.anchor.set(0.5, 0)
+        this.labelContainer.addChild(labelText)
+      } else {
+        this.labelContainer.removeChildren()
+      }
+    }
+
+    return this
+  }
+
+  updatePosition = (x: number, y: number) => {
+    this.startX = this.x
+    this.startY = this.y
+
+    this.endX = x
+    this.endY = y
+
+    const interpolateXNumber = interpolateNumber(this.startX, this.endX)
+    const interpolateYNumber = interpolateNumber(this.startY, this.endY)
+    this.interpolateX = interpolateBasis([interpolateXNumber(0), interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), interpolateXNumber(1)])
+    this.interpolateY = interpolateBasis([interpolateYNumber(0), interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), interpolateYNumber(1)])
+    this.animationTime = 0
+
+    return this
+  }
+
+  animate = (deltaTime: number) => {
+    if (this.animationTime < ANIMATION_DURATION) {
+      this.animationTime += deltaTime
+      const percent = this.animationTime / ANIMATION_DURATION
+      this.x = this.interpolateX(percent)
+      this.y = this.interpolateY(percent)
+    } else {
+      this.x = this.endX
+      this.y = this.endY
+    }
+
+    this.labelContainer.position.x = this.x
+    this.labelContainer.position.y = this.y
+
+    return this
+  }
+
+  move = (x: number, y: number) => {
+    this.x = x
+    this.y = y
+    this.startX = x
+    this.startY = y
+    this.endX = x
+    this.endY = y
+    this.labelContainer.position.x = x
+    this.labelContainer.position.y = y
+    this.animationTime = ANIMATION_DURATION
+    return this
+  }
+
+  animationIsPending = () => this.animationTime < ANIMATION_DURATION
+
+}
 
 
 const colorToNumber = (colorString: string): number => {
@@ -37,14 +140,13 @@ class Renderer {
   hoveredNode?: PositionedNode
   clickedNode?: PositionedNode
   dirtyData = false
-  updateTransition = ANIMATION_DURATION
   updateTime = Date.now()
   linksLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodesById: { [key: string]: { node: PositionedNode, nodeGfx: PIXI.Container, labelGfx: PIXI.Container } } = {}
+  nodesById: { [key: string]: { node: PositionedNode, nodeGfx: NodeContainer } } = {}
   edgesById: { [key: string]: { edge: PositionedEdge, edgeGfx: PIXI.Graphics, labelGfx: PIXI.Container } } = {}
 
   app: PIXI.Application
@@ -150,77 +252,58 @@ class Renderer {
       this.edgesById[edge.id] = { edge, edgeGfx, labelGfx }
 
       this.dirtyData = true
-      this.updateTransition = 0
     }
 
     for (const nodeId in nodes) {
-      if (this.nodesById[nodeId] !== undefined) {
-        // if nodes are currently animating to their new location, don't update node interpolation start position
-        if (this.updateTransition <= ANIMATION_DURATION) {
-          nodes[nodeId].x0 = this.nodesById[nodeId].nodeGfx.position.x
-          nodes[nodeId].y0 = this.nodesById[nodeId].nodeGfx.position.y
-        }
-        this.nodesById[nodeId].node = nodes[nodeId]
-        continue
+      if (this.nodesById[nodeId] === undefined) {
+        // enter
+        /**
+         * TODO - implement occlusion for nodes and node text
+         */
+        const node = nodes[nodeId]
+        const radius = this.nodeStyleSelector(node, 'width') / 2
+        const nodeGfx = new NodeContainer(this.nodeStyleSelector)
+          .updateStyle(nodes[nodeId])
+          .updatePosition(node.x || 0, node.y || 0) // TODO - is x/y always defined?
+
+        // TODO - move all this to the NodeContainer constructor
+        nodeGfx.name = node.id
+        nodeGfx.interactive = true
+        nodeGfx.buttonMode = true
+        nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
+        nodeGfx.on('mouseover', this.nodeMouseOver)
+        nodeGfx.on('mouseout', this.nodeMouseOut)
+        nodeGfx.on('mousedown', this.nodeMouseDown)
+        nodeGfx.on('mouseup', this.nodeMouseUp)
+        nodeGfx.on('mouseupoutside', this.nodeMouseUp)
+  
+        const circle = new PIXI.Graphics()
+        circle.x = 0
+        circle.y = 0
+        circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
+        circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
+        circle.drawCircle(0, 0, radius)
+        nodeGfx.addChild(circle)
+  
+        const circleBorder = new PIXI.Graphics()
+        circle.x = 0
+        circle.y = 0
+        circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), colorToNumber(this.nodeStyleSelector(node, 'stroke')))
+        circleBorder.drawCircle(0, 0, radius)
+        nodeGfx.addChild(circleBorder)
+  
+        this.nodesLayer.addChild(nodeGfx)
+        this.labelsLayer.addChild(nodeGfx.labelContainer)
+  
+        this.nodesById[node.id] = { node, nodeGfx }
+  
+        this.dirtyData = true
+      } else {
+        // update
+        this.nodesById[nodeId].nodeGfx
+          .updateStyle(nodes[nodeId])
+          .updatePosition(nodes[nodeId].x || 0, nodes[nodeId].y || 0) // TODO - is x/y always defined?
       }
-
-      const node = nodes[nodeId]
-
-      const radius = this.nodeStyleSelector(node, 'width') / 2
-
-      /**
-       * TODO - implement occlusion for nodes and node text
-       */
-      const nodeGfx = new PIXI.Container()
-      nodeGfx.name = node.id
-      nodeGfx.interactive = true
-      nodeGfx.buttonMode = true
-      nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
-      nodeGfx.on('mouseover', this.nodeMouseOver)
-      nodeGfx.on('mouseout', this.nodeMouseOut)
-      nodeGfx.on('mousedown', this.nodeMouseDown)
-      nodeGfx.on('mouseup', this.nodeMouseUp)
-      nodeGfx.on('mouseupoutside', this.nodeMouseUp)
-
-      const circle = new PIXI.Graphics()
-      circle.x = 0
-      circle.y = 0
-      circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
-      circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
-      circle.drawCircle(0, 0, radius)
-      nodeGfx.addChild(circle)
-
-      const circleBorder = new PIXI.Graphics()
-      circle.x = 0
-      circle.y = 0
-      circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), colorToNumber(this.nodeStyleSelector(node, 'stroke')))
-      circleBorder.drawCircle(0, 0, radius)
-      nodeGfx.addChild(circleBorder)
-
-      // TODO - don't render label if doesn't exist
-      const labelGfx = new PIXI.Container()
-
-      const labelText = new PIXI.Text(node.label || '', {
-        fontFamily: 'Helvetica',
-        fontSize: 12 * 2,
-        fill: 0x333333,
-        lineJoin: "round",
-        stroke: "#fafafaee",
-        strokeThickness: 2 * 2,
-      })
-      labelText.x = 0
-      labelText.y = radius + LABEL_Y_PADDING
-      labelText.scale.set(0.5)
-      labelText.anchor.set(0.5, 0)
-      labelGfx.addChild(labelText)
-
-      this.nodesLayer.addChild(nodeGfx)
-      this.labelsLayer.addChild(labelGfx)
-
-      this.nodesById[node.id] = { node, nodeGfx, labelGfx }
-
-      this.dirtyData = true
-      this.updateTransition = 0
     }
   }
 
@@ -229,34 +312,13 @@ class Renderer {
     const deltaTime = Math.min(16, Math.max(0, updateTime2 - this.updateTime))
     this.updateTime = updateTime2
 
-    /**
-     * TODO
-     * - node interpolated position needs to be calculated once after crossing the deltaPercent threshold
-     * - calculate node position per node (and lose updateTransition, deltaPercent)
-     * ```
-     * node.nodePostion = (deltaTime: number) => {
-     *   this.previousPosition = if no prev position: initialize prev position to x/y, or to position of a related node, or to avg position of all related nodes
-     * 
-     *   if (this.previousPosition != this.targetPosition) {
-     *     // if position changed: reinit node's animation duration and interpolation function
-     *     this.targetPosition = new targetPostion
-     *     this.animationTime = 0
-     *     const interpolate = interpolateNumber(start, end)
-     *     this.interpolatePosition = interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])
-     *   }
-     * 
-     *   if (animationTime <= ANIMATION_DURATION) {
-     *     node.{ x, y } = this.interpolatePosition(this.animationTime / ANIMATION_DURATION)
-     *   }
-     * 
-     *   this.animationTime += deltaTime
-     * }
-     * 
-     * const node = node.nodePosition(deltaTime)
-     * ```
-     */
-    if (this.dirtyData || this.updateTransition <= ANIMATION_DURATION) {
-      const deltaPercent = Math.min(1, this.updateTransition / ANIMATION_DURATION)
+    if (this.dirtyData) {
+      let animationPending = false
+
+      for (const nodeId in this.nodesById) {
+        this.nodesById[nodeId].nodeGfx.animate(deltaTime)
+        animationPending = animationPending || this.nodesById[nodeId].nodeGfx.animationIsPending()
+      }
 
       for (const edgeId in this.edgesById) {
         const edge = this.edgesById[edgeId].edge
@@ -279,16 +341,16 @@ class Renderer {
           this.edgeStyleSelector(edge, 'strokeOpacity')
         )
 
-        const xStart = interpolatePosition(edge.source.x0 || 0, edge.source.x!, deltaPercent)
-        const yStart = interpolatePosition(edge.source.y0 || 0, edge.source.y!, deltaPercent)
-        const xEnd = interpolatePosition(edge.target.x0 || 0, edge.target.x!, deltaPercent)
-        const yEnd = interpolatePosition(edge.target.y0 || 0, edge.target.y!, deltaPercent)
-        edgeGfx.moveTo(xStart, yStart)
-        edgeGfx.lineTo(xEnd, yEnd)
+        const x0 = this.nodesById[edge.source.id].nodeGfx.x
+        const y0 = this.nodesById[edge.source.id].nodeGfx.y
+        const x1 = this.nodesById[edge.target.id].nodeGfx.x
+        const y1 = this.nodesById[edge.target.id].nodeGfx.y
+        edgeGfx.moveTo(x0, y0)
+        edgeGfx.lineTo(x1, y1)
         edgeGfx.endFill()
 
-        labelGfx.position = new PIXI.Point(xStart + (xEnd - xStart) * 0.5, yStart + (yEnd - yStart) * 0.5)
-        const rotation = Math.atan2(yEnd - yStart, xEnd - xStart)
+        labelGfx.position = new PIXI.Point(x0 + (x1 - x0) * 0.5, y0 + (y1 - y0) * 0.5)
+        const rotation = Math.atan2(y1 - y0, x1 - x0)
         if (rotation > (Math.PI / 2)) {
           labelGfx.rotation = rotation - Math.PI
         } else if (rotation < (Math.PI / 2) * -1) {
@@ -325,30 +387,12 @@ class Renderer {
         //   (this.nodeStyleSelector(edge.source, 'width') / 2) - 
         //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
         //   (LABEL_X_PADDING * 2)
-        const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2))
+        const edgeLength = Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2))
         if (text.width > edgeLength) {
           text.visible = false
         } else {
           text.visible = true
         }
-      }
-  
-      for (const nodeId in this.nodesById) {
-        const node = this.nodesById[nodeId].node
-        const nodeGfx = this.nodesById[nodeId].nodeGfx
-        const labelGfx = this.nodesById[nodeId].labelGfx
-        // labelGfx.visible = false
-        /**
-         * TODO
-         * - ensure that if a node's position changes while it is in transition, it's movement is interpolated from it's current position, not it's new starting position (x0/y0)
-         * - ensure that if a node is being dragged, it's drag position is used (fx/fy?)
-         * - in simulation, when a new node enters, set it's position to either one of it's neighbors, or the rough centroid of some/all of its neighbors (will require an adjacency lookup table)
-         *   - does keylines do this automatically?  or are we doing on insert (though if so, how do we do it w/o an adjacency lookup?)
-         */
-        const x = interpolatePosition(node.x0 || 0, node.x!, deltaPercent)
-        const y = interpolatePosition(node.y0 || 0, node.y!, deltaPercent)
-        nodeGfx.position = new PIXI.Point(x, y)
-        labelGfx.position = new PIXI.Point(x, y)
       }
 
       // unhover
@@ -368,12 +412,11 @@ class Renderer {
         const radius = this.nodeStyleSelector(this.hoveredNode, 'width') / 2
       
         const nodeGfx = this.nodesById[this.hoveredNode.id].nodeGfx
-        const labelGfx = this.nodesById[this.hoveredNode.id].labelGfx
         
         this.nodesLayer.removeChild(nodeGfx)
-        this.labelsLayer.removeChild(labelGfx)
+        this.labelsLayer.removeChild(nodeGfx.labelContainer)
         this.frontNodeLayer.addChild(nodeGfx)
-        this.frontLabelLayer.addChild(labelGfx)
+        this.frontLabelLayer.addChild(nodeGfx.labelContainer)
         
         const circleBorder = new PIXI.Graphics()
         circleBorder.name = 'hoverBorder'
@@ -384,11 +427,9 @@ class Renderer {
         nodeGfx.addChild(circleBorder)
       }
 
-      this.dirtyData = false
+      this.dirtyData = animationPending
       this.viewport.dirty = false
       this.app.render()
-
-      this.updateTransition += deltaTime
     } else if (this.viewport.dirty) {
       // console.log(this.viewport.scale.x, this.viewport.scale.y)
       this.viewport.dirty = false
@@ -442,13 +483,7 @@ class Renderer {
     if (this.clickedNode !== undefined) {
       const node = this.nodesById[this.clickedNode.id].node
       const { x, y } = this.viewport.toWorld(event.data.global)
-      /**
-       * TODO
-       * - should renderers mutate data?  Or should the renderer depend on only the Graph/Simulation to properly mutate data?
-       * - we might be able to get rid of Graph entirely if the renderer can be relied on properly know how/when to mutate PositionedNodes
-       */
-      this.clickedNode.x = x
-      this.clickedNode.y = y
+      this.nodesById[this.clickedNode.id].nodeGfx.move(x, y)
       this.dirtyData = true
       this.onNodeDrag && this.onNodeDrag(node, { x, y })
     }
