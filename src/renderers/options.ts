@@ -8,6 +8,7 @@ export type NodeStyle = {
   stroke: string
   fillOpacity: number
   strokeOpacity: number
+  icon?: string
 }
 
 export type EdgeStyle = {

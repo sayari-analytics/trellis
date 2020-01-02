@@ -4,18 +4,28 @@ import { EdgeStyleSelector } from '../utils'
 import { colorToNumber } from './utils'
 
 
+// const LINE_HOVER_RADIUS = 4
+
 export class EdgeContainer extends PIXI.Container {
 
   labelContainer: PIXI.Container = new PIXI.Container()
-  
+
   private edgeStyleSelector: EdgeStyleSelector
   private label?: string
-  private edgeGfx: PIXI.Graphics
+  private edgeGfx: PIXI.Graphics = new PIXI.Graphics()
+  // private edgeHoverBorder?: PIXI.Graphics
+  // private x0: number = 0
+  // private y0: number = 0
+  // private x1: number = 0
+  // private y1: number = 0
 
   constructor(edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector) {
     super()
     this.edgeStyleSelector = edgeStyleSelector
-    this.edgeGfx = new PIXI.Graphics()
+    this.interactive = true
+    this.buttonMode = true
+    // this.on('mouseover', this.mouseEnter)
+    // this.on('mouseout', this.mouseLeave)
     this.addChild(this.edgeGfx)
   }
 
@@ -45,6 +55,10 @@ export class EdgeContainer extends PIXI.Container {
   }
 
   updatePosition = (edge: PositionedEdge, x0: number, y0: number, x1: number, y1: number) => {
+    // this.x0 = x0
+    // this.y0 = y0
+    // this.x1 = x1
+    // this.y1 = y1
     this.edgeGfx.clear()
 
     this.edgeGfx.lineStyle(
@@ -56,6 +70,28 @@ export class EdgeContainer extends PIXI.Container {
     this.edgeGfx.moveTo(x0, y0)
     this.edgeGfx.lineTo(x1, y1)
     this.edgeGfx.endFill()
+
+    // TODO - fully outline line
+    // const hit = new PIXI.Polygon([
+    //   x0 + LINE_HOVER_RADIUS, y0 + LINE_HOVER_RADIUS,
+    //   x1 + LINE_HOVER_RADIUS, y1 + LINE_HOVER_RADIUS,
+    //   x1 - LINE_HOVER_RADIUS, y1 - LINE_HOVER_RADIUS,
+    //   x0 - LINE_HOVER_RADIUS, y0 - LINE_HOVER_RADIUS,
+    // ])
+
+    // const leftX = Math.min(x0, x1)
+    // const rightX = Math.max(x0, x1)
+    // const bottomY = Math.min(y0, y1)
+    // const topY = Math.max(y0, y1)
+    // const hit = new PIXI.Polygon([
+    //   leftX - LINE_HOVER_RADIUS, bottomY - LINE_HOVER_RADIUS,
+    //   rightX + LINE_HOVER_RADIUS, topY - LINE_HOVER_RADIUS,
+    //   rightX + LINE_HOVER_RADIUS, topY + LINE_HOVER_RADIUS,
+    //   leftX - LINE_HOVER_RADIUS, bottomY + LINE_HOVER_RADIUS,
+    // ])
+
+    // this.hitArea = hit
+    // this.edgeGfx.drawPolygon(hit)
 
     this.labelContainer.position = new PIXI.Point(x0 + (x1 - x0) * 0.5, y0 + (y1 - y0) * 0.5)
     const rotation = Math.atan2(y1 - y0, x1 - x0)
@@ -101,5 +137,39 @@ export class EdgeContainer extends PIXI.Container {
     } else {
       text.visible = true
     }
+
+    return this
   }
+
+  // mouseEnter = (edge: PositionedEdge) => {
+  //   if (this.edgeHoverBorder === undefined) {
+  //     console.log('hover')
+  //     this.edgeHoverBorder = new PIXI.Graphics()
+  //     this.edgeHoverBorder.lineStyle(
+  //       this.edgeStyleSelector(edge, 'width') + 5,
+  //       colorToNumber('#222'), //colorToNumber(this.edgeStyleSelector(edge, 'stroke')),
+  //       1 // this.edgeStyleSelector(edge, 'strokeOpacity')
+  //     )
+  
+  //     this.edgeGfx.moveTo(this.x0, this.y0)
+  //     this.edgeGfx.lineTo(this.x1, this.y1)
+  //     this.edgeGfx.endFill()
+      
+  //     // this.addChild(this.edgeHoverBorder)
+  //     this.layer.addChild(this.edgeHoverBorder)
+  //   }
+
+  //   return this
+  // }
+
+  // mouseLeave = () => {
+  //   if (this.edgeHoverBorder !== undefined) {
+  //     console.log('unhover')
+  //     this.layer.removeChild(this.edgeHoverBorder)
+  //     this.edgeHoverBorder.destroy()
+  //     this.edgeHoverBorder = undefined
+  //   }
+
+  //   return this
+  // }
 }

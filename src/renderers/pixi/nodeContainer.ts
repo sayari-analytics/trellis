@@ -23,6 +23,7 @@ export class NodeContainer extends PIXI.Container {
   private interpolateY: (percent: number) => number = () => this.endY
   private radius: number
   private label?: string
+  private icon?: string
   private animationTime: number = 0
   
   constructor(node: PositionedNode, nodeStyleSelector: NodeStyleSelector) {
@@ -71,6 +72,26 @@ export class NodeContainer extends PIXI.Container {
         this.labelContainer.addChild(labelText)
       } else {
         this.labelContainer.removeChildren()
+      }
+    }
+
+    if (node.style && node.style.icon !== this.icon) {
+      this.icon = node.style.icon
+
+      if (node.style.icon) {
+        const icon = new PIXI.Text(node.style.icon, {
+          fontFamily: 'Material Icons',
+          fontSize: this.radius / Math.SQRT2 * 1.7,
+          fill: 0xffffff
+        })
+        icon.name = 'icon'
+        icon.x = 0
+        icon.y = 0
+        icon.anchor.set(0.5)
+    
+        this.addChild(icon)
+      } else {
+        this.removeChild(this.getChildByName('icon'))
       }
     }
 

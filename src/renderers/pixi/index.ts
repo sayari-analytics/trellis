@@ -1,14 +1,17 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import * as GStats from 'gstats'
+import FontFaceObserver from 'fontfaceobserver'
 import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from '../options'
 import { PositionedNode, PositionedEdge } from '../../index'
 import { animationFrameLoop, noop } from '../../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector } from '../utils'
 import { stats } from '../../stats'
 import { NodeContainer } from './nodeContainer'
-import { colorToNumber } from './utils'
 import { EdgeContainer } from './edgeContainer'
+
+
+new FontFaceObserver('Material Icons').load()
 
 
 class Renderer {
@@ -131,6 +134,7 @@ class Renderer {
         const nodeGfx = new NodeContainer(nodes[nodeId], this.nodeStyleSelector)
           .updateStyle(nodes[nodeId])
           .updatePosition(nodes[nodeId].x!, nodes[nodeId].y!)
+          // TODO - move handlers to NodeContainer
           .on('mouseover', this.nodeMouseOver)
           .on('mouseout', this.nodeMouseOut)
           .on('mousedown', this.nodeMouseDown)
@@ -178,6 +182,7 @@ class Renderer {
         )
       }
 
+      // TODO - move hover/unhover logic to NodeContainer
       // unhover
       for (const nodeGfx of this.frontNodeLayer.children) {
         this.frontNodeLayer.removeChild(nodeGfx);
@@ -192,8 +197,6 @@ class Renderer {
 
       // hover
       if (this.hoveredNode !== undefined) {
-        const radius = this.nodeStyleSelector(this.hoveredNode, 'width') / 2
-
         const nodeGfx = this.nodesById[this.hoveredNode.id].nodeGfx
 
         this.nodesLayer.removeChild(nodeGfx)
@@ -206,7 +209,7 @@ class Renderer {
         circleBorder.x = 0
         circleBorder.y = 0
         circleBorder.lineStyle(this.nodeStyleSelector(this.hoveredNode, 'strokeWidth'), 0xaaaaaa)
-        circleBorder.drawCircle(0, 0, radius)
+        circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.hoveredNode, 'width') / 2)
         nodeGfx.addChild(circleBorder)
       }
 
