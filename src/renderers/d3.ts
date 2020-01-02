@@ -43,9 +43,16 @@ export const D3Renderer = ({
   zoomBehavior.translateBy(svg, parentElement.offsetWidth / 2, parentElement.offsetHeight / 2)
 
   let draggedNode: string | undefined
+  let currentNodes: { [key: string]: PositionedNode }
+  let currentEdges: { [key: string]: PositionedEdge }
+  let currentOptions: SimulationOptions
+
   const dragNode = dragBehavior<any, PositionedNode>()
     .on('start', (d) => (draggedNode = d.id, onNodeMouseDown(d, { x: event.x, y: event.y })))
-    .on('drag', (d) => onNodeDrag(d, { x: event.x, y: event.y }))
+    .on('drag', (d) => {
+      render({ nodes: currentNodes, edges: currentEdges, options: currentOptions })
+      onNodeDrag(d, { x: event.x, y: event.y })
+    })
     .on('end', (d) => (draggedNode = undefined, onNodeMouseUp(d, { x: event.x, y: event.y })))
 
   const _nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
@@ -71,7 +78,10 @@ export const D3Renderer = ({
     return interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])(percent)
   }
 
-  return ({ nodes, edges, options }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge }, options: SimulationOptions }) => {
+  const render = ({ nodes, edges, options }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge }, options: SimulationOptions }) => {
+    currentNodes = nodes
+    currentEdges = edges
+    currentOptions = options;
     /**
      * interpolation animations are disabled while dragging, which means adding new nodes while dragging is weirdly jerky
      * why does interpolating layout while dragging not really work? should node position interpolation be disabled only for the single node?
@@ -115,4 +125,6 @@ export const D3Renderer = ({
         .style('stroke-opacity', edgeStrokeOpacitySelector)
     })
   }
+
+  return render
 }

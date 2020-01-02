@@ -12,9 +12,9 @@ const renderer = D3Renderer({
 })
 graph.onLayout(renderer)
 
-const nodes = large.nodes.map(({ id }) => ({ id }))
+const nodes = mediumSm.nodes.map(({ id }) => ({ id }))
 
-const edges = large.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
+const edges = mediumSm.links.map(({ source, target }) => ({ id: `${source}|${target}`, source, target }))
 
 
 graph.layout({
