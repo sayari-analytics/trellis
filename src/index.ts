@@ -87,7 +87,12 @@ export class Graph {
   drag = (id: string, x: number, y: number) => {
     this.nodes[id].x = x
     this.nodes[id].y = y
-    this.handler({ nodes: this.nodes, edges: this.edges, options: this.options }) // TODO - properly pass SimulationOptions
+    /**
+     * TODO
+     * - does it make sense to call the handler here?  alternatively, should the renderer be required to update and rerender?  
+     * - how does this affect the d3 renderer?
+     */
+    // this.handler({ nodes: this.nodes, edges: this.edges, options: this.options }) // TODO - properly pass SimulationOptions
     this.worker.postMessage({ type: 'drag', id, x, y })
     return this
   }

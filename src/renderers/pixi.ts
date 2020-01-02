@@ -4,7 +4,7 @@ import * as GStats from 'gstats'
 import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from './options'
 import { PositionedNode, PositionedEdge } from '../index'
 import { animationFrameLoop, noop } from '../utils'
-import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector, interpolatePosition } from './utils'
+import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector } from './utils'
 import { color } from 'd3-color'
 import { stats } from '../stats'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
@@ -14,7 +14,7 @@ class NodeContainer extends PIXI.Container {
 
   labelContainer: PIXI.Container = new PIXI.Container()
   
-  radius: number = DEFAULT_NODE_STYLES.width / 2
+  radius: number
 
   label?: string
 
@@ -28,9 +28,28 @@ class NodeContainer extends PIXI.Container {
   private interpolateX: (percent: number) => number = () => this.endX
   private interpolateY: (percent: number) => number = () => this.endY
 
-  constructor(nodeStyleSelector: NodeStyleSelector) {
+  constructor(node: PositionedNode, nodeStyleSelector: NodeStyleSelector) {
     super()
     this.nodeStyleSelector = nodeStyleSelector
+    this.radius = this.nodeStyleSelector(node, 'width') / 2
+    this.name = node.id
+    this.interactive = true
+    this.buttonMode = true
+    this.hitArea = new PIXI.Circle(0, 0, this.radius + 5)
+    const circle = new PIXI.Graphics()
+    circle.x = 0
+    circle.y = 0
+    circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
+    circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
+    circle.drawCircle(0, 0, this.radius)
+    this.addChild(circle)
+
+    const circleBorder = new PIXI.Graphics()
+    circle.x = 0
+    circle.y = 0
+    circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), colorToNumber(this.nodeStyleSelector(node, 'stroke')))
+    circleBorder.drawCircle(0, 0, this.radius)
+    this.addChild(circleBorder)
   }
 
   updateStyle = (node: PositionedNode) => {
@@ -216,7 +235,12 @@ class Renderer {
     animationFrameLoop(this.animate)
   }
 
-  layout = ({ nodes, edges }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge } }) => {
+  layout = ({
+    nodes, edges
+  }: {
+    nodes: { [key: string]: PositionedNode },
+    edges: { [key: string]: PositionedEdge }
+  }) => {
     for (const edgeId in edges) {
       if (this.edgesById[edgeId] !== undefined) {
         this.edgesById[edgeId].edge = edges[edgeId]
@@ -257,45 +281,19 @@ class Renderer {
     for (const nodeId in nodes) {
       if (this.nodesById[nodeId] === undefined) {
         // enter
-        /**
-         * TODO - implement occlusion for nodes and node text
-         */
-        const node = nodes[nodeId]
-        const radius = this.nodeStyleSelector(node, 'width') / 2
-        const nodeGfx = new NodeContainer(this.nodeStyleSelector)
+        const nodeGfx = new NodeContainer(nodes[nodeId], this.nodeStyleSelector)
           .updateStyle(nodes[nodeId])
-          .updatePosition(node.x || 0, node.y || 0) // TODO - is x/y always defined?
-
-        // TODO - move all this to the NodeContainer constructor
-        nodeGfx.name = node.id
-        nodeGfx.interactive = true
-        nodeGfx.buttonMode = true
-        nodeGfx.hitArea = new PIXI.Circle(0, 0, radius + 5)
-        nodeGfx.on('mouseover', this.nodeMouseOver)
-        nodeGfx.on('mouseout', this.nodeMouseOut)
-        nodeGfx.on('mousedown', this.nodeMouseDown)
-        nodeGfx.on('mouseup', this.nodeMouseUp)
-        nodeGfx.on('mouseupoutside', this.nodeMouseUp)
-  
-        const circle = new PIXI.Graphics()
-        circle.x = 0
-        circle.y = 0
-        circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
-        circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
-        circle.drawCircle(0, 0, radius)
-        nodeGfx.addChild(circle)
-  
-        const circleBorder = new PIXI.Graphics()
-        circle.x = 0
-        circle.y = 0
-        circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), colorToNumber(this.nodeStyleSelector(node, 'stroke')))
-        circleBorder.drawCircle(0, 0, radius)
-        nodeGfx.addChild(circleBorder)
+          .updatePosition(nodes[nodeId].x || 0, nodes[nodeId].y || 0) // TODO - is x/y always defined?
+          .on('mouseover', this.nodeMouseOver)
+          .on('mouseout', this.nodeMouseOut)
+          .on('mousedown', this.nodeMouseDown)
+          .on('mouseup', this.nodeMouseUp)
+          .on('mouseupoutside', this.nodeMouseUp)
   
         this.nodesLayer.addChild(nodeGfx)
         this.labelsLayer.addChild(nodeGfx.labelContainer)
   
-        this.nodesById[node.id] = { node, nodeGfx }
+        this.nodesById[nodes[nodeId].id] = { node: nodes[nodeId], nodeGfx }
   
         this.dirtyData = true
       } else {
