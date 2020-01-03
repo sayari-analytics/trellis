@@ -145,7 +145,7 @@ export class EdgeContainer {
        * TODO - does it make more sense to create the graphic on the fly, or create on init and add/remove from container
        */
       this.edgeHoverBorder = new PIXI.Graphics()
-      this.edgeHoverBorder.lineStyle(this.width + 3, this.stroke, this.strokeOpacity)
+      this.edgeHoverBorder.lineStyle(this.width + 2, this.stroke, this.strokeOpacity)
   
       this.edgeHoverBorder.moveTo(this.x0, this.y0)
       this.edgeHoverBorder.lineTo(this.x1, this.y1)

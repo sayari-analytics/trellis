@@ -3,6 +3,7 @@ import { NodeStyleSelector } from '../utils'
 import { PositionedNode } from '../..'
 import { colorToNumber } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
+import { Renderer } from '.'
 
 
 const LABEL_X_PADDING = 4
@@ -13,8 +14,10 @@ const ANIMATION_DURATION = 800
 export class NodeContainer {
 
   labelContainer: PIXI.Container = new PIXI.Container()
-  circleContainer: PIXI.Container = new PIXI.Container() // TODO - make private once mouseEvent handlers are moved into class
-  private node: PositionedNode
+  circleContainer: PIXI.Container = new PIXI.Container()
+  node: PositionedNode
+
+  private renderer: Renderer
   private nodeStyleSelector: NodeStyleSelector
   private startX: number = 0 // TODO - initialize prev position to position of a related node, or to avg position of all related nodes
   private startY: number = 0
@@ -27,7 +30,8 @@ export class NodeContainer {
   private icon?: string
   private animationTime: number = 0
   
-  constructor(node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
+  constructor(renderer: Renderer, node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
+    this.renderer = renderer
     this.node = node
     this.nodeStyleSelector = nodeStyleSelector
     this.radius = this.nodeStyleSelector(node, 'width') / 2
@@ -160,51 +164,4 @@ export class NodeContainer {
 
   animationIsPending = () => this.animationTime < ANIMATION_DURATION
 
-  // private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
-  //   const node = this.nodesById[event.currentTarget.name].node
-  //   this.hoveredNode = node
-  //   const { x, y } = this.viewport.toWorld(event.data.global)
-  //   this.onNodeMouseEnter && this.onNodeMouseEnter(node, { x, y })
-  // }
-
-  // private nodeMouseOut = (event: PIXI.interaction.InteractionEvent) => {
-  //   const node = this.nodesById[event.currentTarget.name].node
-  //   if (this.clickedNode === undefined && this.hoveredNode === node) {
-  //     this.hoveredNode = undefined
-  //     this.dirtyData = true
-  //     const { x, y } = this.viewport.toWorld(event.data.global)
-  //     this.onNodeMouseLeave && this.onNodeMouseLeave(node, { x, y })
-  //   }
-  // }
-
-  // private nodeMouseDown = (event: PIXI.interaction.InteractionEvent) => {
-  //   this.clickedNode = this.nodesById[event.currentTarget.name].node
-  //   this.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
-  //   this.viewport.pause = true
-  //   this.dirtyData = true
-  //   const { x, y } = this.viewport.toWorld(event.data.global)
-  //   this.onNodeMouseDown && this.onNodeMouseDown(this.nodesById[event.currentTarget.name].node, { x, y })
-  // }
-
-  // private nodeMouseUp = (event: PIXI.interaction.InteractionEvent) => {
-  //   if (this.clickedNode !== undefined) {
-  //     const node = this.nodesById[this.clickedNode.id].node
-  //     this.clickedNode = undefined
-  //     this.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
-  //     this.viewport.pause = false
-  //     this.dirtyData = true
-  //     const { x, y } = this.viewport.toWorld(event.data.global)
-  //     this.onNodeMouseUp && this.onNodeMouseUp(node, { x, y })
-  //   }
-  // }
-
-  // private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
-  //   if (this.clickedNode !== undefined) {
-  //     const node = this.nodesById[this.clickedNode.id].node
-  //     const { x, y } = this.viewport.toWorld(event.data.global)
-  //     this.nodesById[this.clickedNode.id].nodeGfx.move(x, y)
-  //     this.dirtyData = true
-  //     this.onNodeDrag && this.onNodeDrag(node, { x, y })
-  //   }
-  // }
 }
