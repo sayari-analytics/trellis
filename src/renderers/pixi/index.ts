@@ -28,11 +28,11 @@ class Renderer {
   clickedNode?: PositionedNode
   dirtyData = false
   updateTime = Date.now()
-  linksLayer = new PIXI.Container()
+  edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
-  frontLabelLayer = new PIXI.Container()
+  frontLabelLayer = new PIXI.Container() // TODO - combine w/ frontNodeLayer?
   nodesById: { [key: string]: { node: PositionedNode, nodeGfx: NodeContainer } } = {}
   edgesById: { [key: string]: { edge: PositionedEdge, edgeGfx: EdgeContainer } } = {}
 
@@ -91,7 +91,7 @@ class Renderer {
     this.viewport.clampZoom({ minWidth: 600, maxWidth: 60000 })
     this.viewport.center = new PIXI.Point(WORLD_WIDTH / 6, WORLD_HEIGHT / 6)
     this.viewport.setZoom(0.5, true)
-    this.viewport.addChild(this.linksLayer)
+    this.viewport.addChild(this.edgesLayer)
     this.viewport.addChild(this.nodesLayer)
     this.viewport.addChild(this.labelsLayer)
     this.viewport.addChild(this.frontNodeLayer)
@@ -112,17 +112,19 @@ class Renderer {
     for (const edgeId in edges) {
       if (this.edgesById[edgeId] === undefined) {
         // enter
-        const edgeGfx = new EdgeContainer(edges[edgeId], this.edgeStyleSelector)
-          .updateStyle(edges[edgeId])
-
-        this.linksLayer.addChild(edgeGfx)
-        this.linksLayer.addChild(edgeGfx.labelContainer)
+        const edgeGfx = new EdgeContainer(
+          edges[edgeId],
+          this.edgeStyleSelector,
+          this.edgesLayer,
+          () => this.dirtyData = true
+        )
+          .style(edges[edgeId])
 
         this.edgesById[edges[edgeId].id] = { edge: edges[edgeId], edgeGfx }
         this.dirtyData = true
       } else {
         // update
-        this.edgesById[edgeId].edgeGfx.updateStyle(edges[edgeId])
+        this.edgesById[edgeId].edgeGfx.style(edges[edgeId])
         this.edgesById[edgeId].edge = edges[edgeId]
         this.dirtyData = true
       }
@@ -173,8 +175,7 @@ class Renderer {
       for (const edgeId in this.edgesById) {
         const edge = this.edgesById[edgeId].edge
 
-        this.edgesById[edgeId].edgeGfx.updatePosition(
-          edge,
+        this.edgesById[edgeId].edgeGfx.move(
           this.nodesById[edge.source.id].nodeGfx.x,
           this.nodesById[edge.source.id].nodeGfx.y,
           this.nodesById[edge.target.id].nodeGfx.x,
@@ -208,8 +209,8 @@ class Renderer {
         circleBorder.name = 'hoverBorder'
         circleBorder.x = 0
         circleBorder.y = 0
-        circleBorder.lineStyle(this.nodeStyleSelector(this.hoveredNode, 'strokeWidth'), 0xaaaaaa)
-        circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.hoveredNode, 'width') / 2)
+        circleBorder.lineStyle(this.nodeStyleSelector(this.hoveredNode, 'strokeWidth') * 1.5, 0xcccccc)
+        circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.hoveredNode, 'width') * 0.5)
         nodeGfx.addChild(circleBorder)
       }
 

@@ -4,37 +4,47 @@ import { EdgeStyleSelector } from '../utils'
 import { colorToNumber } from './utils'
 
 
-// const LINE_HOVER_RADIUS = 4
+const LINE_HOVER_RADIUS = 4
 
-export class EdgeContainer extends PIXI.Container {
 
-  labelContainer: PIXI.Container = new PIXI.Container()
+export class EdgeContainer {
 
+  private onUpdate: () => void
   private edgeStyleSelector: EdgeStyleSelector
   private label?: string
+  private width: number
+  private stroke: number
+  private strokeOpacity: number
+  private labelContainer: PIXI.Container = new PIXI.Container()
+  private hoverContainer: PIXI.Container = new PIXI.Container()
   private edgeGfx: PIXI.Graphics = new PIXI.Graphics()
-  // private edgeHoverBorder?: PIXI.Graphics
-  // private x0: number = 0
-  // private y0: number = 0
-  // private x1: number = 0
-  // private y1: number = 0
+  private edgeHoverBorder?: PIXI.Graphics
+  private x0: number = 0
+  private y0: number = 0
+  private x1: number = 0
+  private y1: number = 0
 
-  constructor(edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector) {
-    super()
+  constructor(edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container, onUpdate: () => void) {
+    this.onUpdate = onUpdate
     this.edgeStyleSelector = edgeStyleSelector
-    this.interactive = true
-    this.buttonMode = true
-    // this.on('mouseover', this.mouseEnter)
-    // this.on('mouseout', this.mouseLeave)
-    this.addChild(this.edgeGfx)
+    this.width = this.edgeStyleSelector(edge, 'width')
+    this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
+    this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
+    this.edgeGfx.interactive = true
+    this.edgeGfx.buttonMode = true
+    this.edgeGfx.on('mouseover', this.mouseEnter)
+    this.edgeGfx.on('mouseout', this.mouseLeave)
+    edgeLayer.addChild(this.edgeGfx)
+    edgeLayer.addChild(this.hoverContainer)
+    edgeLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
-  updateStyle = (edge: PositionedEdge) => {
+  style = (edge: PositionedEdge) => {
     if (edge.label !== this.label) {
       this.label = edge.label
 
       if (edge.label) {
-        const labelText = new PIXI.Text(edge.label || '', {
+        const labelText = new PIXI.Text(edge.label, {
           fontFamily: 'Helvetica',
           fontSize: 10 * 2,
           fill: 0x444444,
@@ -44,53 +54,42 @@ export class EdgeContainer extends PIXI.Container {
         })
         labelText.name = 'text'
         labelText.scale.set(0.5)
-        labelText.anchor.set(0.5, 0.5)
+        labelText.anchor.set(0.5, 0.6)
         this.labelContainer.addChild(labelText)
       } else {
         this.labelContainer.removeChildren()
       }
     }
 
+    this.width = this.edgeStyleSelector(edge, 'width')
+    this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
+    this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
+
     return this
   }
 
-  updatePosition = (edge: PositionedEdge, x0: number, y0: number, x1: number, y1: number) => {
-    // this.x0 = x0
-    // this.y0 = y0
-    // this.x1 = x1
-    // this.y1 = y1
+  move = (x0: number, y0: number, x1: number, y1: number) => {
+    this.x0 = x0
+    this.y0 = y0
+    this.x1 = x1
+    this.y1 = y1
     this.edgeGfx.clear()
 
-    this.edgeGfx.lineStyle(
-      this.edgeStyleSelector(edge, 'width'),
-      colorToNumber(this.edgeStyleSelector(edge, 'stroke')),
-      this.edgeStyleSelector(edge, 'strokeOpacity')
-    )
+    this.edgeGfx.lineStyle(this.width, this.stroke, this.strokeOpacity)
 
     this.edgeGfx.moveTo(x0, y0)
     this.edgeGfx.lineTo(x1, y1)
     this.edgeGfx.endFill()
 
     // TODO - fully outline line
-    // const hit = new PIXI.Polygon([
-    //   x0 + LINE_HOVER_RADIUS, y0 + LINE_HOVER_RADIUS,
-    //   x1 + LINE_HOVER_RADIUS, y1 + LINE_HOVER_RADIUS,
-    //   x1 - LINE_HOVER_RADIUS, y1 - LINE_HOVER_RADIUS,
-    //   x0 - LINE_HOVER_RADIUS, y0 - LINE_HOVER_RADIUS,
-    // ])
+    const hit = new PIXI.Polygon([
+      x0 + LINE_HOVER_RADIUS, y0 + LINE_HOVER_RADIUS,
+      x1 + LINE_HOVER_RADIUS, y1 + LINE_HOVER_RADIUS,
+      x1 - LINE_HOVER_RADIUS, y1 - LINE_HOVER_RADIUS,
+      x0 - LINE_HOVER_RADIUS, y0 - LINE_HOVER_RADIUS,
+    ])
 
-    // const leftX = Math.min(x0, x1)
-    // const rightX = Math.max(x0, x1)
-    // const bottomY = Math.min(y0, y1)
-    // const topY = Math.max(y0, y1)
-    // const hit = new PIXI.Polygon([
-    //   leftX - LINE_HOVER_RADIUS, bottomY - LINE_HOVER_RADIUS,
-    //   rightX + LINE_HOVER_RADIUS, topY - LINE_HOVER_RADIUS,
-    //   rightX + LINE_HOVER_RADIUS, topY + LINE_HOVER_RADIUS,
-    //   leftX - LINE_HOVER_RADIUS, bottomY + LINE_HOVER_RADIUS,
-    // ])
-
-    // this.hitArea = hit
+    this.edgeGfx.hitArea = hit
     // this.edgeGfx.drawPolygon(hit)
 
     this.labelContainer.position = new PIXI.Point(x0 + (x1 - x0) * 0.5, y0 + (y1 - y0) * 0.5)
@@ -103,8 +102,6 @@ export class EdgeContainer extends PIXI.Container {
       this.labelContainer.rotation = rotation
     }
 
-    const text = this.labelContainer.getChildByName('text') as PIXI.Text
-    // this.labelContainer.visible = false
     /**
      * TODO
      * - only double text resolution at high zoom, using occlusion (edge can't be occluded, but edge label can)
@@ -132,6 +129,7 @@ export class EdgeContainer extends PIXI.Container {
     //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
     //   (LABEL_X_PADDING * 2)
     const edgeLength = Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2))
+    const text = this.labelContainer.getChildAt(0) as PIXI.Text
     if (text.width > edgeLength) {
       text.visible = false
     } else {
@@ -141,35 +139,32 @@ export class EdgeContainer extends PIXI.Container {
     return this
   }
 
-  // mouseEnter = (edge: PositionedEdge) => {
-  //   if (this.edgeHoverBorder === undefined) {
-  //     console.log('hover')
-  //     this.edgeHoverBorder = new PIXI.Graphics()
-  //     this.edgeHoverBorder.lineStyle(
-  //       this.edgeStyleSelector(edge, 'width') + 5,
-  //       colorToNumber('#222'), //colorToNumber(this.edgeStyleSelector(edge, 'stroke')),
-  //       1 // this.edgeStyleSelector(edge, 'strokeOpacity')
-  //     )
+  private mouseEnter = () => {
+    if (this.edgeHoverBorder === undefined) {
+      /**
+       * TODO - does it make more sense to create the graphic on the fly, or create on init and add/remove from container
+       */
+      this.edgeHoverBorder = new PIXI.Graphics()
+      this.edgeHoverBorder.lineStyle(this.width + 3, this.stroke, this.strokeOpacity)
   
-  //     this.edgeGfx.moveTo(this.x0, this.y0)
-  //     this.edgeGfx.lineTo(this.x1, this.y1)
-  //     this.edgeGfx.endFill()
-      
-  //     // this.addChild(this.edgeHoverBorder)
-  //     this.layer.addChild(this.edgeHoverBorder)
-  //   }
+      this.edgeHoverBorder.moveTo(this.x0, this.y0)
+      this.edgeHoverBorder.lineTo(this.x1, this.y1)
+      this.edgeHoverBorder.endFill()
 
-  //   return this
-  // }
+      this.hoverContainer.addChild(this.edgeHoverBorder)
+      this.onUpdate()
+    }
 
-  // mouseLeave = () => {
-  //   if (this.edgeHoverBorder !== undefined) {
-  //     console.log('unhover')
-  //     this.layer.removeChild(this.edgeHoverBorder)
-  //     this.edgeHoverBorder.destroy()
-  //     this.edgeHoverBorder = undefined
-  //   }
+    return this
+  }
 
-  //   return this
-  // }
+  private mouseLeave = () => {
+    if (this.edgeHoverBorder !== undefined) {
+      this.hoverContainer.removeChildren()
+      this.edgeHoverBorder = undefined
+      this.onUpdate()
+    }
+
+    return this
+  }
 }
