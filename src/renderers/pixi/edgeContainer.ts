@@ -9,8 +9,8 @@ const LINE_HOVER_RADIUS = 4
 
 export class EdgeContainer {
 
-  private onUpdate: () => void
   private edgeStyleSelector: EdgeStyleSelector
+  private onUpdate: () => void
   private label?: string
   private width: number
   private stroke: number

@@ -89,7 +89,7 @@ class Renderer {
     this.app.stage.addChild(this.viewport.drag().pinch().wheel().decelerate())
 
     this.viewport.clampZoom({ minWidth: 600, maxWidth: 60000 })
-    this.viewport.center = new PIXI.Point(WORLD_WIDTH / 6, WORLD_HEIGHT / 6)
+    this.viewport.center = new PIXI.Point(0, 0)
     this.viewport.setZoom(0.5, true)
     this.viewport.addChild(this.edgesLayer)
     this.viewport.addChild(this.nodesLayer)
@@ -133,26 +133,30 @@ class Renderer {
     for (const nodeId in nodes) {
       if (this.nodesById[nodeId] === undefined) {
         // enter
-        const nodeGfx = new NodeContainer(nodes[nodeId], this.nodeStyleSelector)
-          .updateStyle(nodes[nodeId])
-          .updatePosition(nodes[nodeId].x!, nodes[nodeId].y!)
-          // TODO - move handlers to NodeContainer
-          .on('mouseover', this.nodeMouseOver)
-          .on('mouseout', this.nodeMouseOut)
-          .on('mousedown', this.nodeMouseDown)
-          .on('mouseup', this.nodeMouseUp)
-          .on('mouseupoutside', this.nodeMouseUp)
+        const nodeGfx = new NodeContainer(
+          nodes[nodeId],
+          this.nodeStyleSelector,
+          this.nodesLayer,
+          this.labelsLayer,
+        )
+          .style(nodes[nodeId])
+          .position(nodes[nodeId].x!, nodes[nodeId].y!)
 
-        this.nodesLayer.addChild(nodeGfx)
-        this.labelsLayer.addChild(nodeGfx.labelContainer)
+        // TODO - move to NodeContainer
+        nodeGfx.circleContainer.on('mouseover', this.nodeMouseOver)
+        nodeGfx.circleContainer.on('mouseout', this.nodeMouseOut)
+        nodeGfx.circleContainer.on('mousedown', this.nodeMouseDown)
+        nodeGfx.circleContainer.on('mouseup', this.nodeMouseUp)
+        nodeGfx.circleContainer.on('mouseupoutside', this.nodeMouseUp)
 
         this.nodesById[nodes[nodeId].id] = { node: nodes[nodeId], nodeGfx }
         this.dirtyData = true
       } else {
         // update
         this.nodesById[nodeId].nodeGfx
-          .updateStyle(nodes[nodeId])
-          .updatePosition(nodes[nodeId].x!, nodes[nodeId].y!)
+          .style(nodes[nodeId])
+          .position(nodes[nodeId].x!, nodes[nodeId].y!)
+
         this.nodesById[nodeId].node = nodes[nodeId]
         this.dirtyData = true
       }
@@ -176,10 +180,10 @@ class Renderer {
         const edge = this.edgesById[edgeId].edge
 
         this.edgesById[edgeId].edgeGfx.move(
-          this.nodesById[edge.source.id].nodeGfx.x,
-          this.nodesById[edge.source.id].nodeGfx.y,
-          this.nodesById[edge.target.id].nodeGfx.x,
-          this.nodesById[edge.target.id].nodeGfx.y,
+          this.nodesById[edge.source.id].nodeGfx.circleContainer.x,
+          this.nodesById[edge.source.id].nodeGfx.circleContainer.y,
+          this.nodesById[edge.target.id].nodeGfx.circleContainer.x,
+          this.nodesById[edge.target.id].nodeGfx.circleContainer.y,
         )
       }
 
@@ -200,9 +204,9 @@ class Renderer {
       if (this.hoveredNode !== undefined) {
         const nodeGfx = this.nodesById[this.hoveredNode.id].nodeGfx
 
-        this.nodesLayer.removeChild(nodeGfx)
+        this.nodesLayer.removeChild(nodeGfx.circleContainer)
         this.labelsLayer.removeChild(nodeGfx.labelContainer)
-        this.frontNodeLayer.addChild(nodeGfx)
+        this.frontNodeLayer.addChild(nodeGfx.circleContainer)
         this.frontLabelLayer.addChild(nodeGfx.labelContainer)
 
         const circleBorder = new PIXI.Graphics()
@@ -211,14 +215,13 @@ class Renderer {
         circleBorder.y = 0
         circleBorder.lineStyle(this.nodeStyleSelector(this.hoveredNode, 'strokeWidth') * 1.5, 0xcccccc)
         circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.hoveredNode, 'width') * 0.5)
-        nodeGfx.addChild(circleBorder)
+        nodeGfx.circleContainer.addChild(circleBorder)
       }
 
       this.dirtyData = animationPending
       this.viewport.dirty = false
       this.app.render()
     } else if (this.viewport.dirty) {
-      // console.log(this.viewport.scale.x, this.viewport.scale.y)
       this.viewport.dirty = false
       this.app.render()
     }
@@ -263,7 +266,6 @@ class Renderer {
       const { x, y } = this.viewport.toWorld(event.data.global)
       this.onNodeMouseUp && this.onNodeMouseUp(node, { x, y })
     }
-
   }
 
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
