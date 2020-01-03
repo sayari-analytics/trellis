@@ -14,7 +14,7 @@ import { EdgeContainer } from './edgeContainer'
 new FontFaceObserver('Material Icons').load()
 
 
-class Renderer {
+export class Renderer {
 
   onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseDown?: (node: PositionedNode, details: { x: number, y: number }) => void
@@ -24,8 +24,8 @@ class Renderer {
 
   nodeStyleSelector: NodeStyleSelector
   edgeStyleSelector: EdgeStyleSelector
-  hoveredNode?: PositionedNode
-  clickedNode?: PositionedNode
+  hoveredNode?: string
+  clickedNode?: string
   dirtyData = false
   updateTime = Date.now()
   edgesLayer = new PIXI.Container()
@@ -134,6 +134,7 @@ class Renderer {
       if (this.nodesById[nodeId] === undefined) {
         // enter
         const nodeGfx = new NodeContainer(
+          this,
           nodes[nodeId],
           this.nodeStyleSelector,
           this.nodesLayer,
@@ -202,7 +203,7 @@ class Renderer {
 
       // hover
       if (this.hoveredNode !== undefined) {
-        const nodeGfx = this.nodesById[this.hoveredNode.id].nodeGfx
+        const { nodeGfx, node } = this.nodesById[this.hoveredNode]
 
         this.nodesLayer.removeChild(nodeGfx.circleContainer)
         this.labelsLayer.removeChild(nodeGfx.labelContainer)
@@ -213,8 +214,8 @@ class Renderer {
         circleBorder.name = 'hoverBorder'
         circleBorder.x = 0
         circleBorder.y = 0
-        circleBorder.lineStyle(this.nodeStyleSelector(this.hoveredNode, 'strokeWidth') * 1.5, 0xcccccc)
-        circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.hoveredNode, 'width') * 0.5)
+        circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth') * 1.5, 0xcccccc)
+        circleBorder.drawCircle(0, 0, this.nodeStyleSelector(node, 'width') * 0.5)
         nodeGfx.circleContainer.addChild(circleBorder)
       }
 
@@ -230,7 +231,7 @@ class Renderer {
   private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
     if (this.clickedNode === undefined) {
       const node = this.nodesById[event.currentTarget.name].node
-      this.hoveredNode = node
+      this.hoveredNode = node.id
       this.dirtyData = true
       const { x, y } = this.viewport.toWorld(event.data.global)
       this.onNodeMouseEnter && this.onNodeMouseEnter(node, { x, y })
@@ -239,7 +240,7 @@ class Renderer {
 
   private nodeMouseOut = (event: PIXI.interaction.InteractionEvent) => {
     const node = this.nodesById[event.currentTarget.name].node
-    if (this.clickedNode === undefined && this.hoveredNode === node) {
+    if (this.clickedNode === undefined && this.hoveredNode === node.id) {
       this.hoveredNode = undefined
       this.dirtyData = true
       const { x, y } = this.viewport.toWorld(event.data.global)
@@ -248,7 +249,7 @@ class Renderer {
   }
 
   private nodeMouseDown = (event: PIXI.interaction.InteractionEvent) => {
-    this.clickedNode = this.nodesById[event.currentTarget.name].node
+    this.clickedNode = event.currentTarget.name
     this.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
     this.viewport.pause = true
     this.dirtyData = true
@@ -258,7 +259,7 @@ class Renderer {
 
   private nodeMouseUp = (event: PIXI.interaction.InteractionEvent) => {
     if (this.clickedNode !== undefined) {
-      const node = this.nodesById[this.clickedNode.id].node
+      const node = this.nodesById[this.clickedNode].node
       this.clickedNode = undefined
       this.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
       this.viewport.pause = false
@@ -270,9 +271,9 @@ class Renderer {
 
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
     if (this.clickedNode !== undefined) {
-      const node = this.nodesById[this.clickedNode.id].node
+      const { node, nodeGfx } = this.nodesById[this.clickedNode]
       const { x, y } = this.viewport.toWorld(event.data.global)
-      this.nodesById[this.clickedNode.id].nodeGfx.move(x, y)
+      nodeGfx.move(x, y)
       this.dirtyData = true
       this.onNodeDrag && this.onNodeDrag(node, { x, y })
     }
