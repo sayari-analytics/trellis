@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js'
 import { PositionedEdge } from '../..'
 import { EdgeStyleSelector } from '../utils'
 import { colorToNumber } from './utils'
+import { Renderer } from '.'
 
 
 const LINE_HOVER_RADIUS = 4
@@ -9,14 +10,16 @@ const LINE_HOVER_RADIUS = 4
 
 export class EdgeContainer {
 
+  edge: PositionedEdge
+  labelContainer: PIXI.Container = new PIXI.Container()
+  hoverContainer: PIXI.Container = new PIXI.Container()
+
+  private renderer: Renderer
   private edgeStyleSelector: EdgeStyleSelector
-  private onUpdate: () => void
   private label?: string
   private width: number
   private stroke: number
   private strokeOpacity: number
-  private labelContainer: PIXI.Container = new PIXI.Container()
-  private hoverContainer: PIXI.Container = new PIXI.Container()
   private edgeGfx: PIXI.Graphics = new PIXI.Graphics()
   private edgeHoverBorder?: PIXI.Graphics
   private x0: number = 0
@@ -24,8 +27,9 @@ export class EdgeContainer {
   private x1: number = 0
   private y1: number = 0
 
-  constructor(edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container, onUpdate: () => void) {
-    this.onUpdate = onUpdate
+  constructor(renderer: Renderer, edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container) {
+    this.edge = edge
+    this.renderer = renderer
     this.edgeStyleSelector = edgeStyleSelector
     this.width = this.edgeStyleSelector(edge, 'width')
     this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
@@ -152,7 +156,7 @@ export class EdgeContainer {
       this.edgeHoverBorder.endFill()
 
       this.hoverContainer.addChild(this.edgeHoverBorder)
-      this.onUpdate()
+      this.renderer.dirtyData = true
     }
 
     return this
@@ -162,7 +166,7 @@ export class EdgeContainer {
     if (this.edgeHoverBorder !== undefined) {
       this.hoverContainer.removeChildren()
       this.edgeHoverBorder = undefined
-      this.onUpdate()
+      this.renderer.dirtyData = true
     }
 
     return this

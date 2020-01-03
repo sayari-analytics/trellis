@@ -39,11 +39,11 @@ export class NodeContainer {
     this.circleContainer.interactive = true
     this.circleContainer.buttonMode = true
     this.circleContainer.hitArea = new PIXI.Circle(0, 0, this.radius + 5)
-    // this.circleContainer.on('mouseover', this.nodeMouseOver)
-    // this.circleContainer.on('mouseout', this.nodeMouseOut)
-    // this.circleContainer.on('mousedown', this.nodeMouseDown)
-    // this.circleContainer.on('mouseup', this.nodeMouseUp)
-    // this.circleContainer.on('mouseupoutside', this.nodeMouseUp)
+    this.circleContainer.on('mouseover', this.nodeMouseOver)
+    this.circleContainer.on('mouseout', this.nodeMouseOut)
+    this.circleContainer.on('mousedown', this.nodeMouseDown)
+    this.circleContainer.on('mouseup', this.nodeMouseUp)
+    this.circleContainer.on('mouseupoutside', this.nodeMouseUp)
 
     const circle = new PIXI.Graphics()
     circle.x = 0
@@ -164,4 +164,76 @@ export class NodeContainer {
 
   animationIsPending = () => this.animationTime < ANIMATION_DURATION
 
+  private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.renderer.clickedNode === undefined) {
+      this.renderer.hoveredNode = this.node.id
+
+      this.renderer.nodesLayer.removeChild(this.circleContainer)
+      this.renderer.labelsLayer.removeChild(this.labelContainer)
+      this.renderer.frontNodeLayer.addChild(this.circleContainer)
+      this.renderer.frontLabelLayer.addChild(this.labelContainer)
+
+      const circleBorder = new PIXI.Graphics()
+      circleBorder.name = 'hoverBorder'
+      circleBorder.x = 0
+      circleBorder.y = 0
+      circleBorder.lineStyle(this.nodeStyleSelector(this.node, 'strokeWidth') * 1.5, 0xcccccc)
+      circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.node, 'width') * 0.5)
+      this.circleContainer.addChild(circleBorder)
+
+      this.renderer.dirtyData = true
+      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      this.renderer.onNodeMouseEnter && this.renderer.onNodeMouseEnter(this.node, { x, y })
+    }
+  }
+
+  private nodeMouseOut = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.renderer.clickedNode === undefined && this.renderer.hoveredNode === this.node.id) {
+      this.renderer.hoveredNode = undefined
+
+      for (const nodeGfx of this.renderer.frontNodeLayer.children) {
+        this.renderer.frontNodeLayer.removeChild(nodeGfx);
+        (nodeGfx as PIXI.Graphics).removeChild((nodeGfx as PIXI.Graphics).getChildByName('hoverBorder'))
+        this.renderer.nodesLayer.addChild(nodeGfx)
+      }
+
+      for (const labelGfx of this.renderer.frontLabelLayer.children) {
+        this.renderer.frontLabelLayer.removeChild(labelGfx)
+        this.renderer.labelsLayer.addChild(labelGfx)
+      }
+
+      this.renderer.dirtyData = true
+      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      this.renderer.onNodeMouseLeave && this.renderer.onNodeMouseLeave(this.node, { x, y })
+    }
+  }
+
+  private nodeMouseDown = (event: PIXI.interaction.InteractionEvent) => {
+    this.renderer.clickedNode = event.currentTarget.name
+    this.renderer.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
+    this.renderer.viewport.pause = true
+    this.renderer.dirtyData = true
+    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onNodeMouseDown && this.renderer.onNodeMouseDown(this.node, { x, y })
+  }
+
+  private nodeMouseUp = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.renderer.clickedNode !== undefined) {
+      this.renderer.clickedNode = undefined
+      this.renderer.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
+      this.renderer.viewport.pause = false
+      this.renderer.dirtyData = true
+      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      this.renderer.onNodeMouseUp && this.renderer.onNodeMouseUp(this.node, { x, y })
+    }
+  }
+
+  private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.renderer.clickedNode !== undefined) {
+      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      this.move(x, y)
+      this.renderer.dirtyData = true
+      this.renderer.onNodeDrag && this.renderer.onNodeDrag(this.node, { x, y })
+    }
+  }
 }
