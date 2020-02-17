@@ -32,7 +32,7 @@ export class Renderer {
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
-  frontLabelLayer = new PIXI.Container() // TODO - combine w/ frontNodeLayer?
+  frontLabelLayer = new PIXI.Container()
   nodesById: { [key: string]: NodeContainer } = {}
   edgesById: { [key: string]: EdgeContainer } = {}
 
@@ -61,14 +61,14 @@ export class Renderer {
     const SCREEN_HEIGHT = container.offsetHeight
     const WORLD_WIDTH = SCREEN_WIDTH // * 2
     const WORLD_HEIGHT = SCREEN_HEIGHT // * 2
-    const RESOLUTION = window.devicePixelRatio // * 2
 
     this.app = new PIXI.Application({
       width: SCREEN_WIDTH,
       height: SCREEN_HEIGHT,
-      resolution: RESOLUTION,
+      resolution: 2,
       transparent: true,
       antialias: true,
+      autoDensity: true,
       autoStart: false
     })
     this.app.view.style.width = `${SCREEN_WIDTH}px`
@@ -118,12 +118,12 @@ export class Renderer {
           this.edgeStyleSelector,
           this.edgesLayer,
         )
-          .style(edges[edgeId])
+          .set(edges[edgeId])
 
         this.dirtyData = true
       } else {
         // update
-        this.edgesById[edgeId].style(edges[edgeId])
+        this.edgesById[edgeId].set(edges[edgeId])
         this.edgesById[edgeId].edge = edges[edgeId]
         this.dirtyData = true
       }
@@ -139,18 +139,14 @@ export class Renderer {
           this.nodesLayer,
           this.labelsLayer,
         )
-          .style(nodes[nodeId])
-          .position(nodes[nodeId].x!, nodes[nodeId].y!)
+          .set(nodes[nodeId])
 
         this.nodesById[nodes[nodeId].id] = nodeContainer
         this.dirtyData = true
       } else {
         // update
-        this.nodesById[nodeId]
-          .style(nodes[nodeId])
-          .position(nodes[nodeId].x!, nodes[nodeId].y!)
+        this.nodesById[nodeId].set(nodes[nodeId])
 
-        this.nodesById[nodeId].node = nodes[nodeId]
         this.dirtyData = true
       }
     }
@@ -170,14 +166,8 @@ export class Renderer {
       }
 
       for (const edgeId in this.edgesById) {
-        const edge = this.edgesById[edgeId].edge
-
-        this.edgesById[edgeId].move(
-          this.nodesById[edge.source.id].circleContainer.x,
-          this.nodesById[edge.source.id].circleContainer.y,
-          this.nodesById[edge.target.id].circleContainer.x,
-          this.nodesById[edge.target.id].circleContainer.y,
-        )
+        const { source, target } = this.edgesById[edgeId].edge
+        this.edgesById[edgeId].animate(this.nodesById[source.id], this.nodesById[target.id])
       }
 
       this.dirtyData = animationPending

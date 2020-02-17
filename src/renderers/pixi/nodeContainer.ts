@@ -6,7 +6,6 @@ import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { Renderer } from '.'
 
 
-const LABEL_X_PADDING = 4
 const LABEL_Y_PADDING = 2
 const ANIMATION_DURATION = 800
 
@@ -16,6 +15,8 @@ export class NodeContainer {
   labelContainer: PIXI.Container = new PIXI.Container()
   circleContainer: PIXI.Container = new PIXI.Container()
   node: PositionedNode
+  radius: number
+  strokeWidth: number
 
   private renderer: Renderer
   private nodeStyleSelector: NodeStyleSelector
@@ -25,16 +26,16 @@ export class NodeContainer {
   private endY: number = 0
   private interpolateX: (percent: number) => number = () => this.endX
   private interpolateY: (percent: number) => number = () => this.endY
-  private radius: number
   private label?: string
   private icon?: string
   private animationTime: number = 0
-  
+
   constructor(renderer: Renderer, node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
     this.node = node
     this.nodeStyleSelector = nodeStyleSelector
     this.radius = this.nodeStyleSelector(node, 'width') / 2
+    this.strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
     this.circleContainer.name = node.id
     this.circleContainer.interactive = true
     this.circleContainer.buttonMode = true
@@ -48,25 +49,35 @@ export class NodeContainer {
     const circle = new PIXI.Graphics()
     circle.x = 0
     circle.y = 0
+    circle.lineStyle(this.strokeWidth, colorToNumber(this.nodeStyleSelector(node, 'stroke')))
     circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
     circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
     circle.drawCircle(0, 0, this.radius)
-    
-    const circleBorder = new PIXI.Graphics()
-    circle.x = 0
-    circle.y = 0
-    circleBorder.lineStyle(this.nodeStyleSelector(node, 'strokeWidth'), colorToNumber(this.nodeStyleSelector(node, 'stroke')))
-    circleBorder.drawCircle(0, 0, this.radius)
-
     this.circleContainer.addChild(circle)
-    this.circleContainer.addChild(circleBorder)
 
     nodesLayer.addChild(this.circleContainer)
     labelLayer.addChild(this.labelContainer)
   }
 
-  style = (node: PositionedNode) => {
+  set = (node: PositionedNode) => {
+    /**
+     * TODO - only interpolate movement if node is not being dragged
+     */
+    this.node = node
+    this.startX = this.circleContainer.x
+    this.startY = this.circleContainer.y
+
+    this.endX = node.x!
+    this.endY = node.y!
+
+    const interpolateXNumber = interpolateNumber(this.startX, this.endX)
+    const interpolateYNumber = interpolateNumber(this.startY, this.endY)
+    this.interpolateX = interpolateBasis([interpolateXNumber(0), interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), interpolateXNumber(1)])
+    this.interpolateY = interpolateBasis([interpolateYNumber(0), interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), interpolateYNumber(1)])
+    this.animationTime = 0
+
     this.radius = this.nodeStyleSelector(node, 'width') / 2
+    // TODO - update all changed styles (radius, border etc.)
 
     if (node.label !== this.label) {
       this.label = node.label
@@ -76,8 +87,8 @@ export class NodeContainer {
           fontFamily: 'Helvetica',
           fontSize: 12 * 2,
           fill: 0x333333,
-          lineJoin: "round",
-          stroke: "#fafafaee",
+          lineJoin: 'round',
+          stroke: '#fafafaee',
           strokeThickness: 2 * 2,
         })
         labelText.x = 0
@@ -103,31 +114,12 @@ export class NodeContainer {
         icon.x = 0
         icon.y = 0
         icon.anchor.set(0.5)
-    
+
         this.circleContainer.addChild(icon)
       } else {
         this.circleContainer.removeChild(this.circleContainer.getChildByName('icon'))
       }
     }
-
-    return this
-  }
-
-  position = (x: number, y: number) => {
-    /**
-     * TODO - simplify interface by combining updatePosition and move and only interpolate movement if node is not being dragged
-     */
-    this.startX = this.circleContainer.x
-    this.startY = this.circleContainer.y
-
-    this.endX = x
-    this.endY = y
-
-    const interpolateXNumber = interpolateNumber(this.startX, this.endX)
-    const interpolateYNumber = interpolateNumber(this.startY, this.endY)
-    this.interpolateX = interpolateBasis([interpolateXNumber(0), interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), interpolateXNumber(1)])
-    this.interpolateY = interpolateBasis([interpolateYNumber(0), interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), interpolateYNumber(1)])
-    this.animationTime = 0
 
     return this
   }
@@ -149,19 +141,6 @@ export class NodeContainer {
     return this
   }
 
-  move = (x: number, y: number) => {
-    this.circleContainer.x = x
-    this.circleContainer.y = y
-    this.startX = x
-    this.startY = y
-    this.endX = x
-    this.endY = y
-    this.labelContainer.position.x = x
-    this.labelContainer.position.y = y
-    this.animationTime = ANIMATION_DURATION
-    return this
-  }
-
   animationIsPending = () => this.animationTime < ANIMATION_DURATION
 
   private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
@@ -173,13 +152,16 @@ export class NodeContainer {
       this.renderer.frontNodeLayer.addChild(this.circleContainer)
       this.renderer.frontLabelLayer.addChild(this.labelContainer)
 
-      const circleBorder = new PIXI.Graphics()
-      circleBorder.name = 'hoverBorder'
-      circleBorder.x = 0
-      circleBorder.y = 0
-      circleBorder.lineStyle(this.nodeStyleSelector(this.node, 'strokeWidth') * 1.5, 0xcccccc)
-      circleBorder.drawCircle(0, 0, this.nodeStyleSelector(this.node, 'width') * 0.5)
-      this.circleContainer.addChild(circleBorder)
+      /**
+       * TODO - does it make more sense to update the existing circle's border, rather than render a new circle?
+       */
+      const hoverBorder = new PIXI.Graphics()
+      hoverBorder.name = 'hoverBorder'
+      hoverBorder.x = 0
+      hoverBorder.y = 0
+      hoverBorder.lineStyle(this.nodeStyleSelector(this.node, 'strokeWidth') * 1.5, 0xcccccc)
+      hoverBorder.drawCircle(0, 0, this.nodeStyleSelector(this.node, 'width') * 0.5)
+      this.circleContainer.addChild(hoverBorder)
 
       this.renderer.dirtyData = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
@@ -231,7 +213,15 @@ export class NodeContainer {
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) {
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.move(x, y)
+      this.circleContainer.x = x
+      this.circleContainer.y = y
+      this.startX = x
+      this.startY = y
+      this.endX = x
+      this.endY = y
+      this.labelContainer.position.x = x
+      this.labelContainer.position.y = y
+      this.animationTime = ANIMATION_DURATION
       this.renderer.dirtyData = true
       this.renderer.onNodeDrag && this.renderer.onNodeDrag(this.node, { x, y })
     }
