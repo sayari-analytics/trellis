@@ -33,8 +33,9 @@ export class Renderer {
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodesById: { [key: string]: NodeContainer } = {}
-  edgesById: { [key: string]: EdgeContainer } = {}
+  nodesById: { [id: string]: NodeContainer } = {}
+  edgesById: { [id: string]: EdgeContainer } = {}
+  edgeGroups: { [source: string]: { [target: string]: Set<string> } } = {}
 
   app: PIXI.Application
   viewport: Viewport
@@ -109,6 +110,23 @@ export class Renderer {
     nodes: { [key: string]: PositionedNode },
     edges: { [key: string]: PositionedEdge }
   }) => {
+    /**
+     * calculate edge groups
+     *
+     * this must be completed before initializing new/updating existing edges,
+     * otherwise, edge curves won't be calculated properly
+     */
+    for (const edgeId in edges) {
+      const [min, max] = [edges[edgeId].source.id, edges[edgeId].target.id].sort()
+      if (this.edgeGroups[min] === undefined) {
+        this.edgeGroups[min] = {}
+      }
+      if (this.edgeGroups[min][max] === undefined) {
+        this.edgeGroups[min][max] = new Set()
+      }
+      this.edgeGroups[min][max].add(edgeId)
+    }
+
     for (const edgeId in edges) {
       if (this.edgesById[edgeId] === undefined) {
         // enter
@@ -124,7 +142,6 @@ export class Renderer {
       } else {
         // update
         this.edgesById[edgeId].set(edges[edgeId])
-        this.edgesById[edgeId].edge = edges[edgeId]
         this.dirtyData = true
       }
     }
@@ -148,6 +165,20 @@ export class Renderer {
         this.nodesById[nodeId].set(nodes[nodeId])
 
         this.dirtyData = true
+      }
+    }
+
+    for (const edgeId in this.edgesById) {
+      if (edges[edgeId] === undefined) {
+        // exit
+        this.edgesById[edgeId].delete()
+      }
+    }
+
+    for (const nodeId in this.nodesById) {
+      if (nodes[nodeId] === undefined) {
+        // exit
+        this.nodesById[nodeId].delete()
       }
     }
   }

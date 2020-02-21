@@ -11,15 +11,14 @@ export type Node = {
 }
 export type Edge = {
   id: string
+  label?: string
   source: string
   target: string
-  label?: string
   style?: Partial<EdgeStyle>
 }
 
 export type PositionedNode = Node
   & SimulationNodeDatum
-  & { x0?: number, y0?: number }
 export type PositionedEdge = {
   id: string
   label?: string

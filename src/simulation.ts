@@ -121,7 +121,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     .force('collision', forceCollide)
     .stop()
     .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
-  
+
   const layout = (data: LayoutEvent) => {
     let update = false
 
@@ -142,13 +142,11 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       update = true
     }
 
-    // debugger
     for (const nodeId in data.nodes) {
       if (nodes[nodeId] === undefined) {
         // enter node
         nodes[nodeId] = data.nodes[nodeId]
         update = true
-      // } else if (nodes[nodeId] !== data.nodes[nodeId]) { // TODO - referential equality won't work here?  what level of equality is necessary
       } else {
         // update node
         nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId], { x0: nodes[nodeId].x, y0: nodes[nodeId].y })
@@ -212,26 +210,26 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       simulation.tick(1)
     }
   }
-  
+
   const dragStart = (data: DragStartEvent) => {
     nodes[data.id].fx = data.x
     nodes[data.id].fy = data.y
   }
-  
+
   const drag = (data: DragEvent) => {
     nodes[data.id].fx = data.x
     nodes[data.id].fy = data.y
   }
-  
+
   const dragEnd = (data: DragEndEvent) => {
     nodes[data.id].fx = null
     nodes[data.id].fy = null
   }
-  
+
   const tick = (data: TickEvent) => {
     simulation.restart().tick(1)
   }
-  
+
   self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
     if (data.type === 'layout') {
       layout(data)

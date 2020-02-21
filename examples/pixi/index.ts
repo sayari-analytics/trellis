@@ -1,5 +1,5 @@
-import { interval } from 'rxjs'
-import { map, take } from 'rxjs/operators'
+import { interval, combineLatest, Subject } from 'rxjs'
+import { map, take, scan, startWith, tap } from 'rxjs/operators'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
 import { Node, Edge, Graph } from '../../src/index'
@@ -8,16 +8,24 @@ import { data, large, mediumLg, mediumSm } from '../data'
 import graphData from '../../tmp-data'
 
 
+const nodeClick$ = new Subject<string>()
+
 const graph = new Graph()
 const renderer = PixiRenderer({
   id: 'graph',
+  onNodeMouseEnter: ({ id }) => console.log('mouse enter', id),
+  onNodeMouseLeave: ({ id }) => console.log('mouse leave', id),
   onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
   onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
-  onNodeMouseUp: (({ id }) => graph.dragEnd(id)),
+  onNodeMouseUp: (({ id }) => {
+    console.log('clicked', id)
+    graph.dragEnd(id)
+    nodeClick$.next(id)
+  }),
 })
 graph.onLayout(renderer.layout)
 
-const NODES_PER_TICK = 12
+const NODES_PER_TICK = 200
 
 const nodes: Node[] = Object.values(graphData.nodes).map<Node>(({ id, label, type }) => ({
   id,
@@ -67,11 +75,23 @@ const edges: Edge[] = Object.entries(graphData.edges).map<Edge>(([id, { field, s
 // }))
 
 
-interval(1400).pipe(
-  take(Math.ceil(nodes.length / NODES_PER_TICK)),
-  map((idx) => {
+combineLatest(
+  interval(1400).pipe(
+    take(1),
+    // take(Math.ceil(nodes.length / NODES_PER_TICK)),
+  ),
+  nodeClick$.pipe(
+    scan((clickedNodes, nodeId) => {
+      clickedNodes.add(nodeId)
+      return clickedNodes
+    }, new Set<string>()),
+    startWith(new Set<string>()),
+  )
+).pipe(
+  map(([idx, clickedNodes]) => {
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)
+      // .filter((node) => !clickedNodes.has(node.id))
       .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge } }>((graph, node) => {
         graph.nodes[node.id] = node
 
@@ -83,7 +103,7 @@ interval(1400).pipe(
 
         return graph
       }, { nodes: {}, edges: {} })
-  }),
+  })
 ).subscribe({
   next: (graphData) => graph.layout(graphData),
   error: (err) => console.error(err),

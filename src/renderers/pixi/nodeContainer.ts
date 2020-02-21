@@ -12,11 +12,11 @@ const ANIMATION_DURATION = 800
 
 export class NodeContainer {
 
-  labelContainer: PIXI.Container = new PIXI.Container()
-  circleContainer: PIXI.Container = new PIXI.Container()
   node: PositionedNode
   radius: number
   strokeWidth: number
+  x: number = 0
+  y: number = 0
 
   private renderer: Renderer
   private nodeStyleSelector: NodeStyleSelector
@@ -29,6 +29,8 @@ export class NodeContainer {
   private label?: string
   private icon?: string
   private animationTime: number = 0
+  private circleContainer: PIXI.Container = new PIXI.Container()
+  private labelContainer: PIXI.Container = new PIXI.Container()
 
   constructor(renderer: Renderer, node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
@@ -64,8 +66,8 @@ export class NodeContainer {
      * TODO - only interpolate movement if node is not being dragged
      */
     this.node = node
-    this.startX = this.circleContainer.x
-    this.startY = this.circleContainer.y
+    this.startX = this.x
+    this.startY = this.y
 
     this.endX = node.x!
     this.endY = node.y!
@@ -124,21 +126,28 @@ export class NodeContainer {
     return this
   }
 
+  /**
+   * TODO - animate should be renamed to render and take no arguments
+   * deltaTime can be set as public property on renderer
+   */
   animate = (deltaTime: number) => {
     if (this.animationTime < ANIMATION_DURATION) {
       this.animationTime += deltaTime
       const percent = this.animationTime / ANIMATION_DURATION
-      this.circleContainer.x = this.interpolateX(percent)
-      this.circleContainer.y = this.interpolateY(percent)
+      this.circleContainer.x = this.labelContainer.x = this.x = this.interpolateX(percent)
+      this.circleContainer.y = this.labelContainer.y = this.y = this.interpolateY(percent)
     } else {
-      this.circleContainer.x = this.endX
-      this.circleContainer.y = this.endY
+      this.circleContainer.x = this.labelContainer.x = this.x = this.endX
+      this.circleContainer.y = this.labelContainer.y = this.y = this.endY
     }
 
-    this.labelContainer.position.x = this.circleContainer.x
-    this.labelContainer.position.y = this.circleContainer.y
-
     return this
+  }
+
+  delete = () => {
+    this.circleContainer.destroy()
+    this.labelContainer.destroy()
+    delete this.renderer.nodesById[this.node.id]
   }
 
   animationIsPending = () => this.animationTime < ANIMATION_DURATION
