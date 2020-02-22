@@ -29,6 +29,7 @@ export type RendererOptions = {
   onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
   onEdgeHover?: (edge: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeClick?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  stats?: Stats
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {

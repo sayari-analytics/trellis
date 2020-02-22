@@ -2,11 +2,17 @@ import { interval, combineLatest, Subject } from 'rxjs'
 import { map, take, scan, startWith, tap } from 'rxjs/operators'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
+import Stats from 'stats.js'
 import { Node, Edge, Graph } from '../../src/index'
 import { PixiRenderer } from '../../src/renderers/pixi'
 import { data, large, mediumLg, mediumSm } from '../data'
 import graphData from '../../tmp-data'
 
+
+
+export const stats = new Stats()
+stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom)
 
 const nodeClick$ = new Subject<string>()
 
@@ -22,6 +28,7 @@ const renderer = PixiRenderer({
     graph.dragEnd(id)
     nodeClick$.next(id)
   }),
+  stats
 })
 graph.onLayout(renderer.layout)
 

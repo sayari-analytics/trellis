@@ -1,12 +1,10 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
-import * as GStats from 'gstats'
 import FontFaceObserver from 'fontfaceobserver'
 import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from '../options'
 import { PositionedNode, PositionedEdge } from '../../index'
 import { animationFrameLoop, noop } from '../../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector } from '../utils'
-import { stats } from '../../stats'
 import { NodeContainer } from './nodeContainer'
 import { EdgeContainer } from './edgeContainer'
 
@@ -24,6 +22,7 @@ export class Renderer {
 
   nodeStyleSelector: NodeStyleSelector
   edgeStyleSelector: EdgeStyleSelector
+  stats?: Stats
   hoveredNode?: string
   clickedNode?: string
   dirtyData = false
@@ -43,6 +42,7 @@ export class Renderer {
   constructor({
     id, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle,
     onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
+    stats,
   }: RendererOptions) {
     this.onNodeMouseEnter = onNodeMouseEnter
     this.onNodeMouseDown = onNodeMouseDown
@@ -51,6 +51,7 @@ export class Renderer {
     this.onNodeMouseLeave = onNodeMouseLeave
     this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
     this.edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
+    this.stats = stats
 
 
     const container = document.getElementById(id)
@@ -63,6 +64,10 @@ export class Renderer {
     const WORLD_WIDTH = SCREEN_WIDTH // * 2
     const WORLD_HEIGHT = SCREEN_HEIGHT // * 2
 
+    /**
+     * TODO - max out render performance, even on machines w/o dedicated GPU
+     * just twist all the knobs...
+     */
     this.app = new PIXI.Application({
       width: SCREEN_WIDTH,
       height: SCREEN_HEIGHT,
@@ -70,14 +75,11 @@ export class Renderer {
       transparent: true,
       antialias: true,
       autoDensity: true,
-      autoStart: false
+      autoStart: false,
+      powerPreference: 'high-performance',
     })
-    this.app.view.style.width = `${SCREEN_WIDTH}px`
+    // this.app.view.style.width = `${SCREEN_WIDTH}px`
     this.labelsLayer.interactiveChildren = false
-
-    const pixiHooks = new GStats.PIXIHooks(this.app)
-    const gstats = new GStats.StatsJSAdapter(pixiHooks, stats)
-    document.body.appendChild(gstats.stats.dom || gstats.stats.domElement)
 
     this.viewport = new Viewport({
       screenWidth: SCREEN_WIDTH,
@@ -104,9 +106,7 @@ export class Renderer {
     animationFrameLoop(this.animate)
   }
 
-  layout = ({
-    nodes, edges
-  }: {
+  layout = ({ nodes, edges }: {
     nodes: { [key: string]: PositionedNode },
     edges: { [key: string]: PositionedEdge }
   }) => {
@@ -184,6 +184,12 @@ export class Renderer {
   }
 
   private animate = () => {
+    /**
+     * TODO - enable dead code elimination and build-time env variables
+     */
+    // if (process.env.NODE_ENV === 'development') { this.stats && this.stats.update() }
+    this.stats && this.stats.update()
+
     const updateTime2 = Date.now()
     const deltaTime = Math.min(16, Math.max(0, updateTime2 - this.updateTime))
     this.updateTime = updateTime2
