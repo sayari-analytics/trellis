@@ -1,6 +1,6 @@
-import { Graph, Node, Edge, Options } from '../index'
-import { Observable } from 'rxjs'
-import { switchMap } from 'rxjs/operators'
+// import { Graph, Node, Edge } from '../index'
+// import { Observable } from 'rxjs'
+// import { switchMap } from 'rxjs/operators'
 
 
 // export const observable = (graph: Graph) => {
