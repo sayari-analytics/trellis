@@ -149,7 +149,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
         update = true
       } else {
         // update node
-        nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId], { x0: nodes[nodeId].x, y0: nodes[nodeId].y })
+        nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId])
       }
     }
 

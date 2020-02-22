@@ -10,15 +10,23 @@ import { nodeStyleSelector, edgeStyleSelector } from './utils'
 import { SimulationOptions } from '../simulation'
 
 
+type PositionedNodeWithInitialPosition = PositionedNode & { x0?: number, y0?: number }
+type PositionedEdgeWithInitialPosition = Omit<PositionedEdge, 'source' | 'target'> &
+  { source: PositionedNodeWithInitialPosition, target: PositionedNodeWithInitialPosition }
+
+
+const ANIMATION_DURATION = 800
+
+
 export const D3Renderer = ({
   id,
   nodeStyle = {},
   edgeStyle = {},
-  onNodeMouseEnter = noop,
+  // onNodeMouseEnter = noop,
   onNodeMouseDown = noop,
   onNodeDrag = noop,
   onNodeMouseUp = noop,
-  onNodeMouseLeave = noop,
+  // onNodeMouseLeave = noop,
 }: RendererOptions) => {
   const parent = select<HTMLElement, unknown>(`#${id}`)
   const parentElement = parent.node()
@@ -37,14 +45,14 @@ export const D3Renderer = ({
   const edgeContainer = container.append('g')
 
   const nodesContainer = container.append('g')
-    
+
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
   svg.call(zoomBehavior.on('zoom', () => container.attr('transform', event.transform)))
   zoomBehavior.translateBy(svg, parentElement.offsetWidth / 2, parentElement.offsetHeight / 2)
 
   let draggedNode: string | undefined
-  let currentNodes: { [key: string]: PositionedNode }
-  let currentEdges: { [key: string]: PositionedEdge }
+  let currentNodes: { [key: string]: PositionedNodeWithInitialPosition }
+  let currentEdges: { [key: string]: PositionedEdgeWithInitialPosition }
   let currentOptions: SimulationOptions
 
   const dragNode = dragBehavior<any, PositionedNode>()
@@ -71,14 +79,25 @@ export const D3Renderer = ({
   // const nodeMouseEnterHandler = (d: PositionedNode) => console.log('mouseenter', d.id)
   // const nodeMouseLeaveHandler = (d: PositionedNode) => console.log('mouseleave', d.id)
 
-  const interpolateLayout = interpolateDuration(400)
+  const interpolateLayout = interpolateDuration(ANIMATION_DURATION)
   const synchronousLayout = (cb: (n: number) => void) => raf(() => cb(1))
   const interpolatePosition = (start: number, end: number, percent: number) => {
     const interpolate = interpolateNumber(start, end)
     return interpolateBasis([interpolate(0), interpolate(0.1), interpolate(0.8), interpolate(0.95), interpolate(1)])(percent)
   }
 
-  const render = ({ nodes, edges, options }: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge }, options: SimulationOptions }) => {
+  const render = ({ nodes, edges, options }: {
+    nodes: { [key: string]: PositionedNode },
+    edges: { [key: string]: PositionedEdge },
+    options: SimulationOptions
+  }) => {
+    Object.entries(nodes as { [key: string]: PositionedNodeWithInitialPosition }).forEach(([nodeId, node]) => {
+      if (currentNodes && currentNodes[nodeId]) {
+        node.x0 = currentNodes[nodeId].x0
+        node.y0 = currentNodes[nodeId].y0
+      }
+    })
+
     currentNodes = nodes
     currentEdges = edges
     currentOptions = options;
@@ -89,11 +108,17 @@ export const D3Renderer = ({
      */
     (draggedNode !== undefined || options.tick === null ? synchronousLayout : interpolateLayout)((n: number) => {
       nodesContainer
-        .selectAll<SVGLineElement, PositionedNode>('circle')
-        .data(Object.values(nodes), (d) => d.id)
+        .selectAll<SVGLineElement, PositionedNode & { x0?: number, y0?: number }>('circle')
+        .data(Object.values(currentNodes), (d) => d.id)
         .join('circle')
-        .attr('cx', (d) => interpolatePosition(d.x0 || 0, d.x!, n))
-        .attr('cy', (d) => interpolatePosition(d.y0 || 0, d.y!, n))
+        .attr('cx', (d) => {
+          d.x0 = interpolatePosition(d.x0 || 0, d.x!, n)
+          return d.x0
+        })
+        .attr('cy', (d) => {
+          d.y0 = interpolatePosition(d.y0 || 0, d.y!, n)
+          return d.y0
+        })
         // .attr('cx', (d) => d.id === draggedNode ? d.x! : interpolatePosition(d.x0 || 0, d.x!, n))
         // .attr('cy', (d) => d.id === draggedNode ? d.y! : interpolatePosition(d.y0 || 0, d.y!, n))
         .style('cursor', 'pointer')
@@ -110,12 +135,12 @@ export const D3Renderer = ({
 
       edgeContainer
         .selectAll<SVGLineElement, PositionedEdge>('line')
-        .data(Object.values(edges), (d) => d.id)
+        .data(Object.values(currentEdges), (d) => d.id)
         .join('line')
-        // .attr('x1', (d) => d.id === draggedNode ? d.source.x! : interpolatePosition(d.source.x0 || 0, d.source.x!, n))
-        // .attr('y1', (d) => d.id === draggedNode ? d.source.y! : interpolatePosition(d.source.y0 || 0, d.source.y!, n))
-        // .attr('x2', (d) => d.id === draggedNode ? d.target.x! : interpolatePosition(d.target.x0 || 0, d.target.x!, n))
-        // .attr('y2', (d) => d.id === draggedNode ? d.target.y! : interpolatePosition(d.target.y0 || 0, d.target.y!, n))
+        .attr('x1', (d) => d.id === draggedNode ? d.source.x! : interpolatePosition(d.source.x0 || 0, d.source.x!, n))
+        .attr('y1', (d) => d.id === draggedNode ? d.source.y! : interpolatePosition(d.source.y0 || 0, d.source.y!, n))
+        .attr('x2', (d) => d.id === draggedNode ? d.target.x! : interpolatePosition(d.target.x0 || 0, d.target.x!, n))
+        .attr('y2', (d) => d.id === draggedNode ? d.target.y! : interpolatePosition(d.target.y0 || 0, d.target.y!, n))
         .attr('x1', (d) => interpolatePosition(d.source.x0 || 0, d.source.x!, n))
         .attr('y1', (d) => interpolatePosition(d.source.y0 || 0, d.source.y!, n))
         .attr('x2', (d) => interpolatePosition(d.target.x0 || 0, d.target.x!, n))
