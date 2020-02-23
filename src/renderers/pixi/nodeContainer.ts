@@ -6,7 +6,7 @@ import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { Renderer } from '.'
 
 
-const LABEL_Y_PADDING = 2
+const LABEL_Y_PADDING = 4
 const ANIMATION_DURATION = 800
 
 
@@ -48,14 +48,12 @@ export class NodeContainer {
     this.circleContainer.on('mouseup', this.nodeMouseUp)
     this.circleContainer.on('mouseupoutside', this.nodeMouseUp)
 
-    const circle = new PIXI.Graphics()
-    circle.x = 0
-    circle.y = 0
-    circle.lineStyle(this.strokeWidth, colorToNumber(this.nodeStyleSelector(node, 'stroke')))
-    circle.beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')))
-    circle.alpha = this.nodeStyleSelector(node, 'fillOpacity')
-    circle.drawCircle(0, 0, this.radius)
-    this.circleContainer.addChild(circle)
+    this.circleContainer.addChild(
+      new PIXI.Graphics()
+        .lineStyle(this.strokeWidth, colorToNumber(this.nodeStyleSelector(node, 'stroke')), this.nodeStyleSelector(node, 'strokeOpacity'), 1)
+        .beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')), this.nodeStyleSelector(node, 'fillOpacity'))
+        .drawCircle(0, 0, this.radius)
+    )
 
     nodesLayer.addChild(this.circleContainer)
     labelLayer.addChild(this.labelContainer)
@@ -79,7 +77,7 @@ export class NodeContainer {
     this.animationTime = 0
 
     this.radius = this.nodeStyleSelector(node, 'width') / 2
-    // TODO - update all changed styles (radius, border etc.)
+    // TODO - update all changed styles (radius, border, fill etc.), or maybe only set style properties in set
 
     if (node.label !== this.label) {
       this.label = node.label
@@ -94,7 +92,7 @@ export class NodeContainer {
           strokeThickness: 2 * 2,
         })
         labelText.x = 0
-        labelText.y = this.radius + LABEL_Y_PADDING
+        labelText.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
         labelText.scale.set(0.5)
         labelText.anchor.set(0.5, 0)
         this.labelContainer.addChild(labelText)
@@ -129,8 +127,12 @@ export class NodeContainer {
   /**
    * TODO - animate should be renamed to render and take no arguments
    * deltaTime can be set as public property on renderer
+   *
+   * does animationTime need to be stored on all nodes?  isn't it global?
+   *
+   * perf boost: render cheap version of things while still animating position
    */
-  animate = (deltaTime: number) => {
+  render = (deltaTime: number) => {
     if (this.animationTime < ANIMATION_DURATION) {
       this.animationTime += deltaTime
       const percent = this.animationTime / ANIMATION_DURATION
@@ -168,7 +170,7 @@ export class NodeContainer {
       hoverBorder.name = 'hoverBorder'
       hoverBorder.x = 0
       hoverBorder.y = 0
-      hoverBorder.lineStyle(this.nodeStyleSelector(this.node, 'strokeWidth') * 1.5, 0xcccccc)
+      hoverBorder.lineStyle(this.nodeStyleSelector(this.node, 'strokeWidth') * 1.5, 0xcccccc, 1, 1)
       hoverBorder.drawCircle(0, 0, this.nodeStyleSelector(this.node, 'width') * 0.5)
       this.circleContainer.addChild(hoverBorder)
 

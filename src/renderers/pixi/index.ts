@@ -19,6 +19,11 @@ export class Renderer {
   onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
+  onEdgeMouseEnter?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseDown?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeDrag?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseUp?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseLeave?: (node: PositionedEdge, details: { x: number, y: number }) => void
 
   nodeStyleSelector: NodeStyleSelector
   edgeStyleSelector: EdgeStyleSelector
@@ -26,7 +31,7 @@ export class Renderer {
   hoveredNode?: string
   clickedNode?: string
   dirtyData = false
-  updateTime = Date.now()
+  renderTime = Date.now()
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -42,6 +47,7 @@ export class Renderer {
   constructor({
     id, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle,
     onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
+    onEdgeMouseEnter = noop, onEdgeMouseDown = noop, onEdgeDrag = noop, onEdgeMouseUp = noop, onEdgeMouseLeave = noop,
     stats,
   }: RendererOptions) {
     this.onNodeMouseEnter = onNodeMouseEnter
@@ -49,6 +55,11 @@ export class Renderer {
     this.onNodeDrag = onNodeDrag
     this.onNodeMouseUp = onNodeMouseUp
     this.onNodeMouseLeave = onNodeMouseLeave
+    this.onEdgeMouseEnter = onEdgeMouseEnter
+    this.onEdgeMouseDown = onEdgeMouseDown
+    this.onEdgeDrag = onEdgeDrag
+    this.onEdgeMouseUp = onEdgeMouseUp
+    this.onEdgeMouseLeave = onEdgeMouseLeave
     this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
     this.edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
     this.stats = stats
@@ -103,7 +114,7 @@ export class Renderer {
 
     container.appendChild(this.app.view)
 
-    animationFrameLoop(this.animate)
+    animationFrameLoop(this.render)
   }
 
   layout = ({ nodes, edges }: {
@@ -183,28 +194,30 @@ export class Renderer {
     }
   }
 
-  private animate = () => {
+  private render = () => {
     /**
      * TODO - enable dead code elimination and build-time env variables
      */
     // if (process.env.NODE_ENV === 'development') { this.stats && this.stats.update() }
     this.stats && this.stats.update()
 
-    const updateTime2 = Date.now()
-    const deltaTime = Math.min(16, Math.max(0, updateTime2 - this.updateTime))
-    this.updateTime = updateTime2
+    const now = Date.now()
+    const deltaTime = Math.min(16, Math.max(0, now - this.renderTime))
+    this.renderTime = now
 
     if (this.dirtyData) {
       let animationPending = false
 
       for (const nodeId in this.nodesById) {
-        this.nodesById[nodeId].animate(deltaTime)
+        /* TODO - if animationTime is global, then no need to pass deltaTime to nodeContainers
+         * and animationPending could be calculated once per render in the renderer, rather than in each nodeContainer
+         */
+        this.nodesById[nodeId].render(deltaTime)
         animationPending = animationPending || this.nodesById[nodeId].animationIsPending()
       }
 
       for (const edgeId in this.edgesById) {
-        const { source, target } = this.edgesById[edgeId].edge
-        this.edgesById[edgeId].animate(this.nodesById[source.id], this.nodesById[target.id])
+        this.edgesById[edgeId].render()
       }
 
       this.dirtyData = animationPending

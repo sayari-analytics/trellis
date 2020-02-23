@@ -3,19 +3,22 @@ import { PositionedEdge } from '../..'
 import { EdgeStyleSelector } from '../utils'
 import { colorToNumber } from './utils'
 import { Renderer } from '.'
-import { NodeContainer } from './nodeContainer'
-
-
-const LINE_HOVER_RADIUS = 4
 
 
 const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
 
 const midPoint = (x0: number, y0: number, x1: number, y1: number): [number, number] => [(x0 + x1) / 2, (y0 + y1) / 2]
 
+const length = (x0: number, y0: number, x1: number, y1: number) => Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2))
+
+const angle = (x0: number, y0: number, x1: number, y1: number) => Math.atan2(y0 - y1, x0 - x1)
+
 const HALF_PI = Math.PI / 2
 const TWO_PI = Math.PI * 2
 const THREE_HALF_PI = HALF_PI * 3
+const LINE_HOVER_RADIUS = 4
+const ARROW_HEIGHT = 16
+const ARROW_WIDTH = 8
 
 
 export class EdgeContainer {
@@ -37,6 +40,9 @@ export class EdgeContainer {
   private y0: number = 0
   private x1: number = 0
   private y1: number = 0
+  private curvePeak?: [number, number]
+  private curveControlPointA?: [number, number]
+  private curveControlPointB?: [number, number]
   private curve: number = 0
 
   constructor(renderer: Renderer, edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container) {
@@ -48,16 +54,9 @@ export class EdgeContainer {
     this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
     this.edgeGfx.interactive = true
     this.edgeGfx.buttonMode = true
-    this.edgeGfx.on('mouseover', this.mouseEnter)
-    this.edgeGfx.on('mouseout', this.mouseLeave)
-
-    const arrowWidth = 8
-    const arrowHeight = 16
-    this.arrow = new PIXI.Graphics()
-    this.arrow.beginFill(colorToNumber(this.edgeStyleSelector(this.edge, 'stroke')), this.edgeStyleSelector(this.edge, 'strokeOpacity'))
-    this.arrow.moveTo(0, 0)
-    this.arrow.lineTo(arrowHeight, arrowWidth / 2)
-    this.arrow.lineTo(arrowHeight, - arrowWidth / 2)
+    this.edgeGfx
+      .on('mouseover', this.mouseEnter)
+      .on('mouseout', this.mouseLeave)
 
     edgeLayer.addChild(this.edgeGfx)
     edgeLayer.addChild(this.arrow)
@@ -89,8 +88,6 @@ export class EdgeContainer {
     }
 
     /**
-     * calculate edge curve
-     *
      * TODO - expose edge curve in style spec
      */
     const [min, max] = [this.edge.source.id, this.edge.target.id].sort()
@@ -105,10 +102,11 @@ export class EdgeContainer {
       this.curve--
     }
 
-    this.arrow.beginFill(
-      colorToNumber(this.edgeStyleSelector(this.edge, 'stroke')),
-      this.edgeStyleSelector(this.edge, 'strokeOpacity')
-    )
+    this.arrow
+      .beginFill(colorToNumber(this.edgeStyleSelector(this.edge, 'stroke')), this.edgeStyleSelector(this.edge, 'strokeOpacity'))
+      .lineTo(ARROW_HEIGHT, ARROW_WIDTH / 2)
+      .lineTo(ARROW_HEIGHT, - ARROW_WIDTH / 2)
+
     this.width = this.edgeStyleSelector(edge, 'width')
     this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
     this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
@@ -117,62 +115,97 @@ export class EdgeContainer {
   }
 
   /**
-   * TODO - don't need to pass source/target here.  can be inferred from set step
-   * animate should be renamed to render and take no arguments.
+   * TODO - perf boost: render cheap version of things while still animating position
    */
-  animate = (source: NodeContainer, target: NodeContainer) => {
-    this.x0 = source.x
-    this.y0 = source.y
-    this.x1 = target.x
-    this.y1 = target.y
-    const angle = (Math.atan2(this.y0 - this.y1, this.x0 - this.x1) + TWO_PI) % TWO_PI
-    // let angle = Math.atan2(this.y0 - this.y1, this.x0 - this.x1)
-    // angle = angle - (TWO_PI * Math.floor((angle + Math.PI) / TWO_PI))
-
-    /**
-     * render edge line
-     *
-     * TODO - properly position arrow
-     * properly position hit poly
-     */
-    this.edgeGfx.clear()
-    this.edgeGfx.lineStyle(this.width, this.stroke, this.strokeOpacity)
-    this.edgeGfx.moveTo(this.x0, this.y0)
-
+  render = () => {
     if (this.curve === 0) {
-      this.edgeGfx.lineTo(this.x1, this.y1)
+      const sourceContainer = this.renderer.nodesById[this.edge.source.id]
+      const targetContainer = this.renderer.nodesById[this.edge.target.id]
+      const theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
+      /**
+       * edge start/end is source/target node's center, offset by radius, strokeWidht and, if rendered on edge source and/or target, arrow height
+       * TODO - once arrows are encorporated into the style spec, add/remove arrowHeight offset
+       */
+      const start = movePoint(sourceContainer.x, sourceContainer.y, theta + Math.PI, sourceContainer.radius + sourceContainer.strokeWidth)
+      const end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + targetContainer.strokeWidth + ARROW_HEIGHT)
+      this.x0 = start[0]
+      this.y0 = start[1]
+      this.x1 = end[0]
+      this.y1 = end[1]
+
+      this.edgeGfx
+        .clear()
+        .lineStyle(this.width, this.stroke, this.strokeOpacity)
+        .moveTo(this.x0, this.y0)
+        .lineTo(this.x1, this.y1)
+        .endFill()
+
+      const center = midPoint(this.x0, this.y0, this.x1, this.y1)
+      this.labelContainer.x = center[0]
+      this.labelContainer.y = center[1]
+      this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
+
+      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + targetContainer.strokeWidth)
+      this.arrow.x = arrowPosition[0]
+      this.arrow.y = arrowPosition[1]
+      this.arrow.rotation = theta
+
+      // TODO - fully outline line
+      this.edgeGfx.hitArea = new PIXI.Polygon([
+        this.x0 + LINE_HOVER_RADIUS, this.y0 + LINE_HOVER_RADIUS,
+        this.x1 + LINE_HOVER_RADIUS, this.y1 + LINE_HOVER_RADIUS,
+        this.x1 - LINE_HOVER_RADIUS, this.y1 - LINE_HOVER_RADIUS,
+        this.x0 - LINE_HOVER_RADIUS, this.y0 - LINE_HOVER_RADIUS,
+      ])
+      // this.edgeGfx.drawPolygon(this.edgeGfx.hitArea as any)
     } else {
-      const [midX, midY] = midPoint(this.x0, this.y0, this.x1, this.y1)
-      const [controlX, controlY] = movePoint(midX, midY, angle > Math.PI || angle < -Math.PI ? angle + HALF_PI : angle - HALF_PI, this.curve * 50)
-      this.edgeGfx.bezierCurveTo(this.x0, this.y0, controlX, controlY, this.x1, this.y1)
+      const sourceContainer = this.renderer.nodesById[this.edge.source.id]
+      const targetContainer = this.renderer.nodesById[this.edge.target.id]
+      const center = midPoint(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
+      const thetaUncurved = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
+      this.curvePeak = movePoint(center[0], center[1], thetaUncurved > TWO_PI || thetaUncurved < 0 ? thetaUncurved - HALF_PI : thetaUncurved + HALF_PI, this.curve * 20)
+      const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
+      const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
+      const start = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart + Math.PI, sourceContainer.radius + sourceContainer.strokeWidth)
+      const end = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + targetContainer.strokeWidth + ARROW_HEIGHT)
+      this.x0 = start[0]
+      this.y0 = start[1]
+      this.x1 = end[0]
+      this.y1 = end[1]
+
+      const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
+      this.curveControlPointA = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved, edgeLength / 4)
+      this.curveControlPointB = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved + Math.PI, edgeLength / 4)
+
+      this.edgeGfx
+        .clear()
+        .lineStyle(this.width, this.stroke, this.strokeOpacity)
+        .moveTo(this.x0, this.y0)
+        .bezierCurveTo(this.x0, this.y0, this.curveControlPointA[0], this.curveControlPointA[1], this.curvePeak[0], this.curvePeak[1])
+        .bezierCurveTo(this.curveControlPointB[0], this.curveControlPointB[1], this.x1, this.y1, this.x1, this.y1)
+        .endFill()
+
+      this.labelContainer.x = this.curvePeak[0]
+      this.labelContainer.y = this.curvePeak[1]
+      this.labelContainer.rotation = thetaUncurved > HALF_PI && thetaUncurved < THREE_HALF_PI ? thetaUncurved - Math.PI : thetaUncurved
+
+      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + targetContainer.strokeWidth)
+      this.arrow.x = arrowPosition[0]
+      this.arrow.y = arrowPosition[1]
+      this.arrow.rotation = thetaCurveEnd
+
+      // TODO - fully outline line
+      this.edgeGfx.hitArea = new PIXI.Polygon([
+        this.x0 + LINE_HOVER_RADIUS, this.y0 + LINE_HOVER_RADIUS,
+        this.curvePeak[0] + LINE_HOVER_RADIUS, this.curvePeak[1] + LINE_HOVER_RADIUS,
+        this.x1 + LINE_HOVER_RADIUS, this.y1 + LINE_HOVER_RADIUS,
+        this.x1 - LINE_HOVER_RADIUS, this.y1 - LINE_HOVER_RADIUS,
+        this.curvePeak[0] - LINE_HOVER_RADIUS, this.curvePeak[1] - LINE_HOVER_RADIUS,
+        this.x0 - LINE_HOVER_RADIUS, this.y0 - LINE_HOVER_RADIUS,
+      ])
+      // this.edgeGfx.drawPolygon(this.edgeGfx.hitArea as any)
     }
 
-    this.edgeGfx.endFill()
-
-    /**
-     * render edge direction arrows
-     * TODO - when drawing edge arrow, terminate line at base of arrow
-     *        when not drawing edge arrow, terminate line at node border
-     */
-    const [arrowX, arrowY] = movePoint(this.x1, this.y1, angle, target.radius)
-    this.arrow.x = arrowX
-    this.arrow.y = arrowY
-    this.arrow.rotation = angle
-
-    // TODO - fully outline line
-    const hit = new PIXI.Polygon([
-      this.x0 + LINE_HOVER_RADIUS, this.y0 + LINE_HOVER_RADIUS,
-      this.x1 + LINE_HOVER_RADIUS, this.y1 + LINE_HOVER_RADIUS,
-      this.x1 - LINE_HOVER_RADIUS, this.y1 - LINE_HOVER_RADIUS,
-      this.x0 - LINE_HOVER_RADIUS, this.y0 - LINE_HOVER_RADIUS,
-    ])
-
-    this.edgeGfx.hitArea = hit
-    // this.edgeGfx.drawPolygon(hit)
-
-    this.labelContainer.x = this.x0 + (this.x1 - this.x0) * 0.5
-    this.labelContainer.y = this.y0 + (this.y1 - this.y0) * 0.5
-    this.labelContainer.rotation = angle > HALF_PI && angle < THREE_HALF_PI ? angle - Math.PI : angle
 
     /**
      * TODO
@@ -196,19 +229,19 @@ export class EdgeContainer {
      * - truncate text, rather than hiding, or shrink size
      * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
      */
-    // const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2)) -
-    //   (this.nodeStyleSelector(edge.source, 'width') / 2) -
-    //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
-    //   (LABEL_X_PADDING * 2)
-    const edgeLength = Math.sqrt(Math.pow(this.x1 - this.x0, 2) + Math.pow(this.y1 - this.y0, 2))
-    const text = this.labelContainer.getChildAt(0) as PIXI.Text
-    if (text.width > edgeLength) {
-      text.visible = false
-    } else {
-      text.visible = true
+    if (this.label) {
+      // const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2)) -
+      //   (this.nodeStyleSelector(edge.source, 'width') / 2) -
+      //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
+      //   (LABEL_X_PADDING * 2)
+      const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
+      const text = this.labelContainer.getChildAt(0) as PIXI.Text
+      if (text.width > edgeLength) {
+        text.visible = false
+      } else {
+        text.visible = true
+      }
     }
-
-    return this
   }
 
   delete = () => {
@@ -225,12 +258,20 @@ export class EdgeContainer {
       /**
        * TODO - does it make more sense to create the graphic on the fly, or create on init and add/remove from container
        */
-      this.edgeHoverBorder = new PIXI.Graphics()
-      this.edgeHoverBorder.lineStyle(this.width + 2, this.stroke, this.strokeOpacity)
-
-      this.edgeHoverBorder.moveTo(this.x0, this.y0)
-      this.edgeHoverBorder.lineTo(this.x1, this.y1)
-      this.edgeHoverBorder.endFill()
+      if (this.curve === 0 || this.curveControlPointA === undefined || this.curveControlPointB === undefined || this.curvePeak === undefined) {
+        this.edgeHoverBorder = new PIXI.Graphics()
+          .lineStyle(this.width + 2, this.stroke, this.strokeOpacity)
+          .moveTo(this.x0, this.y0)
+          .lineTo(this.x1, this.y1)
+          .endFill()
+      } else {
+        this.edgeHoverBorder = new PIXI.Graphics()
+          .lineStyle(this.width + 2, this.stroke, this.strokeOpacity)
+          .moveTo(this.x0, this.y0)
+          .bezierCurveTo(this.x0, this.y0, this.curveControlPointA[0], this.curveControlPointA[1], this.curvePeak[0], this.curvePeak[1])
+          .bezierCurveTo(this.curveControlPointB[0], this.curveControlPointB[1], this.x1, this.y1, this.x1, this.y1)
+          .endFill()
+      }
 
       this.hoverContainer.addChild(this.edgeHoverBorder)
       this.renderer.dirtyData = true

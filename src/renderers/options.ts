@@ -27,8 +27,11 @@ export type RendererOptions = {
   onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onEdgeHover?: (edge: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeClick?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseEnter?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseDown?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeDrag?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseUp?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseLeave?: (node: PositionedEdge, details: { x: number, y: number }) => void
   stats?: Stats
 }
 
