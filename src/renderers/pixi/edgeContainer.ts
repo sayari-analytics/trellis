@@ -126,7 +126,7 @@ export class EdgeContainer {
        * edge start/end is source/target node's center, offset by radius, strokeWidht and, if rendered on edge source and/or target, arrow height
        * TODO - once arrows are encorporated into the style spec, add/remove arrowHeight offset
        */
-      const start = movePoint(sourceContainer.x, sourceContainer.y, theta + Math.PI, sourceContainer.radius + sourceContainer.strokeWidth)
+      const start = movePoint(sourceContainer.x, sourceContainer.y, theta, (sourceContainer.radius + sourceContainer.strokeWidth) * -1)
       const end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + targetContainer.strokeWidth + ARROW_HEIGHT)
       this.x0 = start[0]
       this.y0 = start[1]
@@ -145,19 +145,22 @@ export class EdgeContainer {
       this.labelContainer.y = center[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
+      // TODO - don't bother rendering arrow when animating position
       const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + targetContainer.strokeWidth)
       this.arrow.x = arrowPosition[0]
       this.arrow.y = arrowPosition[1]
       this.arrow.rotation = theta
 
-      // TODO - fully outline line
-      this.edgeGfx.hitArea = new PIXI.Polygon([
-        this.x0 + LINE_HOVER_RADIUS, this.y0 + LINE_HOVER_RADIUS,
-        this.x1 + LINE_HOVER_RADIUS, this.y1 + LINE_HOVER_RADIUS,
-        this.x1 - LINE_HOVER_RADIUS, this.y1 - LINE_HOVER_RADIUS,
-        this.x0 - LINE_HOVER_RADIUS, this.y0 - LINE_HOVER_RADIUS,
-      ])
-      // this.edgeGfx.drawPolygon(this.edgeGfx.hitArea as any)
+      // TODO - don't bother rendering hitArea when animating position
+      const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
+      const perpendicular = theta + HALF_PI
+      const hitAreaVerticies: number[] = []
+      hitAreaVerticies.push(...movePoint(this.x0, this.y0, perpendicular, hoverRadius))
+      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], perpendicular, hoverRadius))
+      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], perpendicular, -hoverRadius))
+      hitAreaVerticies.push(...movePoint(this.x0, this.y0, perpendicular, -hoverRadius))
+      this.edgeGfx.hitArea = new PIXI.Polygon(hitAreaVerticies)
+      // this.edgeGfx.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.edgeGfx.hitArea as any)
     } else {
       const sourceContainer = this.renderer.nodesById[this.edge.source.id]
       const targetContainer = this.renderer.nodesById[this.edge.target.id]
@@ -166,7 +169,7 @@ export class EdgeContainer {
       this.curvePeak = movePoint(center[0], center[1], thetaUncurved > TWO_PI || thetaUncurved < 0 ? thetaUncurved - HALF_PI : thetaUncurved + HALF_PI, this.curve * 20)
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
-      const start = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart + Math.PI, sourceContainer.radius + sourceContainer.strokeWidth)
+      const start = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, (sourceContainer.radius + sourceContainer.strokeWidth) * -1)
       const end = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + targetContainer.strokeWidth + ARROW_HEIGHT)
       this.x0 = start[0]
       this.y0 = start[1]
@@ -175,7 +178,7 @@ export class EdgeContainer {
 
       const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
       this.curveControlPointA = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved, edgeLength / 4)
-      this.curveControlPointB = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved + Math.PI, edgeLength / 4)
+      this.curveControlPointB = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved, edgeLength / -4)
 
       this.edgeGfx
         .clear()
@@ -194,16 +197,16 @@ export class EdgeContainer {
       this.arrow.y = arrowPosition[1]
       this.arrow.rotation = thetaCurveEnd
 
-      // TODO - fully outline line
-      this.edgeGfx.hitArea = new PIXI.Polygon([
-        this.x0 + LINE_HOVER_RADIUS, this.y0 + LINE_HOVER_RADIUS,
-        this.curvePeak[0] + LINE_HOVER_RADIUS, this.curvePeak[1] + LINE_HOVER_RADIUS,
-        this.x1 + LINE_HOVER_RADIUS, this.y1 + LINE_HOVER_RADIUS,
-        this.x1 - LINE_HOVER_RADIUS, this.y1 - LINE_HOVER_RADIUS,
-        this.curvePeak[0] - LINE_HOVER_RADIUS, this.curvePeak[1] - LINE_HOVER_RADIUS,
-        this.x0 - LINE_HOVER_RADIUS, this.y0 - LINE_HOVER_RADIUS,
-      ])
-      // this.edgeGfx.drawPolygon(this.edgeGfx.hitArea as any)
+      const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
+      const hitAreaVerticies: number[] = []
+      hitAreaVerticies.push(...movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, hoverRadius))
+      hitAreaVerticies.push(...movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved + HALF_PI, hoverRadius))
+      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], thetaCurveEnd + HALF_PI, hoverRadius))
+      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], thetaUncurved + HALF_PI, -hoverRadius))
+      hitAreaVerticies.push(...movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved + HALF_PI, -hoverRadius))
+      hitAreaVerticies.push(...movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, -hoverRadius))
+      this.edgeGfx.hitArea = new PIXI.Polygon(hitAreaVerticies)
+      // this.edgeGfx.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.edgeGfx.hitArea as any)
     }
 
 
@@ -230,10 +233,6 @@ export class EdgeContainer {
      * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
      */
     if (this.label) {
-      // const edgeLength = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - yStart, 2)) -
-      //   (this.nodeStyleSelector(edge.source, 'width') / 2) -
-      //   (this.nodeStyleSelector(edge.target, 'width') / 2) -
-      //   (LABEL_X_PADDING * 2)
       const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
       const text = this.labelContainer.getChildAt(0) as PIXI.Text
       if (text.width > edgeLength) {
