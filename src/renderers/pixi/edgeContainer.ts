@@ -249,7 +249,8 @@ export class EdgeContainer {
     this.hoverContainer.destroy()
     this.labelContainer.destroy()
     delete this.renderer.edgesById[this.edge.id]
-    this.renderer.edgeGroups[this.edge.source.id][this.edge.target.id].delete(this.edge.id)
+    const [min, max] = [this.edge.source.id, this.edge.target.id].sort()
+    this.renderer.edgeGroups[min][max].delete(this.edge.id)
   }
 
   private mouseEnter = () => {
