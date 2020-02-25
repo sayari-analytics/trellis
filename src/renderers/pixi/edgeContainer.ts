@@ -30,9 +30,9 @@ export class EdgeContainer {
   private renderer: Renderer
   private edgeStyleSelector: EdgeStyleSelector
   private label?: string
-  private width: number
-  private stroke: number
-  private strokeOpacity: number
+  private width: number = 0
+  private stroke: number = 0
+  private strokeOpacity: number = 0
   private edgeGfx: PIXI.Graphics = new PIXI.Graphics()
   private arrow = new PIXI.Graphics()
   private edgeHoverBorder?: PIXI.Graphics
@@ -49,9 +49,6 @@ export class EdgeContainer {
     this.edge = edge
     this.renderer = renderer
     this.edgeStyleSelector = edgeStyleSelector
-    this.width = this.edgeStyleSelector(edge, 'width')
-    this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
-    this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
     this.edgeGfx.interactive = true
     this.edgeGfx.buttonMode = true
     this.edgeGfx
@@ -66,6 +63,11 @@ export class EdgeContainer {
 
   set = (edge: PositionedEdge) => {
     this.edge = edge
+
+    this.width = this.edgeStyleSelector(edge, 'width')
+    this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
+    this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
+
     if (edge.label !== this.label) {
       this.label = edge.label
 
@@ -91,9 +93,6 @@ export class EdgeContainer {
      * TODO - expose edge curve in style spec
      */
     const [min, max] = [this.edge.source.id, this.edge.target.id].sort()
-    // this.curve = Array.from(this.renderer.edgeGroups[min][max])
-    //   .sort()
-    //   .indexOf(this.edge.id) - ((this.renderer.edgeGroups[min][max].size - 1) / 2)
     this.curve = (this.renderer.edgeGroups[min][max].size - 1) / 2
     for (const edgeId of this.renderer.edgeGroups[min][max]) {
       if (edgeId === this.edge.id) {
@@ -103,13 +102,9 @@ export class EdgeContainer {
     }
 
     this.arrow
-      .beginFill(colorToNumber(this.edgeStyleSelector(this.edge, 'stroke')), this.edgeStyleSelector(this.edge, 'strokeOpacity'))
+      .beginFill(this.stroke, this.strokeOpacity)
       .lineTo(ARROW_HEIGHT, ARROW_WIDTH / 2)
       .lineTo(ARROW_HEIGHT, - ARROW_WIDTH / 2)
-
-    this.width = this.edgeStyleSelector(edge, 'width')
-    this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
-    this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
 
     return this
   }

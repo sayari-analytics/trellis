@@ -13,8 +13,8 @@ const ANIMATION_DURATION = 800
 export class NodeContainer {
 
   node: PositionedNode
-  radius: number
-  strokeWidth: number
+  radius: number = 0
+  strokeWidth: number = 0
   x: number = 0
   y: number = 0
 
@@ -28,32 +28,24 @@ export class NodeContainer {
   private interpolateY: (percent: number) => number = () => this.endY
   private label?: string
   private icon?: string
-  private animationTime: number = 0
-  private circleContainer: PIXI.Container = new PIXI.Container()
-  private labelContainer: PIXI.Container = new PIXI.Container()
+  private animationTime = 0
+  private circleContainer = new PIXI.Container()
+  private labelContainer = new PIXI.Container()
+  private nodeGfx = new PIXI.Graphics()
 
   constructor(renderer: Renderer, node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
     this.node = node
     this.nodeStyleSelector = nodeStyleSelector
-    this.radius = this.nodeStyleSelector(node, 'width') / 2
-    this.strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
     this.circleContainer.name = node.id
     this.circleContainer.interactive = true
     this.circleContainer.buttonMode = true
-    this.circleContainer.hitArea = new PIXI.Circle(0, 0, this.radius + 5)
     this.circleContainer.on('mouseover', this.nodeMouseOver)
-    this.circleContainer.on('mouseout', this.nodeMouseOut)
-    this.circleContainer.on('mousedown', this.nodeMouseDown)
-    this.circleContainer.on('mouseup', this.nodeMouseUp)
-    this.circleContainer.on('mouseupoutside', this.nodeMouseUp)
-
-    this.circleContainer.addChild(
-      new PIXI.Graphics()
-        .lineStyle(this.strokeWidth, colorToNumber(this.nodeStyleSelector(node, 'stroke')), this.nodeStyleSelector(node, 'strokeOpacity'), 1)
-        .beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')), this.nodeStyleSelector(node, 'fillOpacity'))
-        .drawCircle(0, 0, this.radius)
-    )
+      .on('mouseout', this.nodeMouseOut)
+      .on('mousedown', this.nodeMouseDown)
+      .on('mouseup', this.nodeMouseUp)
+      .on('mouseupoutside', this.nodeMouseUp)
+      .addChild(this.nodeGfx)
 
     nodesLayer.addChild(this.circleContainer)
     labelLayer.addChild(this.labelContainer)
@@ -76,8 +68,18 @@ export class NodeContainer {
     this.interpolateY = interpolateBasis([interpolateYNumber(0), interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), interpolateYNumber(1)])
     this.animationTime = 0
 
-    this.radius = this.nodeStyleSelector(node, 'width') / 2
-    // TODO - update all changed styles (radius, border, fill etc.), or maybe only set style properties in set
+    const radius = this.nodeStyleSelector(node, 'width') / 2
+    if (radius !== this.radius) {
+      this.radius = radius
+      this.circleContainer.hitArea = new PIXI.Circle(0, 0, this.radius + 5)
+    }
+
+    this.strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
+
+    this.nodeGfx
+      .lineStyle(this.strokeWidth, colorToNumber(this.nodeStyleSelector(node, 'stroke')), this.nodeStyleSelector(node, 'strokeOpacity'), 1)
+      .beginFill(colorToNumber(this.nodeStyleSelector(node, 'fill')), this.nodeStyleSelector(node, 'fillOpacity'))
+      .drawCircle(0, 0, this.radius)
 
     if (node.label !== this.label) {
       this.label = node.label
