@@ -10,6 +10,7 @@ import { EdgeContainer } from './edgeContainer'
 
 
 new FontFaceObserver('Material Icons').load()
+export const ANIMATION_DURATION = 800
 
 
 export class Renderer {
@@ -30,8 +31,9 @@ export class Renderer {
   stats?: Stats
   hoveredNode?: string
   clickedNode?: string
-  dirtyData = false
+  dirty = false
   renderTime = Date.now()
+  animationTime = 0
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -121,12 +123,8 @@ export class Renderer {
     nodes: { [key: string]: PositionedNode },
     edges: { [key: string]: PositionedEdge }
   }) => {
-    /**
-     * calculate edge groups
-     *
-     * this must be completed before initializing new/updating existing edges,
-     * otherwise, edge curves won't be calculated properly
-     */
+    this.animationTime = 0
+
     for (const edgeId in edges) {
       const [min, max] = [edges[edgeId].source.id, edges[edgeId].target.id].sort()
       if (this.edgeGroups[min] === undefined) {
@@ -138,28 +136,9 @@ export class Renderer {
       this.edgeGroups[min][max].add(edgeId)
     }
 
-    for (const edgeId in edges) {
-      if (this.edgesById[edgeId] === undefined) {
-        // enter
-        this.edgesById[edges[edgeId].id] = new EdgeContainer(
-          this,
-          edges[edgeId],
-          this.edgeStyleSelector,
-          this.edgesLayer,
-        )
-          .set(edges[edgeId])
-
-        this.dirtyData = true
-      } else {
-        // update
-        this.edgesById[edgeId].set(edges[edgeId])
-        this.dirtyData = true
-      }
-    }
-
     for (const nodeId in nodes) {
       if (this.nodesById[nodeId] === undefined) {
-        // enter
+        // node enter
         const nodeContainer = new NodeContainer(
           this,
           nodes[nodeId],
@@ -170,26 +149,45 @@ export class Renderer {
           .set(nodes[nodeId])
 
         this.nodesById[nodes[nodeId].id] = nodeContainer
-        this.dirtyData = true
+        this.dirty = true
       } else {
-        // update
+        // node update
         this.nodesById[nodeId].set(nodes[nodeId])
 
-        this.dirtyData = true
-      }
-    }
-
-    for (const edgeId in this.edgesById) {
-      if (edges[edgeId] === undefined) {
-        // exit
-        this.edgesById[edgeId].delete()
+        this.dirty = true
       }
     }
 
     for (const nodeId in this.nodesById) {
       if (nodes[nodeId] === undefined) {
-        // exit
+        // node exit
         this.nodesById[nodeId].delete()
+      }
+    }
+
+    for (const edgeId in edges) {
+      if (this.edgesById[edgeId] === undefined) {
+        // edge enter
+        this.edgesById[edges[edgeId].id] = new EdgeContainer(
+          this,
+          edges[edgeId],
+          this.edgeStyleSelector,
+          this.edgesLayer,
+        )
+          .set(edges[edgeId])
+
+        this.dirty = true
+      } else {
+        // edge update
+        this.edgesById[edgeId].set(edges[edgeId])
+        this.dirty = true
+      }
+    }
+
+    for (const edgeId in this.edgesById) {
+      if (edges[edgeId] === undefined) {
+        // edge exit
+        this.edgesById[edgeId].delete()
       }
     }
   }
@@ -202,25 +200,19 @@ export class Renderer {
     this.stats && this.stats.update()
 
     const now = Date.now()
-    const deltaTime = Math.min(16, Math.max(0, now - this.renderTime))
+    this.animationTime += Math.min(16, Math.max(0, now - this.renderTime))
     this.renderTime = now
 
-    if (this.dirtyData) {
-      let animationPending = false
-
+    if (this.dirty) {
       for (const nodeId in this.nodesById) {
-        /* TODO - if animationTime is global, then no need to pass deltaTime to nodeContainers
-         * and animationPending could be calculated once per render in the renderer, rather than in each nodeContainer
-         */
-        this.nodesById[nodeId].render(deltaTime)
-        animationPending = animationPending || this.nodesById[nodeId].animationIsPending()
+        this.nodesById[nodeId].render()
       }
 
       for (const edgeId in this.edgesById) {
         this.edgesById[edgeId].render()
       }
 
-      this.dirtyData = animationPending
+      this.dirty = this.animationTime < ANIMATION_DURATION
       this.viewport.dirty = false
       this.app.render()
     } else if (this.viewport.dirty) {

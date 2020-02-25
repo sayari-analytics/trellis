@@ -269,7 +269,7 @@ export class EdgeContainer {
       }
 
       this.hoverContainer.addChild(this.edgeHoverBorder)
-      this.renderer.dirtyData = true
+      this.renderer.dirty = true
     }
 
     return this
@@ -279,7 +279,7 @@ export class EdgeContainer {
     if (this.edgeHoverBorder !== undefined) {
       this.hoverContainer.removeChildren()
       this.edgeHoverBorder = undefined
-      this.renderer.dirtyData = true
+      this.renderer.dirty = true
     }
 
     return this

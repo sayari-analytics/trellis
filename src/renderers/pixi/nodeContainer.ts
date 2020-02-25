@@ -3,11 +3,10 @@ import { NodeStyleSelector } from '../utils'
 import { PositionedNode } from '../..'
 import { colorToNumber } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { Renderer } from '.'
+import { Renderer, ANIMATION_DURATION } from '.'
 
 
 const LABEL_Y_PADDING = 4
-const ANIMATION_DURATION = 800
 
 
 export class NodeContainer {
@@ -28,7 +27,6 @@ export class NodeContainer {
   private interpolateY: (percent: number) => number = () => this.endY
   private label?: string
   private icon?: string
-  private animationTime = 0
   private circleContainer = new PIXI.Container()
   private labelContainer = new PIXI.Container()
   private nodeGfx = new PIXI.Graphics()
@@ -37,7 +35,6 @@ export class NodeContainer {
     this.renderer = renderer
     this.node = node
     this.nodeStyleSelector = nodeStyleSelector
-    this.circleContainer.name = node.id
     this.circleContainer.interactive = true
     this.circleContainer.buttonMode = true
     this.circleContainer.on('mouseover', this.nodeMouseOver)
@@ -66,7 +63,6 @@ export class NodeContainer {
     const interpolateYNumber = interpolateNumber(this.startY, this.endY)
     this.interpolateX = interpolateBasis([interpolateXNumber(0), interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), interpolateXNumber(1)])
     this.interpolateY = interpolateBasis([interpolateYNumber(0), interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), interpolateYNumber(1)])
-    this.animationTime = 0
 
     const radius = this.nodeStyleSelector(node, 'width') / 2
     if (radius !== this.radius) {
@@ -127,22 +123,18 @@ export class NodeContainer {
   }
 
   /**
-   * TODO - animate should be renamed to render and take no arguments
-   * deltaTime can be set as public property on renderer
-   *
-   * does animationTime need to be stored on all nodes?  isn't it global?
-   *
-   * perf boost: render cheap version of things while still animating position
+   * TODO - perf boost: render cheap version of things while still animating position
    */
-  render = (deltaTime: number) => {
-    if (this.animationTime < ANIMATION_DURATION) {
-      this.animationTime += deltaTime
-      const percent = this.animationTime / ANIMATION_DURATION
-      this.circleContainer.x = this.labelContainer.x = this.x = this.interpolateX(percent)
-      this.circleContainer.y = this.labelContainer.y = this.y = this.interpolateY(percent)
-    } else {
-      this.circleContainer.x = this.labelContainer.x = this.x = this.endX
-      this.circleContainer.y = this.labelContainer.y = this.y = this.endY
+  render = () => {
+    if (this.renderer.clickedNode !== this.node.id) {
+      if (this.renderer.animationTime < ANIMATION_DURATION) {
+        const percent = this.renderer.animationTime / ANIMATION_DURATION
+        this.circleContainer.x = this.labelContainer.x = this.x = this.interpolateX(percent)
+        this.circleContainer.y = this.labelContainer.y = this.y = this.interpolateY(percent)
+      } else {
+        this.circleContainer.x = this.labelContainer.x = this.x = this.endX
+        this.circleContainer.y = this.labelContainer.y = this.y = this.endY
+      }
     }
 
     return this
@@ -153,8 +145,6 @@ export class NodeContainer {
     this.labelContainer.destroy()
     delete this.renderer.nodesById[this.node.id]
   }
-
-  animationIsPending = () => this.animationTime < ANIMATION_DURATION
 
   private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) {
@@ -176,7 +166,7 @@ export class NodeContainer {
       hoverBorder.drawCircle(0, 0, this.nodeStyleSelector(this.node, 'width') * 0.5)
       this.circleContainer.addChild(hoverBorder)
 
-      this.renderer.dirtyData = true
+      this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
       this.renderer.onNodeMouseEnter && this.renderer.onNodeMouseEnter(this.node, { x, y })
     }
@@ -197,17 +187,17 @@ export class NodeContainer {
         this.renderer.labelsLayer.addChild(labelGfx)
       }
 
-      this.renderer.dirtyData = true
+      this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
       this.renderer.onNodeMouseLeave && this.renderer.onNodeMouseLeave(this.node, { x, y })
     }
   }
 
   private nodeMouseDown = (event: PIXI.interaction.InteractionEvent) => {
-    this.renderer.clickedNode = event.currentTarget.name
+    this.renderer.clickedNode = this.node.id
     this.renderer.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
     this.renderer.viewport.pause = true
-    this.renderer.dirtyData = true
+    this.renderer.dirty = true
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
     this.renderer.onNodeMouseDown && this.renderer.onNodeMouseDown(this.node, { x, y })
   }
@@ -217,7 +207,7 @@ export class NodeContainer {
       this.renderer.clickedNode = undefined
       this.renderer.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
       this.renderer.viewport.pause = false
-      this.renderer.dirtyData = true
+      this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
       this.renderer.onNodeMouseUp && this.renderer.onNodeMouseUp(this.node, { x, y })
     }
@@ -226,16 +216,9 @@ export class NodeContainer {
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) {
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.circleContainer.x = x
-      this.circleContainer.y = y
-      this.startX = x
-      this.startY = y
-      this.endX = x
-      this.endY = y
-      this.labelContainer.position.x = x
-      this.labelContainer.position.y = y
-      this.animationTime = ANIMATION_DURATION
-      this.renderer.dirtyData = true
+      this.startX = this.endX = this.circleContainer.x = this.labelContainer.x = this.x = x
+      this.startY = this.endY = this.circleContainer.y = this.labelContainer.y = this.y = y
+      this.renderer.dirty = true
       this.renderer.onNodeDrag && this.renderer.onNodeDrag(this.node, { x, y })
     }
   }
