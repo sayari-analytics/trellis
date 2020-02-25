@@ -150,6 +150,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       } else {
         // update node
         nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId])
+        update = true
       }
     }
 
@@ -171,6 +172,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
           target: nodes[data.edges[edgeId].target as unknown as string],
           style: data.edges[edgeId].style,
         }
+        /**
+         * TODO - updating node properties shouldn't relayout graph
+         * might get this for free if simulation is only passed node.radius, edge.source, edge.target
+         */
         update = true
       } else if (edges[edgeId] !== data.edges[edgeId]) { // TODO - referential equality won't work here
         // update edge
@@ -182,6 +187,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
           target: nodes[data.edges[edgeId].target as unknown as string],
           style: data.edges[edgeId].style,
         }
+        /**
+         * TODO - updating edge properties shouldn't relayout graph
+         */
+        update = true
       }
     }
 

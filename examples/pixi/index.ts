@@ -7,6 +7,7 @@ import { Node, Edge, Graph } from '../../src/index'
 import { PixiRenderer } from '../../src/renderers/pixi'
 import { data, large, mediumLg, mediumSm } from '../data'
 import graphData from '../../tmp-data'
+import { SimulationOptions } from '../../src/simulation'
 
 
 
@@ -19,12 +20,12 @@ const nodeClick$ = new Subject<string>()
 const graph = new Graph()
 const renderer = PixiRenderer({
   id: 'graph',
-  onNodeMouseEnter: ({ id }) => console.log('mouse enter', id),
-  onNodeMouseLeave: ({ id }) => console.log('mouse leave', id),
+  // onNodeMouseEnter: ({ id }) => console.log('mouse enter', id),
+  // onNodeMouseLeave: ({ id }) => console.log('mouse leave', id),
   onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
   onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
   onNodeMouseUp: (({ id }) => {
-    console.log('clicked', id)
+    // console.log('clicked', id)
     graph.dragEnd(id)
     nodeClick$.next(id)
   }),
@@ -82,7 +83,7 @@ const edges: Edge[] = Object.entries(graphData.edges).map<Edge>(([id, { field, s
 
 
 const NODES_PER_TICK = 200
-const INTERVAL = 1400
+const INTERVAL = 2000
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 
 console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${nodes.length} \nedge count ${edges.length}`)
@@ -102,7 +103,12 @@ combineLatest(
     return nodes
       .slice(0, (idx + 1) * NODES_PER_TICK)
       // .filter((node) => !clickedNodes.has(node.id))
-      .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge } }>((graph, node) => {
+      .map((node) => {
+        return clickedNodes.has(node.id) && node.style.width !== 220 ?
+          { ...node, style: { ...node.style, width: 220 } } :
+          node
+      })
+      .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge }, options?: Partial<SimulationOptions> }>((graph, node) => {
         graph.nodes[node.id] = node
 
         edges.forEach((edge) => {
@@ -112,7 +118,7 @@ combineLatest(
         })
 
         return graph
-      }, { nodes: {}, edges: {} })
+      }, { nodes: {}, edges: {}, options: { tick: 1000 } })
   })
 ).subscribe({
   next: (graphData) => graph.layout(graphData),
