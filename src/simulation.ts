@@ -1,4 +1,4 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY } from 'd3-force'
 import { PositionedNode, PositionedEdge } from './index'
 import { DEFAULT_NODE_STYLES } from './renderers/options'
 
@@ -13,7 +13,7 @@ export type SimulationOptions = {
 }
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-  strength: 400,
+  strength: -400,
   distance: 300,
   nodeWidth: DEFAULT_NODE_STYLES.width,
   nodeStrokeWidth: DEFAULT_NODE_STYLES.strokeWidth,
@@ -40,6 +40,9 @@ declare const d3: {
   forceCenter: typeof forceCenter
   forceLink: typeof forceLink
   forceCollide: typeof forceCollide
+  forceRadial: typeof forceRadial
+  forceX: typeof forceX
+  forceY: typeof forceY
 }
 
 declare const self: Worker
@@ -74,15 +77,10 @@ export type DragEndEvent = {
   id: string
 }
 
-export type TickEvent = {
-  type: 'tick'
-}
-
 export type Event = LayoutEvent
   | DragStartEvent
   | DragEvent
   | DragEndEvent
-  | TickEvent
 
 export type LayoutResultEvent = {
   nodes: { [key: string]: PositionedNode }
@@ -91,21 +89,62 @@ export type LayoutResultEvent = {
 
 
 const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
+  const throttle = <T>(fn: ((arg: T) => void)) => {
+    let timeout: NodeJS.Timeout | undefined
+    let _arg: T | undefined
+
+    return (arg: T) => {
+      if (timeout === undefined) {
+        setTimeout(() => {
+          fn(_arg!)
+          timeout = undefined
+        }, 0)
+      }
+      _arg = arg
+    }
+  }
+
   const options: SimulationOptions = {
     strength: DEFAULT_OPTIONS.strength,
     distance: DEFAULT_OPTIONS.distance,
     nodeWidth: DEFAULT_OPTIONS.nodeWidth,
     nodeStrokeWidth: DEFAULT_OPTIONS.nodeStrokeWidth,
     nodePadding: DEFAULT_OPTIONS.nodePadding,
-    tick: -1,
+    tick: DEFAULT_OPTIONS.tick,
   } // TODO - are all Options passed?  or partial w/ defaults
-  let nodes: { [key: string]: PositionedNode } = {}
-  let edges: { [key: string]: PositionedEdge } = {}
+  const nodes: { [key: string]: PositionedNode } = {}
+  const edges: { [key: string]: PositionedEdge } = {}
 
+
+  /**
+   * event scheduling
+   * - throttle layout events: if multiple layouts events are triggered while simulation is running, drop all but the most recent one
+   * - run drag/start/end events synchronously: if multiple drag events are triggered while simulation is running, replay them all in order
+   * - throttle layout results before posting message, allowing drag events dispatched while layout was running to be played on top of that layout result
+   */
+  self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
+    if (data.type === 'layout') {
+      layout(data)
+    } else if (data.type === 'dragStart') {
+      dragStart(data)
+    } else if (data.type === 'drag') {
+      drag(data)
+    } else if (data.type === 'dragEnd') {
+      dragEnd(data)
+    }
+  }
+
+  const postMessage = throttle(() => {
+    self.postMessage({ nodes: nodes, edges: edges })
+  }) as unknown as () => void
+
+  /**
+   * layout simulation
+   */
   const forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
     .id((node) => node.id)
     .distance(options.distance)
-  const forceManyBody = d3.forceManyBody().strength(-options.strength)
+  const forceManyBody = d3.forceManyBody().strength(options.strength) // .distanceMax(5000)
   const forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
     const radius = node.style === undefined || node.style.width === undefined ?
       options.nodeWidth * 0.5 :
@@ -119,14 +158,22 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     .force('center', d3.forceCenter())
     .force('charge', forceManyBody)
     .force('collision', forceCollide)
+    .force('link', forceLink.links(Object.values(edges)))
+    // .force('position', d3.forceRadial(10000).strength(0.01))
+    // .force('position', d3.forceX(0))
+    // .force('position', d3.forceY(0))
     .stop()
-    .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
+    // .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
 
-  const layout = (data: LayoutEvent) => {
+  /**
+   * simulation handlers
+   */
+  const layout = throttle((data: LayoutEvent) => {
     let update = false
+    let updateRadius = false
 
     if (data.options.strength !== options.strength) {
-      forceManyBody.strength(-data.options.strength)
+      forceManyBody.strength(data.options.strength)
       options.strength = data.options.strength
       update = true
     }
@@ -149,8 +196,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
         update = true
       } else {
         // update node
+        if (data.nodes[nodeId].style?.width !== nodes[nodeId].style?.width) {
+          updateRadius = true
+        }
         nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId])
-        update = true
       }
     }
 
@@ -172,25 +221,21 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
           target: nodes[data.edges[edgeId].target as unknown as string],
           style: data.edges[edgeId].style,
         }
-        /**
-         * TODO - updating node properties shouldn't relayout graph
-         * might get this for free if simulation is only passed node.radius, edge.source, edge.target
-         */
         update = true
-      } else if (edges[edgeId] !== data.edges[edgeId]) { // TODO - referential equality won't work here
+      } else {
         // update edge
-        // TODO - add edge style properties
-        edges[edgeId] = {
-          id: data.edges[edgeId].id,
-          label: data.edges[edgeId].label,
-          source: nodes[data.edges[edgeId].source as unknown as string],
-          target: nodes[data.edges[edgeId].target as unknown as string],
-          style: data.edges[edgeId].style,
+        if (
+          (data.edges[edgeId].source as unknown as string) !== edges[edgeId].source.id ||
+          (data.edges[edgeId].target as unknown as string) !== edges[edgeId].target.id
+        ) {
+          update = true
         }
-        /**
-         * TODO - updating edge properties shouldn't relayout graph
-         */
-        update = true
+
+        edges[edgeId].id = data.edges[edgeId].id
+        edges[edgeId].label = data.edges[edgeId].label
+        edges[edgeId].source = nodes[data.edges[edgeId].source as unknown as string]
+        edges[edgeId].target = nodes[data.edges[edgeId].target as unknown as string]
+        edges[edgeId].style = data.edges[edgeId].style
       }
     }
 
@@ -203,31 +248,53 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     }
 
     if (update) {
+      forceLink.links(Object.values(edges))
       simulation
         .nodes(Object.values(nodes))
-        .force('link', forceLink.links(Object.values(edges)))
         .alpha(1)
 
       if (options.tick !== null) {
         simulation.stop().tick(options.tick)
-        self.postMessage({ nodes: nodes, edges: edges })
+        simulation.alpha(0)
+        // Object.values(nodes).forEach((node) => {
+        //   delete node.vx
+        //   delete node.vy
+        // })
+        postMessage()
         // simulation.restart().alpha(0)
       } else {
         simulation.restart()
       }
+    } else if (updateRadius) {
+      console.log('update radius')
+      simulation
+        .nodes(Object.values(nodes))
+        .alpha(1)
+        .stop()
+        .tick(300)
+      simulation.alpha(0)
+      postMessage()
+      // simulation.restart().alpha(0)
     } else {
-      simulation.tick(1)
+      // simulation.tick(1)
+      /**
+       * TODO - move update boolean logic out of WebWorker.
+       * if it lives here, then we have to emit on non-layout-updates b/c node/edge properties may have updated
+       * which causes issues w/ node hover handlers causing relayouts: drag sets nodes position, causes layout,
+       * which slightly changes node position, and renderer tries to interpolate between each
+       */
+      postMessage() // TODO - delete once non-updates are passed directly to the renderer, bypassing simulation
     }
-  }
+  })
 
   const dragStart = (data: DragStartEvent) => {
-    nodes[data.id].fx = data.x
-    nodes[data.id].fy = data.y
+    nodes[data.id].x = nodes[data.id].fx = data.x
+    nodes[data.id].y = nodes[data.id].fy = data.y
   }
 
   const drag = (data: DragEvent) => {
-    nodes[data.id].fx = data.x
-    nodes[data.id].fy = data.y
+    nodes[data.id].x = nodes[data.id].fx = data.x
+    nodes[data.id].y = nodes[data.id].fy = data.y
   }
 
   const dragEnd = (data: DragEndEvent) => {
@@ -235,23 +302,9 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     nodes[data.id].fy = null
   }
 
-  const tick = (data: TickEvent) => {
-    simulation.restart().tick(1)
-  }
-
-  self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
-    if (data.type === 'layout') {
-      layout(data)
-    } else if (data.type === 'dragStart') {
-      dragStart(data)
-    } else if (data.type === 'drag') {
-      drag(data)
-    } else if (data.type === 'dragEnd') {
-      dragEnd(data)
-    } else if (data.type === 'tick') {
-      tick(data)
-    }
-  }
+  // const tick = () => {
+  //   simulation.restart().tick(1)
+  // }
 }
 
 

@@ -3,7 +3,7 @@ import { NodeStyleSelector } from '../utils'
 import { PositionedNode } from '../..'
 import { colorToNumber } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { Renderer, ANIMATION_DURATION } from '.'
+import { Renderer, POSITION_ANIMATION_DURATION } from '.'
 
 
 const LABEL_Y_PADDING = 4
@@ -37,7 +37,7 @@ export class NodeContainer {
   private circleContainer = new PIXI.Container()
   private labelContainer = new PIXI.Container()
   private nodeGfx = new PIXI.Graphics()
-  private hoverBorder = new PIXI.Graphics()
+  private labelSprite?: PIXI.Text
 
   constructor(renderer: Renderer, node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
@@ -66,10 +66,21 @@ export class NodeContainer {
     this.startY = this.y
     this.endX = node.x!
     this.endY = node.y!
-    const interpolateXNumber = interpolateNumber(this.startX, this.endX)
-    const interpolateYNumber = interpolateNumber(this.startY, this.endY)
-    this.interpolateX = interpolateBasis([interpolateXNumber(0), interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), interpolateXNumber(1)])
-    this.interpolateY = interpolateBasis([interpolateYNumber(0), interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), interpolateYNumber(1)])
+    /**
+     * TODO - if node position is currently being interpolated, instead of reinterpolating from 0 velocity, smooth interpolation change
+     */
+    if (this.startX !== this.endX) {
+      const interpolateXNumber = interpolateNumber(this.startX, this.endX)
+      this.interpolateX = interpolateBasis([this.startX, interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), this.endX])
+    } else {
+      this.interpolateX = () => this.endX
+    }
+    if (this.startY !== this.endY) {
+      const interpolateYNumber = interpolateNumber(this.startY, this.endY)
+      this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), this.endY])
+    } else {
+      this.interpolateY = () => this.endY
+    }
 
     const radius = this.nodeStyleSelector(node, 'width') / 2
     const strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
@@ -80,8 +91,13 @@ export class NodeContainer {
 
     this.startRadius = this.radius === -1 ? radius : this.radius
     this.endRadius = radius
-    const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
-    this.interpolateRadius = interpolateBasis([interpolateRadiusNumber(0), interpolateRadiusNumber(0.1), interpolateRadiusNumber(0.8), interpolateRadiusNumber(0.95), interpolateRadiusNumber(1)])
+    if (this.startRadius !== this.endRadius) {
+      const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
+      this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.1), interpolateRadiusNumber(0.8), interpolateRadiusNumber(0.95), this.endRadius])
+    } else {
+      this.interpolateRadius = () => this.endRadius
+    }
+
     this.strokeWidth = strokeWidth
     this.stroke = colorToNumber(this.nodeStyleSelector(this.node, 'stroke'))
     this.strokeOpacity = this.nodeStyleSelector(this.node, 'strokeOpacity')
@@ -92,7 +108,8 @@ export class NodeContainer {
       this.label = node.label
 
       if (node.label) {
-        const labelText = new PIXI.Text(node.label || '', {
+        this.labelSprite?.destroy()
+        this.labelSprite = new PIXI.Text(node.label || '', {
           fontFamily: 'Helvetica',
           fontSize: 12 * 2,
           fill: 0x333333,
@@ -100,11 +117,11 @@ export class NodeContainer {
           stroke: '#fafafaee',
           strokeThickness: 2 * 2,
         })
-        labelText.x = 0
-        labelText.y = radius + this.strokeWidth + LABEL_Y_PADDING
-        labelText.scale.set(0.5)
-        labelText.anchor.set(0.5, 0)
-        this.labelContainer.addChild(labelText)
+        this.labelSprite.x = 0
+        this.labelSprite.y = radius + this.strokeWidth + LABEL_Y_PADDING
+        this.labelSprite.scale.set(0.5)
+        this.labelSprite.anchor.set(0.5, 0)
+        this.labelContainer.addChild(this.labelSprite)
       } else {
         this.labelContainer.removeChildren()
       }
@@ -137,15 +154,16 @@ export class NodeContainer {
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render = () => {
-    if (this.renderer.animationTime < ANIMATION_DURATION) {
-      const percent = this.renderer.animationTime / ANIMATION_DURATION
+    // TODO - should positionPercent be calculated in renderer
+    if (this.renderer.animationTime < POSITION_ANIMATION_DURATION) {
+      const positionPercent = this.renderer.animationTime / POSITION_ANIMATION_DURATION
 
       if (this.renderer.clickedNode !== this.node.id) {
-        this.circleContainer.x = this.labelContainer.x = this.x = this.interpolateX(percent)
-        this.circleContainer.y = this.labelContainer.y = this.y = this.interpolateY(percent)
+        this.circleContainer.x = this.labelContainer.x = this.x = this.interpolateX(positionPercent)
+        this.circleContainer.y = this.labelContainer.y = this.y = this.interpolateY(positionPercent)
       }
 
-      this.radius = this.interpolateRadius(percent)
+      this.radius = this.interpolateRadius(this.renderer.animationTime / 200)
     } else {
       if (this.renderer.clickedNode !== this.node.id) {
         this.circleContainer.x = this.labelContainer.x = this.x = this.endX
@@ -155,16 +173,23 @@ export class NodeContainer {
       this.radius = this.endRadius
     }
 
-    this.nodeGfx
-      .clear()
-      .lineStyle(this.strokeWidth, this.stroke, this.strokeOpacity, 1)
-      .beginFill(this.fill, this.fillOpacity)
-      .drawCircle(0, 0, this.radius)
+    if (this.renderer.hoveredNode === this.node.id) {
+      this.nodeGfx
+        .clear()
+        .lineStyle(this.strokeWidth * 1.5, 0xcccccc, 1, 1)
+        .beginFill(this.fill, this.fillOpacity)
+        .drawCircle(0, 0, this.radius)
+    } else {
+      this.nodeGfx
+        .clear()
+        .lineStyle(this.strokeWidth, this.stroke, this.strokeOpacity, 1)
+        .beginFill(this.fill, this.fillOpacity)
+        .drawCircle(0, 0, this.radius)
+    }
 
-    this.hoverBorder
-      .clear()
-      .lineStyle(this.strokeWidth * 1.5, 0xcccccc, 1, 1)
-      .drawCircle(0, 0, this.radius)
+    if (this.labelSprite) {
+      this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
+    }
 
     return this
   }
@@ -184,8 +209,6 @@ export class NodeContainer {
       this.renderer.frontNodeLayer.addChild(this.circleContainer)
       this.renderer.frontLabelLayer.addChild(this.labelContainer)
 
-      this.circleContainer.addChild(this.hoverBorder)
-
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
       this.renderer.onNodeMouseEnter && this.renderer.onNodeMouseEnter(this.node, { x, y })
@@ -198,8 +221,7 @@ export class NodeContainer {
 
       for (const nodeGfx of this.renderer.frontNodeLayer.children) {
         this.renderer.frontNodeLayer.removeChild(nodeGfx)
-        this.renderer.nodesLayer.addChild(nodeGfx);
-        (nodeGfx as PIXI.Graphics).removeChild(this.hoverBorder)
+        this.renderer.nodesLayer.addChild(nodeGfx)
       }
 
       for (const labelGfx of this.renderer.frontLabelLayer.children) {

@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
     "dev": "parcel examples/index.html",
+    "perf": "parcel perf/index.html",
     "build": "rm -rf ./dist/ && tsc --project ./tsconfig.json"
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",

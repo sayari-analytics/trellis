@@ -10,7 +10,7 @@ import { EdgeContainer } from './edgeContainer'
 
 
 new FontFaceObserver('Material Icons').load()
-export const ANIMATION_DURATION = 800
+export const POSITION_ANIMATION_DURATION = 600
 
 
 export class Renderer {
@@ -119,11 +119,17 @@ export class Renderer {
     animationFrameLoop(this.render)
   }
 
+  /**
+   * TODO - handle case where layout is called while previous layout is still being interpolated
+   * current approach essentially cancels previous layout and runs a new one
+   * maybe instead stage new one, overwriting stagged layout if new layouts are called, and don't run until previous interpolation is done
+   */
   layout = ({ nodes, edges }: {
     nodes: { [key: string]: PositionedNode },
     edges: { [key: string]: PositionedEdge }
   }) => {
     this.animationTime = 0
+    // this.animationTime = this.animationTime < POSITION_ANIMATION_DURATION ? this.animationTime : 0
 
     for (const edgeId in edges) {
       const [min, max] = [edges[edgeId].source.id, edges[edgeId].target.id].sort()
@@ -212,7 +218,7 @@ export class Renderer {
         this.edgesById[edgeId].render()
       }
 
-      this.dirty = this.animationTime < ANIMATION_DURATION
+      this.dirty = this.animationTime < POSITION_ANIMATION_DURATION
       this.viewport.dirty = false
       this.app.render()
     } else if (this.viewport.dirty) {
