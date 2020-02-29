@@ -1,5 +1,5 @@
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY } from 'd3-force'
-import { PositionedNode, PositionedEdge } from './index'
+import { PositionedNode, PositionedEdge, Node, Edge } from './index'
 import { DEFAULT_NODE_STYLES } from './renderers/options'
 
 
@@ -53,9 +53,9 @@ export type TypedMessageEvent<T = unknown> = {
 
 export type LayoutEvent = {
   type: 'layout',
-  nodes: PositionedNode[]
-  edges: PositionedEdge[]
-  options: SimulationOptions
+  nodes: Node[]
+  edges: Edge[]
+  options?: Partial<SimulationOptions>
 }
 
 export type DragStartEvent = {
@@ -89,33 +89,216 @@ export type LayoutResultEvent = {
 
 
 const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
-  const throttle = <T>(fn: ((arg: T) => void)) => {
+  const throttle = (fn: (() => void)) => {
     let timeout: NodeJS.Timeout | undefined
-    let _arg: T | undefined
 
-    return (arg: T) => {
+    return () => {
       if (timeout === undefined) {
         setTimeout(() => {
-          fn(_arg!)
           timeout = undefined
+          fn()
         }, 0)
       }
-      _arg = arg
     }
   }
 
-  const options: SimulationOptions = {
-    strength: DEFAULT_OPTIONS.strength,
-    distance: DEFAULT_OPTIONS.distance,
-    nodeWidth: DEFAULT_OPTIONS.nodeWidth,
-    nodeStrokeWidth: DEFAULT_OPTIONS.nodeStrokeWidth,
-    nodePadding: DEFAULT_OPTIONS.nodePadding,
-    tick: DEFAULT_OPTIONS.tick,
-  } // TODO - are all Options passed?  or partial w/ defaults
-  let nodes: { [key: string]: PositionedNode } = {}
-  let edges: { [key: string]: PositionedEdge } = {}
+  class Simulation {
 
+    options: SimulationOptions = {
+      strength: DEFAULT_OPTIONS.strength,
+      distance: DEFAULT_OPTIONS.distance,
+      nodeWidth: DEFAULT_OPTIONS.nodeWidth,
+      nodeStrokeWidth: DEFAULT_OPTIONS.nodeStrokeWidth,
+      nodePadding: DEFAULT_OPTIONS.nodePadding,
+      tick: DEFAULT_OPTIONS.tick,
+    } // TODO - are all Options passed?  or partial w/ defaults
+    nodesById: { [key: string]: PositionedNode } = {}
+    edgesById: { [key: string]: PositionedEdge } = {}
 
+    forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
+      .id((node) => node.id)
+      .distance(this.options.distance)
+
+    forceManyBody = d3.forceManyBody().strength(this.options.strength) // .distanceMax(5000)
+
+    forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
+      const radius = node.style === undefined || node.style.width === undefined ?
+        this.options.nodeWidth * 0.5 :
+        node.style.width * 0.5
+      const strokeWidth = node.style === undefined || node.style.strokeWidth === undefined ?
+        this.options.nodeStrokeWidth * 0.5 :
+        node.style.strokeWidth * 0.5
+      return radius + strokeWidth + this.options.nodePadding
+    })
+
+    simulation = d3.forceSimulation()
+      .force('center', d3.forceCenter())
+      .force('charge', this.forceManyBody)
+      .force('collision', this.forceCollide)
+      .force('link', this.forceLink)
+      // .force('position', d3.forceRadial(10000).strength(0.01))
+      // .force('position', d3.forceX(0))
+      // .force('position', d3.forceY(0))
+      .stop()
+
+    postLayout = throttle(() => {
+      self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
+    })
+
+    /**
+     * TODO - fisheye force
+     *
+     * whenever only parentNodes change in graph layout:
+     * - apply fisheye w/ negative strength for all previous parentNodes, if any
+     * - apply fisheye w/ positive strength for all new parentNodes, if any
+     *
+     * single fisheye force exerts force on all nodes by repositioning them by parentNode radius away from parentNode center
+     * multiple fisheye forces first reposition themselves relative to each other, then apply the sum of their force vectors on all nodes
+     *   - or, probably simpler to just apply each fisheye force in sequence
+     */
+
+    /**
+     * simulation handlers
+     */
+    // TODO - throttle causes data to get mutated unexpectedly.  expected: edge.source = Node. observed: edge.source = Node
+    layout = ({
+      nodes,
+      edges,
+      options: {
+        strength = DEFAULT_OPTIONS.strength,
+        distance = DEFAULT_OPTIONS.distance,
+        tick = DEFAULT_OPTIONS.tick,
+      } = {}
+    }: { nodes: Node[], edges: Edge[], options?: Partial<SimulationOptions> }) => {
+      let update = false
+      const nodesById: { [id: string]: PositionedNode } = {}
+      const edgesById: { [id: string]: PositionedEdge } = {}
+
+      if (strength !== this.options.strength) {
+        this.forceManyBody.strength(strength)
+        this.options.strength = strength
+        update = true
+      }
+
+      if (distance !== this.options.distance) {
+        this.forceLink.distance(distance)
+        this.options.distance = distance
+        update = true
+      }
+
+      if (tick !== this.options.tick) {
+        this.options.tick = tick
+        update = true
+      }
+
+      for (let i = 0; i < nodes.length; i++) {
+        const node: PositionedNode = nodes[i]
+        if (this.nodesById[node.id] === undefined) {
+          // enter node
+          nodesById[node.id] = node
+          update = true
+        } else {
+          // update node
+          if (node.style?.width !== this.nodesById[node.id].style?.width) {
+            update = true
+          }
+          node.x = this.nodesById[node.id].x
+          node.y = this.nodesById[node.id].y
+          node.fx = this.nodesById[node.id].fx
+          node.fy = this.nodesById[node.id].fy
+          node.vx = this.nodesById[node.id].vx
+          node.vy = this.nodesById[node.id].vy
+          node.index = this.nodesById[node.id].index
+          nodesById[node.id] = node
+        }
+      }
+
+      for (const nodeId in this.nodesById) {
+        if (nodesById[nodeId] === undefined) {
+          // exit node
+          update = true
+        }
+      }
+
+      for (let i = 0; i < edges.length; i++) {
+        const edge = edges[i] as unknown as PositionedEdge
+        edge.source = nodesById[edges[i].source]
+        edge.target = nodesById[edges[i].target]
+
+        if (this.edgesById[edge.id] === undefined) {
+          // enter edge
+          edgesById[edge.id] = edge
+          update = true
+        } else {
+          // update edge
+          if (
+            edge.source.id !== this.edgesById[edge.id].source.id ||
+            edge.target.id !== this.edgesById[edge.id].target.id
+          ) {
+            update = true
+          }
+          edgesById[edge.id] = edge
+        }
+      }
+
+      for (const edgeId in this.edgesById) {
+        if (edgesById[edgeId] === undefined) {
+          // exit edge
+          update = true
+        }
+      }
+
+      this.nodesById = nodesById
+      this.edgesById = edgesById
+      this.simulation.nodes(nodes as PositionedNode[])
+      this.forceLink.links(edges as unknown as PositionedEdge[])
+
+      if (update) {
+        if (this.options.tick !== null) {
+          this.simulation
+            .alpha(1)
+            .stop()
+            .tick(this.options.tick)
+          this.simulation.alpha(0)
+          this.postLayout()
+        } else {
+          this.simulation
+            .alpha(1)
+            .restart()
+            .on('tick', () => this.postLayout())
+        }
+      } else {
+        /**
+         * TODO - would be more efficient to diff input before sending to webWorker, bypassing worker on no update
+         * could allow renderer to not store hover state
+         */
+        this.postLayout()
+      }
+    }
+
+    dragStart = (data: DragStartEvent) => {
+      if (this.nodesById[data.id]) {
+        this.nodesById[data.id].fx = data.x
+        this.nodesById[data.id].fy = data.y
+      }
+    }
+
+    drag = (data: DragEvent) => {
+      if (this.nodesById[data.id]) {
+        this.nodesById[data.id].x = this.nodesById[data.id].fx = data.x
+        this.nodesById[data.id].y = this.nodesById[data.id].fy = data.y
+      }
+    }
+
+    dragEnd = (data: DragEndEvent) => {
+      if (this.nodesById[data.id]) {
+        this.nodesById[data.id].fx = null
+        this.nodesById[data.id].fy = null
+      }
+    }
+  }
+
+  const simulation = new Simulation()
   /**
    * event scheduling
    * - throttle layout events: if multiple layouts events are triggered while simulation is running, drop all but the most recent one
@@ -124,196 +307,13 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
    */
   self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
     if (data.type === 'layout') {
-      layout(data)
+      simulation.layout(data)
     } else if (data.type === 'dragStart') {
-      dragStart(data)
+      simulation.dragStart(data)
     } else if (data.type === 'drag') {
-      drag(data)
+      simulation.drag(data)
     } else if (data.type === 'dragEnd') {
-      dragEnd(data)
-    }
-  }
-
-  const postMessage = throttle(() => {
-    self.postMessage({ nodes: simulation.nodes(), edges: forceLink.links() } as LayoutResultEvent)
-  }) as unknown as () => void
-
-  /**
-   * layout simulation
-   */
-  const forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
-    .id((node) => node.id)
-    .distance(options.distance)
-  const forceManyBody = d3.forceManyBody().strength(options.strength) // .distanceMax(5000)
-  const forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
-    const radius = node.style === undefined || node.style.width === undefined ?
-      options.nodeWidth * 0.5 :
-      node.style.width * 0.5
-    const strokeWidth = node.style === undefined || node.style.strokeWidth === undefined ?
-      options.nodeStrokeWidth * 0.5 :
-      node.style.strokeWidth * 0.5
-    return radius + strokeWidth + options.nodePadding
-  })
-  const simulation = d3.forceSimulation()
-    .force('center', d3.forceCenter())
-    .force('charge', forceManyBody)
-    .force('collision', forceCollide)
-    .force('link', forceLink)
-    // .force('position', d3.forceRadial(10000).strength(0.01))
-    // .force('position', d3.forceX(0))
-    // .force('position', d3.forceY(0))
-    .stop()
-    // .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
-
-  /**
-   * TODO - fisheye force
-   *
-   * whenever only parentNodes change in graph layout:
-   * - apply fisheye w/ negative strength for all previous parentNodes, if any
-   * - apply fisheye w/ positive strength for all new parentNodes, if any
-   *
-   * single fisheye force exerts force on all nodes by repositioning them by parentNode radius away from parentNode center
-   * multiple fisheye forces first reposition themselves relative to each other, then apply the sum of their force vectors on all nodes
-   *   - or, probably simpler to just apply each fisheye force in sequence
-   */
-
-  /**
-   * simulation handlers
-   */
-  // TODO - throttle causes data to get mutated unexpectedly.  expected: edge.source = Node. observed: edge.source = Node
-  const layout = (data: LayoutEvent) => {
-    let update = false
-    const prevNodes = nodes
-    const prevEdges = edges
-    nodes = {}
-    edges = {}
-
-    if (data.options.strength !== options.strength) {
-      forceManyBody.strength(data.options.strength)
-      options.strength = data.options.strength
-      update = true
-    }
-
-    if (data.options.distance !== options.distance) {
-      forceLink.distance(options.distance)
-      options.distance = data.options.distance
-      update = true
-    }
-
-    if (data.options.tick !== options.tick) {
-      options.tick = data.options.tick
-      update = true
-    }
-
-    for (let i = 0; i < data.nodes.length; i++) {
-      const node = data.nodes[i]
-      if (prevNodes[node.id] === undefined) {
-        // enter node
-        nodes[node.id] = node
-        update = true
-      } else {
-        // update node
-        if (node.style?.width !== prevNodes[node.id].style?.width) {
-          update = true
-        }
-        node.x = prevNodes[node.id].x
-        node.y = prevNodes[node.id].y
-        node.fx = prevNodes[node.id].fx
-        node.fy = prevNodes[node.id].fy
-        node.vx = prevNodes[node.id].vx
-        node.vy = prevNodes[node.id].vy
-        node.index = prevNodes[node.id].index
-        nodes[node.id] = node
-      }
-    }
-
-    for (const nodeId in prevNodes) {
-      if (nodes[nodeId] === undefined) {
-        // exit node
-        update = true
-      }
-    }
-
-    for (let i = 0; i < data.edges.length; i++) {
-      const edge = data.edges[i]
-      if (prevEdges[edge.id] === undefined) {
-        // enter edge
-        edges[edge.id] = edge
-        update = true
-      } else {
-        // update edge
-        if (
-          (edge.source as unknown as string) !== prevEdges[edge.id].source.id ||
-          (edge.target as unknown as string) !== prevEdges[edge.id].target.id
-        ) {
-          update = true
-        }
-
-        edge.source = nodes[edge.source as unknown as string]
-        edge.target = nodes[edge.target as unknown as string]
-        edges[edge.id] = edge
-      }
-    }
-
-    for (const edgeId in prevEdges) {
-      if (edges[edgeId] === undefined) {
-        // exit edge
-        update = true
-      }
-    }
-
-    if (update) {
-      if (options.tick !== null) {
-        simulation.nodes(data.nodes)
-        forceLink.links(data.edges)
-        simulation
-          .alpha(1)
-          .stop()
-          .tick(options.tick)
-        simulation.alpha(0)
-        // data.nodes.forEach((node) => {
-        //   delete node.vx
-        //   delete node.vy
-        // })
-        postMessage()
-      } else {
-        simulation.nodes(data.nodes)
-        forceLink.links(data.edges)
-        simulation
-          .alpha(1)
-          .restart()
-      }
-    } else {
-      /**
-       * TODO - move update boolean logic out of WebWorker.
-       * if it lives here, then we have to emit on non-layout-updates b/c node/edge properties may have updated
-       * which causes issues w/ node hover handlers causing relayouts: drag sets nodes position, causes layout,
-       * which slightly changes node position, and renderer tries to interpolate between each
-       */
-      simulation.nodes(data.nodes)
-      forceLink.links(data.edges)
-      postMessage() // TODO - delete once non-updates are passed directly to the renderer, bypassing simulation
-    }
-  }
-
-  const dragStart = (data: DragStartEvent) => {
-    if (nodes[data.id]) {
-      nodes[data.id].fx = data.x
-      nodes[data.id].fy = data.y
-    }
-  }
-
-  const drag = (data: DragEvent) => {
-    if (nodes[data.id]) {
-      nodes[data.id].x = nodes[data.id].fx = data.x
-      nodes[data.id].y = nodes[data.id].fy = data.y
-    }
-  }
-
-  const dragEnd = (data: DragEndEvent) => {
-    if (nodes[data.id]) {
-      nodes[data.id].fx = null
-      nodes[data.id].fy = null
+      simulation.dragEnd(data)
     }
   }
 }
