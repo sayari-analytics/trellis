@@ -14,7 +14,6 @@ const nodes = Object.values(graphData.nodes)
     label,
     style: { width: 62, fill: '#ffaf1d', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
   }))
-  // .reduce<{ [id: string]: Node }>((nodes, node) => (nodes[node.id] = node, nodes), {})
 
 const edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
@@ -31,11 +30,10 @@ const edges = Object.entries<{ field: string, source: string, target: string }>(
     target,
     label: field.replace(/_/g, ' '),
   }))
-  // .reduce<{ [id: string]: Edge }>((edges, edge) => (edges[edge.id] = edge, edges), {})
 
 
 const layout = (graph: Graph) => (
-  graphData$: Observable<{ nodes: { [key: string]: Node }, edges: { [key: string]: Edge }, options?: Partial<SimulationOptions> }>
+  graphData$: Observable<{ nodes: Node[], edges: Edge[], options?: Partial<SimulationOptions> }>
 ) => {
   return graphData$.pipe(
     mergeMap((graphData) => {
@@ -60,23 +58,19 @@ const graph = new Graph()
 console.timeEnd('Initialize Graph')
 
 interval(1500).pipe(
-  take(COUNT + 10),
+  take(COUNT + 5),
   mergeMap((idx) => {
     return of(idx).pipe(
       map((idx) => {
-        return nodes
-          .slice(0, (idx + 1) * NODES_PER_TICK)
-          .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge }, options?: Partial<SimulationOptions> }>((graph, node) => {
-            graph.nodes[node.id] = node
+        const nodeIds = new Set<string>()
 
-            edges.forEach((edge) => {
-              if (graph.nodes[edge.source] && graph.nodes[edge.target]) {
-                graph.edges[edge.id] = edge
-              }
-            })
-
-            return graph
-          }, { nodes: {}, edges: {} })
+        return {
+          nodes: nodes
+            .slice(0, (idx + 1) * NODES_PER_TICK)
+            .map((node) => (nodeIds.add(node.id), node)),
+          edges: edges
+            .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+        }
       }),
       tap(() => console.time(idx.toString())),
       layout(graph),

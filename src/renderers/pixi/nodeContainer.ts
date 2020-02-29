@@ -11,7 +11,7 @@ const LABEL_Y_PADDING = 4
 
 export class NodeContainer {
 
-  node: PositionedNode
+  node: PositionedNode = { id: '' }
   radius = -1
   strokeWidth = 0
   stroke = 0
@@ -39,9 +39,8 @@ export class NodeContainer {
   private nodeGfx = new PIXI.Graphics()
   private labelSprite?: PIXI.Text
 
-  constructor(renderer: Renderer, node: PositionedNode, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
+  constructor(renderer: Renderer, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
-    this.node = node
     this.nodeStyleSelector = nodeStyleSelector
     this.circleContainer.interactive = true
     this.circleContainer.buttonMode = true

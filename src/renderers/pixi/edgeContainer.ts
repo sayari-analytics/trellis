@@ -23,7 +23,7 @@ const ARROW_WIDTH = 8
 
 export class EdgeContainer {
 
-  edge: PositionedEdge
+  edge: PositionedEdge = { id: '', source: { id: '' }, target: { id: '' } }
   labelContainer: PIXI.Container = new PIXI.Container()
   hoverContainer: PIXI.Container = new PIXI.Container()
 
@@ -45,8 +45,7 @@ export class EdgeContainer {
   private curveControlPointB?: [number, number]
   private curve: number = 0
 
-  constructor(renderer: Renderer, edge: PositionedEdge, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container) {
-    this.edge = edge
+  constructor(renderer: Renderer, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container) {
     this.renderer = renderer
     this.edgeStyleSelector = edgeStyleSelector
     this.edgeGfx.interactive = true

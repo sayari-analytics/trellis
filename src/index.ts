@@ -33,10 +33,7 @@ export class Graph {
 
   worker: Worker
   dispose: () => void
-  handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge }, options: SimulationOptions }) => void = noop
-
-  nodes: { [key: string]: PositionedNode } = {}
-  edges: { [key: string]: PositionedEdge } = {}
+  handler: (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options: SimulationOptions }) => void = noop
   options: SimulationOptions = DEFAULT_SIMULATION_OPTIONS
 
   constructor() {
@@ -44,8 +41,6 @@ export class Graph {
     this.worker = worker
     this.dispose = dispose
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
-      this.nodes = event.data.nodes
-      this.edges = event.data.edges
       this.handler({ ...event.data, options: this.options }) // TODO - properly pass SimulationOptions - current implementation might associate older data w/ newer options
     }
   }
@@ -62,18 +57,23 @@ export class Graph {
       nodePadding = DEFAULT_SIMULATION_OPTIONS.nodePadding,
     } = {}
   }: {
-    nodes: { [key: string]: Node },
-    edges: { [key: string]: Edge },
+    nodes: Node[],
+    edges: Edge[],
     options?: Partial<SimulationOptions>
   }) => {
     // TODO - noop on nodes/edges/options equality
     // TODO - does it make sense to only serialize node ids and edge id/source/target? e.g. drop style and remerge
     this.options = { strength, tick, distance, nodeWidth, nodeStrokeWidth, nodePadding }
-    this.worker.postMessage({ type: 'layout', nodes, edges, options: this.options })
+    this.worker.postMessage({
+      type: 'layout',
+      nodes,
+      edges,
+      options: this.options
+    })
     return this
   }
 
-  onLayout = (handler: (graph: { nodes: { [key: string]: PositionedNode }, edges: { [key: string]: PositionedEdge }, options: SimulationOptions }) => void) => {
+  onLayout = (handler: (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options: SimulationOptions }) => void) => {
     this.handler = handler
     return this
   }
@@ -84,19 +84,12 @@ export class Graph {
   }
 
   drag = (id: string, x: number, y: number) => {
-    this.nodes[id].x = x
-    this.nodes[id].y = y
     this.worker.postMessage({ type: 'drag', id, x, y })
     return this
   }
 
   dragEnd = (id: string) => {
     this.worker.postMessage({ type: 'dragEnd', id })
-    return this
-  }
-
-  tick = () => {
-    this.worker.postMessage({ type: 'tick' })
     return this
   }
 }

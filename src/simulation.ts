@@ -53,8 +53,8 @@ export type TypedMessageEvent<T = unknown> = {
 
 export type LayoutEvent = {
   type: 'layout',
-  nodes: { [key: string]: PositionedNode }
-  edges: { [key: string]: PositionedEdge }
+  nodes: PositionedNode[]
+  edges: PositionedEdge[]
   options: SimulationOptions
 }
 
@@ -83,8 +83,8 @@ export type Event = LayoutEvent
   | DragEndEvent
 
 export type LayoutResultEvent = {
-  nodes: { [key: string]: PositionedNode }
-  edges: { [key: string]: PositionedEdge }
+  nodes: PositionedNode[]
+  edges: PositionedEdge[]
 }
 
 
@@ -112,8 +112,8 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     nodePadding: DEFAULT_OPTIONS.nodePadding,
     tick: DEFAULT_OPTIONS.tick,
   } // TODO - are all Options passed?  or partial w/ defaults
-  const nodes: { [key: string]: PositionedNode } = {}
-  const edges: { [key: string]: PositionedEdge } = {}
+  let nodes: { [key: string]: PositionedNode } = {}
+  let edges: { [key: string]: PositionedEdge } = {}
 
 
   /**
@@ -135,7 +135,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
   }
 
   const postMessage = throttle(() => {
-    self.postMessage({ nodes: nodes, edges: edges })
+    self.postMessage({ nodes: simulation.nodes(), edges: forceLink.links() } as LayoutResultEvent)
   }) as unknown as () => void
 
   /**
@@ -158,7 +158,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     .force('center', d3.forceCenter())
     .force('charge', forceManyBody)
     .force('collision', forceCollide)
-    .force('link', forceLink.links(Object.values(edges)))
+    .force('link', forceLink)
     // .force('position', d3.forceRadial(10000).strength(0.01))
     // .force('position', d3.forceX(0))
     // .force('position', d3.forceY(0))
@@ -166,11 +166,27 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     // .on('tick', () => self.postMessage({ nodes: nodes, edges: edges }))
 
   /**
+   * TODO - fisheye force
+   *
+   * whenever only parentNodes change in graph layout:
+   * - apply fisheye w/ negative strength for all previous parentNodes, if any
+   * - apply fisheye w/ positive strength for all new parentNodes, if any
+   *
+   * single fisheye force exerts force on all nodes by repositioning them by parentNode radius away from parentNode center
+   * multiple fisheye forces first reposition themselves relative to each other, then apply the sum of their force vectors on all nodes
+   *   - or, probably simpler to just apply each fisheye force in sequence
+   */
+
+  /**
    * simulation handlers
    */
-  const layout = throttle((data: LayoutEvent) => {
+  // TODO - throttle causes data to get mutated unexpectedly.  expected: edge.source = Node. observed: edge.source = Node
+  const layout = (data: LayoutEvent) => {
     let update = false
-    let updateRadius = false
+    const prevNodes = nodes
+    const prevEdges = edges
+    nodes = {}
+    edges = {}
 
     if (data.options.strength !== options.strength) {
       forceManyBody.strength(data.options.strength)
@@ -189,122 +205,117 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       update = true
     }
 
-    for (const nodeId in data.nodes) {
-      if (nodes[nodeId] === undefined) {
+    for (let i = 0; i < data.nodes.length; i++) {
+      const node = data.nodes[i]
+      if (prevNodes[node.id] === undefined) {
         // enter node
-        nodes[nodeId] = data.nodes[nodeId]
+        nodes[node.id] = node
         update = true
       } else {
         // update node
-        if (data.nodes[nodeId].style?.width !== nodes[nodeId].style?.width) {
-          updateRadius = true
+        if (node.style?.width !== prevNodes[node.id].style?.width) {
+          update = true
         }
-        nodes[nodeId] = Object.assign(nodes[nodeId], data.nodes[nodeId])
+        node.x = prevNodes[node.id].x
+        node.y = prevNodes[node.id].y
+        node.fx = prevNodes[node.id].fx
+        node.fy = prevNodes[node.id].fy
+        node.vx = prevNodes[node.id].vx
+        node.vy = prevNodes[node.id].vy
+        node.index = prevNodes[node.id].index
+        nodes[node.id] = node
       }
     }
 
-    for (const nodeId in nodes) {
-      if (data.nodes[nodeId] === undefined) {
+    for (const nodeId in prevNodes) {
+      if (nodes[nodeId] === undefined) {
         // exit node
-        delete nodes[nodeId]
         update = true
       }
     }
 
-    for (const edgeId in data.edges) {
-      if (edges[edgeId] === undefined) {
+    for (let i = 0; i < data.edges.length; i++) {
+      const edge = data.edges[i]
+      if (prevEdges[edge.id] === undefined) {
         // enter edge
-        edges[edgeId] = {
-          id: data.edges[edgeId].id,
-          label: data.edges[edgeId].label,
-          source: nodes[data.edges[edgeId].source as unknown as string],
-          target: nodes[data.edges[edgeId].target as unknown as string],
-          style: data.edges[edgeId].style,
-        }
+        edges[edge.id] = edge
         update = true
       } else {
         // update edge
         if (
-          (data.edges[edgeId].source as unknown as string) !== edges[edgeId].source.id ||
-          (data.edges[edgeId].target as unknown as string) !== edges[edgeId].target.id
+          (edge.source as unknown as string) !== prevEdges[edge.id].source.id ||
+          (edge.target as unknown as string) !== prevEdges[edge.id].target.id
         ) {
           update = true
         }
 
-        edges[edgeId].id = data.edges[edgeId].id
-        edges[edgeId].label = data.edges[edgeId].label
-        edges[edgeId].source = nodes[data.edges[edgeId].source as unknown as string]
-        edges[edgeId].target = nodes[data.edges[edgeId].target as unknown as string]
-        edges[edgeId].style = data.edges[edgeId].style
+        edge.source = nodes[edge.source as unknown as string]
+        edge.target = nodes[edge.target as unknown as string]
+        edges[edge.id] = edge
       }
     }
 
-    for (const edgeId in edges) {
-      if (data.edges[edgeId] === undefined) {
+    for (const edgeId in prevEdges) {
+      if (edges[edgeId] === undefined) {
         // exit edge
-        delete edges[edgeId]
         update = true
       }
     }
 
     if (update) {
-      forceLink.links(Object.values(edges))
-      simulation
-        .nodes(Object.values(nodes))
-        .alpha(1)
-
       if (options.tick !== null) {
-        simulation.stop().tick(options.tick)
+        simulation.nodes(data.nodes)
+        forceLink.links(data.edges)
+        simulation
+          .alpha(1)
+          .stop()
+          .tick(options.tick)
         simulation.alpha(0)
-        // Object.values(nodes).forEach((node) => {
+        // data.nodes.forEach((node) => {
         //   delete node.vx
         //   delete node.vy
         // })
         postMessage()
-        // simulation.restart().alpha(0)
       } else {
-        simulation.restart()
+        simulation.nodes(data.nodes)
+        forceLink.links(data.edges)
+        simulation
+          .alpha(1)
+          .restart()
       }
-    } else if (updateRadius) {
-      console.log('update radius')
-      simulation
-        .nodes(Object.values(nodes))
-        .alpha(1)
-        .stop()
-        .tick(300)
-      simulation.alpha(0)
-      postMessage()
-      // simulation.restart().alpha(0)
     } else {
-      // simulation.tick(1)
       /**
        * TODO - move update boolean logic out of WebWorker.
        * if it lives here, then we have to emit on non-layout-updates b/c node/edge properties may have updated
        * which causes issues w/ node hover handlers causing relayouts: drag sets nodes position, causes layout,
        * which slightly changes node position, and renderer tries to interpolate between each
        */
+      simulation.nodes(data.nodes)
+      forceLink.links(data.edges)
       postMessage() // TODO - delete once non-updates are passed directly to the renderer, bypassing simulation
     }
-  })
+  }
 
   const dragStart = (data: DragStartEvent) => {
-    nodes[data.id].x = nodes[data.id].fx = data.x
-    nodes[data.id].y = nodes[data.id].fy = data.y
+    if (nodes[data.id]) {
+      nodes[data.id].fx = data.x
+      nodes[data.id].fy = data.y
+    }
   }
 
   const drag = (data: DragEvent) => {
-    nodes[data.id].x = nodes[data.id].fx = data.x
-    nodes[data.id].y = nodes[data.id].fy = data.y
+    if (nodes[data.id]) {
+      nodes[data.id].x = nodes[data.id].fx = data.x
+      nodes[data.id].y = nodes[data.id].fy = data.y
+    }
   }
 
   const dragEnd = (data: DragEndEvent) => {
-    nodes[data.id].fx = null
-    nodes[data.id].fy = null
+    if (nodes[data.id]) {
+      nodes[data.id].fx = null
+      nodes[data.id].fy = null
+    }
   }
-
-  // const tick = () => {
-  //   simulation.restart().tick(1)
-  // }
 }
 
 

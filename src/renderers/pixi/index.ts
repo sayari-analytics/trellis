@@ -10,7 +10,7 @@ import { EdgeContainer } from './edgeContainer'
 
 
 new FontFaceObserver('Material Icons').load()
-export const POSITION_ANIMATION_DURATION = 600
+export const POSITION_ANIMATION_DURATION = 800
 
 
 export class Renderer {
@@ -125,77 +125,82 @@ export class Renderer {
    * maybe instead stage new one, overwriting stagged layout if new layouts are called, and don't run until previous interpolation is done
    */
   layout = ({ nodes, edges }: {
-    nodes: { [key: string]: PositionedNode },
-    edges: { [key: string]: PositionedEdge }
+    nodes: PositionedNode[],
+    edges: PositionedEdge[],
   }) => {
     this.animationTime = 0
+    const nodesById: { [id: string]: NodeContainer } = {}
+    const edgesById: { [id: string]: EdgeContainer } = {}
     // this.animationTime = this.animationTime < POSITION_ANIMATION_DURATION ? this.animationTime : 0
 
-    for (const edgeId in edges) {
-      const [min, max] = [edges[edgeId].source.id, edges[edgeId].target.id].sort()
+    for (const edge of edges) {
+      const [min, max] = [edge.source.id, edge.target.id].sort()
       if (this.edgeGroups[min] === undefined) {
         this.edgeGroups[min] = {}
       }
       if (this.edgeGroups[min][max] === undefined) {
         this.edgeGroups[min][max] = new Set()
       }
-      this.edgeGroups[min][max].add(edgeId)
+      this.edgeGroups[min][max].add(edge.id)
     }
 
-    for (const nodeId in nodes) {
-      if (this.nodesById[nodeId] === undefined) {
+    for (const node of nodes) {
+      if (this.nodesById[node.id] === undefined) {
         // node enter
         const nodeContainer = new NodeContainer(
           this,
-          nodes[nodeId],
           this.nodeStyleSelector,
           this.nodesLayer,
           this.labelsLayer,
         )
-          .set(nodes[nodeId])
+          .set(node)
 
-        this.nodesById[nodes[nodeId].id] = nodeContainer
+        nodesById[node.id] = nodeContainer
         this.dirty = true
       } else {
         // node update
-        this.nodesById[nodeId].set(nodes[nodeId])
+        nodesById[node.id] = this.nodesById[node.id].set(node)
 
         this.dirty = true
       }
     }
 
     for (const nodeId in this.nodesById) {
-      if (nodes[nodeId] === undefined) {
+      if (nodesById[nodeId] === undefined) {
         // node exit
         this.nodesById[nodeId].delete()
+        this.dirty = true
       }
     }
 
-    for (const edgeId in edges) {
-      if (this.edgesById[edgeId] === undefined) {
+    for (const edge of edges) {
+      if (this.edgesById[edge.id] === undefined) {
         // edge enter
-        this.edgesById[edges[edgeId].id] = new EdgeContainer(
+        edgesById[edge.id] = new EdgeContainer(
           this,
-          edges[edgeId],
           this.edgeStyleSelector,
           this.edgesLayer,
         )
-          .set(edges[edgeId])
+          .set(edge)
 
         this.dirty = true
       } else {
         // edge update
-        this.edgesById[edgeId].set(edges[edgeId])
+        edgesById[edge.id] = this.edgesById[edge.id].set(edge)
         this.dirty = true
       }
     }
 
     for (const edgeId in this.edgesById) {
-      if (edges[edgeId] === undefined) {
+      if (edgesById[edgeId] === undefined) {
         // edge exit
         this.edgesById[edgeId].delete()
+        this.dirty = true
       }
     }
+
+    this.nodesById = nodesById
+    this.edgesById = edgesById
   }
 
   private render = () => {

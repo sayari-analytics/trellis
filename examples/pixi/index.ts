@@ -30,7 +30,6 @@ const renderer = PixiRenderer({
   onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
   onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
   onNodeMouseUp: (({ id }) => {
-    // console.log('clicked', id)
     graph.dragEnd(id)
     nodeClick$.next(id)
   }),
@@ -101,7 +100,7 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
 
 
 const NODES_PER_TICK = 200
-const INTERVAL = 1400
+const INTERVAL = 1200
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 
 console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${nodes.length} \nedge count ${edges.length}`)
@@ -109,39 +108,34 @@ console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nno
 
 combineLatest(
   interval(INTERVAL).pipe(take(COUNT)),
-  // nodeClick$.pipe(
-  //   scan((clickedNodes, nodeId) => {
-  //     clickedNodes.add(nodeId)
-  //     return clickedNodes
-  //   }, new Set<string>()),
-  //   startWith(new Set<string>()),
-  // ),
-  nodeClick$.pipe(startWith(null)),
-  nodeHover$.pipe(startWith(null))
+  nodeClick$.pipe(
+    scan((clickedNodes, nodeId) => {
+      clickedNodes.add(nodeId)
+      return clickedNodes
+    }, new Set<string>()),
+    startWith(new Set<string>()),
+  ),
+  // nodeClick$.pipe(startWith(null)),
+  // nodeHover$.pipe(startWith(null))
 ).pipe(
   map(([idx, clickedNode, hoverNode]) => {
-    return nodes
-      .slice(0, (idx + 1) * NODES_PER_TICK)
-      // .filter((node) => !clickedNodes.has(node.id))
-      .map((node) => {
-        if (node.id === clickedNode) {
-          // node.style.width = 220
-          return { ...node, style: { ...node.style, width: 620, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined } }
-        }
+    const nodeIds = new Set()
+    return {
+      nodes: nodes
+        .slice(0, (idx + 1) * NODES_PER_TICK)
+        .filter((node) => !clickedNode.has(node.id))
+        .map((node) => (nodeIds.add(node.id), node))
+        .map((node) => {
+          // if (node.id === clickedNode) {
+          //   // node.style.width = 220
+          //   return { ...node, style: { ...node.style, width: 550, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined } }
+          // }
 
-        return node
-      })
-      .reduce<{ nodes: { [id: string]: Node }, edges: { [id: string]: Edge }, options?: Partial<SimulationOptions> }>((graph, node) => {
-        graph.nodes[node.id] = node
-
-        edges.forEach((edge) => {
-          if (graph.nodes[edge.source] && graph.nodes[edge.target]) {
-            graph.edges[edge.id] = edge
-          }
-        })
-
-        return graph
-      }, { nodes: {}, edges: {}, options: { tick: 1000 } })
+          return node
+        }),
+      edges: edges
+        .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+    }
   })
 ).subscribe({
   next: (graphData) => graph.layout(graphData),
