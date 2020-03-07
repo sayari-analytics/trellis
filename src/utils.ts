@@ -53,6 +53,15 @@ export const animationFrameLoop = (cb: () => void) => {
   return () => raf.cancel(frame)
 }
 
+// export const animationFrameLoop = (cb: () => void) => {
+//   const tick = () => {
+//     cb()
+//     raf(tick)
+//   }
+
+//   raf(tick)
+// }
+
 
 export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => void) => {
   let clear = true

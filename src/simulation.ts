@@ -1,4 +1,4 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationNodeDatum } from 'd3-force'
 import { PositionedNode, PositionedEdge, Node, Edge } from './index'
 import { DEFAULT_NODE_STYLES } from './renderers/options'
 
@@ -9,11 +9,11 @@ export type SimulationOptions = {
   nodeWidth: number
   nodeStrokeWidth: number
   nodePadding: number
-  tick: number | null
+  tick: number
 }
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-  strength: -400,
+  strength: -600,
   distance: 300,
   nodeWidth: DEFAULT_NODE_STYLES.width,
   nodeStrokeWidth: DEFAULT_NODE_STYLES.strokeWidth,
@@ -114,6 +114,9 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     } // TODO - are all Options passed?  or partial w/ defaults
     nodesById: { [key: string]: PositionedNode } = {}
     edgesById: { [key: string]: PositionedEdge } = {}
+    subGraphs: { [id: string]: Simulation } = {}
+
+    forceCenter = d3.forceCenter()
 
     forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
       .id((node) => node.id)
@@ -131,8 +134,8 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       return radius + strokeWidth + this.options.nodePadding
     })
 
-    simulation = d3.forceSimulation()
-      .force('center', d3.forceCenter())
+    simulation = d3.forceSimulation<PositionedNode>()
+      .force('center', this.forceCenter)
       .force('charge', this.forceManyBody)
       .force('collision', this.forceCollide)
       .force('link', this.forceLink)
@@ -140,6 +143,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       // .force('position', d3.forceX(0))
       // .force('position', d3.forceY(0))
       .stop()
+
+    constructor(x = 0, y = 0) {
+      this.forceCenter.x(x).y(y)
+    }
 
     postLayout = throttle(() => {
       self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
@@ -161,18 +168,19 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
      * simulation handlers
      */
     // TODO - throttle causes data to get mutated unexpectedly.  expected: edge.source = Node. observed: edge.source = Node
-    layout = ({
-      nodes,
-      edges,
-      options: {
+    layout = (
+      nodes: Node[],
+      edges: Edge[],
+      {
         strength = DEFAULT_OPTIONS.strength,
         distance = DEFAULT_OPTIONS.distance,
         tick = DEFAULT_OPTIONS.tick,
-      } = {}
-    }: { nodes: Node[], edges: Edge[], options?: Partial<SimulationOptions> }) => {
+      }: Partial<SimulationOptions>
+    ) => {
       let update = false
       const nodesById: { [id: string]: PositionedNode } = {}
       const edgesById: { [id: string]: PositionedEdge } = {}
+      const subGraphs: { [id: string]: Simulation } = {}
 
       if (strength !== this.options.strength) {
         this.forceManyBody.strength(strength)
@@ -196,12 +204,16 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
         if (this.nodesById[node.id] === undefined) {
           // enter node
           nodesById[node.id] = node
+          if (node.subGraph) {
+            subGraphs[node.id] = new Simulation(node.x, node.y).layout(
+              node.subGraph.nodes,
+              node.subGraph.edges,
+              node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+            )
+          }
           update = true
         } else {
           // update node
-          if (node.style?.width !== this.nodesById[node.id].style?.width) {
-            update = true
-          }
           node.x = this.nodesById[node.id].x
           node.y = this.nodesById[node.id].y
           node.fx = this.nodesById[node.id].fx
@@ -209,6 +221,24 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
           node.vx = this.nodesById[node.id].vx
           node.vy = this.nodesById[node.id].vy
           node.index = this.nodesById[node.id].index
+
+          if (node.style?.width !== this.nodesById[node.id].style?.width) {
+            update = true
+          }
+
+          // TODO - subGraphs need full enter/update/exit logic
+          if (node.subGraph) {
+            subGraphs[node.id] = new Simulation(node.x, node.y).layout(
+              node.subGraph.nodes,
+              node.subGraph.edges,
+              node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+            )
+            update = true
+          } else if (this.nodesById[node.id].subGraph) {
+            // exit subGraph
+            update = true
+          }
+
           nodesById[node.id] = node
         }
       }
@@ -248,32 +278,20 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
         }
       }
 
-      this.nodesById = nodesById
-      this.edgesById = edgesById
-      this.simulation.nodes(nodes as PositionedNode[])
+      this.simulation.nodes(nodes)
       this.forceLink.links(edges as unknown as PositionedEdge[])
 
       if (update) {
-        if (this.options.tick !== null) {
-          this.simulation
-            .alpha(1)
-            .stop()
-            .tick(this.options.tick)
-          this.simulation.alpha(0)
-          this.postLayout()
-        } else {
-          this.simulation
-            .alpha(1)
-            .restart()
-            .on('tick', () => this.postLayout())
-        }
-      } else {
-        /**
-         * TODO - would be more efficient to diff input before sending to webWorker, bypassing worker on no update
-         * could allow renderer to not store hover state
-         */
-        this.postLayout()
+        this.fisheye(nodes, this.subGraphs, true)
+        this.simulation.alpha(1).stop().tick(this.options.tick)
+        this.fisheye(nodes, subGraphs)
       }
+
+      this.nodesById = nodesById
+      this.edgesById = edgesById
+      this.subGraphs = subGraphs
+
+      return this
     }
 
     dragStart = (data: DragStartEvent) => {
@@ -296,6 +314,46 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
         this.nodesById[data.id].fy = null
       }
     }
+
+    fisheye = (nodes: PositionedNode[], subGraphs: { [id: string]: Simulation }, collapse?: boolean) => {
+      let subGraphsById = Object.entries(subGraphs),
+        id: string,
+        x: number,
+        y: number,
+        radius: number,
+        node: PositionedNode,
+        theta: number,
+        xOffset: number,
+        yOffset: number
+
+      for (let i = 0; i < subGraphsById.length; i++) {
+        id = subGraphsById[i][0]
+        x = subGraphsById[i][1].forceCenter.x()
+        y = subGraphsById[i][1].forceCenter.y()
+        radius = 200
+
+        // if (this.forceCenter.x() === 0) {
+        //   collapse ? console.log('collapse', id, nodes.length) : console.log('expand', id, nodes.length)
+        // }
+
+        for (let i = 0; i < nodes.length; i++) {
+          node = nodes[i]
+          if (node.id === id) {
+            if (!collapse) {
+              node.style === undefined ? node.style = { width: radius * 2 } : node.style.width = radius * 2
+            }
+          } else if (node.x != undefined && node.y != undefined) {
+            theta = collapse ? Math.atan2(y - node.y, x - node.x) : Math.atan2(node.y - y, node.x - x)
+            xOffset = Math.cos(theta) * radius
+            yOffset = Math.sin(theta) * radius
+            node.x += xOffset
+            node.y += yOffset
+            if (node.fx != undefined) node.fx += xOffset
+            if (node.fy != undefined) node.fy += yOffset
+          }
+        }
+      }
+    }
   }
 
   const simulation = new Simulation()
@@ -307,7 +365,9 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
    */
   self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
     if (data.type === 'layout') {
-      simulation.layout(data)
+      simulation
+        .layout(data.nodes, data.edges, data.options ?? {})
+        .postLayout()
     } else if (data.type === 'dragStart') {
       simulation.dragStart(data)
     } else if (data.type === 'drag') {

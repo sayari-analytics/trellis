@@ -34,7 +34,7 @@ export class NodeContainer {
   private interpolateRadius: (percent: number) => number = () => this.endRadius
   private label?: string
   private icon?: string
-  private circleContainer = new PIXI.Container()
+  private nodeContainer = new PIXI.Container()
   private labelContainer = new PIXI.Container()
   private nodeGfx = new PIXI.Graphics()
   private labelSprite?: PIXI.Text
@@ -42,16 +42,16 @@ export class NodeContainer {
   constructor(renderer: Renderer, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
     this.nodeStyleSelector = nodeStyleSelector
-    this.circleContainer.interactive = true
-    this.circleContainer.buttonMode = true
-    this.circleContainer.on('mouseover', this.nodeMouseOver)
+    this.nodeContainer.interactive = true
+    this.nodeContainer.buttonMode = true
+    this.nodeContainer.on('mouseover', this.nodeMouseOver)
       .on('mouseout', this.nodeMouseOut)
       .on('mousedown', this.nodeMouseDown)
       .on('mouseup', this.nodeMouseUp)
       .on('mouseupoutside', this.nodeMouseUp)
       .addChild(this.nodeGfx)
 
-    nodesLayer.addChild(this.circleContainer)
+    nodesLayer.addChild(this.nodeContainer)
     labelLayer.addChild(this.labelContainer)
   }
 
@@ -84,9 +84,9 @@ export class NodeContainer {
     const radius = this.nodeStyleSelector(node, 'width') / 2
     const strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
 
-    if (radius !== this.radius || strokeWidth !== this.strokeWidth) {
-      this.circleContainer.hitArea = new PIXI.Circle(0, 0, radius + strokeWidth)
-    }
+    // if (radius !== this.radius || strokeWidth !== this.strokeWidth) {
+    //   this.nodeContainer.hitArea = new PIXI.Circle(0, 0, radius + strokeWidth)
+    // }
 
     this.startRadius = this.radius === -1 ? radius : this.radius
     this.endRadius = radius
@@ -140,9 +140,9 @@ export class NodeContainer {
         icon.y = 0
         icon.anchor.set(0.5)
 
-        this.circleContainer.addChild(icon)
+        this.nodeContainer.addChild(icon)
       } else {
-        this.circleContainer.removeChild(this.circleContainer.getChildByName('icon'))
+        this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }
     }
 
@@ -154,19 +154,19 @@ export class NodeContainer {
    */
   render = () => {
     // TODO - should positionPercent be calculated in renderer
-    if (this.renderer.animationTime < POSITION_ANIMATION_DURATION) {
-      const positionPercent = this.renderer.animationTime / POSITION_ANIMATION_DURATION
+    if (this.renderer.animationDuration < POSITION_ANIMATION_DURATION) {
+      const positionPercent = this.renderer.animationDuration / POSITION_ANIMATION_DURATION
 
       if (this.renderer.clickedNode !== this.node.id) {
-        this.circleContainer.x = this.labelContainer.x = this.x = this.interpolateX(positionPercent)
-        this.circleContainer.y = this.labelContainer.y = this.y = this.interpolateY(positionPercent)
+        this.nodeContainer.x = this.labelContainer.x = this.x = this.interpolateX(positionPercent)
+        this.nodeContainer.y = this.labelContainer.y = this.y = this.interpolateY(positionPercent)
       }
 
-      this.radius = this.interpolateRadius(this.renderer.animationTime / 200)
+      this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
     } else {
       if (this.renderer.clickedNode !== this.node.id) {
-        this.circleContainer.x = this.labelContainer.x = this.x = this.endX
-        this.circleContainer.y = this.labelContainer.y = this.y = this.endY
+        this.nodeContainer.x = this.labelContainer.x = this.x = this.endX
+        this.nodeContainer.y = this.labelContainer.y = this.y = this.endY
       }
 
       this.radius = this.endRadius
@@ -194,7 +194,7 @@ export class NodeContainer {
   }
 
   delete = () => {
-    this.circleContainer.destroy()
+    this.nodeContainer.destroy()
     this.labelContainer.destroy()
     delete this.renderer.nodesById[this.node.id]
   }
@@ -203,9 +203,9 @@ export class NodeContainer {
     if (this.renderer.clickedNode === undefined) {
       this.renderer.hoveredNode = this.node.id
 
-      this.renderer.nodesLayer.removeChild(this.circleContainer)
+      this.renderer.nodesLayer.removeChild(this.nodeContainer)
       this.renderer.labelsLayer.removeChild(this.labelContainer)
-      this.renderer.frontNodeLayer.addChild(this.circleContainer)
+      this.renderer.frontNodeLayer.addChild(this.nodeContainer)
       this.renderer.frontLabelLayer.addChild(this.labelContainer)
 
       this.renderer.dirty = true
@@ -257,8 +257,8 @@ export class NodeContainer {
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) {
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.startX = this.endX = this.circleContainer.x = this.labelContainer.x = this.x = x
-      this.startY = this.endY = this.circleContainer.y = this.labelContainer.y = this.y = y
+      this.startX = this.endX = this.nodeContainer.x = this.labelContainer.x = this.x = x
+      this.startY = this.endY = this.nodeContainer.y = this.labelContainer.y = this.y = y
       this.renderer.dirty = true
       this.renderer.onNodeDrag && this.renderer.onNodeDrag(this.node, { x, y })
     }

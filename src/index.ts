@@ -8,6 +8,11 @@ export type Node = {
   id: string
   label?: string
   style?: Partial<NodeStyle>
+  subGraph?: {
+    nodes: Node[],
+    edges: Edge[],
+    options?: Partial<SimulationOptions>
+  }
 }
 export type Edge = {
   id: string

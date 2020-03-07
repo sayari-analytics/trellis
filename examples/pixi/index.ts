@@ -12,10 +12,10 @@ import { SimulationOptions } from '../../src/simulation'
 
 
 export const stats = new Stats()
-stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+stats.showPanel(1) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-const nodeClick$ = new Subject<string>()
+const nodeClick$ = new Subject<string | null>()
 const nodeHover$ = new Subject<string | null>()
 
 const graph = new Graph()
@@ -33,6 +33,9 @@ const renderer = PixiRenderer({
     graph.dragEnd(id)
     nodeClick$.next(id)
   }),
+  onContainerMouseUp: () => {
+    nodeClick$.next(null)
+  },
   stats
 })
 graph.onLayout(renderer.layout)
@@ -58,11 +61,17 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-  .concat([
-    // ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
-    // ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[0].id}_2`, target: `${Object.values(graphData.nodes)[0].id}_3` }],
-    // ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[0].id}_3`, target: `${Object.values(graphData.nodes)[0].id}_4` }],
-  ])
+  // .concat([
+  //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
+  //   ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
+  //   ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
+  //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
+  //   ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
+  //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
+  //   ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
+  //   ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
+  //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
+  // ])
   .map<Edge>(([id, { field, source, target }]) => ({
     id,
     source,
@@ -99,7 +108,7 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
 // }))
 
 
-const NODES_PER_TICK = 200
+const NODES_PER_TICK = 400
 const INTERVAL = 1200
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 
@@ -108,14 +117,14 @@ console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nno
 
 combineLatest(
   interval(INTERVAL).pipe(take(COUNT)),
-  nodeClick$.pipe(
-    scan((clickedNodes, nodeId) => {
-      clickedNodes.add(nodeId)
-      return clickedNodes
-    }, new Set<string>()),
-    startWith(new Set<string>()),
-  ),
-  // nodeClick$.pipe(startWith(null)),
+  // nodeClick$.pipe(
+  //   scan((clickedNodes, nodeId) => {
+  //     clickedNodes.add(nodeId)
+  //     return clickedNodes
+  //   }, new Set<string>()),
+  //   startWith(new Set<string>()),
+  // ),
+  nodeClick$.pipe(startWith(null)),
   // nodeHover$.pipe(startWith(null))
 ).pipe(
   map(([idx, clickedNode, hoverNode]) => {
@@ -123,18 +132,29 @@ combineLatest(
     return {
       nodes: nodes
         .slice(0, (idx + 1) * NODES_PER_TICK)
-        .filter((node) => !clickedNode.has(node.id))
-        .map((node) => (nodeIds.add(node.id), node))
+        // .filter((node) => !clickedNode.has(node.id))
+        // .map((node) => {
+        //   if (node.id === hoverNode) {
+        //     return { ...node, style: { ...node.style, width: 550, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined } }
+        //   }
+
+        //   return node
+        // })
         .map((node) => {
-          // if (node.id === clickedNode) {
-          //   // node.style.width = 220
-          //   return { ...node, style: { ...node.style, width: 550, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined } }
-          // }
+          if (node.id === clickedNode) {
+            return {
+              ...node,
+              style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined },
+              subGraph: { nodes: [], edges: [] },
+            }
+          }
 
           return node
-        }),
+        })
+        .map((node) => (nodeIds.add(node.id), node)),
       edges: edges
-        .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+        .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)),
+      options: { strength: -600, }
     }
   })
 ).subscribe({

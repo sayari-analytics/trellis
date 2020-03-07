@@ -21,8 +21,8 @@
     "d3-selection": "^1.4.0",
     "d3-zoom": "^1.8.3",
     "fontfaceobserver": "^2.1.0",
-    "pixi-viewport": "^4.4.1",
-    "pixi.js": "^5.2.0",
+    "pixi-viewport": "^4.10.0",
+    "pixi.js": "^5.2.1",
     "raf": "^3.4.1"
   },
   "devDependencies": {

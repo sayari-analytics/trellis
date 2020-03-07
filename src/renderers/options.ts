@@ -27,11 +27,16 @@ export type RendererOptions = {
   onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onEdgeMouseEnter?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseDown?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeDrag?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseUp?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseLeave?: (node: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseEnter?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseDown?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeDrag?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseUp?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onEdgeMouseLeave?: (edge: PositionedEdge, details: { x: number, y: number }) => void
+  onContainerMouseEnter?: (details: { x: number, y: number }) => void
+  onContainerMouseDown?: (details: { x: number, y: number }) => void
+  onContainerDrag?: (details: { x: number, y: number }) => void
+  onContainerMouseUp?: (details: { x: number, y: number }) => void
+  onContainerMouseLeave?: (details: { x: number, y: number }) => void
   stats?: Stats
 }
 

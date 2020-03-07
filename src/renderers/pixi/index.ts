@@ -33,7 +33,7 @@ export class Renderer {
   clickedNode?: string
   dirty = false
   renderTime = Date.now()
-  animationTime = 0
+  animationDuration = 0
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -50,6 +50,7 @@ export class Renderer {
     id, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle,
     onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
     onEdgeMouseEnter = noop, onEdgeMouseDown = noop, onEdgeDrag = noop, onEdgeMouseUp = noop, onEdgeMouseLeave = noop,
+    onContainerMouseEnter = noop, onContainerMouseDown = noop, onContainerDrag = noop, onContainerMouseUp = noop, onContainerMouseLeave = noop,
     stats,
   }: RendererOptions) {
     this.onNodeMouseEnter = onNodeMouseEnter
@@ -70,6 +71,12 @@ export class Renderer {
     const container = document.getElementById(id)
     if (container === null) {
       throw new Error(`Element #${id} not found`)
+    }
+
+    container.onmouseup = (e) => {
+      if (this.hoveredNode === undefined) {
+        onContainerMouseUp({ x: e.x, y: e.y })
+      }
     }
 
     const SCREEN_WIDTH = container.offsetWidth
@@ -106,7 +113,7 @@ export class Renderer {
 
     this.viewport.clampZoom({ minWidth: 600, maxWidth: 60000 })
     this.viewport.center = new PIXI.Point(0, 0)
-    this.viewport.setZoom(0.5, true)
+    this.viewport.setZoom(0.6, true)
     this.viewport.addChild(this.edgesLayer)
     this.viewport.addChild(this.nodesLayer)
     this.viewport.addChild(this.labelsLayer)
@@ -128,10 +135,9 @@ export class Renderer {
     nodes: PositionedNode[],
     edges: PositionedEdge[],
   }) => {
-    this.animationTime = 0
+    this.animationDuration = 0
     const nodesById: { [id: string]: NodeContainer } = {}
     const edgesById: { [id: string]: EdgeContainer } = {}
-    // this.animationTime = this.animationTime < POSITION_ANIMATION_DURATION ? this.animationTime : 0
 
     for (const edge of edges) {
       const [min, max] = [edge.source.id, edge.target.id].sort()
@@ -211,10 +217,12 @@ export class Renderer {
     this.stats && this.stats.update()
 
     const now = Date.now()
-    this.animationTime += Math.min(16, Math.max(0, now - this.renderTime))
+    // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
+    this.animationDuration += now - this.renderTime
     this.renderTime = now
 
     if (this.dirty) {
+      // console.time('update data')
       for (const nodeId in this.nodesById) {
         this.nodesById[nodeId].render()
       }
@@ -223,12 +231,17 @@ export class Renderer {
         this.edgesById[edgeId].render()
       }
 
-      this.dirty = this.animationTime < POSITION_ANIMATION_DURATION
+      this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
       this.viewport.dirty = false
+      // console.timeEnd('update data')
+      // console.time('render data change')
       this.app.render()
+      // console.timeEnd('render data change')
     } else if (this.viewport.dirty) {
       this.viewport.dirty = false
+      // console.time('render viewport change')
       this.app.render()
+      // console.timeEnd('render viewport change')
     }
   }
 }
