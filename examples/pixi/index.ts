@@ -108,7 +108,7 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
 // }))
 
 
-const NODES_PER_TICK = 400
+const NODES_PER_TICK = 200
 const INTERVAL = 1200
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 
@@ -137,7 +137,6 @@ combineLatest(
         //   if (node.id === hoverNode) {
         //     return { ...node, style: { ...node.style, width: 550, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined } }
         //   }
-
         //   return node
         // })
         .map((node) => {
@@ -148,7 +147,6 @@ combineLatest(
               subGraph: { nodes: [], edges: [] },
             }
           }
-
           return node
         })
         .map((node) => (nodeIds.add(node.id), node)),

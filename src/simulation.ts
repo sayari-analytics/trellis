@@ -1,4 +1,4 @@
-import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationNodeDatum } from 'd3-force'
+import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY } from 'd3-force'
 import { PositionedNode, PositionedEdge, Node, Edge } from './index'
 import { DEFAULT_NODE_STYLES } from './renderers/options'
 
@@ -153,18 +153,6 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     })
 
     /**
-     * TODO - fisheye force
-     *
-     * whenever only parentNodes change in graph layout:
-     * - apply fisheye w/ negative strength for all previous parentNodes, if any
-     * - apply fisheye w/ positive strength for all new parentNodes, if any
-     *
-     * single fisheye force exerts force on all nodes by repositioning them by parentNode radius away from parentNode center
-     * multiple fisheye forces first reposition themselves relative to each other, then apply the sum of their force vectors on all nodes
-     *   - or, probably simpler to just apply each fisheye force in sequence
-     */
-
-    /**
      * simulation handlers
      */
     // TODO - throttle causes data to get mutated unexpectedly.  expected: edge.source = Node. observed: edge.source = Node
@@ -278,17 +266,17 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
         }
       }
 
+      this.nodesById = nodesById
+      this.edgesById = edgesById
       this.simulation.nodes(nodes)
       this.forceLink.links(edges as unknown as PositionedEdge[])
 
       if (update) {
-        this.fisheye(nodes, this.subGraphs, true)
+        this.fisheyeCollapse(nodes, this.subGraphs)
         this.simulation.alpha(1).stop().tick(this.options.tick)
-        this.fisheye(nodes, subGraphs)
+        this.fisheyeExpand(nodes, subGraphs)
       }
 
-      this.nodesById = nodesById
-      this.edgesById = edgesById
       this.subGraphs = subGraphs
 
       return this
@@ -315,7 +303,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       }
     }
 
-    fisheye = (nodes: PositionedNode[], subGraphs: { [id: string]: Simulation }, collapse?: boolean) => {
+    fisheyeCollapse = (nodes: PositionedNode[], subGraphs: { [id: string]: Simulation }) => {
       let subGraphsById = Object.entries(subGraphs),
         id: string,
         x: number,
@@ -328,22 +316,48 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
 
       for (let i = 0; i < subGraphsById.length; i++) {
         id = subGraphsById[i][0]
-        x = subGraphsById[i][1].forceCenter.x()
-        y = subGraphsById[i][1].forceCenter.y()
+        x = this.nodesById[id].x! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
+        y = this.nodesById[id].y! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
         radius = 200
 
-        // if (this.forceCenter.x() === 0) {
-        //   collapse ? console.log('collapse', id, nodes.length) : console.log('expand', id, nodes.length)
-        // }
+        for (let i = 0; i < nodes.length; i++) {
+          node = nodes[i]
+          if (node.id === id && node.x != undefined && node.y != undefined) {
+            theta = Math.atan2(y - node.y, x - node.x)
+            xOffset = Math.cos(theta) * radius
+            yOffset = Math.sin(theta) * radius
+            node.x += xOffset
+            node.y += yOffset
+            if (node.fx != undefined) node.fx += xOffset
+            if (node.fy != undefined) node.fy += yOffset
+          }
+        }
+      }
+    }
+
+    fisheyeExpand = (nodes: PositionedNode[], subGraphs: { [id: string]: Simulation }) => {
+      let subGraphsById = Object.entries(subGraphs),
+        id: string,
+        x: number,
+        y: number,
+        radius: number,
+        node: PositionedNode,
+        theta: number,
+        xOffset: number,
+        yOffset: number
+
+      for (let i = 0; i < subGraphsById.length; i++) {
+        id = subGraphsById[i][0]
+        x = this.nodesById[id].x!
+        y = this.nodesById[id].y!
+        radius = 200
 
         for (let i = 0; i < nodes.length; i++) {
           node = nodes[i]
           if (node.id === id) {
-            if (!collapse) {
-              node.style === undefined ? node.style = { width: radius * 2 } : node.style.width = radius * 2
-            }
+            node.style === undefined ? node.style = { width: radius * 2 } : node.style.width = radius * 2
           } else if (node.x != undefined && node.y != undefined) {
-            theta = collapse ? Math.atan2(y - node.y, x - node.x) : Math.atan2(node.y - y, node.x - x)
+            theta = Math.atan2(node.y - y, node.x - x)
             xOffset = Math.cos(theta) * radius
             yOffset = Math.sin(theta) * radius
             node.x += xOffset
