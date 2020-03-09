@@ -38,7 +38,7 @@ export class Graph {
 
   worker: Worker
   dispose: () => void
-  handler: (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options: SimulationOptions }) => void = noop
+  handler: (graph: { nodes: PositionedNode[], edges: PositionedEdge[] }) => void = noop
   options: SimulationOptions = DEFAULT_SIMULATION_OPTIONS
 
   constructor() {
@@ -46,7 +46,7 @@ export class Graph {
     this.worker = worker
     this.dispose = dispose
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
-      this.handler({ ...event.data, options: this.options }) // TODO - properly pass SimulationOptions - current implementation might associate older data w/ newer options
+      this.handler(event.data)
     }
   }
 
@@ -58,7 +58,6 @@ export class Graph {
       tick = DEFAULT_SIMULATION_OPTIONS.tick,
       distance = DEFAULT_SIMULATION_OPTIONS.distance,
       nodeWidth = DEFAULT_SIMULATION_OPTIONS.nodeWidth,
-      nodeStrokeWidth = DEFAULT_SIMULATION_OPTIONS.nodeStrokeWidth,
       nodePadding = DEFAULT_SIMULATION_OPTIONS.nodePadding,
     } = {}
   }: {
@@ -68,7 +67,7 @@ export class Graph {
   }) => {
     // TODO - noop on nodes/edges/options equality
     // TODO - does it make sense to only serialize node ids and edge id/source/target? e.g. drop style and remerge
-    this.options = { strength, tick, distance, nodeWidth, nodeStrokeWidth, nodePadding }
+    this.options = { strength, tick, distance, nodeWidth, nodePadding }
     this.worker.postMessage({
       type: 'layout',
       nodes,
@@ -78,7 +77,7 @@ export class Graph {
     return this
   }
 
-  onLayout = (handler: (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options: SimulationOptions }) => void) => {
+  onLayout = (handler: (graph: { nodes: PositionedNode[], edges: PositionedEdge[] }) => void) => {
     this.handler = handler
     return this
   }

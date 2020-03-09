@@ -84,10 +84,6 @@ export class NodeContainer {
     const radius = this.nodeStyleSelector(node, 'width') / 2
     const strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
 
-    // if (radius !== this.radius || strokeWidth !== this.strokeWidth) {
-    //   this.nodeContainer.hitArea = new PIXI.Circle(0, 0, radius + strokeWidth)
-    // }
-
     this.startRadius = this.radius === -1 ? radius : this.radius
     this.endRadius = radius
     if (this.startRadius !== this.endRadius) {
@@ -117,7 +113,7 @@ export class NodeContainer {
           strokeThickness: 2 * 2,
         })
         this.labelSprite.x = 0
-        this.labelSprite.y = radius + this.strokeWidth + LABEL_Y_PADDING
+        this.labelSprite.y = radius + LABEL_Y_PADDING
         this.labelSprite.scale.set(0.5)
         this.labelSprite.anchor.set(0.5, 0)
         this.labelContainer.addChild(this.labelSprite)
@@ -172,22 +168,14 @@ export class NodeContainer {
       this.radius = this.endRadius
     }
 
-    if (this.renderer.hoveredNode === this.node.id) {
-      this.nodeGfx
-        .clear()
-        .lineStyle(this.strokeWidth * 1.5, 0xcccccc, 1, 1)
-        .beginFill(this.fill, this.fillOpacity)
-        .drawCircle(0, 0, this.radius)
-    } else {
-      this.nodeGfx
-        .clear()
-        .lineStyle(this.strokeWidth, this.stroke, this.strokeOpacity, 1)
-        .beginFill(this.fill, this.fillOpacity)
-        .drawCircle(0, 0, this.radius)
-    }
+    this.nodeGfx
+      .clear()
+      .lineStyle(this.strokeWidth, this.renderer.hoveredNode === this.node.id ? 0xcccccc : this.stroke, this.strokeOpacity, 0)
+      .beginFill(this.fill, this.fillOpacity)
+      .drawCircle(0, 0, this.radius)
 
     if (this.labelSprite) {
-      this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
+      this.labelSprite.y = this.radius + LABEL_Y_PADDING
     }
 
     return this

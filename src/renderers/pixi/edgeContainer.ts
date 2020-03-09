@@ -117,11 +117,11 @@ export class EdgeContainer {
       const targetContainer = this.renderer.nodesById[this.edge.target.id]
       const theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
       /**
-       * edge start/end is source/target node's center, offset by radius, strokeWidht and, if rendered on edge source and/or target, arrow height
+       * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
        * TODO - once arrows are encorporated into the style spec, add/remove arrowHeight offset
        */
-      const start = movePoint(sourceContainer.x, sourceContainer.y, theta, (sourceContainer.radius + sourceContainer.strokeWidth) * -1)
-      const end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + targetContainer.strokeWidth + ARROW_HEIGHT)
+      const start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceContainer.radius)
+      const end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + ARROW_HEIGHT)
       this.x0 = start[0]
       this.y0 = start[1]
       this.x1 = end[0]
@@ -140,7 +140,7 @@ export class EdgeContainer {
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
       // TODO - don't bother rendering arrow when animating position
-      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + targetContainer.strokeWidth)
+      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius)
       this.arrow.x = arrowPosition[0]
       this.arrow.y = arrowPosition[1]
       this.arrow.rotation = theta
@@ -163,8 +163,8 @@ export class EdgeContainer {
       this.curvePeak = movePoint(center[0], center[1], thetaUncurved > TWO_PI || thetaUncurved < 0 ? thetaUncurved - HALF_PI : thetaUncurved + HALF_PI, this.curve * 20)
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
-      const start = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, (sourceContainer.radius + sourceContainer.strokeWidth) * -1)
-      const end = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + targetContainer.strokeWidth + ARROW_HEIGHT)
+      const start = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceContainer.radius)
+      const end = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + ARROW_HEIGHT)
       this.x0 = start[0]
       this.y0 = start[1]
       this.x1 = end[0]
@@ -186,7 +186,7 @@ export class EdgeContainer {
       this.labelContainer.y = this.curvePeak[1]
       this.labelContainer.rotation = thetaUncurved > HALF_PI && thetaUncurved < THREE_HALF_PI ? thetaUncurved - Math.PI : thetaUncurved
 
-      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + targetContainer.strokeWidth)
+      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius)
       this.arrow.x = arrowPosition[0]
       this.arrow.y = arrowPosition[1]
       this.arrow.rotation = thetaCurveEnd

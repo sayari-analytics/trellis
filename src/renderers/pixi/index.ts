@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import FontFaceObserver from 'fontfaceobserver'
-import { RendererOptions, DEFAULT_RENDERER_OPTIONS, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from '../options'
+import { RendererOptions, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererLayoutOptions } from '../options'
 import { PositionedNode, PositionedEdge } from '../../index'
 import { animationFrameLoop, noop } from '../../utils'
 import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector } from '../utils'
@@ -22,13 +22,14 @@ export class Renderer {
   onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
   onEdgeMouseEnter?: (node: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeMouseDown?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeDrag?: (node: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeMouseUp?: (node: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeMouseLeave?: (node: PositionedEdge, details: { x: number, y: number }) => void
 
+  width: number
+  height: number
   nodeStyleSelector: NodeStyleSelector
   edgeStyleSelector: EdgeStyleSelector
-  stats?: Stats
+  debug: RendererOptions['debug']
   hoveredNode?: string
   clickedNode?: string
   dirty = false
@@ -47,12 +48,13 @@ export class Renderer {
   viewport: Viewport
 
   constructor({
-    id, nodeStyle = DEFAULT_RENDERER_OPTIONS.nodeStyle, edgeStyle = DEFAULT_RENDERER_OPTIONS.edgeStyle,
+    id, width = 800, height = 600, debug,
     onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
-    onEdgeMouseEnter = noop, onEdgeMouseDown = noop, onEdgeDrag = noop, onEdgeMouseUp = noop, onEdgeMouseLeave = noop,
-    onContainerMouseEnter = noop, onContainerMouseDown = noop, onContainerDrag = noop, onContainerMouseUp = noop, onContainerMouseLeave = noop,
-    stats,
+    onEdgeMouseEnter = noop, onEdgeMouseDown = noop, onEdgeMouseUp = noop, onEdgeMouseLeave = noop,
+    onContainerMouseEnter, onContainerMouseDown, onContainerMouseMove, onContainerMouseUp, onContainerMouseLeave,
   }: RendererOptions) {
+    this.width = width
+    this.height = height
     this.onNodeMouseEnter = onNodeMouseEnter
     this.onNodeMouseDown = onNodeMouseDown
     this.onNodeDrag = onNodeDrag
@@ -60,70 +62,96 @@ export class Renderer {
     this.onNodeMouseLeave = onNodeMouseLeave
     this.onEdgeMouseEnter = onEdgeMouseEnter
     this.onEdgeMouseDown = onEdgeMouseDown
-    this.onEdgeDrag = onEdgeDrag
     this.onEdgeMouseUp = onEdgeMouseUp
     this.onEdgeMouseLeave = onEdgeMouseLeave
-    this.nodeStyleSelector = nodeStyleSelector({ ...DEFAULT_NODE_STYLES, ...nodeStyle })
-    this.edgeStyleSelector = edgeStyleSelector({ ...DEFAULT_EDGE_STYLES, ...edgeStyle })
-    this.stats = stats
-
+    this.nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
+    this.edgeStyleSelector = edgeStyleSelector(DEFAULT_EDGE_STYLES)
+    this.debug = debug
 
     const container = document.getElementById(id)
     if (container === null) {
       throw new Error(`Element #${id} not found`)
     }
 
-    container.onmouseup = (e) => {
-      if (this.hoveredNode === undefined) {
-        onContainerMouseUp({ x: e.x, y: e.y })
+    if (onContainerMouseEnter) {
+      container.onmouseenter = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseEnter({ x: e.x, y: e.y })
+        }
       }
     }
-
-    const SCREEN_WIDTH = container.offsetWidth
-    const SCREEN_HEIGHT = container.offsetHeight
-    const WORLD_WIDTH = SCREEN_WIDTH // * 2
-    const WORLD_HEIGHT = SCREEN_HEIGHT // * 2
+    if (onContainerMouseDown) {
+      container.onmousedown = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseDown({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseMove) {
+      container.onmousemove = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseMove({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseUp) {
+      container.onmouseup = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseUp({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseLeave) {
+      container.onmouseleave = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseLeave({ x: e.x, y: e.y })
+        }
+      }
+    }
 
     /**
      * TODO - max out render performance, even on machines w/o dedicated GPU
      * just twist all the knobs...
      */
     this.app = new PIXI.Application({
-      width: SCREEN_WIDTH,
-      height: SCREEN_HEIGHT,
-      resolution: 2,
+      width: this.width,
+      height: this.height,
+      resolution: window.devicePixelRatio,
       transparent: true,
       antialias: true,
       autoDensity: true,
       autoStart: false,
       powerPreference: 'high-performance',
     })
-    // this.app.view.style.width = `${SCREEN_WIDTH}px`
+
     this.labelsLayer.interactiveChildren = false
 
     this.viewport = new Viewport({
-      screenWidth: SCREEN_WIDTH,
-      screenHeight: SCREEN_HEIGHT,
-      worldWidth: WORLD_WIDTH,
-      worldHeight: WORLD_HEIGHT,
       interaction: this.app.renderer.plugins.interaction
     })
-
-    this.app.stage.addChild(this.viewport.drag().pinch().wheel().decelerate())
-
-    this.viewport.clampZoom({ minWidth: 600, maxWidth: 60000 })
+      .drag()
+      .pinch()
+      .wheel()
+      .decelerate()
+      .clampZoom({ minScale: 0.02, maxScale: 3 })
+      .setZoom(0.6, true)
+      .on('drag-start', () => container.style.cursor = 'move')
+      .on('drag-end', () => container.style.cursor = 'auto')
     this.viewport.center = new PIXI.Point(0, 0)
-    this.viewport.setZoom(0.6, true)
     this.viewport.addChild(this.edgesLayer)
     this.viewport.addChild(this.nodesLayer)
     this.viewport.addChild(this.labelsLayer)
     this.viewport.addChild(this.frontNodeLayer)
     this.viewport.addChild(this.frontLabelLayer)
+    this.app.stage.addChild(this.viewport)
+
     this.app.view.addEventListener('wheel', (event) => { event.preventDefault() })
 
     container.appendChild(this.app.view)
 
-    animationFrameLoop(this.render)
+    animationFrameLoop(this.debug ? this.debugRender : this.render)
+
+    this.viewport.width
   }
 
   /**
@@ -131,10 +159,20 @@ export class Renderer {
    * current approach essentially cancels previous layout and runs a new one
    * maybe instead stage new one, overwriting stagged layout if new layouts are called, and don't run until previous interpolation is done
    */
-  layout = ({ nodes, edges }: {
+  layout = ({ nodes, edges, options }: {
     nodes: PositionedNode[],
     edges: PositionedEdge[],
+    options?: RendererLayoutOptions
   }) => {
+    if (
+      (options?.width !== undefined && options.width !== this.width) ||
+      (options?.height !== undefined && options.height !== this.height)
+    ) {
+      this.width = options.width ?? this.width
+      this.height = options.height ?? this.height
+      this.app.renderer.resize(this.width, this.height)
+    }
+
     this.animationDuration = 0
     const nodesById: { [id: string]: NodeContainer } = {}
     const edgesById: { [id: string]: EdgeContainer } = {}
@@ -210,19 +248,12 @@ export class Renderer {
   }
 
   private render = () => {
-    /**
-     * TODO - enable dead code elimination and build-time env variables
-     */
-    // if (process.env.NODE_ENV === 'development') { this.stats && this.stats.update() }
-    this.stats && this.stats.update()
-
     const now = Date.now()
     // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
     this.animationDuration += now - this.renderTime
     this.renderTime = now
 
     if (this.dirty) {
-      // console.time('update data')
       for (const nodeId in this.nodesById) {
         this.nodesById[nodeId].render()
       }
@@ -233,15 +264,42 @@ export class Renderer {
 
       this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
       this.viewport.dirty = false
-      // console.timeEnd('update data')
-      // console.time('render data change')
       this.app.render()
-      // console.timeEnd('render data change')
     } else if (this.viewport.dirty) {
       this.viewport.dirty = false
-      // console.time('render viewport change')
       this.app.render()
-      // console.timeEnd('render viewport change')
+    }
+  }
+
+  private debugRender = () => {
+    this.debug?.stats?.update()
+
+    const now = Date.now()
+    // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
+    this.animationDuration += now - this.renderTime
+    this.renderTime = now
+
+    if (this.dirty) {
+      this.debug?.logRenderTime && console.time('update data')
+      for (const nodeId in this.nodesById) {
+        this.nodesById[nodeId].render()
+      }
+
+      for (const edgeId in this.edgesById) {
+        this.edgesById[edgeId].render()
+      }
+
+      this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
+      this.viewport.dirty = false
+      this.debug?.logRenderTime && console.timeEnd('update data')
+      this.debug?.logRenderTime && console.time('render data change')
+      this.app.render()
+      this.debug?.logRenderTime &&  console.timeEnd('render data change')
+    } else if (this.viewport.dirty) {
+      this.viewport.dirty = false
+      this.debug?.logRenderTime && console.time('render viewport change')
+      this.app.render()
+      this.debug?.logRenderTime && console.timeEnd('render viewport change')
     }
   }
 }

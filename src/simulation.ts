@@ -7,7 +7,6 @@ export type SimulationOptions = {
   strength: number
   distance: number
   nodeWidth: number
-  nodeStrokeWidth: number
   nodePadding: number
   tick: number
 }
@@ -16,7 +15,6 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
   strength: -600,
   distance: 300,
   nodeWidth: DEFAULT_NODE_STYLES.width,
-  nodeStrokeWidth: DEFAULT_NODE_STYLES.strokeWidth,
   nodePadding: 8,
   tick: 300,
 }
@@ -108,7 +106,6 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       strength: DEFAULT_OPTIONS.strength,
       distance: DEFAULT_OPTIONS.distance,
       nodeWidth: DEFAULT_OPTIONS.nodeWidth,
-      nodeStrokeWidth: DEFAULT_OPTIONS.nodeStrokeWidth,
       nodePadding: DEFAULT_OPTIONS.nodePadding,
       tick: DEFAULT_OPTIONS.tick,
     } // TODO - are all Options passed?  or partial w/ defaults
@@ -125,13 +122,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
     forceManyBody = d3.forceManyBody().strength(this.options.strength) // .distanceMax(5000)
 
     forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
-      const radius = node.style === undefined || node.style.width === undefined ?
+      return (node.style === undefined || node.style.width === undefined ?
         this.options.nodeWidth * 0.5 :
         node.style.width * 0.5
-      const strokeWidth = node.style === undefined || node.style.strokeWidth === undefined ?
-        this.options.nodeStrokeWidth * 0.5 :
-        node.style.strokeWidth * 0.5
-      return radius + strokeWidth + this.options.nodePadding
+      ) + this.options.nodePadding
     })
 
     simulation = d3.forceSimulation<PositionedNode>()
@@ -143,10 +137,6 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       // .force('position', d3.forceX(0))
       // .force('position', d3.forceY(0))
       .stop()
-
-    constructor(x = 0, y = 0) {
-      this.forceCenter.x(x).y(y)
-    }
 
     postLayout = throttle(() => {
       self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
@@ -193,7 +183,8 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
           // enter node
           nodesById[node.id] = node
           if (node.subGraph) {
-            subGraphs[node.id] = new Simulation(node.x, node.y).layout(
+            // enter subgraph
+            subGraphs[node.id] = new Simulation().layout(
               node.subGraph.nodes,
               node.subGraph.edges,
               node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
@@ -216,11 +207,21 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
 
           // TODO - subGraphs need full enter/update/exit logic
           if (node.subGraph) {
-            subGraphs[node.id] = new Simulation(node.x, node.y).layout(
-              node.subGraph.nodes,
-              node.subGraph.edges,
-              node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
-            )
+            if (this.subGraphs[node.id] === undefined) {
+              // enter subgraph
+              subGraphs[node.id] = new Simulation().layout(
+                node.subGraph.nodes,
+                node.subGraph.edges,
+                node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+              )
+            } else {
+              // update subgraph
+              subGraphs[node.id] = this.subGraphs[node.id].layout(
+                node.subGraph.nodes,
+                node.subGraph.edges,
+                node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+              )
+            }
             update = true
           } else if (this.nodesById[node.id].subGraph) {
             // exit subGraph

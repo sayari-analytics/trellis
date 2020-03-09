@@ -1,13 +1,9 @@
 import { interval, combineLatest, Subject } from 'rxjs'
-import { map, take, scan, startWith } from 'rxjs/operators'
-import { scaleOrdinal } from 'd3-scale'
-import { schemeCategory10 } from 'd3-scale-chromatic'
+import { map, take, startWith } from 'rxjs/operators'
 import Stats from 'stats.js'
 import { Node, Edge, Graph } from '../../src/index'
 import { PixiRenderer } from '../../src/renderers/pixi'
-import { data, large, mediumLg, mediumSm } from '../data'
 import graphData from '../../tmp-data'
-import { SimulationOptions } from '../../src/simulation'
 
 
 
@@ -19,8 +15,11 @@ const nodeClick$ = new Subject<string | null>()
 const nodeHover$ = new Subject<string | null>()
 
 const graph = new Graph()
+const container = document.getElementById('graph')
 const renderer = PixiRenderer({
   id: 'graph',
+  width: container.offsetWidth,
+  height: container.offsetHeight,
   onNodeMouseEnter: ({ id }) => {
     nodeHover$.next(id)
   },
@@ -36,7 +35,7 @@ const renderer = PixiRenderer({
   onContainerMouseUp: () => {
     nodeClick$.next(null)
   },
-  stats
+  debug: { stats }
 })
 graph.onLayout(renderer.layout)
 
@@ -49,7 +48,7 @@ const nodes: Node[] = Object.values(graphData.nodes)
     id,
     label,
     style: {
-      width: 62,
+      width: 66,
       fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
       stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
       strokeWidth: 4,
@@ -78,34 +77,6 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
     target,
     label: field.replace(/_/g, ' '),
   }))
-
-
-// const colorScale = scaleOrdinal(schemeCategory10)
-
-// const nodes: Node[] = mediumSm.nodes.map<Node>(({ id, group }) => ({
-//   id,
-//   label: id,
-//   style: {
-//     width: (group + 3) * 5,
-//     fill: colorScale(group.toString()),
-//     stroke: '#fff',
-//     icon: 'person'
-//     // width: 62,
-//     // fill: group > 3 ? '#ffaf1d' : '#7CBBF3',
-//     // stroke: group > 3 ? '#F7CA4D' : '#90D7FB',
-//     // strokeWidth: 4,
-//   }
-// }))
-
-// const edges: Edge[] = mediumSm.links.map<Edge>(({ source, target, value }) => ({
-//   id: `${source}|${target}`,
-//   source,
-//   target,
-//   label: `${source.replace(/[0-9]/g, '')}-${target.replace(/[0-9]/g, '')}`,
-//   style: {
-//     width: Math.max(1, value * 0.2),
-//   }
-// }))
 
 
 const NODES_PER_TICK = 200

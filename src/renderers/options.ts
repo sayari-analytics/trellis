@@ -19,9 +19,8 @@ export type EdgeStyle = {
 
 export type RendererOptions = {
   id: string
-  strength?: number
-  nodeStyle?: Partial<NodeStyle>
-  edgeStyle?: Partial<EdgeStyle>
+  width?: number
+  height?: number
   onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeMouseDown?: (node: PositionedNode, details: { x: number, y: number }) => void
   onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
@@ -29,15 +28,19 @@ export type RendererOptions = {
   onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
   onEdgeMouseEnter?: (edge: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeMouseDown?: (edge: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeDrag?: (edge: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeMouseUp?: (edge: PositionedEdge, details: { x: number, y: number }) => void
   onEdgeMouseLeave?: (edge: PositionedEdge, details: { x: number, y: number }) => void
   onContainerMouseEnter?: (details: { x: number, y: number }) => void
   onContainerMouseDown?: (details: { x: number, y: number }) => void
-  onContainerDrag?: (details: { x: number, y: number }) => void
+  onContainerMouseMove?: (details: { x: number, y: number }) => void
   onContainerMouseUp?: (details: { x: number, y: number }) => void
   onContainerMouseLeave?: (details: { x: number, y: number }) => void
-  stats?: Stats
+  debug?: { logRenderTime?: boolean, stats?: Stats }
+}
+
+export type RendererLayoutOptions = {
+  width?: number
+  height?: number
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {

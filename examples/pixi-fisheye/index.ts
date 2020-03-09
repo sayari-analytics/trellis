@@ -13,8 +13,11 @@ document.body.appendChild(stats.dom)
 const nodeClick$ = new Subject<string | null>()
 
 const graph = new Graph()
+const container = document.getElementById('graph')
 const renderer = PixiRenderer({
   id: 'graph',
+  width: container.offsetWidth,
+  height: container.offsetHeight,
   onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
   onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
   onNodeMouseUp: (({ id }) => {
@@ -24,7 +27,7 @@ const renderer = PixiRenderer({
   onContainerMouseUp: () => {
     nodeClick$.next(null)
   },
-  stats
+  debug: { stats }
 })
 graph.onLayout(renderer.layout)
 
@@ -98,7 +101,14 @@ nodeClick$.pipe(
             return {
               ...node,
               style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined },
-              subGraph: { nodes: [], edges: [] },
+              subGraph: {
+                nodes: [
+                  { id: 'a', label: 'A', type: 'company'},
+                  { id: 'b', label: 'B', type: 'company'},
+                  { id: 'c', label: 'C', type: 'company'},
+                ],
+                edges: []
+              },
             }
           }
           return node
