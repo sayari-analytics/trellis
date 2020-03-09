@@ -4,17 +4,19 @@ import { DEFAULT_NODE_STYLES } from './renderers/options'
 
 
 export type SimulationOptions = {
-  strength: number
-  distance: number
-  nodeWidth: number
+  nodeStrength: number
+  linkDistance: number
+  linkStrength?: number
+  centerStrength: number
   nodePadding: number
   tick: number
 }
 
 export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
-  strength: -600,
-  distance: 300,
-  nodeWidth: DEFAULT_NODE_STYLES.width,
+  nodeStrength: -600,
+  linkDistance: 300,
+  linkStrength: undefined,
+  centerStrength: 0.001,
   nodePadding: 8,
   tick: 300,
 }
@@ -86,7 +88,7 @@ export type LayoutResultEvent = {
 }
 
 
-const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
+const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: number) => {
   const throttle = (fn: (() => void)) => {
     let timeout: NodeJS.Timeout | undefined
 
@@ -103,39 +105,34 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
   class Simulation {
 
     options: SimulationOptions = {
-      strength: DEFAULT_OPTIONS.strength,
-      distance: DEFAULT_OPTIONS.distance,
-      nodeWidth: DEFAULT_OPTIONS.nodeWidth,
+      nodeStrength: DEFAULT_OPTIONS.nodeStrength,
+      linkDistance: DEFAULT_OPTIONS.linkDistance,
+      linkStrength: DEFAULT_OPTIONS.linkStrength,
+      centerStrength: DEFAULT_OPTIONS.centerStrength,
       nodePadding: DEFAULT_OPTIONS.nodePadding,
       tick: DEFAULT_OPTIONS.tick,
-    } // TODO - are all Options passed?  or partial w/ defaults
+    }
     nodesById: { [key: string]: PositionedNode } = {}
     edgesById: { [key: string]: PositionedEdge } = {}
     subGraphs: { [id: string]: Simulation } = {}
 
-    forceCenter = d3.forceCenter()
-
-    forceLink = d3.forceLink<PositionedNode, PositionedEdge>()
-      .id((node) => node.id)
-      .distance(this.options.distance)
-
-    forceManyBody = d3.forceManyBody().strength(this.options.strength) // .distanceMax(5000)
-
+    forceLink = d3.forceLink<PositionedNode, PositionedEdge>().distance(this.options.linkDistance)
+    forceManyBody = d3.forceManyBody().strength(this.options.nodeStrength).distanceMax(4000).theta(0.5)
     forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
       return (node.style === undefined || node.style.width === undefined ?
-        this.options.nodeWidth * 0.5 :
+        DEFAULT_NODE_WIDTH * 0.5 :
         node.style.width * 0.5
       ) + this.options.nodePadding
     })
+    forceX = d3.forceX(0).strength(this.options.centerStrength)
+    forceY = d3.forceY(0).strength(this.options.centerStrength)
 
     simulation = d3.forceSimulation<PositionedNode>()
-      .force('center', this.forceCenter)
       .force('charge', this.forceManyBody)
       .force('collision', this.forceCollide)
       .force('link', this.forceLink)
-      // .force('position', d3.forceRadial(10000).strength(0.01))
-      // .force('position', d3.forceX(0))
-      // .force('position', d3.forceY(0))
+      .force('x', this.forceX)
+      .force('y', this.forceY)
       .stop()
 
     postLayout = throttle(() => {
@@ -150,8 +147,11 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       nodes: Node[],
       edges: Edge[],
       {
-        strength = DEFAULT_OPTIONS.strength,
-        distance = DEFAULT_OPTIONS.distance,
+        nodeStrength = DEFAULT_OPTIONS.nodeStrength,
+        linkDistance = DEFAULT_OPTIONS.linkDistance,
+        linkStrength = DEFAULT_OPTIONS.linkStrength,
+        centerStrength = DEFAULT_OPTIONS.centerStrength,
+        nodePadding = DEFAULT_OPTIONS.nodePadding,
         tick = DEFAULT_OPTIONS.tick,
       }: Partial<SimulationOptions>
     ) => {
@@ -160,15 +160,33 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
       const edgesById: { [id: string]: PositionedEdge } = {}
       const subGraphs: { [id: string]: Simulation } = {}
 
-      if (strength !== this.options.strength) {
-        this.forceManyBody.strength(strength)
-        this.options.strength = strength
+      if (nodeStrength !== this.options.nodeStrength) {
+        this.forceManyBody.strength(nodeStrength)
+        this.options.nodeStrength = nodeStrength
         update = true
       }
 
-      if (distance !== this.options.distance) {
-        this.forceLink.distance(distance)
-        this.options.distance = distance
+      if (linkDistance !== this.options.linkDistance) {
+        this.forceLink.distance(linkDistance)
+        this.options.linkDistance = linkDistance
+        update = true
+      }
+
+      if (linkStrength !== this.options.linkStrength) {
+        linkStrength !== undefined && this.forceLink.strength(linkStrength)
+        this.options.linkStrength = linkStrength
+        update = true
+      }
+
+      if (centerStrength !== this.options.centerStrength) {
+        this.forceX.strength(this.options.centerStrength)
+        this.forceY.strength(this.options.centerStrength)
+        this.options.centerStrength = centerStrength
+        update = true
+      }
+
+      if (nodePadding !== this.options.nodePadding) {
+        this.options.nodePadding = nodePadding
         update = true
       }
 
@@ -394,7 +412,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions) => {
 }
 
 
-const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)})`], { type: 'application/javascript' })
+const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)}, ${DEFAULT_NODE_STYLES.width})`], { type: 'application/javascript' })
 
 
 export const Simulation = () => {

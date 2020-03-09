@@ -41,9 +41,10 @@ graph.onLayout(renderer.layout)
 
 
 const nodes: Node[] = Object.values(graphData.nodes)
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
   .map<Node>(({ id, label, type }) => ({
     id,
     label,
@@ -57,7 +58,7 @@ const nodes: Node[] = Object.values(graphData.nodes)
   }))
 
 const edges: Edge[] = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
   // .concat([
@@ -79,7 +80,7 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
   }))
 
 
-const NODES_PER_TICK = 200
+const NODES_PER_TICK = 2000
 const INTERVAL = 1200
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 
@@ -123,7 +124,7 @@ combineLatest(
         .map((node) => (nodeIds.add(node.id), node)),
       edges: edges
         .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)),
-      options: { strength: -600, }
+      options: { nodeStrength: -600, }
     }
   })
 ).subscribe({

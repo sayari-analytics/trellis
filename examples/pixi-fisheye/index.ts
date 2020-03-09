@@ -115,7 +115,7 @@ nodeClick$.pipe(
         })
         .map((node) => (nodeIds.add(node.id), node)),
       edges: edges,
-      options: { strength: -500, }
+      options: { nodeStrength: -500, }
     }
   })
 ).subscribe({
