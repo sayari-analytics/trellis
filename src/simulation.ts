@@ -115,6 +115,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
     nodesById: { [key: string]: PositionedNode } = {}
     edgesById: { [key: string]: PositionedEdge } = {}
     subGraphs: { [id: string]: Simulation } = {}
+    parent?: Simulation
 
     forceLink = d3.forceLink<PositionedNode, PositionedEdge>().distance(this.options.linkDistance)
     forceManyBody = d3.forceManyBody().strength(this.options.nodeStrength).distanceMax(4000).theta(0.5)
@@ -139,6 +140,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
       self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
     })
 
+    constructor(parent?: Simulation) {
+      this.parent = parent
+    }
+
     /**
      * simulation handlers
      */
@@ -156,6 +161,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
       }: Partial<SimulationOptions>
     ) => {
       let update = false
+      let updateSubGraphs = false
       const nodesById: { [id: string]: PositionedNode } = {}
       const edgesById: { [id: string]: PositionedEdge } = {}
       const subGraphs: { [id: string]: Simulation } = {}
@@ -202,11 +208,12 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
           nodesById[node.id] = node
           if (node.subGraph) {
             // enter subgraph
-            subGraphs[node.id] = new Simulation().layout(
+            subGraphs[node.id] = new Simulation(this).layout(
               node.subGraph.nodes,
               node.subGraph.edges,
               node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
             )
+            updateSubGraphs = true
           }
           update = true
         } else {
@@ -220,14 +227,17 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
           node.index = this.nodesById[node.id].index
 
           if (node.style?.width !== this.nodesById[node.id].style?.width) {
+            /**
+             * TODO - this returns true when old node width is unchanged b/c expanded node width is manually set to subGraph width
+             * results in unnecessary run of simulation when just closing expanded node
+             */
             update = true
           }
 
-          // TODO - subGraphs need full enter/update/exit logic
           if (node.subGraph) {
             if (this.subGraphs[node.id] === undefined) {
               // enter subgraph
-              subGraphs[node.id] = new Simulation().layout(
+              subGraphs[node.id] = new Simulation(this).layout(
                 node.subGraph.nodes,
                 node.subGraph.edges,
                 node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
@@ -240,10 +250,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
                 node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
               )
             }
-            update = true
+            updateSubGraphs = true
           } else if (this.nodesById[node.id].subGraph) {
             // exit subGraph
-            update = true
+            updateSubGraphs = true
           }
 
           nodesById[node.id] = node
@@ -285,15 +295,20 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
         }
       }
 
+
       this.nodesById = nodesById
       this.edgesById = edgesById
       this.simulation.nodes(nodes)
       this.forceLink.links(edges as unknown as PositionedEdge[])
 
-      if (update) {
+      if (updateSubGraphs) {
         this.fisheyeCollapse(nodes, this.subGraphs)
-        this.simulation.alpha(1).stop().tick(this.options.tick)
+        if (update) {
+          this.simulation.alpha(1).stop().tick(this.options.tick)
+        }
         this.fisheyeExpand(nodes, subGraphs)
+      } else if (update) {
+        this.simulation.alpha(1).stop().tick(this.options.tick)
       }
 
       this.subGraphs = subGraphs
