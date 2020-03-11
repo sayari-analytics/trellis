@@ -1,8 +1,9 @@
 import * as PIXI from 'pixi.js'
 import { PositionedEdge } from '../..'
-import { EdgeStyleSelector } from '../utils'
+import { edgeStyleSelector } from '../utils'
 import { colorToNumber } from './utils'
 import { Renderer } from '.'
+import { DEFAULT_EDGE_STYLES } from '../options'
 
 
 const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
@@ -28,7 +29,6 @@ export class EdgeContainer {
   hoverContainer: PIXI.Container = new PIXI.Container()
 
   private renderer: Renderer
-  private edgeStyleSelector: EdgeStyleSelector
   private label?: string
   private width: number = 0
   private stroke: number = 0
@@ -44,10 +44,10 @@ export class EdgeContainer {
   private curveControlPointA?: [number, number]
   private curveControlPointB?: [number, number]
   private curve: number = 0
+  private static edgeStyleSelector = edgeStyleSelector(DEFAULT_EDGE_STYLES)
 
-  constructor(renderer: Renderer, edgeStyleSelector: EdgeStyleSelector, edgeLayer: PIXI.Container) {
+  constructor(renderer: Renderer, edgeLayer: PIXI.Container) {
     this.renderer = renderer
-    this.edgeStyleSelector = edgeStyleSelector
     this.edgeGfx.interactive = true
     this.edgeGfx.buttonMode = true
     this.edgeGfx
@@ -63,9 +63,9 @@ export class EdgeContainer {
   set = (edge: PositionedEdge) => {
     this.edge = edge
 
-    this.width = this.edgeStyleSelector(edge, 'width')
-    this.stroke = colorToNumber(this.edgeStyleSelector(edge, 'stroke'))
-    this.strokeOpacity = this.edgeStyleSelector(edge, 'strokeOpacity')
+    this.width = EdgeContainer.edgeStyleSelector(edge, 'width')
+    this.stroke = colorToNumber(EdgeContainer.edgeStyleSelector(edge, 'stroke'))
+    this.strokeOpacity = EdgeContainer.edgeStyleSelector(edge, 'strokeOpacity')
 
     if (edge.label !== this.label) {
       this.label = edge.label

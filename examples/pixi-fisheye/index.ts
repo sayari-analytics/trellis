@@ -103,9 +103,9 @@ nodeClick$.pipe(
               style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined },
               subGraph: {
                 nodes: [
-                  { id: 'a', label: 'A', type: 'company'},
-                  { id: 'b', label: 'B', type: 'company'},
-                  { id: 'c', label: 'C', type: 'company'},
+                  { id: `${node.id}a`, label: 'A', type: 'company'},
+                  { id: `${node.id}b`, label: 'B', type: 'company'},
+                  { id: `${node.id}c`, label: 'C', type: 'company'},
                 ],
                 edges: []
               },

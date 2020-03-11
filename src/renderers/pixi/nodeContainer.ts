@@ -1,9 +1,10 @@
 import * as PIXI from 'pixi.js'
-import { NodeStyleSelector } from '../utils'
+import { nodeStyleSelector } from '../utils'
 import { PositionedNode } from '../..'
 import { colorToNumber } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { Renderer, POSITION_ANIMATION_DURATION } from '.'
+import { DEFAULT_NODE_STYLES } from '../options'
 
 
 const LABEL_Y_PADDING = 4
@@ -22,7 +23,6 @@ export class NodeContainer {
   y = 0
 
   private renderer: Renderer
-  private nodeStyleSelector: NodeStyleSelector
   private startX = 0 // TODO - initialize prev position to position of a related node, or to avg position of all related nodes
   private startY = 0
   private startRadius = 0
@@ -38,10 +38,10 @@ export class NodeContainer {
   private labelContainer = new PIXI.Container()
   private nodeGfx = new PIXI.Graphics()
   private labelSprite?: PIXI.Text
+  private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
 
-  constructor(renderer: Renderer, nodeStyleSelector: NodeStyleSelector, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
+  constructor(renderer: Renderer, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
     this.renderer = renderer
-    this.nodeStyleSelector = nodeStyleSelector
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
     this.nodeContainer.on('mouseover', this.nodeMouseOver)
@@ -81,8 +81,8 @@ export class NodeContainer {
       this.interpolateY = () => this.endY
     }
 
-    const radius = this.nodeStyleSelector(node, 'width') / 2
-    const strokeWidth = this.nodeStyleSelector(node, 'strokeWidth')
+    const radius = NodeContainer.nodeStyleSelector(node, 'width') / 2
+    const strokeWidth = NodeContainer.nodeStyleSelector(node, 'strokeWidth')
 
     this.startRadius = this.radius === -1 ? radius : this.radius
     this.endRadius = radius
@@ -94,10 +94,10 @@ export class NodeContainer {
     }
 
     this.strokeWidth = strokeWidth
-    this.stroke = colorToNumber(this.nodeStyleSelector(this.node, 'stroke'))
-    this.strokeOpacity = this.nodeStyleSelector(this.node, 'strokeOpacity')
-    this.fill = colorToNumber(this.nodeStyleSelector(this.node, 'fill'))
-    this.fillOpacity = this.nodeStyleSelector(this.node, 'fillOpacity')
+    this.stroke = colorToNumber(NodeContainer.nodeStyleSelector(this.node, 'stroke'))
+    this.strokeOpacity = NodeContainer.nodeStyleSelector(this.node, 'strokeOpacity')
+    this.fill = colorToNumber(NodeContainer.nodeStyleSelector(this.node, 'fill'))
+    this.fillOpacity = NodeContainer.nodeStyleSelector(this.node, 'fillOpacity')
 
     if (node.label !== this.label) {
       this.label = node.label

@@ -1,10 +1,9 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import FontFaceObserver from 'fontfaceobserver'
-import { RendererOptions, DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererLayoutOptions } from '../options'
+import { RendererOptions, RendererLayoutOptions } from '../options'
 import { PositionedNode, PositionedEdge } from '../../index'
 import { animationFrameLoop, noop } from '../../utils'
-import { edgeStyleSelector, nodeStyleSelector, NodeStyleSelector, EdgeStyleSelector } from '../utils'
 import { NodeContainer } from './nodeContainer'
 import { EdgeContainer } from './edgeContainer'
 
@@ -27,8 +26,6 @@ export class Renderer {
 
   width: number
   height: number
-  nodeStyleSelector: NodeStyleSelector
-  edgeStyleSelector: EdgeStyleSelector
   debug: RendererOptions['debug']
   hoveredNode?: string
   clickedNode?: string
@@ -64,49 +61,11 @@ export class Renderer {
     this.onEdgeMouseDown = onEdgeMouseDown
     this.onEdgeMouseUp = onEdgeMouseUp
     this.onEdgeMouseLeave = onEdgeMouseLeave
-    this.nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
-    this.edgeStyleSelector = edgeStyleSelector(DEFAULT_EDGE_STYLES)
     this.debug = debug
 
     const container = document.getElementById(id)
     if (container === null) {
       throw new Error(`Element #${id} not found`)
-    }
-
-    if (onContainerMouseEnter) {
-      container.onmouseenter = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseEnter({ x: e.x, y: e.y })
-        }
-      }
-    }
-    if (onContainerMouseDown) {
-      container.onmousedown = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseDown({ x: e.x, y: e.y })
-        }
-      }
-    }
-    if (onContainerMouseMove) {
-      container.onmousemove = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseMove({ x: e.x, y: e.y })
-        }
-      }
-    }
-    if (onContainerMouseUp) {
-      container.onmouseup = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseUp({ x: e.x, y: e.y })
-        }
-      }
-    }
-    if (onContainerMouseLeave) {
-      container.onmouseleave = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseLeave({ x: e.x, y: e.y })
-        }
-      }
     }
 
     /**
@@ -123,6 +82,42 @@ export class Renderer {
       autoStart: false,
       powerPreference: 'high-performance',
     })
+
+    if (onContainerMouseEnter) {
+      this.app.view.onmouseenter = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseEnter({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseDown) {
+      this.app.view.onmousedown = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseDown({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseMove) {
+      this.app.view.onmousemove = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseMove({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseUp) {
+      this.app.view.onmouseup = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseUp({ x: e.x, y: e.y })
+        }
+      }
+    }
+    if (onContainerMouseLeave) {
+      this.app.view.onmouseleave = (e) => {
+        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
+          onContainerMouseLeave({ x: e.x, y: e.y })
+        }
+      }
+    }
 
     this.labelsLayer.interactiveChildren = false
 
@@ -191,20 +186,11 @@ export class Renderer {
     for (const node of nodes) {
       if (this.nodesById[node.id] === undefined) {
         // node enter
-        const nodeContainer = new NodeContainer(
-          this,
-          this.nodeStyleSelector,
-          this.nodesLayer,
-          this.labelsLayer,
-        )
-          .set(node)
-
-        nodesById[node.id] = nodeContainer
+        nodesById[node.id] = new NodeContainer(this, this.nodesLayer, this.labelsLayer).set(node)
         this.dirty = true
       } else {
         // node update
         nodesById[node.id] = this.nodesById[node.id].set(node)
-
         this.dirty = true
       }
     }
@@ -220,13 +206,7 @@ export class Renderer {
     for (const edge of edges) {
       if (this.edgesById[edge.id] === undefined) {
         // edge enter
-        edgesById[edge.id] = new EdgeContainer(
-          this,
-          this.edgeStyleSelector,
-          this.edgesLayer,
-        )
-          .set(edge)
-
+        edgesById[edge.id] = new EdgeContainer(this, this.edgesLayer).set(edge)
         this.dirty = true
       } else {
         // edge update

@@ -16,7 +16,7 @@ export const DEFAULT_SIMULATION_OPTIONS: SimulationOptions = {
   nodeStrength: -600,
   linkDistance: 300,
   linkStrength: undefined,
-  centerStrength: 0.001,
+  centerStrength: 0.01,
   nodePadding: 8,
   tick: 300,
 }
