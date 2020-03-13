@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY } from 'd3-force'
 import { PositionedNode, PositionedEdge, Node, Edge } from './index'
 import { DEFAULT_NODE_STYLES } from './renderers/options'
@@ -102,6 +103,15 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
     }
   }
 
+  const DEFAULT_SUBGRAPH_SIMULATION_OPTIONS: SimulationOptions = {
+    nodeStrength: -100,
+    linkDistance: 200,
+    linkStrength: undefined,
+    centerStrength: 0.1,
+    nodePadding: 6,
+    tick: 100,
+  }
+
   class Simulation {
 
     options: SimulationOptions = {
@@ -202,16 +212,17 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
       }
 
       for (let i = 0; i < nodes.length; i++) {
-        const node: PositionedNode = nodes[i]
+        // TODO - rewrite w/o casts
+        const node = nodes[i] as PositionedNode
         if (this.nodesById[node.id] === undefined) {
           // enter node
           nodesById[node.id] = node
           if (node.subGraph) {
             // enter subgraph
             subGraphs[node.id] = new Simulation(this).layout(
-              node.subGraph.nodes,
-              node.subGraph.edges,
-              node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+              node.subGraph.nodes as Node[],
+              node.subGraph.edges as unknown as Edge[],
+              node.subGraph.options === undefined ? DEFAULT_SUBGRAPH_SIMULATION_OPTIONS : node.subGraph.options,
             )
             updateSubGraphs = true
           }
@@ -238,16 +249,16 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
             if (this.subGraphs[node.id] === undefined) {
               // enter subgraph
               subGraphs[node.id] = new Simulation(this).layout(
-                node.subGraph.nodes,
-                node.subGraph.edges,
-                node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+                node.subGraph.nodes as Node[],
+                node.subGraph.edges as unknown as Edge[],
+                node.subGraph.options === undefined ? DEFAULT_SUBGRAPH_SIMULATION_OPTIONS : node.subGraph.options,
               )
             } else {
               // update subgraph
               subGraphs[node.id] = this.subGraphs[node.id].layout(
-                node.subGraph.nodes,
-                node.subGraph.edges,
-                node.subGraph.options === undefined ? Object.assign({}, this.options, { strength: -100, tick: 100 }) : node.subGraph.options,
+                node.subGraph.nodes as Node[],
+                node.subGraph.edges as unknown as Edge[],
+                node.subGraph.options === undefined ? DEFAULT_SUBGRAPH_SIMULATION_OPTIONS : node.subGraph.options,
               )
             }
             updateSubGraphs = true
@@ -298,15 +309,15 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
 
       this.nodesById = nodesById
       this.edgesById = edgesById
-      this.simulation.nodes(nodes)
+      this.simulation.nodes(nodes as PositionedNode[])
       this.forceLink.links(edges as unknown as PositionedEdge[])
 
       if (updateSubGraphs) {
-        this.fisheyeCollapse(nodes, this.subGraphs)
+        this.fisheyeCollapse(nodes as PositionedNode[], this.subGraphs)
         if (update) {
           this.simulation.alpha(1).stop().tick(this.options.tick)
         }
-        this.fisheyeExpand(nodes, subGraphs)
+        this.fisheyeExpand(nodes as PositionedNode[], subGraphs)
       } else if (update) {
         this.simulation.alpha(1).stop().tick(this.options.tick)
       }

@@ -10,7 +10,7 @@ const movePoint = (x: number, y: number, angle: number, distance: number): [numb
 
 const midPoint = (x0: number, y0: number, x1: number, y1: number): [number, number] => [(x0 + x1) / 2, (y0 + y1) / 2]
 
-const length = (x0: number, y0: number, x1: number, y1: number) => Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2))
+const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
 
 const angle = (x0: number, y0: number, x1: number, y1: number) => Math.atan2(y0 - y1, x0 - x1)
 
@@ -46,7 +46,7 @@ export class EdgeContainer {
   private curve: number = 0
   private static edgeStyleSelector = edgeStyleSelector(DEFAULT_EDGE_STYLES)
 
-  constructor(renderer: Renderer, edgeLayer: PIXI.Container) {
+  constructor(renderer: Renderer, edgesLayer: PIXI.Container) {
     this.renderer = renderer
     this.edgeGfx.interactive = true
     this.edgeGfx.buttonMode = true
@@ -54,19 +54,27 @@ export class EdgeContainer {
       .on('mouseover', this.mouseEnter)
       .on('mouseout', this.mouseLeave)
 
-    edgeLayer.addChild(this.edgeGfx)
-    edgeLayer.addChild(this.arrow)
-    edgeLayer.addChild(this.hoverContainer)
-    edgeLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
+    edgesLayer.addChild(this.edgeGfx)
+    edgesLayer.addChild(this.arrow)
+    edgesLayer.addChild(this.hoverContainer)
+    edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
   set = (edge: PositionedEdge) => {
     this.edge = edge
 
+
+    /**
+     * Style
+     */
     this.width = EdgeContainer.edgeStyleSelector(edge, 'width')
     this.stroke = colorToNumber(EdgeContainer.edgeStyleSelector(edge, 'stroke'))
     this.strokeOpacity = EdgeContainer.edgeStyleSelector(edge, 'strokeOpacity')
 
+
+    /**
+     * Label
+     */
     if (edge.label !== this.label) {
       this.label = edge.label
 
@@ -88,18 +96,23 @@ export class EdgeContainer {
       }
     }
 
+
     /**
+     * Curve
      * TODO - expose edge curve in style spec
      */
-    const [min, max] = [this.edge.source.id, this.edge.target.id].sort()
-    this.curve = (this.renderer.edgeGroups[min][max].size - 1) / 2
-    for (const edgeId of this.renderer.edgeGroups[min][max]) {
+    this.curve = (this.renderer.forwardEdgeIndex[this.edge.source.id][this.edge.target.id].size - 1) * 0.5
+    for (const edgeId of this.renderer.forwardEdgeIndex[this.edge.source.id][this.edge.target.id]) {
       if (edgeId === this.edge.id) {
         break
       }
       this.curve--
     }
 
+
+    /**
+     * Arrow
+     */
     this.arrow
       .beginFill(this.stroke, this.strokeOpacity)
       .lineTo(ARROW_HEIGHT, ARROW_WIDTH / 2)
@@ -112,16 +125,18 @@ export class EdgeContainer {
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render = () => {
+    const sourceContainer = this.renderer.nodesById[this.edge.source.id],
+      targetContainer = this.renderer.nodesById[this.edge.target.id],
+      theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
+      start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceContainer.radius),
+      end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + ARROW_HEIGHT),
+      center = midPoint(start[0], start[1], end[0], end[1])
+
     if (this.curve === 0) {
-      const sourceContainer = this.renderer.nodesById[this.edge.source.id]
-      const targetContainer = this.renderer.nodesById[this.edge.target.id]
-      const theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
       /**
        * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
        * TODO - once arrows are encorporated into the style spec, add/remove arrowHeight offset
        */
-      const start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceContainer.radius)
-      const end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + ARROW_HEIGHT)
       this.x0 = start[0]
       this.y0 = start[1]
       this.x1 = end[0]
@@ -134,7 +149,6 @@ export class EdgeContainer {
         .lineTo(this.x1, this.y1)
         .endFill()
 
-      const center = midPoint(this.x0, this.y0, this.x1, this.y1)
       this.labelContainer.x = center[0]
       this.labelContainer.y = center[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
@@ -148,31 +162,35 @@ export class EdgeContainer {
       // TODO - don't bother rendering hitArea when animating position
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const perpendicular = theta + HALF_PI
-      const hitAreaVerticies: number[] = []
-      hitAreaVerticies.push(...movePoint(this.x0, this.y0, perpendicular, hoverRadius))
-      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], perpendicular, hoverRadius))
-      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], perpendicular, -hoverRadius))
-      hitAreaVerticies.push(...movePoint(this.x0, this.y0, perpendicular, -hoverRadius))
+      const hitAreaVerticies: number[] = new Array(8)
+      let point = movePoint(this.x0, this.y0, perpendicular, hoverRadius)
+      hitAreaVerticies[0] = point[0]
+      hitAreaVerticies[1] = point[1]
+      point = movePoint(arrowPosition[0], arrowPosition[1], perpendicular, hoverRadius)
+      hitAreaVerticies[2] = point[0]
+      hitAreaVerticies[3] = point[1]
+      point = movePoint(arrowPosition[0], arrowPosition[1], perpendicular, -hoverRadius)
+      hitAreaVerticies[4] = point[0]
+      hitAreaVerticies[5] = point[1]
+      point = movePoint(this.x0, this.y0, perpendicular, -hoverRadius)
+      hitAreaVerticies[6] = point[0]
+      hitAreaVerticies[7] = point[1]
       this.edgeGfx.hitArea = new PIXI.Polygon(hitAreaVerticies)
       // this.edgeGfx.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.edgeGfx.hitArea as any)
     } else {
-      const sourceContainer = this.renderer.nodesById[this.edge.source.id]
-      const targetContainer = this.renderer.nodesById[this.edge.target.id]
-      const center = midPoint(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
-      const thetaUncurved = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y)
-      this.curvePeak = movePoint(center[0], center[1], thetaUncurved > TWO_PI || thetaUncurved < 0 ? thetaUncurved - HALF_PI : thetaUncurved + HALF_PI, this.curve * 20)
+      this.curvePeak = movePoint(center[0], center[1], theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI, this.curve * 20)
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
-      const start = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceContainer.radius)
-      const end = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + ARROW_HEIGHT)
-      this.x0 = start[0]
-      this.y0 = start[1]
-      this.x1 = end[0]
-      this.y1 = end[1]
+      const curveStart = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceContainer.radius)
+      const curveEnd = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + ARROW_HEIGHT)
+      this.x0 = curveStart[0]
+      this.y0 = curveStart[1]
+      this.x1 = curveEnd[0]
+      this.y1 = curveEnd[1]
 
       const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
-      this.curveControlPointA = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved, edgeLength / 4)
-      this.curveControlPointB = movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved, edgeLength / -4)
+      this.curveControlPointA = movePoint(this.curvePeak[0], this.curvePeak[1], theta, edgeLength / 4)
+      this.curveControlPointB = movePoint(this.curvePeak[0], this.curvePeak[1], theta, edgeLength / -4)
 
       this.edgeGfx
         .clear()
@@ -184,7 +202,7 @@ export class EdgeContainer {
 
       this.labelContainer.x = this.curvePeak[0]
       this.labelContainer.y = this.curvePeak[1]
-      this.labelContainer.rotation = thetaUncurved > HALF_PI && thetaUncurved < THREE_HALF_PI ? thetaUncurved - Math.PI : thetaUncurved
+      this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
       const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius)
       this.arrow.x = arrowPosition[0]
@@ -192,13 +210,25 @@ export class EdgeContainer {
       this.arrow.rotation = thetaCurveEnd
 
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
-      const hitAreaVerticies: number[] = []
-      hitAreaVerticies.push(...movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, hoverRadius))
-      hitAreaVerticies.push(...movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved + HALF_PI, hoverRadius))
-      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], thetaCurveEnd + HALF_PI, hoverRadius))
-      hitAreaVerticies.push(...movePoint(arrowPosition[0], arrowPosition[1], thetaUncurved + HALF_PI, -hoverRadius))
-      hitAreaVerticies.push(...movePoint(this.curvePeak[0], this.curvePeak[1], thetaUncurved + HALF_PI, -hoverRadius))
-      hitAreaVerticies.push(...movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, -hoverRadius))
+      const hitAreaVerticies: number[] = new Array(12)
+      let point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, hoverRadius)
+      hitAreaVerticies[0] = point[0]
+      hitAreaVerticies[1] = point[1]
+      point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, hoverRadius)
+      hitAreaVerticies[2] = point[0]
+      hitAreaVerticies[3] = point[1]
+      point = movePoint(arrowPosition[0], arrowPosition[1], thetaCurveEnd + HALF_PI, hoverRadius)
+      hitAreaVerticies[4] = point[0]
+      hitAreaVerticies[5] = point[1]
+      point = movePoint(arrowPosition[0], arrowPosition[1], theta + HALF_PI, -hoverRadius)
+      hitAreaVerticies[6] = point[0]
+      hitAreaVerticies[7] = point[1]
+      point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, -hoverRadius)
+      hitAreaVerticies[8] = point[0]
+      hitAreaVerticies[9] = point[1]
+      point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, -hoverRadius)
+      hitAreaVerticies[10] = point[0]
+      hitAreaVerticies[11] = point[1]
       this.edgeGfx.hitArea = new PIXI.Polygon(hitAreaVerticies)
       // this.edgeGfx.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.edgeGfx.hitArea as any)
     }
@@ -243,8 +273,8 @@ export class EdgeContainer {
     this.hoverContainer.destroy()
     this.labelContainer.destroy()
     delete this.renderer.edgesById[this.edge.id]
-    const [min, max] = [this.edge.source.id, this.edge.target.id].sort()
-    this.renderer.edgeGroups[min][max].delete(this.edge.id)
+    this.renderer.forwardEdgeIndex[this.edge.source.id][this.edge.target.id].delete(this.edge.id)
+    this.renderer.reverseEdgeIndex[this.edge.target.id][this.edge.source.id].delete(this.edge.id)
   }
 
   private mouseEnter = () => {

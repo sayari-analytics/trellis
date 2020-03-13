@@ -39,7 +39,8 @@ export class Renderer {
   frontLabelLayer = new PIXI.Container()
   nodesById: { [id: string]: NodeContainer } = {}
   edgesById: { [id: string]: EdgeContainer } = {}
-  edgeGroups: { [source: string]: { [target: string]: Set<string> } } = {}
+  forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
+  reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
   app: PIXI.Application
   viewport: Viewport
@@ -128,7 +129,7 @@ export class Renderer {
       .pinch()
       .wheel()
       .decelerate()
-      .clampZoom({ minScale: 0.02, maxScale: 3 })
+      .clampZoom({ minScale: 0.02, maxScale: 2.5 })
       .setZoom(0.6, true)
       .on('drag-start', () => container.style.cursor = 'move')
       .on('drag-end', () => container.style.cursor = 'auto')
@@ -172,21 +173,56 @@ export class Renderer {
     const nodesById: { [id: string]: NodeContainer } = {}
     const edgesById: { [id: string]: EdgeContainer } = {}
 
+
+    /**
+     * Build edge indices
+     * TODO - is it possible to build edge indices and enter/update/exit edge containers in one pass?
+     */
     for (const edge of edges) {
-      const [min, max] = [edge.source.id, edge.target.id].sort()
-      if (this.edgeGroups[min] === undefined) {
-        this.edgeGroups[min] = {}
+      const id = edge.id,
+        source = edge.source.id,
+        target = edge.target.id
+
+      if (this.forwardEdgeIndex[source] === undefined) {
+        this.forwardEdgeIndex[source] = {}
       }
-      if (this.edgeGroups[min][max] === undefined) {
-        this.edgeGroups[min][max] = new Set()
+      if (this.forwardEdgeIndex[source][target] === undefined) {
+        this.forwardEdgeIndex[source][target] = new Set()
       }
-      this.edgeGroups[min][max].add(edge.id)
+      this.forwardEdgeIndex[source][target].add(id)
+
+      if (this.reverseEdgeIndex[target] === undefined) {
+        this.reverseEdgeIndex[target] = {}
+      }
+      if (this.reverseEdgeIndex[target][source] === undefined) {
+        this.reverseEdgeIndex[target][source] = new Set()
+      }
+      this.reverseEdgeIndex[target][source].add(id)
     }
 
+
+    /**
+     * Ndge enter/update/exit
+     */
     for (const node of nodes) {
       if (this.nodesById[node.id] === undefined) {
         // node enter
-        nodesById[node.id] = new NodeContainer(this, this.nodesLayer, this.labelsLayer).set(node)
+        if (this.reverseEdgeIndex[node.id]) {
+          // nodes w edges from existing nodes enter from one of those nodes
+          const adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
+          nodesById[node.id] = adjacentNode === undefined ?
+            new NodeContainer(this, node, 0, 0) :
+            new NodeContainer(this, node, adjacentNode.x, adjacentNode.y)
+        } else if (this.forwardEdgeIndex[node.id]) {
+          // nodes w edges to existing nodes enter from one of those nodes
+          const adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
+          nodesById[node.id] = adjacentNode === undefined ?
+            new NodeContainer(this, node, 0, 0) :
+            new NodeContainer(this, node, adjacentNode.x, adjacentNode.y)
+        } else {
+          // nodes w/o edges to an existing node enter from origin
+          nodesById[node.id] = new NodeContainer(this, node, 0, 0)
+        }
         this.dirty = true
       } else {
         // node update
@@ -203,14 +239,19 @@ export class Renderer {
       }
     }
 
+
+    /**
+     * Edge enter/update/exit
+     */
     for (const edge of edges) {
-      if (this.edgesById[edge.id] === undefined) {
+      const id = edge.id
+      if (this.edgesById[id] === undefined) {
         // edge enter
-        edgesById[edge.id] = new EdgeContainer(this, this.edgesLayer).set(edge)
+        edgesById[id] = new EdgeContainer(this, this.edgesLayer).set(edge)
         this.dirty = true
       } else {
         // edge update
-        edgesById[edge.id] = this.edgesById[edge.id].set(edge)
+        edgesById[id] = this.edgesById[id].set(edge)
         this.dirty = true
       }
     }
@@ -222,6 +263,7 @@ export class Renderer {
         this.dirty = true
       }
     }
+
 
     this.nodesById = nodesById
     this.edgesById = edgesById

@@ -22,8 +22,17 @@ export type Edge = {
   style?: Partial<EdgeStyle>
 }
 
-export type PositionedNode = Node
-  & SimulationNodeDatum
+export type PositionedNode = {
+  id: string
+  label?: string
+  style?: Partial<NodeStyle>
+  subGraph?: {
+    nodes: PositionedNode[],
+    edges: PositionedEdge[],
+    options?: Partial<SimulationOptions>
+  }
+} & SimulationNodeDatum
+
 export type PositionedEdge = {
   id: string
   label?: string

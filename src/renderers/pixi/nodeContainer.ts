@@ -12,18 +12,22 @@ const LABEL_Y_PADDING = 4
 
 export class NodeContainer {
 
-  node: PositionedNode = { id: '' }
+  node: PositionedNode
+  x: number
+  y: number
   radius = -1
   strokeWidth = 0
   stroke = 0
   strokeOpacity = 0
   fill = 0
   fillOpacity = 0
-  x = 0
-  y = 0
+  subGraphNodes: { [id: string]: NodeContainer } = {}
 
   private renderer: Renderer
-  private startX = 0 // TODO - initialize prev position to position of a related node, or to avg position of all related nodes
+  private nodesLayer: PIXI.Container
+  private labelsLayer: PIXI.Container
+  private parent?: NodeContainer
+  private startX = 0
   private startY = 0
   private startRadius = 0
   private endX = 0
@@ -40,8 +44,11 @@ export class NodeContainer {
   private labelSprite?: PIXI.Text
   private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
 
-  constructor(renderer: Renderer, nodesLayer: PIXI.Container, labelLayer: PIXI.Container) {
+  constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: NodeContainer) {
     this.renderer = renderer
+    this.nodesLayer = renderer.nodesLayer
+    this.labelsLayer = renderer.labelsLayer
+    this.parent = parent
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
     this.nodeContainer.on('mouseover', this.nodeMouseOver)
@@ -51,8 +58,12 @@ export class NodeContainer {
       .on('mouseupoutside', this.nodeMouseUp)
       .addChild(this.nodeGfx)
 
-    nodesLayer.addChild(this.nodeContainer)
-    labelLayer.addChild(this.labelContainer)
+    this.nodesLayer.addChild(this.nodeContainer)
+    this.labelsLayer.addChild(this.labelContainer)
+    this.node = node
+    this.x = x
+    this.y = y
+    this.set(node)
   }
 
   set = (node: PositionedNode) => {
@@ -60,12 +71,15 @@ export class NodeContainer {
      * TODO - only interpolate movement if node is not being dragged
      */
     this.node = node
-
     this.startX = this.x
     this.startY = this.y
     this.endX = node.x!
     this.endY = node.y!
+
+
     /**
+     * Position Interpolation
+     *
      * TODO - if node position is currently being interpolated, instead of reinterpolating from 0 velocity, smooth interpolation change
      */
     if (this.startX !== this.endX) {
@@ -81,6 +95,10 @@ export class NodeContainer {
       this.interpolateY = () => this.endY
     }
 
+
+    /**
+     * Radius Interpolation
+     */
     const radius = NodeContainer.nodeStyleSelector(node, 'width') / 2
     const strokeWidth = NodeContainer.nodeStyleSelector(node, 'strokeWidth')
 
@@ -93,12 +111,20 @@ export class NodeContainer {
       this.interpolateRadius = () => this.endRadius
     }
 
+
+    /**
+     * Styles
+     */
     this.strokeWidth = strokeWidth
     this.stroke = colorToNumber(NodeContainer.nodeStyleSelector(this.node, 'stroke'))
     this.strokeOpacity = NodeContainer.nodeStyleSelector(this.node, 'strokeOpacity')
     this.fill = colorToNumber(NodeContainer.nodeStyleSelector(this.node, 'fill'))
     this.fillOpacity = NodeContainer.nodeStyleSelector(this.node, 'fillOpacity')
 
+
+    /**
+     * Label
+     */
     if (node.label !== this.label) {
       this.label = node.label
 
@@ -122,6 +148,10 @@ export class NodeContainer {
       }
     }
 
+
+    /**
+     * Icon
+     */
     if (node.style && node.style.icon !== this.icon) {
       this.icon = node.style.icon
 
@@ -141,6 +171,36 @@ export class NodeContainer {
         this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }
     }
+
+
+    /**
+     * SubGraph Node
+     */
+    const subGraphNodes: { [id: string]: NodeContainer } = {}
+    if (node.subGraph?.nodes) {
+      for (const subGraphNode of node.subGraph.nodes) {
+        if (this.subGraphNodes[subGraphNode.id] === undefined) {
+          // enter subGraph node
+          subGraphNodes[subGraphNode.id] = new NodeContainer(
+            this.renderer,  { ...subGraphNode, x: subGraphNode.x! + this.endX, y: subGraphNode.y! + this.endY }, this.x, this.y, this
+          )
+        } else {
+          // update subGraph node
+          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id]
+            .set({ ...subGraphNode, x: subGraphNode.x! + this.endX, y: subGraphNode.y! + this.endY })
+        }
+      }
+    }
+
+    for (const subGraphNodeId in this.subGraphNodes) {
+      if (subGraphNodes[subGraphNodeId] === undefined) {
+        // exit subGraph node
+        this.subGraphNodes[subGraphNodeId].delete()
+      }
+    }
+
+    this.subGraphNodes = subGraphNodes
+
 
     return this
   }
@@ -178,12 +238,20 @@ export class NodeContainer {
       this.labelSprite.y = this.radius + LABEL_Y_PADDING
     }
 
+    for (const subGraphNodeId in this.subGraphNodes) {
+      this.subGraphNodes[subGraphNodeId].render()
+    }
+
     return this
   }
 
   delete = () => {
     this.nodeContainer.destroy()
     this.labelContainer.destroy()
+    for (const subGraphNodeId in this.subGraphNodes) {
+      // exit subGraph node
+      this.subGraphNodes[subGraphNodeId].delete()
+    }
     delete this.renderer.nodesById[this.node.id]
   }
 
