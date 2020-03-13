@@ -11,21 +11,27 @@ stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
 const nodeClick$ = new Subject<string | null>()
+const nodeDoubleClick$ = new Subject<string | null>()
 
 const graph = new Graph()
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+
 const renderer = PixiRenderer({
   container,
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
-  onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
-  onNodeMouseUp: (({ id }) => {
+  onNodePointerDown: (_, { id }, x, y) => graph.dragStart(id, x, y),
+  onNodeDrag: (_, { id }, x, y) => graph.drag(id, x, y),
+  onNodePointerUp: (_, { id }) => {
     graph.dragEnd(id)
     nodeClick$.next(id)
-  }),
-  onContainerMouseUp: () => {
+  },
+  onNodeDoubleClick: (_, { id }) => {
+    nodeDoubleClick$.next(id)
+  },
+  onContainerPointerUp: () => {
     nodeClick$.next(null)
+    nodeDoubleClick$.next(null)
   },
   debug: { stats }
 })
@@ -87,7 +93,7 @@ const edges: Edge[] = [
 
 
 
-nodeClick$.pipe(
+nodeDoubleClick$.pipe(
   startWith(null),
   map((clickedNode) => {
     const nodeIds = new Set()

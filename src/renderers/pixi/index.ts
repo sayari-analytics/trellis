@@ -14,16 +14,6 @@ export const POSITION_ANIMATION_DURATION = 800
 
 export class Renderer {
 
-  onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeMouseDown?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onEdgeMouseEnter?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseDown?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseUp?: (node: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseLeave?: (node: PositionedEdge, details: { x: number, y: number }) => void
-
   width: number
   height: number
   debug: RendererOptions['debug']
@@ -42,26 +32,38 @@ export class Renderer {
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
+  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+
   app: PIXI.Application
   viewport: Viewport
 
   constructor({
     container, width = 800, height = 600, debug,
-    onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
-    onEdgeMouseEnter = noop, onEdgeMouseDown = noop, onEdgeMouseUp = noop, onEdgeMouseLeave = noop,
-    onContainerMouseEnter, onContainerMouseDown, onContainerMouseMove, onContainerMouseUp, onContainerMouseLeave,
+    onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
+    onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
+    onContainerPointerEnter, onContainerPointerDown, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave,
   }: RendererOptions) {
     this.width = width
     this.height = height
-    this.onNodeMouseEnter = onNodeMouseEnter
-    this.onNodeMouseDown = onNodeMouseDown
+    this.onNodePointerEnter = onNodePointerEnter
+    this.onNodePointerDown = onNodePointerDown
     this.onNodeDrag = onNodeDrag
-    this.onNodeMouseUp = onNodeMouseUp
-    this.onNodeMouseLeave = onNodeMouseLeave
-    this.onEdgeMouseEnter = onEdgeMouseEnter
-    this.onEdgeMouseDown = onEdgeMouseDown
-    this.onEdgeMouseUp = onEdgeMouseUp
-    this.onEdgeMouseLeave = onEdgeMouseLeave
+    this.onNodePointerUp = onNodePointerUp
+    this.onNodePointerLeave = onNodePointerLeave
+    this.onNodeDoubleClick = onNodeDoubleClick
+    this.onEdgePointerEnter = onEdgePointerEnter
+    this.onEdgePointerDown = onEdgePointerDown
+    this.onEdgePointerUp = onEdgePointerUp
+    this.onEdgePointerLeave = onEdgePointerLeave
     this.debug = debug
 
     if (!(container instanceof HTMLCanvasElement)) {
@@ -84,38 +86,38 @@ export class Renderer {
       powerPreference: 'high-performance',
     })
 
-    if (onContainerMouseEnter) {
-      this.app.view.onmouseenter = (e) => {
+    if (onContainerPointerEnter) {
+      this.app.view.onpointerenter = (e) => {
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseEnter({ x: e.x, y: e.y })
+          onContainerPointerEnter(e)
         }
       }
     }
-    if (onContainerMouseDown) {
-      this.app.view.onmousedown = (e) => {
+    if (onContainerPointerDown) {
+      this.app.view.onpointerdown = (e) => {
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseDown({ x: e.x, y: e.y })
+          onContainerPointerDown(e)
         }
       }
     }
-    if (onContainerMouseMove) {
-      this.app.view.onmousemove = (e) => {
+    if (onContainerPointerMove) {
+      this.app.view.onpointermove = (e) => {
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseMove({ x: e.x, y: e.y })
+          onContainerPointerMove(e)
         }
       }
     }
-    if (onContainerMouseUp) {
-      this.app.view.onmouseup = (e) => {
+    if (onContainerPointerUp) {
+      this.app.view.onpointerup = (e) => {
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseUp({ x: e.x, y: e.y })
+          onContainerPointerUp(e)
         }
       }
     }
-    if (onContainerMouseLeave) {
-      this.app.view.onmouseleave = (e) => {
+    if (onContainerPointerLeave) {
+      this.app.view.onpointerleave = (e) => {
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerMouseLeave({ x: e.x, y: e.y })
+          onContainerPointerLeave(e)
         }
       }
     }

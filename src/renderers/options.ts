@@ -21,20 +21,21 @@ export type RendererOptions = {
   container: HTMLCanvasElement
   width?: number
   height?: number
-  onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeMouseDown?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeDrag?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeMouseUp?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onNodeMouseLeave?: (node: PositionedNode, details: { x: number, y: number }) => void
-  onEdgeMouseEnter?: (edge: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseDown?: (edge: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseUp?: (edge: PositionedEdge, details: { x: number, y: number }) => void
-  onEdgeMouseLeave?: (edge: PositionedEdge, details: { x: number, y: number }) => void
-  onContainerMouseEnter?: (details: { x: number, y: number }) => void
-  onContainerMouseDown?: (details: { x: number, y: number }) => void
-  onContainerMouseMove?: (details: { x: number, y: number }) => void
-  onContainerMouseUp?: (details: { x: number, y: number }) => void
-  onContainerMouseLeave?: (details: { x: number, y: number }) => void
+  onNodePointerEnter?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerDown?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodeDrag?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerUp?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerLeave?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodeDoubleClick?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onEdgePointerEnter?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerDown?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerUp?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerLeave?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onContainerPointerEnter?: (event: PointerEvent) => void
+  onContainerPointerDown?: (event: PointerEvent) => void
+  onContainerPointerMove?: (event: PointerEvent) => void
+  onContainerPointerUp?: (event: PointerEvent) => void
+  onContainerPointerLeave?: (event: PointerEvent) => void
   debug?: { logRenderTime?: boolean, stats?: Stats }
 }
 

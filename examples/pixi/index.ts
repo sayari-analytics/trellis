@@ -20,19 +20,19 @@ const renderer = PixiRenderer({
   container,
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodeMouseEnter: ({ id }) => {
+  onNodePointerEnter: (_, { id }) => {
     nodeHover$.next(id)
   },
-  onNodeMouseLeave: () => {
+  onNodePointerLeave: () => {
     nodeHover$.next(null)
   },
-  onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),
-  onNodeDrag: (({ id }, { x, y }) => graph.drag(id, x, y)),
-  onNodeMouseUp: (({ id }) => {
+  onNodePointerDown: (_, { id }, x, y) => graph.dragStart(id, x, y),
+  onNodeDrag: (_, { id }, x, y) => graph.drag(id, x, y),
+  onNodePointerUp: (_, { id }) => {
     graph.dragEnd(id)
     nodeClick$.next(id)
-  }),
-  onContainerMouseUp: () => {
+  },
+  onContainerPointerUp: () => {
     nodeClick$.next(null)
   },
   debug: { stats }

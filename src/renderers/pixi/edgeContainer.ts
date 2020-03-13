@@ -51,8 +51,11 @@ export class EdgeContainer {
     this.edgeGfx.interactive = true
     this.edgeGfx.buttonMode = true
     this.edgeGfx
-      .on('mouseover', this.mouseEnter)
-      .on('mouseout', this.mouseLeave)
+      .on('pointerover', this.pointerEnter)
+      .on('pointerout', this.pointerLeave)
+      .on('pointerdown', this.pointerDown)
+      .on('pointerup', this.pointerUp)
+      .on('pointerupoutside', this.pointerUp)
 
     edgesLayer.addChild(this.edgeGfx)
     edgesLayer.addChild(this.arrow)
@@ -277,7 +280,7 @@ export class EdgeContainer {
     this.renderer.reverseEdgeIndex[this.edge.target.id][this.edge.source.id].delete(this.edge.id)
   }
 
-  private mouseEnter = () => {
+  private pointerEnter = (event: PIXI.interaction.InteractionEvent) => {
     if (this.edgeHoverBorder === undefined) {
       /**
        * TODO - does it make more sense to create the graphic on the fly, or create on init and add/remove from container
@@ -299,17 +302,36 @@ export class EdgeContainer {
 
       this.hoverContainer.addChild(this.edgeHoverBorder)
       this.renderer.dirty = true
+      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      this.renderer.onEdgePointerEnter(event, this.edge, x, y)
     }
 
     return this
   }
 
-  private mouseLeave = () => {
+  private pointerLeave = (event: PIXI.interaction.InteractionEvent) => {
     if (this.edgeHoverBorder !== undefined) {
       this.hoverContainer.removeChildren()
       this.edgeHoverBorder = undefined
       this.renderer.dirty = true
+
+      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      this.renderer.onEdgePointerLeave(event, this.edge, x, y)
     }
+
+    return this
+  }
+
+  private pointerDown = (event: PIXI.interaction.InteractionEvent) => {
+    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onEdgePointerDown(event, this.edge, x, y)
+
+    return this
+  }
+
+  private pointerUp = (event: PIXI.interaction.InteractionEvent) => {
+    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onEdgePointerUp(event, this.edge, x, y)
 
     return this
   }

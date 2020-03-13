@@ -52,12 +52,11 @@ export class NodeContainer {
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
     this.nodeContainer
-      .on('mouseover', this.nodeMouseOver)
-      .on('mouseover', this.nodeMouseOver)
-      .on('mouseout', this.nodeMouseOut)
-      .on('mousedown', this.nodeMouseDown)
-      .on('mouseup', this.nodeMouseUp)
-      .on('mouseupoutside', this.nodeMouseUp)
+      .on('pointerover', this.nodePointerEnter)
+      .on('pointerout', this.nodePointerLeave)
+      .on('pointerdown', this.nodePointerDown)
+      .on('pointerup', this.nodePointerUp)
+      .on('pointerupoutside', this.nodePointerUp)
       .addChild(this.nodeGfx)
 
     this.nodeContainer.zIndex = this.nodeContainerDepth()
@@ -259,7 +258,7 @@ export class NodeContainer {
     delete this.renderer.nodesById[this.node.id]
   }
 
-  private nodeMouseOver = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerEnter = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) {
       this.renderer.hoveredNode = this.node.id
 
@@ -270,11 +269,11 @@ export class NodeContainer {
 
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onNodeMouseEnter && this.renderer.onNodeMouseEnter(this.node, { x, y })
+      this.renderer.onNodePointerEnter(event, this.node, x, y)
     }
   }
 
-  private nodeMouseOut = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerLeave = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined && this.renderer.hoveredNode === this.node.id) {
       this.renderer.hoveredNode = undefined
 
@@ -290,27 +289,46 @@ export class NodeContainer {
 
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onNodeMouseLeave && this.renderer.onNodeMouseLeave(this.node, { x, y })
+      this.renderer.onNodePointerLeave(event, this.node, x, y)
     }
   }
 
-  private nodeMouseDown = (event: PIXI.interaction.InteractionEvent) => {
+  private doubleClickTimeout: NodeJS.Timeout | undefined
+  private doubleClick = false
+
+  private clearDoubleClick = () => {
+    this.doubleClickTimeout = undefined
+    this.doubleClick = false
+  }
+
+  private nodePointerDown = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.doubleClickTimeout === undefined) {
+      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+    } else {
+      this.doubleClick = true
+    }
+
     this.renderer.clickedNode = this.node.id
     this.renderer.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
     this.renderer.viewport.pause = true
     this.renderer.dirty = true
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onNodeMouseDown && this.renderer.onNodeMouseDown(this.node, { x, y })
+    this.renderer.onNodePointerDown(event, this.node, x, y)
   }
 
-  private nodeMouseUp = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerUp = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) {
       this.renderer.clickedNode = undefined
       this.renderer.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
       this.renderer.viewport.pause = false
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onNodeMouseUp && this.renderer.onNodeMouseUp(this.node, { x, y })
+      this.renderer.onNodePointerUp(event, this.node, x, y)
+
+      if (this.doubleClick) {
+        this.doubleClick = false
+        this.renderer.onNodeDoubleClick(event, this.node, x, y)
+      }
     }
   }
 
@@ -320,7 +338,7 @@ export class NodeContainer {
       this.startX = this.endX = this.nodeContainer.x = this.labelContainer.x = this.x = x
       this.startY = this.endY = this.nodeContainer.y = this.labelContainer.y = this.y = y
       this.renderer.dirty = true
-      this.renderer.onNodeDrag && this.renderer.onNodeDrag(this.node, { x, y })
+      this.renderer.onNodeDrag(event, this.node, x, y)
     }
   }
 
