@@ -13,9 +13,9 @@ document.body.appendChild(stats.dom)
 const nodeClick$ = new Subject<string | null>()
 
 const graph = new Graph()
-const container = document.getElementById('graph')
+const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderer = PixiRenderer({
-  id: 'graph',
+  container,
   width: container.offsetWidth,
   height: container.offsetHeight,
   onNodeMouseDown: (({ id }, { x, y }) => graph.dragStart(id, x, y)),

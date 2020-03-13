@@ -46,7 +46,7 @@ export class Renderer {
   viewport: Viewport
 
   constructor({
-    id, width = 800, height = 600, debug,
+    container, width = 800, height = 600, debug,
     onNodeMouseEnter = noop, onNodeMouseDown = noop, onNodeDrag = noop, onNodeMouseUp = noop, onNodeMouseLeave = noop,
     onEdgeMouseEnter = noop, onEdgeMouseDown = noop, onEdgeMouseUp = noop, onEdgeMouseLeave = noop,
     onContainerMouseEnter, onContainerMouseDown, onContainerMouseMove, onContainerMouseUp, onContainerMouseLeave,
@@ -64,9 +64,8 @@ export class Renderer {
     this.onEdgeMouseLeave = onEdgeMouseLeave
     this.debug = debug
 
-    const container = document.getElementById(id)
-    if (container === null) {
-      throw new Error(`Element #${id} not found`)
+    if (!(container instanceof HTMLCanvasElement)) {
+      throw new Error('container must be an instance of HTMLCanvasElement')
     }
 
     /**
@@ -74,6 +73,7 @@ export class Renderer {
      * just twist all the knobs...
      */
     this.app = new PIXI.Application({
+      view: container,
       width: this.width,
       height: this.height,
       resolution: window.devicePixelRatio,
@@ -121,6 +121,7 @@ export class Renderer {
     }
 
     this.labelsLayer.interactiveChildren = false
+    this.nodesLayer.sortableChildren = true // TODO - perf test
 
     this.viewport = new Viewport({
       interaction: this.app.renderer.plugins.interaction
@@ -142,8 +143,6 @@ export class Renderer {
     this.app.stage.addChild(this.viewport)
 
     this.app.view.addEventListener('wheel', (event) => { event.preventDefault() })
-
-    container.appendChild(this.app.view)
 
     animationFrameLoop(this.debug ? this.debugRender : this.render)
 
@@ -316,7 +315,7 @@ export class Renderer {
       this.debug?.logRenderTime && console.timeEnd('update data')
       this.debug?.logRenderTime && console.time('render data change')
       this.app.render()
-      this.debug?.logRenderTime &&  console.timeEnd('render data change')
+      this.debug?.logRenderTime && console.timeEnd('render data change')
     } else if (this.viewport.dirty) {
       this.viewport.dirty = false
       this.debug?.logRenderTime && console.time('render viewport change')

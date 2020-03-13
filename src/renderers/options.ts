@@ -18,7 +18,7 @@ export type EdgeStyle = {
 }
 
 export type RendererOptions = {
-  id: string
+  container: HTMLCanvasElement
   width?: number
   height?: number
   onNodeMouseEnter?: (node: PositionedNode, details: { x: number, y: number }) => void
@@ -56,9 +56,4 @@ export const DEFAULT_EDGE_STYLES: EdgeStyle = {
   width: 1,
   stroke: '#ccc',
   strokeOpacity: 1,
-}
-
-export const DEFAULT_RENDERER_OPTIONS: Partial<RendererOptions> = {
-  nodeStyle: {},
-  edgeStyle: {},
 }

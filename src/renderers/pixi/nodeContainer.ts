@@ -22,11 +22,11 @@ export class NodeContainer {
   fill = 0
   fillOpacity = 0
   subGraphNodes: { [id: string]: NodeContainer } = {}
+  parent?: NodeContainer
 
   private renderer: Renderer
   private nodesLayer: PIXI.Container
   private labelsLayer: PIXI.Container
-  private parent?: NodeContainer
   private startX = 0
   private startY = 0
   private startRadius = 0
@@ -51,12 +51,16 @@ export class NodeContainer {
     this.parent = parent
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
-    this.nodeContainer.on('mouseover', this.nodeMouseOver)
+    this.nodeContainer
+      .on('mouseover', this.nodeMouseOver)
+      .on('mouseover', this.nodeMouseOver)
       .on('mouseout', this.nodeMouseOut)
       .on('mousedown', this.nodeMouseDown)
       .on('mouseup', this.nodeMouseUp)
       .on('mouseupoutside', this.nodeMouseUp)
       .addChild(this.nodeGfx)
+
+    this.nodeContainer.zIndex = this.nodeContainerDepth()
 
     this.nodesLayer.addChild(this.nodeContainer)
     this.labelsLayer.addChild(this.labelContainer)
@@ -318,5 +322,17 @@ export class NodeContainer {
       this.renderer.dirty = true
       this.renderer.onNodeDrag && this.renderer.onNodeDrag(this.node, { x, y })
     }
+  }
+
+  private nodeContainerDepth = () => {
+    let depth = 0
+    let parent = this.parent
+
+    while (parent) {
+      depth++
+      parent = parent.parent
+    }
+
+    return depth
   }
 }
