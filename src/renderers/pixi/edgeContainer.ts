@@ -63,7 +63,7 @@ export class EdgeContainer {
     edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
-  set = (edge: PositionedEdge) => {
+  set(edge: PositionedEdge) {
     this.edge = edge
 
 
@@ -127,7 +127,7 @@ export class EdgeContainer {
   /**
    * TODO - perf boost: render cheap version of things while still animating position
    */
-  render = () => {
+  render() {
     const sourceContainer = this.renderer.nodesById[this.edge.source.id],
       targetContainer = this.renderer.nodesById[this.edge.target.id],
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
@@ -270,7 +270,7 @@ export class EdgeContainer {
     }
   }
 
-  delete = () => {
+  delete() {
     this.edgeGfx.destroy()
     this.arrow.destroy()
     this.hoverContainer.destroy()

@@ -17,8 +17,8 @@ export class Renderer {
   width: number
   height: number
   debug: RendererOptions['debug']
-  hoveredNode?: string
-  clickedNode?: string
+  hoveredNode?: NodeContainer
+  clickedNode?: NodeContainer
   dirty = false
   renderTime = Date.now()
   animationDuration = 0
@@ -86,6 +86,7 @@ export class Renderer {
       powerPreference: 'high-performance',
     })
 
+    // TODO - these shouldn't fire on edge hover or click either
     if (onContainerPointerEnter) {
       this.app.view.onpointerenter = (e) => {
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
@@ -109,6 +110,7 @@ export class Renderer {
     }
     if (onContainerPointerUp) {
       this.app.view.onpointerup = (e) => {
+        // console.log('hoverNode', this.hoveredNode, 'clickedNode', this.clickedNode)
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
           onContainerPointerUp(e)
         }
@@ -144,11 +146,14 @@ export class Renderer {
     this.viewport.addChild(this.frontLabelLayer)
     this.app.stage.addChild(this.viewport)
 
+    // this.nodesLayer.addChild(
+    //   new PIXI.Graphics().lineStyle(1, 0x666666).moveTo(-10000, 0).lineTo(10000, 0).endFill(),
+    //   new PIXI.Graphics().lineStyle(1, 0x666666).moveTo(0, -10000).lineTo(0, 10000).endFill()
+    // )
+
     this.app.view.addEventListener('wheel', (event) => { event.preventDefault() })
 
     animationFrameLoop(this.debug ? this.debugRender : this.render)
-
-    this.viewport.width
   }
 
   /**

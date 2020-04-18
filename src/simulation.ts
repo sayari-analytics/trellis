@@ -104,10 +104,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
   }
 
   const DEFAULT_SUBGRAPH_SIMULATION_OPTIONS: SimulationOptions = {
-    nodeStrength: -100,
-    linkDistance: 200,
+    nodeStrength: -50,
+    linkDistance: 100,
     linkStrength: undefined,
-    centerStrength: 0.1,
+    centerStrength: 0.5,
     nodePadding: 6,
     tick: 100,
   }

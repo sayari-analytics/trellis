@@ -5,7 +5,6 @@ import { Node, Edge, Graph } from '../../src/index'
 import { PixiRenderer } from '../../src/renderers/pixi'
 
 
-
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
@@ -38,7 +37,7 @@ const renderer = PixiRenderer({
 graph.onLayout(renderer.layout)
 
 
-const COMPANY_STYLE = { width: 62, fill: '#ffaf1d', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
+const COMPANY_STYLE = { width: 62, fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
 const PERSON_STYLE = { width: 62, fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
 
 const nodes: Node[] = [
@@ -60,10 +59,10 @@ const nodes: Node[] = [
   { id: 'p', label: 'P', type: 'person'},
   { id: 'q', label: 'Q', type: 'person'},
 ]
-  .map<Node>(({ id, label, type }) => ({
+  .map<Node>(({ id, label, type }, idx) => ({
     id,
     label,
-    style: type === 'person' ? PERSON_STYLE : COMPANY_STYLE
+    style: type === 'person' ? { ...PERSON_STYLE, width: (20 - idx) * 8 } : COMPANY_STYLE
   }))
 
 const edges: Edge[] = [
@@ -101,9 +100,12 @@ nodeDoubleClick$.pipe(
       nodes: nodes
         .map((node) => {
           if (node.id === clickedNode) {
+            // const fill = hsl(node.style.fill)
+            // fill.s -= 0.2
+            // fill.l += 0.22
             return {
               ...node,
-              style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined },
+              style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
               subGraph: {
                 nodes: [
                   { id: `${node.id}a`, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE, width: 42 } },

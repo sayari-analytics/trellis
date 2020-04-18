@@ -25,6 +25,7 @@ export class NodeContainer {
   parent?: NodeContainer
 
   private renderer: Renderer
+  private depth: number
   private nodesLayer: PIXI.Container
   private labelsLayer: PIXI.Container
   private startX = 0
@@ -45,10 +46,16 @@ export class NodeContainer {
   private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
 
   constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: NodeContainer) {
+    this.depth = parent ? parent.depth + 1 : 0
     this.renderer = renderer
-    this.nodesLayer = renderer.nodesLayer
-    this.labelsLayer = renderer.labelsLayer
-    this.parent = parent
+    if (parent) {
+      this.nodesLayer = parent.nodeContainer
+      this.labelsLayer = new PIXI.Container()
+      this.parent = parent
+    } else {
+      this.nodesLayer = renderer.nodesLayer
+      this.labelsLayer = renderer.labelsLayer
+    }
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
     this.nodeContainer
@@ -59,7 +66,7 @@ export class NodeContainer {
       .on('pointerupoutside', this.nodePointerUp)
       .addChild(this.nodeGfx)
 
-    this.nodeContainer.zIndex = this.nodeContainerDepth()
+    this.nodeContainer.zIndex = this.depth
 
     this.nodesLayer.addChild(this.nodeContainer)
     this.labelsLayer.addChild(this.labelContainer)
@@ -69,7 +76,7 @@ export class NodeContainer {
     this.set(node)
   }
 
-  set = (node: PositionedNode) => {
+  set(node: PositionedNode) {
     /**
      * TODO - only interpolate movement if node is not being dragged
      */
@@ -140,6 +147,7 @@ export class NodeContainer {
           lineJoin: 'round',
           stroke: '#fafafaee',
           strokeThickness: 2 * 2,
+          align: 'center',
         })
         this.labelSprite.x = 0
         this.labelSprite.y = radius + LABEL_Y_PADDING
@@ -185,12 +193,12 @@ export class NodeContainer {
         if (this.subGraphNodes[subGraphNode.id] === undefined) {
           // enter subGraph node
           subGraphNodes[subGraphNode.id] = new NodeContainer(
-            this.renderer,  { ...subGraphNode, x: subGraphNode.x! + this.endX, y: subGraphNode.y! + this.endY }, this.x, this.y, this
+            this.renderer, subGraphNode, 0, 0, this
           )
         } else {
           // update subGraph node
           subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id]
-            .set({ ...subGraphNode, x: subGraphNode.x! + this.endX, y: subGraphNode.y! + this.endY })
+            .set(subGraphNode)
         }
       }
     }
@@ -211,19 +219,19 @@ export class NodeContainer {
   /**
    * TODO - perf boost: render cheap version of things while still animating position
    */
-  render = () => {
+  render() {
     // TODO - should positionPercent be calculated in renderer
     if (this.renderer.animationDuration < POSITION_ANIMATION_DURATION) {
       const positionPercent = this.renderer.animationDuration / POSITION_ANIMATION_DURATION
 
-      if (this.renderer.clickedNode !== this.node.id) {
+      if (this.renderer.clickedNode !== this) {
         this.nodeContainer.x = this.labelContainer.x = this.x = this.interpolateX(positionPercent)
         this.nodeContainer.y = this.labelContainer.y = this.y = this.interpolateY(positionPercent)
       }
 
       this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
     } else {
-      if (this.renderer.clickedNode !== this.node.id) {
+      if (this.renderer.clickedNode !== this) {
         this.nodeContainer.x = this.labelContainer.x = this.x = this.endX
         this.nodeContainer.y = this.labelContainer.y = this.y = this.endY
       }
@@ -233,7 +241,7 @@ export class NodeContainer {
 
     this.nodeGfx
       .clear()
-      .lineStyle(this.strokeWidth, this.renderer.hoveredNode === this.node.id ? 0xcccccc : this.stroke, this.strokeOpacity, 0)
+      .lineStyle(this.strokeWidth, this.renderer.hoveredNode === this ? 0xcccccc : this.stroke, this.strokeOpacity, 0)
       .beginFill(this.fill, this.fillOpacity)
       .drawCircle(0, 0, this.radius)
 
@@ -248,7 +256,7 @@ export class NodeContainer {
     return this
   }
 
-  delete = () => {
+  delete() {
     this.nodeContainer.destroy()
     this.labelContainer.destroy()
     for (const subGraphNodeId in this.subGraphNodes) {
@@ -258,38 +266,72 @@ export class NodeContainer {
     delete this.renderer.nodesById[this.node.id]
   }
 
+  /**
+   * Note - for overlapping sibling nodes OUTTER and INNER, the following events are fired
+   * - pointer from outside to inside OUTTER            enter OUTTER
+   * - pointer from inside OUTTER to inside INNER       leave OUTTER, enter INNER
+   * - pointer from inside INNER to inside OUTTER       leave INNER, enter OUTTER
+   * - pointer from inside OUTTER to outside            leave OUTTER
+   *
+   * the above is as expected.  however, subgraphs of child nodes are missing two events
+   * - pointer from outside to inside OUTTER            enter OUTTER
+   * - pointer from inside OUTTER to inside INNER       [missing leave OUTTER], enter INNER
+   * - pointer from inside INNER to inside OUTTER       leave INNER, [missing enter OUTTER]
+   * - pointer from inside OUTTER to outside            leave OUTTER
+   *
+   * i.e. pointer events are different when: moving from sibling to sibling vs. moving from parent to child
+   * this feels wrong... how does this compare to DOM event handlers?
+   * in order to treat subGraph nodes as if they are siblings of other nodes:
+   * - fire leave when entering a node if there is already a hovered node, before firing enter
+   * - fire enter when leaving a node if pointer is over a node, after firing leave
+   */
   private nodePointerEnter = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.renderer.clickedNode === undefined) {
-      this.renderer.hoveredNode = this.node.id
+    if (this.renderer.clickedNode !== undefined) {
+      return
+    }
 
+    // PATCH so subGraph node pointer events are handled like sibling nodes - fire leave when entering a subGraph node if there is already a hovered node, before firing enter
+    if (this.parent && this.parent === this.renderer.hoveredNode) {
+      // TODO - event.target is wrong
+      this.parent.nodeContainer.emit('pointerout', event)
+    }
+
+    this.renderer.hoveredNode = this
+
+    if (this.parent === undefined) {
       this.renderer.nodesLayer.removeChild(this.nodeContainer)
       this.renderer.labelsLayer.removeChild(this.labelContainer)
       this.renderer.frontNodeLayer.addChild(this.nodeContainer)
       this.renderer.frontLabelLayer.addChild(this.labelContainer)
-
-      this.renderer.dirty = true
-      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onNodePointerEnter(event, this.node, x, y)
     }
+
+    this.renderer.dirty = true
+    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onNodePointerEnter(event, this.node, x, y)
   }
 
   private nodePointerLeave = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.renderer.clickedNode === undefined && this.renderer.hoveredNode === this.node.id) {
-      this.renderer.hoveredNode = undefined
+    if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) {
+      return
+    }
 
-      for (const nodeGfx of this.renderer.frontNodeLayer.children) {
-        this.renderer.frontNodeLayer.removeChild(nodeGfx)
-        this.renderer.nodesLayer.addChild(nodeGfx)
-      }
+    this.renderer.hoveredNode = undefined
 
-      for (const labelGfx of this.renderer.frontLabelLayer.children) {
-        this.renderer.frontLabelLayer.removeChild(labelGfx)
-        this.renderer.labelsLayer.addChild(labelGfx)
-      }
+    if (this.parent === undefined) {
+      this.renderer.frontNodeLayer.removeChild(this.nodeContainer)
+      this.renderer.frontLabelLayer.removeChild(this.labelContainer)
+      this.renderer.nodesLayer.addChild(this.nodeContainer)
+      this.renderer.labelsLayer.addChild(this.labelContainer)
+    }
 
-      this.renderer.dirty = true
-      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onNodePointerLeave(event, this.node, x, y)
+    this.renderer.dirty = true
+    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onNodePointerLeave(event, this.node, x, y)
+
+    // PATCH so subGraph node pointer events are handled like sibling nodes - fire enter when leaving a subGraph node if pointer is over a node, after firing leave
+    if (this.parent) {
+      // TODO - simply checking if node is in a subGraph is not sufficient.  event.target is wrong
+      this.parent.nodeContainer.emit('pointerover', event)
     }
   }
 
@@ -308,8 +350,8 @@ export class NodeContainer {
       this.doubleClick = true
     }
 
-    this.renderer.clickedNode = this.node.id
-    this.renderer.app.renderer.plugins.interaction.on('mousemove', this.nodeMove)
+    this.renderer.clickedNode = this
+    this.renderer.app.renderer.plugins.interaction.on('pointermove', this.nodeMove)
     this.renderer.viewport.pause = true
     this.renderer.dirty = true
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
@@ -319,7 +361,7 @@ export class NodeContainer {
   private nodePointerUp = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) {
       this.renderer.clickedNode = undefined
-      this.renderer.app.renderer.plugins.interaction.off('mousemove', this.nodeMove)
+      this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
       this.renderer.viewport.pause = false
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
@@ -340,17 +382,5 @@ export class NodeContainer {
       this.renderer.dirty = true
       this.renderer.onNodeDrag(event, this.node, x, y)
     }
-  }
-
-  private nodeContainerDepth = () => {
-    let depth = 0
-    let parent = this.parent
-
-    while (parent) {
-      depth++
-      parent = parent.parent
-    }
-
-    return depth
   }
 }

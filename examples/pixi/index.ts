@@ -13,6 +13,7 @@ document.body.appendChild(stats.dom)
 
 const nodeClick$ = new Subject<string | null>()
 const nodeHover$ = new Subject<string | null>()
+const nodeDoubleClick$ = new Subject<string | null>()
 
 const graph = new Graph()
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
@@ -32,15 +33,24 @@ const renderer = PixiRenderer({
     graph.dragEnd(id)
     nodeClick$.next(id)
   },
+  onNodeDoubleClick: (_, { id }) => {
+    nodeDoubleClick$.next(id)
+  },
   onContainerPointerUp: () => {
     nodeClick$.next(null)
+    nodeDoubleClick$.next(null)
   },
   debug: { stats }
 })
 graph.onLayout(renderer.layout)
 
 
+const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
+const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
+const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
+
 const nodes: Node[] = Object.values(graphData.nodes)
+  .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
@@ -80,7 +90,7 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
   }))
 
 
-const NODES_PER_TICK = 5
+const NODES_PER_TICK = 200
 const INTERVAL = 1400
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 
@@ -96,7 +106,8 @@ combineLatest(
   //   }, new Set<string>()),
   //   startWith(new Set<string>()),
   // ),
-  nodeClick$.pipe(startWith(null)),
+  // nodeClick$.pipe(startWith(null)),
+  nodeDoubleClick$.pipe(startWith(null)),
   // nodeHover$.pipe(startWith(null))
 ).pipe(
   map(([idx, clickedNode, hoverNode]) => {
