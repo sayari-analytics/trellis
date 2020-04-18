@@ -8,7 +8,7 @@ import graphData from '../../tmp-data'
 
 
 export const stats = new Stats()
-stats.showPanel(1) // 0: fps, 1: ms, 2: mb, 3+: custom
+stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
 const nodeClick$ = new Subject<string | null>()
@@ -40,7 +40,7 @@ const renderer = PixiRenderer({
     nodeClick$.next(null)
     nodeDoubleClick$.next(null)
   },
-  debug: { stats }
+  debug: { stats, logRenderTime: true }
 })
 graph.onLayout(renderer.layout)
 

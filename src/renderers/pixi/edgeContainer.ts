@@ -84,14 +84,14 @@ export class EdgeContainer {
       if (edge.label) {
         const labelText = new PIXI.Text(edge.label, {
           fontFamily: 'Helvetica',
-          fontSize: 10 * 2,
+          fontSize: 10 * 2.5,
           fill: 0x444444,
           lineJoin: 'round',
           stroke: '#fafafaee',
-          strokeThickness: 2 * 2,
+          strokeThickness: 2 * 2.5,
         })
         labelText.name = 'text'
-        labelText.scale.set(0.5)
+        labelText.scale.set(0.4)
         labelText.anchor.set(0.5, 0.6)
         this.labelContainer.addChild(labelText)
       } else {

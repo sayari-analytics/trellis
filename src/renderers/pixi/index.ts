@@ -308,7 +308,7 @@ export class Renderer {
     this.renderTime = now
 
     if (this.dirty) {
-      this.debug?.logRenderTime && console.time('update data')
+      this.debug?.logUpdateTime && console.time('update data')
       for (const nodeId in this.nodesById) {
         this.nodesById[nodeId].render()
       }
@@ -319,7 +319,7 @@ export class Renderer {
 
       this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
       this.viewport.dirty = false
-      this.debug?.logRenderTime && console.timeEnd('update data')
+      this.debug?.logUpdateTime && console.timeEnd('update data')
       this.debug?.logRenderTime && console.time('render data change')
       this.app.render()
       this.debug?.logRenderTime && console.timeEnd('render data change')

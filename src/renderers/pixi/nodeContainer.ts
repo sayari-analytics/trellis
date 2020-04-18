@@ -142,16 +142,15 @@ export class NodeContainer {
         this.labelSprite?.destroy()
         this.labelSprite = new PIXI.Text(node.label || '', {
           fontFamily: 'Helvetica',
-          fontSize: 12 * 2,
+          fontSize: 12 * 2.5,
           fill: 0x333333,
           lineJoin: 'round',
           stroke: '#fafafaee',
           strokeThickness: 2 * 2,
           align: 'center',
         })
-        this.labelSprite.x = 0
-        this.labelSprite.y = radius + LABEL_Y_PADDING
-        this.labelSprite.scale.set(0.5)
+        this.labelSprite.position.set(0, radius + LABEL_Y_PADDING)
+        this.labelSprite.scale.set(0.4)
         this.labelSprite.anchor.set(0.5, 0)
         this.labelContainer.addChild(this.labelSprite)
       } else {
@@ -173,8 +172,7 @@ export class NodeContainer {
           fill: 0xffffff
         })
         icon.name = 'icon'
-        icon.x = 0
-        icon.y = 0
+        icon.position.set(0,0)
         icon.anchor.set(0.5)
 
         this.nodeContainer.addChild(icon)
