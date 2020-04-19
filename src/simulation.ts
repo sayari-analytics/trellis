@@ -114,7 +114,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
 
   class Simulation {
 
-    options: SimulationOptions = {
+    private options: SimulationOptions = {
       nodeStrength: DEFAULT_OPTIONS.nodeStrength,
       linkDistance: DEFAULT_OPTIONS.linkDistance,
       linkStrength: DEFAULT_OPTIONS.linkStrength,
@@ -122,33 +122,36 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
       nodePadding: DEFAULT_OPTIONS.nodePadding,
       tick: DEFAULT_OPTIONS.tick,
     }
-    nodesById: { [key: string]: PositionedNode } = {}
-    edgesById: { [key: string]: PositionedEdge } = {}
-    subGraphs: { [id: string]: Simulation } = {}
-    parent?: Simulation
 
-    forceLink = d3.forceLink<PositionedNode, PositionedEdge>().distance(this.options.linkDistance)
-    forceManyBody = d3.forceManyBody().strength(this.options.nodeStrength).distanceMax(4000).theta(0.5)
-    forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
+    private parent?: Simulation
+    private nodesById: { [key: string]: PositionedNode } = {}
+    private edgesById: { [key: string]: PositionedEdge } = {}
+    private subGraphs: { [id: string]: Simulation } = {}
+    /**
+     * nodesById[nodeId].style.width property for nodes with subgraphs is computed width
+     * in order to properly compute whether the simlulation needs to update,
+     * we need to track not just previous computed width, but also previous original width
+     */
+    private previousWidth: { [id: string]: number | undefined } = {}
+
+    private forceLink = d3.forceLink<PositionedNode, PositionedEdge>().distance(this.options.linkDistance)
+    private forceManyBody = d3.forceManyBody().strength(this.options.nodeStrength).distanceMax(4000).theta(0.5)
+    private forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
       return (node.style === undefined || node.style.width === undefined ?
         DEFAULT_NODE_WIDTH * 0.5 :
         node.style.width * 0.5
       ) + this.options.nodePadding
     })
-    forceX = d3.forceX(0).strength(this.options.centerStrength)
-    forceY = d3.forceY(0).strength(this.options.centerStrength)
+    private forceX = d3.forceX(0).strength(this.options.centerStrength)
+    private forceY = d3.forceY(0).strength(this.options.centerStrength)
 
-    simulation = d3.forceSimulation<PositionedNode>()
+    private simulation = d3.forceSimulation<PositionedNode>()
       .force('charge', this.forceManyBody)
       .force('collision', this.forceCollide)
       .force('link', this.forceLink)
       .force('x', this.forceX)
       .force('y', this.forceY)
       .stop()
-
-    postLayout = throttle(() => {
-      self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
-    })
 
     constructor(parent?: Simulation) {
       this.parent = parent
@@ -237,11 +240,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
           node.vy = this.nodesById[node.id].vy
           node.index = this.nodesById[node.id].index
 
-          if (node.style?.width !== this.nodesById[node.id].style?.width) {
-            /**
-             * TODO - this returns true when old node width is unchanged b/c expanded node width is manually set to subGraph width
-             * results in unnecessary run of simulation when just closing expanded node
-             */
+          if (node.style?.width !== this.previousWidth[node.id]) {
             update = true
           }
 
@@ -269,6 +268,8 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
 
           nodesById[node.id] = node
         }
+
+        // this.previousWidth[node.id] = node.style?.width
       }
 
       for (const nodeId in this.nodesById) {
@@ -367,7 +368,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
 
         for (let i = 0; i < nodes.length; i++) {
           node = nodes[i]
-          if (node.id === id && node.x != undefined && node.y != undefined) {
+          if (node.id !== id && node.x != undefined && node.y != undefined) {
             theta = Math.atan2(y - node.y, x - node.x)
             xOffset = Math.cos(theta) * radius
             yOffset = Math.sin(theta) * radius
@@ -400,6 +401,9 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
         for (let i = 0; i < nodes.length; i++) {
           node = nodes[i]
           if (node.id === id) {
+            /**
+             * TODO - properly compute node w/ subGraph radius
+             */
             node.style === undefined ? node.style = { width: radius * 2 } : node.style.width = radius * 2
           } else if (node.x != undefined && node.y != undefined) {
             theta = Math.atan2(node.y - y, node.x - x)
@@ -413,6 +417,10 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
         }
       }
     }
+
+    postLayout = throttle(() => {
+      self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
+    })
   }
 
   const simulation = new Simulation()
