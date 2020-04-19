@@ -43,6 +43,10 @@ export class NodeContainer {
   private labelContainer = new PIXI.Container()
   private nodeGfx = new PIXI.Graphics()
   private labelSprite?: PIXI.Text
+  private doubleClickTimeout: NodeJS.Timeout | undefined
+  private doubleClick = false
+  private nodeMoveXOffset: number = 0
+  private nodeMoveYOffset: number = 0
   private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
 
   constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: NodeContainer) {
@@ -333,9 +337,6 @@ export class NodeContainer {
     }
   }
 
-  private doubleClickTimeout: NodeJS.Timeout | undefined
-  private doubleClick = false
-
   private clearDoubleClick = () => {
     this.doubleClickTimeout = undefined
     this.doubleClick = false
@@ -353,7 +354,9 @@ export class NodeContainer {
     this.renderer.viewport.pause = true
     this.renderer.dirty = true
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onNodePointerDown(event, this.node, x, y)
+    this.nodeMoveXOffset = x - this.x
+    this.nodeMoveYOffset = y - this.y
+    this.renderer.onNodePointerDown(event, this.node, this.x, this.y)
   }
 
   private nodePointerUp = (event: PIXI.interaction.InteractionEvent) => {
@@ -362,23 +365,26 @@ export class NodeContainer {
       this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
       this.renderer.viewport.pause = false
       this.renderer.dirty = true
-      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onNodePointerUp(event, this.node, x, y)
+      this.nodeMoveXOffset = 0
+      this.nodeMoveYOffset = 0
+      this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
 
       if (this.doubleClick) {
         this.doubleClick = false
-        this.renderer.onNodeDoubleClick(event, this.node, x, y)
+        this.renderer.onNodeDoubleClick(event, this.node, this.x, this.y)
       }
     }
   }
 
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) {
-      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      const position = this.renderer.viewport.toWorld(event.data.global)
+      const x = position.x - this.nodeMoveXOffset
+      const y = position.y - this.nodeMoveYOffset
       this.startX = this.endX = this.nodeContainer.x = this.labelContainer.x = this.x = x
       this.startY = this.endY = this.nodeContainer.y = this.labelContainer.y = this.y = y
       this.renderer.dirty = true
-      this.renderer.onNodeDrag(event, this.node, x, y)
+      this.renderer.onNodeDrag(event, this.node, this.x, this.y)
     }
   }
 }

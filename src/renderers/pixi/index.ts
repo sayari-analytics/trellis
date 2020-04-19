@@ -74,6 +74,7 @@ export class Renderer {
      * TODO - max out render performance, even on machines w/o dedicated GPU
      * just twist all the knobs...
      */
+    PIXI.utils.skipHello()
     this.app = new PIXI.Application({
       view: container,
       width: this.width,
