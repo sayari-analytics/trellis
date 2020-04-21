@@ -90,7 +90,7 @@ const edges: Edge[] = Object.entries<{ field: string, source: string, target: st
   }))
 
 
-const NODES_PER_TICK = 20
+const NODES_PER_TICK = 200
 const INTERVAL = 1400
 const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
 

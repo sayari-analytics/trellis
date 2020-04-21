@@ -32,9 +32,10 @@ const renderer = PixiRenderer({
     nodeClick$.next(null)
     nodeDoubleClick$.next(null)
   },
-  debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: false }
 })
 graph.onLayout(renderer.layout)
+;(global as any).renderer = renderer
 
 
 const COMPANY_STYLE = { width: 62, fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }

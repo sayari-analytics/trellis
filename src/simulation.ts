@@ -269,7 +269,7 @@ const workerScript = (DEFAULT_OPTIONS: SimulationOptions, DEFAULT_NODE_WIDTH: nu
           nodesById[node.id] = node
         }
 
-        // this.previousWidth[node.id] = node.style?.width
+        this.previousWidth[node.id] = node.style?.width
       }
 
       for (const nodeId in this.nodesById) {

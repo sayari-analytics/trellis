@@ -10,7 +10,7 @@ import { EdgeContainer } from './edgeContainer'
 
 new FontFaceObserver('Material Icons').load()
 
-export const POSITION_ANIMATION_DURATION = 800
+const POSITION_ANIMATION_DURATION = 800
 
 PIXI.utils.skipHello()
 
@@ -25,6 +25,7 @@ export class Renderer {
   dirty = false
   renderTime = Date.now()
   animationDuration = 0
+  animationPercent = 0
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -113,7 +114,6 @@ export class Renderer {
     }
     if (onContainerPointerUp) {
       this.app.view.onpointerup = (e) => {
-        // console.log('hoverNode', this.hoveredNode, 'clickedNode', this.clickedNode)
         if (this.hoveredNode === undefined && this.clickedNode === undefined) {
           onContainerPointerUp(e)
         }
@@ -179,6 +179,7 @@ export class Renderer {
     }
 
     this.animationDuration = 0
+    this.animationPercent = 0
     const nodesById: { [id: string]: NodeContainer } = {}
     const edgesById: { [id: string]: EdgeContainer } = {}
 
@@ -216,22 +217,17 @@ export class Renderer {
     for (const node of nodes) {
       if (this.nodesById[node.id] === undefined) {
         // node enter
+        let adjacentNode: NodeContainer | undefined
+
         if (this.reverseEdgeIndex[node.id]) {
           // nodes w edges from existing nodes enter from one of those nodes
-          const adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
-          nodesById[node.id] = adjacentNode === undefined ?
-            new NodeContainer(this, node, 0, 0) :
-            new NodeContainer(this, node, adjacentNode.x, adjacentNode.y)
+          adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
         } else if (this.forwardEdgeIndex[node.id]) {
           // nodes w edges to existing nodes enter from one of those nodes
-          const adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
-          nodesById[node.id] = adjacentNode === undefined ?
-            new NodeContainer(this, node, 0, 0) :
-            new NodeContainer(this, node, adjacentNode.x, adjacentNode.y)
-        } else {
-          // nodes w/o edges to an existing node enter from origin
-          nodesById[node.id] = new NodeContainer(this, node, 0, 0)
+          adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
         }
+
+        nodesById[node.id] = new NodeContainer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
         this.dirty = true
       } else {
         // node update
@@ -282,6 +278,7 @@ export class Renderer {
     const now = Date.now()
     // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
     this.animationDuration += now - this.renderTime
+    this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.renderTime = now
 
     if (this.dirty) {
@@ -293,7 +290,7 @@ export class Renderer {
         this.edgesById[edgeId].render()
       }
 
-      this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
+      this.dirty = this.animationPercent < 1
       this.viewport.dirty = false
       this.app.render()
     } else if (this.viewport.dirty) {
@@ -308,6 +305,7 @@ export class Renderer {
     const now = Date.now()
     // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
     this.animationDuration += now - this.renderTime
+    this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.renderTime = now
 
     if (this.dirty) {
@@ -321,7 +319,7 @@ export class Renderer {
       }
       performance.measure('update', 'update')
 
-      this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
+      this.dirty = this.animationPercent < 1
       this.viewport.dirty = false
 
       performance.mark('render')
@@ -339,14 +337,14 @@ export class Renderer {
       const total = measurements[0].duration
       console.log(
         `%c${total.toFixed(2)}ms %c(update: 0.00, render: ${measurements[0].duration.toFixed(2)})`,
-        `color: ${total < 16 ? '#6c6' : total < 32 ? '#faa' : '#d00'}`,
+        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 50 ? '#e22' : '#b00'}`,
         'color: #666'
       )
     } else if (this.debug?.logPerformance && measurements.length === 2) {
       const total = measurements[0].duration + measurements[1].duration
       console.log(
         `%c${total.toFixed(2)}ms %c(${measurements.map(({ name, duration }) => `${name}: ${duration.toFixed(2)}`).join(', ')}}`,
-        `color: ${total < 16 ? '#6c6' : total < 32 ? '#faa' : '#d00'}`,
+        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 50 ? '#e22' : '#b00'}`,
         'color: #666'
       )
     }

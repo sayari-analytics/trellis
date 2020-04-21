@@ -1,9 +1,9 @@
 import * as PIXI from 'pixi.js'
 import { nodeStyleSelector } from '../utils'
 import { PositionedNode } from '../..'
-import { colorToNumber } from './utils'
+import { colorToNumber, parentInFront } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { Renderer, POSITION_ANIMATION_DURATION } from '.'
+import { Renderer } from '.'
 import { DEFAULT_NODE_STYLES } from '../options'
 
 
@@ -26,8 +26,6 @@ export class NodeContainer {
 
   private renderer: Renderer
   private depth: number
-  private nodesLayer: PIXI.Container
-  private labelsLayer: PIXI.Container
   private startX = 0
   private startY = 0
   private startRadius = 0
@@ -50,16 +48,11 @@ export class NodeContainer {
   private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
 
   constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: NodeContainer) {
-    this.depth = parent ? parent.depth + 1 : 0
     this.renderer = renderer
-    if (parent) {
-      this.nodesLayer = parent.nodeContainer
-      this.labelsLayer = new PIXI.Container()
-      this.parent = parent
-    } else {
-      this.nodesLayer = renderer.nodesLayer
-      this.labelsLayer = renderer.labelsLayer
-    }
+
+    this.parent = parent
+    this.depth = parent ? parent.depth + 1 : 0
+
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
     this.nodeContainer
@@ -72,8 +65,18 @@ export class NodeContainer {
 
     this.nodeContainer.zIndex = this.depth
 
-    this.nodesLayer.addChild(this.nodeContainer)
-    this.labelsLayer.addChild(this.labelContainer)
+    /**
+     * if any ancestor is in front layer, add to front
+     * otherwise, add to regular layers
+     */
+    if (parentInFront(this.renderer, this.parent)) {
+      this.renderer.frontNodeLayer.addChild(this.nodeContainer)
+      this.renderer.frontLabelLayer.addChild(this.labelContainer)
+    } else {
+      this.renderer.nodesLayer.addChild(this.nodeContainer)
+      this.renderer.labelsLayer.addChild(this.labelContainer)
+    }
+
     this.node = node
     this.x = x
     this.y = y
@@ -219,23 +222,20 @@ export class NodeContainer {
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render() {
-    // TODO - should positionPercent be calculated in renderer
-    if (this.renderer.animationDuration < POSITION_ANIMATION_DURATION) {
-      const positionPercent = this.renderer.animationDuration / POSITION_ANIMATION_DURATION
+    if (this.renderer.clickedNode !== this) {
+      // if (this.parent) {
+      //   debugger
+      // }
 
-      if (this.renderer.clickedNode !== this) {
-        this.nodeContainer.x = this.labelContainer.x = this.x = this.interpolateX(positionPercent)
-        this.nodeContainer.y = this.labelContainer.y = this.y = this.interpolateY(positionPercent)
+      if (this.renderer.animationPercent < 1) {
+        this.nodeContainer.x = this.labelContainer.x = this.x = (this.interpolateX(this.renderer.animationPercent) + (this.parent ? this.parent.x : 0))
+        this.nodeContainer.y = this.labelContainer.y = this.y = (this.interpolateY(this.renderer.animationPercent) + (this.parent ? this.parent.y : 0))
+        this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
+      } else {
+        this.nodeContainer.x = this.labelContainer.x = this.x = (this.endX + (this.parent ? this.parent.x : 0))
+        this.nodeContainer.y = this.labelContainer.y = this.y = (this.endY + (this.parent ? this.parent.y : 0))
+        this.radius = this.endRadius
       }
-
-      this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
-    } else {
-      if (this.renderer.clickedNode !== this) {
-        this.nodeContainer.x = this.labelContainer.x = this.x = this.endX
-        this.nodeContainer.y = this.labelContainer.y = this.y = this.endY
-      }
-
-      this.radius = this.endRadius
     }
 
     this.nodeGfx
@@ -265,35 +265,9 @@ export class NodeContainer {
     delete this.renderer.nodesById[this.node.id]
   }
 
-  /**
-   * Note - for overlapping sibling nodes OUTTER and INNER, the following events are fired
-   * - pointer from outside to inside OUTTER            enter OUTTER
-   * - pointer from inside OUTTER to inside INNER       leave OUTTER, enter INNER
-   * - pointer from inside INNER to inside OUTTER       leave INNER, enter OUTTER
-   * - pointer from inside OUTTER to outside            leave OUTTER
-   *
-   * the above is as expected.  however, subgraphs of child nodes are missing two events
-   * - pointer from outside to inside OUTTER            enter OUTTER
-   * - pointer from inside OUTTER to inside INNER       [missing leave OUTTER], enter INNER
-   * - pointer from inside INNER to inside OUTTER       leave INNER, [missing enter OUTTER]
-   * - pointer from inside OUTTER to outside            leave OUTTER
-   *
-   * i.e. pointer events are different when: moving from sibling to sibling vs. moving from parent to child
-   * this feels wrong... how does this compare to DOM event handlers?
-   * in order to treat subGraph nodes as if they are siblings of other nodes:
-   * - fire leave when entering a node if there is already a hovered node, before firing enter
-   * - fire enter when leaving a node if pointer is over a node, after firing leave
-   */
-  private nodePointerEnter = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined) {
-      return
-    }
 
-    // PATCH so subGraph node pointer events are handled like sibling nodes - fire leave when entering a subGraph node if there is already a hovered node, before firing enter
-    if (this.parent && this.parent === this.renderer.hoveredNode) {
-      // TODO - event.target is wrong
-      this.parent.nodeContainer.emit('pointerout', event)
-    }
+  private nodePointerEnter = (event: PIXI.interaction.InteractionEvent) => {
+    if (this.renderer.clickedNode !== undefined) return
 
     this.renderer.hoveredNode = this
 
@@ -302,6 +276,13 @@ export class NodeContainer {
       this.renderer.labelsLayer.removeChild(this.labelContainer)
       this.renderer.frontNodeLayer.addChild(this.nodeContainer)
       this.renderer.frontLabelLayer.addChild(this.labelContainer)
+
+      for (const subGraphNodeId in this.subGraphNodes) {
+        this.renderer.nodesLayer.removeChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
+        this.renderer.labelsLayer.removeChild(this.subGraphNodes[subGraphNodeId].labelContainer)
+        this.renderer.frontNodeLayer.addChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
+        this.renderer.frontLabelLayer.addChild(this.subGraphNodes[subGraphNodeId].labelContainer)
+      }
     }
 
     this.renderer.dirty = true
@@ -310,9 +291,7 @@ export class NodeContainer {
   }
 
   private nodePointerLeave = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) {
-      return
-    }
+    if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) return
 
     this.renderer.hoveredNode = undefined
 
@@ -321,22 +300,18 @@ export class NodeContainer {
       this.renderer.frontLabelLayer.removeChild(this.labelContainer)
       this.renderer.nodesLayer.addChild(this.nodeContainer)
       this.renderer.labelsLayer.addChild(this.labelContainer)
+
+      for (const subGraphNodeId in this.subGraphNodes) {
+        this.renderer.frontNodeLayer.removeChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
+        this.renderer.frontLabelLayer.removeChild(this.subGraphNodes[subGraphNodeId].labelContainer)
+        this.renderer.nodesLayer.addChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
+        this.renderer.labelsLayer.addChild(this.subGraphNodes[subGraphNodeId].labelContainer)
+      }
     }
 
     this.renderer.dirty = true
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
     this.renderer.onNodePointerLeave(event, this.node, x, y)
-
-    // PATCH so subGraph node pointer events are handled like sibling nodes - fire enter when leaving a subGraph node if pointer is over a node, after firing leave
-    if (this.parent) {
-      // TODO - simply checking if node is in a subGraph is not sufficient.  event.target is wrong
-      this.parent.nodeContainer.emit('pointerover', event)
-    }
-  }
-
-  private clearDoubleClick = () => {
-    this.doubleClickTimeout = undefined
-    this.doubleClick = false
   }
 
   private nodePointerDown = (event: PIXI.interaction.InteractionEvent) => {
@@ -357,31 +332,37 @@ export class NodeContainer {
   }
 
   private nodePointerUp = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined) {
-      this.renderer.clickedNode = undefined
-      this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
-      this.renderer.viewport.pause = false
-      this.renderer.dirty = true
-      this.nodeMoveXOffset = 0
-      this.nodeMoveYOffset = 0
-      this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
+    if (this.renderer.clickedNode === undefined) return
 
-      if (this.doubleClick) {
-        this.doubleClick = false
-        this.renderer.onNodeDoubleClick(event, this.node, this.x, this.y)
-      }
+    this.renderer.clickedNode = undefined
+    this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
+    this.renderer.viewport.pause = false
+    this.renderer.dirty = true
+    this.nodeMoveXOffset = 0
+    this.nodeMoveYOffset = 0
+    this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
+
+    if (this.doubleClick) {
+      this.doubleClick = false
+      this.renderer.onNodeDoubleClick(event, this.node, this.x, this.y)
     }
   }
 
   private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined) {
-      const position = this.renderer.viewport.toWorld(event.data.global)
-      const x = position.x - this.nodeMoveXOffset
-      const y = position.y - this.nodeMoveYOffset
-      this.startX = this.endX = this.nodeContainer.x = this.labelContainer.x = this.x = x
-      this.startY = this.endY = this.nodeContainer.y = this.labelContainer.y = this.y = y
-      this.renderer.dirty = true
-      this.renderer.onNodeDrag(event, this.node, this.x, this.y)
-    }
+    if (this.renderer.clickedNode === undefined) return
+
+    const position = this.renderer.viewport.toWorld(event.data.global)
+    const x = position.x - this.nodeMoveXOffset
+    const y = position.y - this.nodeMoveYOffset
+    this.startX = this.endX = this.nodeContainer.x = this.labelContainer.x = this.x = x
+    this.startY = this.endY = this.nodeContainer.y = this.labelContainer.y = this.y = y
+    this.renderer.dirty = true
+    this.renderer.onNodeDrag(event, this.node, this.x, this.y)
+  }
+
+
+  private clearDoubleClick = () => {
+    this.doubleClickTimeout = undefined
+    this.doubleClick = false
   }
 }
