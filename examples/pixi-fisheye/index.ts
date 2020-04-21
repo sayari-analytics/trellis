@@ -32,7 +32,7 @@ const renderer = PixiRenderer({
     nodeClick$.next(null)
     nodeDoubleClick$.next(null)
   },
-  debug: { stats }
+  debug: { stats, logPerformance: true }
 })
 graph.onLayout(renderer.layout)
 

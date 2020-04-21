@@ -194,13 +194,10 @@ export class NodeContainer {
       for (const subGraphNode of node.subGraph.nodes) {
         if (this.subGraphNodes[subGraphNode.id] === undefined) {
           // enter subGraph node
-          subGraphNodes[subGraphNode.id] = new NodeContainer(
-            this.renderer, subGraphNode, 0, 0, this
-          )
+          subGraphNodes[subGraphNode.id] = new NodeContainer(this.renderer, subGraphNode, 0, 0, this)
         } else {
           // update subGraph node
-          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id]
-            .set(subGraphNode)
+          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode)
         }
       }
     }

@@ -36,7 +36,7 @@ export type RendererOptions = {
   onContainerPointerMove?: (event: PointerEvent) => void
   onContainerPointerUp?: (event: PointerEvent) => void
   onContainerPointerLeave?: (event: PointerEvent) => void
-  debug?: { logUpdateTime?: boolean, logRenderTime?: boolean, stats?: Stats }
+  debug?: { logPerformance?: boolean, stats?: Stats }
 }
 
 export type RendererLayoutOptions = {

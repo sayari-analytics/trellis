@@ -311,7 +311,7 @@ export class Renderer {
     this.renderTime = now
 
     if (this.dirty) {
-      this.debug?.logUpdateTime && console.time('update data')
+      performance.mark('update')
       for (const nodeId in this.nodesById) {
         this.nodesById[nodeId].render()
       }
@@ -319,19 +319,39 @@ export class Renderer {
       for (const edgeId in this.edgesById) {
         this.edgesById[edgeId].render()
       }
+      performance.measure('update', 'update')
 
       this.dirty = this.animationDuration < POSITION_ANIMATION_DURATION
       this.viewport.dirty = false
-      this.debug?.logUpdateTime && console.timeEnd('update data')
-      this.debug?.logRenderTime && console.time('render data change')
+
+      performance.mark('render')
       this.app.render()
-      this.debug?.logRenderTime && console.timeEnd('render data change')
+      performance.measure('render', 'render')
     } else if (this.viewport.dirty) {
       this.viewport.dirty = false
-      this.debug?.logRenderTime && console.time('render viewport change')
+      performance.mark('render')
       this.app.render()
-      this.debug?.logRenderTime && console.timeEnd('render viewport change')
+      performance.measure('render', 'render')
     }
+
+    const measurements = performance.getEntriesByType('measure')
+    if (this.debug?.logPerformance && measurements.length === 1) {
+      const total = measurements[0].duration
+      console.log(
+        `%c${total.toFixed(2)}ms %c(update: 0.00, render: ${measurements[0].duration.toFixed(2)})`,
+        `color: ${total < 16 ? '#6c6' : total < 32 ? '#faa' : '#d00'}`,
+        'color: #666'
+      )
+    } else if (this.debug?.logPerformance && measurements.length === 2) {
+      const total = measurements[0].duration + measurements[1].duration
+      console.log(
+        `%c${total.toFixed(2)}ms %c(${measurements.map(({ name, duration }) => `${name}: ${duration.toFixed(2)}`).join(', ')}}`,
+        `color: ${total < 16 ? '#6c6' : total < 32 ? '#faa' : '#d00'}`,
+        'color: #666'
+      )
+    }
+    performance.clearMarks()
+    performance.clearMeasures()
   }
 }
 

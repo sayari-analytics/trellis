@@ -53,27 +53,25 @@ export const animationFrameLoop = (cb: () => void) => {
   return () => raf.cancel(frame)
 }
 
-// export const animationFrameLoop = (cb: () => void) => {
-//   const tick = () => {
-//     cb()
-//     raf(tick)
-//   }
-
-//   raf(tick)
-// }
-
 
 export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => void) => {
+  let tailArgs: T | undefined
   let clear = true
 
   return (...args: T) => {
     if (clear) {
+      clear = false
+      cb(...args)
+
       raf(() => {
-        cb(...args)
+        if (tailArgs) {
+          cb(...tailArgs)
+        }
+        tailArgs = undefined
         clear = true
       })
-
-      clear = false
+    } else {
+      tailArgs = args
     }
   }
 }
