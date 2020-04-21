@@ -22,7 +22,7 @@ const ARROW_HEIGHT = 16
 const ARROW_WIDTH = 8
 
 
-export class EdgeContainer {
+export class Edge {
 
   edge: PositionedEdge = { id: '', source: { id: '' }, target: { id: '' } }
   labelContainer: PIXI.Container = new PIXI.Container()
@@ -70,9 +70,9 @@ export class EdgeContainer {
     /**
      * Style
      */
-    this.width = EdgeContainer.edgeStyleSelector(edge, 'width')
-    this.stroke = colorToNumber(EdgeContainer.edgeStyleSelector(edge, 'stroke'))
-    this.strokeOpacity = EdgeContainer.edgeStyleSelector(edge, 'strokeOpacity')
+    this.width = Edge.edgeStyleSelector(edge, 'width')
+    this.stroke = colorToNumber(Edge.edgeStyleSelector(edge, 'stroke'))
+    this.strokeOpacity = Edge.edgeStyleSelector(edge, 'strokeOpacity')
 
 
     /**

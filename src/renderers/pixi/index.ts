@@ -4,8 +4,8 @@ import FontFaceObserver from 'fontfaceobserver'
 import { RendererOptions, RendererLayoutOptions } from '../options'
 import { PositionedNode, PositionedEdge } from '../../index'
 import { animationFrameLoop, noop } from '../../utils'
-import { NodeContainer } from './nodeContainer'
-import { EdgeContainer } from './edgeContainer'
+import { Node } from './node'
+import { Edge } from './edge'
 
 
 new FontFaceObserver('Material Icons').load()
@@ -20,8 +20,8 @@ export class Renderer {
   width: number
   height: number
   debug: RendererOptions['debug']
-  hoveredNode?: NodeContainer
-  clickedNode?: NodeContainer
+  hoveredNode?: Node
+  clickedNode?: Node
   dirty = false
   renderTime = Date.now()
   animationDuration = 0
@@ -31,8 +31,8 @@ export class Renderer {
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodesById: { [id: string]: NodeContainer } = {}
-  edgesById: { [id: string]: EdgeContainer } = {}
+  nodesById: { [id: string]: Node } = {}
+  edgesById: { [id: string]: Edge } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
@@ -180,8 +180,8 @@ export class Renderer {
 
     this.animationDuration = 0
     this.animationPercent = 0
-    const nodesById: { [id: string]: NodeContainer } = {}
-    const edgesById: { [id: string]: EdgeContainer } = {}
+    const nodesById: { [id: string]: Node } = {}
+    const edgesById: { [id: string]: Edge } = {}
 
 
     /**
@@ -217,7 +217,7 @@ export class Renderer {
     for (const node of nodes) {
       if (this.nodesById[node.id] === undefined) {
         // node enter
-        let adjacentNode: NodeContainer | undefined
+        let adjacentNode: Node | undefined
 
         if (this.reverseEdgeIndex[node.id]) {
           // nodes w edges from existing nodes enter from one of those nodes
@@ -227,7 +227,7 @@ export class Renderer {
           adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
         }
 
-        nodesById[node.id] = new NodeContainer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
+        nodesById[node.id] = new Node(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
         this.dirty = true
       } else {
         // node update
@@ -252,7 +252,7 @@ export class Renderer {
       const id = edge.id
       if (this.edgesById[id] === undefined) {
         // edge enter
-        edgesById[id] = new EdgeContainer(this, this.edgesLayer).set(edge)
+        edgesById[id] = new Edge(this, this.edgesLayer).set(edge)
         this.dirty = true
       } else {
         // edge update

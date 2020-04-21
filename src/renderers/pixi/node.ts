@@ -10,7 +10,7 @@ import { DEFAULT_NODE_STYLES } from '../options'
 const LABEL_Y_PADDING = 4
 
 
-export class NodeContainer {
+export class Node {
 
   node: PositionedNode
   x: number
@@ -21,8 +21,8 @@ export class NodeContainer {
   strokeOpacity = 0
   fill = 0
   fillOpacity = 0
-  subGraphNodes: { [id: string]: NodeContainer } = {}
-  parent?: NodeContainer
+  subGraphNodes: { [id: string]: Node } = {}
+  parent?: Node
 
   private renderer: Renderer
   private depth: number
@@ -47,7 +47,7 @@ export class NodeContainer {
   private nodeMoveYOffset: number = 0
   private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
 
-  constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: NodeContainer) {
+  constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: Node) {
     this.renderer = renderer
 
     this.parent = parent
@@ -116,8 +116,8 @@ export class NodeContainer {
     /**
      * Radius Interpolation
      */
-    const radius = NodeContainer.nodeStyleSelector(node, 'width') / 2
-    const strokeWidth = NodeContainer.nodeStyleSelector(node, 'strokeWidth')
+    const radius = Node.nodeStyleSelector(node, 'width') / 2
+    const strokeWidth = Node.nodeStyleSelector(node, 'strokeWidth')
 
     this.startRadius = this.radius === -1 ? radius : this.radius
     this.endRadius = radius
@@ -133,10 +133,10 @@ export class NodeContainer {
      * Styles
      */
     this.strokeWidth = strokeWidth
-    this.stroke = colorToNumber(NodeContainer.nodeStyleSelector(this.node, 'stroke'))
-    this.strokeOpacity = NodeContainer.nodeStyleSelector(this.node, 'strokeOpacity')
-    this.fill = colorToNumber(NodeContainer.nodeStyleSelector(this.node, 'fill'))
-    this.fillOpacity = NodeContainer.nodeStyleSelector(this.node, 'fillOpacity')
+    this.stroke = colorToNumber(Node.nodeStyleSelector(this.node, 'stroke'))
+    this.strokeOpacity = Node.nodeStyleSelector(this.node, 'strokeOpacity')
+    this.fill = colorToNumber(Node.nodeStyleSelector(this.node, 'fill'))
+    this.fillOpacity = Node.nodeStyleSelector(this.node, 'fillOpacity')
 
 
     /**
@@ -192,12 +192,12 @@ export class NodeContainer {
     /**
      * SubGraph Node
      */
-    const subGraphNodes: { [id: string]: NodeContainer } = {}
+    const subGraphNodes: { [id: string]: Node } = {}
     if (node.subGraph?.nodes) {
       for (const subGraphNode of node.subGraph.nodes) {
         if (this.subGraphNodes[subGraphNode.id] === undefined) {
           // enter subGraph node
-          subGraphNodes[subGraphNode.id] = new NodeContainer(this.renderer, subGraphNode, 0, 0, this)
+          subGraphNodes[subGraphNode.id] = new Node(this.renderer, subGraphNode, 0, 0, this)
         } else {
           // update subGraph node
           subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode)

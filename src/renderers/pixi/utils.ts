@@ -1,6 +1,6 @@
 import { color } from 'd3-color'
 import { Renderer } from '.'
-import { NodeContainer } from './nodeContainer'
+import { Node } from './node'
 
 
 export const colorToNumber = (colorString: string): number => {
@@ -13,7 +13,7 @@ export const colorToNumber = (colorString: string): number => {
 }
 
 
-export const parentInFront = (renderer: Renderer, parent: NodeContainer | undefined) => {
+export const parentInFront = (renderer: Renderer, parent: Node | undefined) => {
   while (parent) {
     if (renderer.hoveredNode === parent) {
       return true
