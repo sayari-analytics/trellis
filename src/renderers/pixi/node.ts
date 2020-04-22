@@ -222,20 +222,22 @@ export class Node {
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render() {
-    if (this.renderer.clickedNode !== this) {
-      // if (this.parent) {
-      //   debugger
-      // }
+    if (this.renderer.animationPercent < 1) {
+      this.x = this.interpolateX(this.renderer.animationPercent)
+      this.y = this.interpolateY(this.renderer.animationPercent)
+      this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
+    } else {
+      this.x = this.endX
+      this.y = this.endY
+      this.radius = this.endRadius
+    }
 
-      if (this.renderer.animationPercent < 1) {
-        this.nodeContainer.x = this.labelContainer.x = this.x = (this.interpolateX(this.renderer.animationPercent) + (this.parent ? this.parent.x : 0))
-        this.nodeContainer.y = this.labelContainer.y = this.y = (this.interpolateY(this.renderer.animationPercent) + (this.parent ? this.parent.y : 0))
-        this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
-      } else {
-        this.nodeContainer.x = this.labelContainer.x = this.x = (this.endX + (this.parent ? this.parent.x : 0))
-        this.nodeContainer.y = this.labelContainer.y = this.y = (this.endY + (this.parent ? this.parent.y : 0))
-        this.radius = this.endRadius
-      }
+    if (this.parent) {
+      this.nodeContainer.x = this.labelContainer.x = this.x + this.parent.x
+      this.nodeContainer.y = this.labelContainer.y = this.y + this.parent.y
+    } else {
+      this.nodeContainer.x = this.labelContainer.x = this.x
+      this.nodeContainer.y = this.labelContainer.y = this.y
     }
 
     this.nodeGfx
@@ -286,8 +288,8 @@ export class Node {
     }
 
     this.renderer.dirty = true
-    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onNodePointerEnter(event, this.node, x, y)
+    const position = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onNodePointerEnter(event, this.node, position.x, position.y)
   }
 
   private nodePointerLeave = (event: PIXI.interaction.InteractionEvent) => {
@@ -310,8 +312,8 @@ export class Node {
     }
 
     this.renderer.dirty = true
-    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onNodePointerLeave(event, this.node, x, y)
+    const position = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.onNodePointerLeave(event, this.node, position.x, position.y)
   }
 
   private nodePointerDown = (event: PIXI.interaction.InteractionEvent) => {
@@ -325,9 +327,9 @@ export class Node {
     this.renderer.app.renderer.plugins.interaction.on('pointermove', this.nodeMove)
     this.renderer.viewport.pause = true
     this.renderer.dirty = true
-    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.nodeMoveXOffset = x - this.x
-    this.nodeMoveYOffset = y - this.y
+    const position = this.renderer.viewport.toWorld(event.data.global)
+    this.nodeMoveXOffset = position.x - this.x
+    this.nodeMoveYOffset = position.y - this.y
     this.renderer.onNodePointerDown(event, this.node, this.x, this.y)
   }
 
@@ -352,10 +354,8 @@ export class Node {
     if (this.renderer.clickedNode === undefined) return
 
     const position = this.renderer.viewport.toWorld(event.data.global)
-    const x = position.x - this.nodeMoveXOffset
-    const y = position.y - this.nodeMoveYOffset
-    this.startX = this.endX = this.nodeContainer.x = this.labelContainer.x = this.x = x
-    this.startY = this.endY = this.nodeContainer.y = this.labelContainer.y = this.y = y
+    this.startX = this.endX = this.x = position.x - this.nodeMoveXOffset
+    this.startY = this.endY = this.y = position.y - this.nodeMoveYOffset
     this.renderer.dirty = true
     this.renderer.onNodeDrag(event, this.node, this.x, this.y)
   }

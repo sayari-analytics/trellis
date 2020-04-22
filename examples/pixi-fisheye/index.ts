@@ -9,7 +9,7 @@ export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-const nodeClick$ = new Subject<string | null>()
+// const nodeClick$ = new Subject<string | null>()
 const nodeDoubleClick$ = new Subject<string | null>()
 
 const graph = new Graph()
@@ -23,13 +23,13 @@ const renderer = PixiRenderer({
   onNodeDrag: (_, { id }, x, y) => graph.drag(id, x, y),
   onNodePointerUp: (_, { id }) => {
     graph.dragEnd(id)
-    nodeClick$.next(id)
+    // nodeClick$.next(id)
   },
   onNodeDoubleClick: (_, { id }) => {
     nodeDoubleClick$.next(id)
   },
   onContainerPointerUp: () => {
-    nodeClick$.next(null)
+    // nodeClick$.next(null)
     nodeDoubleClick$.next(null)
   },
   debug: { stats, logPerformance: false }
