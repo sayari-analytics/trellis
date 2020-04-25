@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { PositionedEdge } from '../..'
+import { Edge as PositionedEdge } from '../../layout/force'
 import { edgeStyleSelector } from '../utils'
 import { colorToNumber } from './utils'
 import { Renderer } from '.'
@@ -24,9 +24,7 @@ const ARROW_WIDTH = 8
 
 export class Edge {
 
-  edge: PositionedEdge = { id: '', source: { id: '' }, target: { id: '' } }
-  labelContainer: PIXI.Container = new PIXI.Container()
-  hoverContainer: PIXI.Container = new PIXI.Container()
+  edge: PositionedEdge = { id: '', source: '', target: '' }
 
   private renderer: Renderer
   private label?: string
@@ -35,7 +33,8 @@ export class Edge {
   private strokeOpacity: number = 0
   private edgeGfx: PIXI.Graphics = new PIXI.Graphics()
   private arrow = new PIXI.Graphics()
-  private edgeHoverBorder?: PIXI.Graphics
+  private hoveredEdge = false
+  private labelContainer: PIXI.Container = new PIXI.Container()
   private x0: number = 0
   private y0: number = 0
   private x1: number = 0
@@ -59,7 +58,6 @@ export class Edge {
 
     edgesLayer.addChild(this.edgeGfx)
     edgesLayer.addChild(this.arrow)
-    edgesLayer.addChild(this.hoverContainer)
     edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
@@ -104,8 +102,8 @@ export class Edge {
      * Curve
      * TODO - expose edge curve in style spec
      */
-    this.curve = (this.renderer.forwardEdgeIndex[this.edge.source.id][this.edge.target.id].size - 1) * 0.5
-    for (const edgeId of this.renderer.forwardEdgeIndex[this.edge.source.id][this.edge.target.id]) {
+    this.curve = (this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target].size - 1) * 0.5
+    for (const edgeId of this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target]) {
       if (edgeId === this.edge.id) {
         break
       }
@@ -128,8 +126,8 @@ export class Edge {
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render() {
-    const sourceContainer = this.renderer.nodesById[this.edge.source.id],
-      targetContainer = this.renderer.nodesById[this.edge.target.id],
+    const sourceContainer = this.renderer.nodesById[this.edge.source],
+      targetContainer = this.renderer.nodesById[this.edge.target],
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
       start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceContainer.radius),
       end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + ARROW_HEIGHT),
@@ -273,66 +271,38 @@ export class Edge {
   delete() {
     this.edgeGfx.destroy()
     this.arrow.destroy()
-    this.hoverContainer.destroy()
     this.labelContainer.destroy()
     delete this.renderer.edgesById[this.edge.id]
-    this.renderer.forwardEdgeIndex[this.edge.source.id][this.edge.target.id].delete(this.edge.id)
-    this.renderer.reverseEdgeIndex[this.edge.target.id][this.edge.source.id].delete(this.edge.id)
+    this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target].delete(this.edge.id)
+    this.renderer.reverseEdgeIndex[this.edge.target][this.edge.source].delete(this.edge.id)
   }
 
   private pointerEnter = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.edgeHoverBorder === undefined) {
-      /**
-       * TODO - does it make more sense to create the graphic on the fly, or create on init and add/remove from container
-       */
-      if (this.curve === 0 || this.curveControlPointA === undefined || this.curveControlPointB === undefined || this.curvePeak === undefined) {
-        this.edgeHoverBorder = new PIXI.Graphics()
-          .lineStyle(this.width + 2, this.stroke, this.strokeOpacity)
-          .moveTo(this.x0, this.y0)
-          .lineTo(this.x1, this.y1)
-          .endFill()
-      } else {
-        this.edgeHoverBorder = new PIXI.Graphics()
-          .lineStyle(this.width + 2, this.stroke, this.strokeOpacity)
-          .moveTo(this.x0, this.y0)
-          .bezierCurveTo(this.x0, this.y0, this.curveControlPointA[0], this.curveControlPointA[1], this.curvePeak[0], this.curvePeak[1])
-          .bezierCurveTo(this.curveControlPointB[0], this.curveControlPointB[1], this.x1, this.y1, this.x1, this.y1)
-          .endFill()
-      }
-
-      this.hoverContainer.addChild(this.edgeHoverBorder)
+    if (!this.hoveredEdge) {
+      this.hoveredEdge = true
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
       this.renderer.onEdgePointerEnter(event, this.edge, x, y)
     }
-
-    return this
   }
 
   private pointerLeave = (event: PIXI.interaction.InteractionEvent) => {
-    if (this.edgeHoverBorder !== undefined) {
-      this.hoverContainer.removeChildren()
-      this.edgeHoverBorder = undefined
+    if (this.hoveredEdge) {
+      this.hoveredEdge = false
       this.renderer.dirty = true
 
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
       this.renderer.onEdgePointerLeave(event, this.edge, x, y)
     }
-
-    return this
   }
 
   private pointerDown = (event: PIXI.interaction.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
     this.renderer.onEdgePointerDown(event, this.edge, x, y)
-
-    return this
   }
 
   private pointerUp = (event: PIXI.interaction.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
     this.renderer.onEdgePointerUp(event, this.edge, x, y)
-
-    return this
   }
 }

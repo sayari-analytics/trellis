@@ -2,7 +2,7 @@ import { Node, Edge, Graph } from '../../src/index'
 import graphData from '../../tmp-data'
 import { of, Observable, interval } from 'rxjs'
 import { map, mergeMap, tap, take } from 'rxjs/operators'
-import { SimulationOptions } from '../../src/simulation'
+import { LayoutOptions } from '../../src/simulation'
 
 
 const nodes = Object.values(graphData.nodes)
@@ -33,7 +33,7 @@ const edges = Object.entries<{ field: string, source: string, target: string }>(
 
 
 const layout = (graph: Graph) => (
-  graphData$: Observable<{ nodes: Node[], edges: Edge[], options?: Partial<SimulationOptions> }>
+  graphData$: Observable<{ nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }>
 ) => {
   return graphData$.pipe(
     mergeMap((graphData) => {

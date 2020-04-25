@@ -7,7 +7,7 @@ import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererOptions } from './opt
 import { interpolateDuration, noop } from '../utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { nodeStyleSelector, edgeStyleSelector } from './utils'
-import { SimulationOptions } from '../simulation'
+import { LayoutOptions } from '../simulation'
 
 
 type PositionedNodeWithInitialPosition = PositionedNode & { x0?: number, y0?: number }
@@ -53,7 +53,7 @@ export const D3Renderer = ({
   let draggedNode: string | undefined
   let currentNodes: { [key: string]: PositionedNodeWithInitialPosition }
   let currentEdges: { [key: string]: PositionedEdgeWithInitialPosition }
-  let currentOptions: SimulationOptions
+  let currentOptions: LayoutOptions
 
   const dragNode = dragBehavior<any, PositionedNode>()
     .on('start', (d) => (draggedNode = d.id, onNodeMouseDown(d, { x: event.x, y: event.y })))
@@ -89,7 +89,7 @@ export const D3Renderer = ({
   const render = ({ nodes, edges, options }: {
     nodes: { [key: string]: PositionedNode },
     edges: { [key: string]: PositionedEdge },
-    options: SimulationOptions
+    options: LayoutOptions
   }) => {
     Object.entries(nodes as { [key: string]: PositionedNodeWithInitialPosition }).forEach(([nodeId, node]) => {
       if (currentNodes && currentNodes[nodeId]) {

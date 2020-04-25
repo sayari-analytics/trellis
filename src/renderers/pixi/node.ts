@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { nodeStyleSelector } from '../utils'
-import { PositionedNode } from '../..'
+import { PositionedNode } from '../../layout/force'
 import { colorToNumber, parentInFront } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { Renderer } from '.'
@@ -93,7 +93,6 @@ export class Node {
     this.endX = node.x!
     this.endY = node.y!
 
-
     /**
      * Position Interpolation
      *
@@ -116,7 +115,7 @@ export class Node {
     /**
      * Radius Interpolation
      */
-    const radius = Node.nodeStyleSelector(node, 'width') / 2
+    const radius = node.radius
     const strokeWidth = Node.nodeStyleSelector(node, 'strokeWidth')
 
     this.startRadius = this.radius === -1 ? radius : this.radius
@@ -242,7 +241,7 @@ export class Node {
 
     this.nodeGfx
       .clear()
-      .lineStyle(this.strokeWidth, this.renderer.hoveredNode === this ? 0xcccccc : this.stroke, this.strokeOpacity, 0)
+      .lineStyle(this.strokeWidth, this.stroke, this.strokeOpacity, 0)
       .beginFill(this.fill, this.fillOpacity)
       .drawCircle(0, 0, this.radius)
 

@@ -1,5 +1,5 @@
 import { NodeStyle, EdgeStyle } from './options'
-import { PositionedNode, PositionedEdge } from '..'
+import { PositionedNode, Edge as PositionedEdge } from '../layout/force'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 
 
@@ -19,7 +19,7 @@ export const edgeStyleSelector = (edgeStyles: EdgeStyle): EdgeStyleSelector => <
     return edgeStyles[attribute]
   }
 
-  return edge.style[attribute] as NodeStyle[T]
+  return edge.style[attribute] as EdgeStyle[T]
 }
 
 

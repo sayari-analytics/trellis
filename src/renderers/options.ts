@@ -1,8 +1,7 @@
-import { PositionedNode, PositionedEdge } from '../index'
+import { PositionedNode, Edge } from '../layout/force'
 
 
 export type NodeStyle = {
-  width: number
   strokeWidth: number
   fill: string
   stroke: string
@@ -27,10 +26,10 @@ export type RendererOptions = {
   onNodePointerUp?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
   onNodePointerLeave?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
   onNodeDoubleClick?: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onEdgePointerEnter?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerDown?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerUp?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerLeave?: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerEnter?: (event: PIXI.interaction.InteractionEvent, edge: Edge, x: number, y: number) => void
+  onEdgePointerDown?: (event: PIXI.interaction.InteractionEvent, edge: Edge, x: number, y: number) => void
+  onEdgePointerUp?: (event: PIXI.interaction.InteractionEvent, edge: Edge, x: number, y: number) => void
+  onEdgePointerLeave?: (event: PIXI.interaction.InteractionEvent, edge: Edge, x: number, y: number) => void
   onContainerPointerEnter?: (event: PointerEvent) => void
   onContainerPointerDown?: (event: PointerEvent) => void
   onContainerPointerMove?: (event: PointerEvent) => void
@@ -45,7 +44,6 @@ export type RendererLayoutOptions = {
 }
 
 export const DEFAULT_NODE_STYLES: NodeStyle = {
-  width: 62,
   strokeWidth: 2,
   fill: '#ff4b4b',
   stroke: '#bb0000',

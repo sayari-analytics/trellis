@@ -1,26 +1,6 @@
 /* eslint-disable no-useless-escape */
-import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY } from 'd3-force'
-import { PositionedNode, PositionedEdge, Node, Edge } from './index'
-import { DEFAULT_NODE_STYLES } from './renderers/options'
-
-
-export type LayoutOptions = {
-  nodeStrength: number
-  linkDistance: number
-  linkStrength?: number
-  centerStrength: number
-  nodePadding: number
-  tick: number
-}
-
-export const DEFAULT_SIMULATION_OPTIONS: LayoutOptions = {
-  nodeStrength: -600,
-  linkDistance: 300,
-  linkStrength: undefined,
-  centerStrength: 0.01,
-  nodePadding: 8,
-  tick: 300,
-}
+import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
+import { Node, Edge, LayoutOptions, PositionedNode } from '.'
 
 
 const d3ForceScript = `
@@ -34,6 +14,14 @@ const d3ForceScript = `
 !function(n,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports,require("d3-quadtree"),require("d3-dispatch"),require("d3-timer")):"function"==typeof define&&define.amd?define(["exports","d3-quadtree","d3-dispatch","d3-timer"],t):t(n.d3=n.d3||{},n.d3,n.d3,n.d3)}(this,function(n,t,r,e){"use strict";function i(n){return function(){return n}}function u(){return 1e-6*(Math.random()-.5)}function o(n){return n.x+n.vx}function f(n){return n.y+n.vy}function a(n){return n.index}function c(n,t){var r=n.get(t);if(!r)throw new Error("missing: "+t);return r}function l(n){return n.x}function h(n){return n.y}var v=10,y=Math.PI*(3-Math.sqrt(5));n.forceCenter=function(n,t){var r;function e(){var e,i,u=r.length,o=0,f=0;for(e=0;e<u;++e)o+=(i=r[e]).x,f+=i.y;for(o=o/u-n,f=f/u-t,e=0;e<u;++e)(i=r[e]).x-=o,i.y-=f}return null==n&&(n=0),null==t&&(t=0),e.initialize=function(n){r=n},e.x=function(t){return arguments.length?(n=+t,e):n},e.y=function(n){return arguments.length?(t=+n,e):t},e},n.forceCollide=function(n){var r,e,a=1,c=1;function l(){for(var n,i,l,v,y,d,x,g=r.length,s=0;s<c;++s)for(i=t.quadtree(r,o,f).visitAfter(h),n=0;n<g;++n)l=r[n],d=e[l.index],x=d*d,v=l.x+l.vx,y=l.y+l.vy,i.visit(p);function p(n,t,r,e,i){var o=n.data,f=n.r,c=d+f;if(!o)return t>v+c||e<v-c||r>y+c||i<y-c;if(o.index>l.index){var h=v-o.x-o.vx,g=y-o.y-o.vy,s=h*h+g*g;s<c*c&&(0===h&&(s+=(h=u())*h),0===g&&(s+=(g=u())*g),s=(c-(s=Math.sqrt(s)))/s*a,l.vx+=(h*=s)*(c=(f*=f)/(x+f)),l.vy+=(g*=s)*c,o.vx-=h*(c=1-c),o.vy-=g*c)}}}function h(n){if(n.data)return n.r=e[n.data.index];for(var t=n.r=0;t<4;++t)n[t]&&n[t].r>n.r&&(n.r=n[t].r)}function v(){if(r){var t,i,u=r.length;for(e=new Array(u),t=0;t<u;++t)i=r[t],e[i.index]=+n(i,t,r)}}return"function"!=typeof n&&(n=i(null==n?1:+n)),l.initialize=function(n){r=n,v()},l.iterations=function(n){return arguments.length?(c=+n,l):c},l.strength=function(n){return arguments.length?(a=+n,l):a},l.radius=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),v(),l):n},l},n.forceLink=function(n){var t,r,e,o,f,l=a,h=function(n){return 1/Math.min(o[n.source.index],o[n.target.index])},v=i(30),y=1;function d(e){for(var i=0,o=n.length;i<y;++i)for(var a,c,l,h,v,d,x,g=0;g<o;++g)c=(a=n[g]).source,h=(l=a.target).x+l.vx-c.x-c.vx||u(),v=l.y+l.vy-c.y-c.vy||u(),h*=d=((d=Math.sqrt(h*h+v*v))-r[g])/d*e*t[g],v*=d,l.vx-=h*(x=f[g]),l.vy-=v*x,c.vx+=h*(x=1-x),c.vy+=v*x}function x(){if(e){var i,u,a=e.length,h=n.length,v=new Map(e.map((n,t)=>[l(n,t,e),n]));for(i=0,o=new Array(a);i<h;++i)(u=n[i]).index=i,"object"!=typeof u.source&&(u.source=c(v,u.source)),"object"!=typeof u.target&&(u.target=c(v,u.target)),o[u.source.index]=(o[u.source.index]||0)+1,o[u.target.index]=(o[u.target.index]||0)+1;for(i=0,f=new Array(h);i<h;++i)u=n[i],f[i]=o[u.source.index]/(o[u.source.index]+o[u.target.index]);t=new Array(h),g(),r=new Array(h),s()}}function g(){if(e)for(var r=0,i=n.length;r<i;++r)t[r]=+h(n[r],r,n)}function s(){if(e)for(var t=0,i=n.length;t<i;++t)r[t]=+v(n[t],t,n)}return null==n&&(n=[]),d.initialize=function(n){e=n,x()},d.links=function(t){return arguments.length?(n=t,x(),d):n},d.id=function(n){return arguments.length?(l=n,d):l},d.iterations=function(n){return arguments.length?(y=+n,d):y},d.strength=function(n){return arguments.length?(h="function"==typeof n?n:i(+n),g(),d):h},d.distance=function(n){return arguments.length?(v="function"==typeof n?n:i(+n),s(),d):v},d},n.forceManyBody=function(){var n,r,e,o,f=i(-30),a=1,c=1/0,v=.81;function y(i){var u,o=n.length,f=t.quadtree(n,l,h).visitAfter(x);for(e=i,u=0;u<o;++u)r=n[u],f.visit(g)}function d(){if(n){var t,r,e=n.length;for(o=new Array(e),t=0;t<e;++t)r=n[t],o[r.index]=+f(r,t,n)}}function x(n){var t,r,e,i,u,f=0,a=0;if(n.length){for(e=i=u=0;u<4;++u)(t=n[u])&&(r=Math.abs(t.value))&&(f+=t.value,a+=r,e+=r*t.x,i+=r*t.y);n.x=e/a,n.y=i/a}else{(t=n).x=t.data.x,t.y=t.data.y;do{f+=o[t.data.index]}while(t=t.next)}n.value=f}function g(n,t,i,f){if(!n.value)return!0;var l=n.x-r.x,h=n.y-r.y,y=f-t,d=l*l+h*h;if(y*y/v<d)return d<c&&(0===l&&(d+=(l=u())*l),0===h&&(d+=(h=u())*h),d<a&&(d=Math.sqrt(a*d)),r.vx+=l*n.value*e/d,r.vy+=h*n.value*e/d),!0;if(!(n.length||d>=c)){(n.data!==r||n.next)&&(0===l&&(d+=(l=u())*l),0===h&&(d+=(h=u())*h),d<a&&(d=Math.sqrt(a*d)));do{n.data!==r&&(y=o[n.data.index]*e/d,r.vx+=l*y,r.vy+=h*y)}while(n=n.next)}}return y.initialize=function(t){n=t,d()},y.strength=function(n){return arguments.length?(f="function"==typeof n?n:i(+n),d(),y):f},y.distanceMin=function(n){return arguments.length?(a=n*n,y):Math.sqrt(a)},y.distanceMax=function(n){return arguments.length?(c=n*n,y):Math.sqrt(c)},y.theta=function(n){return arguments.length?(v=n*n,y):Math.sqrt(v)},y},n.forceRadial=function(n,t,r){var e,u,o,f=i(.1);function a(n){for(var i=0,f=e.length;i<f;++i){var a=e[i],c=a.x-t||1e-6,l=a.y-r||1e-6,h=Math.sqrt(c*c+l*l),v=(o[i]-h)*u[i]*n/h;a.vx+=c*v,a.vy+=l*v}}function c(){if(e){var t,r=e.length;for(u=new Array(r),o=new Array(r),t=0;t<r;++t)o[t]=+n(e[t],t,e),u[t]=isNaN(o[t])?0:+f(e[t],t,e)}}return"function"!=typeof n&&(n=i(+n)),null==t&&(t=0),null==r&&(r=0),a.initialize=function(n){e=n,c()},a.strength=function(n){return arguments.length?(f="function"==typeof n?n:i(+n),c(),a):f},a.radius=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),c(),a):n},a.x=function(n){return arguments.length?(t=+n,a):t},a.y=function(n){return arguments.length?(r=+n,a):r},a},n.forceSimulation=function(n){var t,i=1,u=.001,o=1-Math.pow(u,1/300),f=0,a=.6,c=new Map,l=e.timer(d),h=r.dispatch("tick","end");function d(){x(),h.call("tick",t),i<u&&(l.stop(),h.call("end",t))}function x(r){var e,u,l=n.length;void 0===r&&(r=1);for(var h=0;h<r;++h)for(i+=(f-i)*o,c.forEach(function(n){n(i)}),e=0;e<l;++e)null==(u=n[e]).fx?u.x+=u.vx*=a:(u.x=u.fx,u.vx=0),null==u.fy?u.y+=u.vy*=a:(u.y=u.fy,u.vy=0);return t}function g(){for(var t,r=0,e=n.length;r<e;++r){if((t=n[r]).index=r,null!=t.fx&&(t.x=t.fx),null!=t.fy&&(t.y=t.fy),isNaN(t.x)||isNaN(t.y)){var i=v*Math.sqrt(r),u=r*y;t.x=i*Math.cos(u),t.y=i*Math.sin(u)}(isNaN(t.vx)||isNaN(t.vy))&&(t.vx=t.vy=0)}}function s(t){return t.initialize&&t.initialize(n),t}return null==n&&(n=[]),g(),t={tick:x,restart:function(){return l.restart(d),t},stop:function(){return l.stop(),t},nodes:function(r){return arguments.length?(n=r,g(),c.forEach(s),t):n},alpha:function(n){return arguments.length?(i=+n,t):i},alphaMin:function(n){return arguments.length?(u=+n,t):u},alphaDecay:function(n){return arguments.length?(o=+n,t):+o},alphaTarget:function(n){return arguments.length?(f=+n,t):f},velocityDecay:function(n){return arguments.length?(a=1-n,t):1-a},force:function(n,r){return arguments.length>1?(null==r?c.delete(n):c.set(n,s(r)),t):c.get(n)},find:function(t,r,e){var i,u,o,f,a,c=0,l=n.length;for(null==e?e=1/0:e*=e,c=0;c<l;++c)(o=(i=t-(f=n[c]).x)*i+(u=r-f.y)*u)<e&&(a=f,e=o);return a},on:function(n,r){return arguments.length>1?(h.on(n,r),t):h.on(n)}}},n.forceX=function(n){var t,r,e,u=i(.1);function o(n){for(var i,u=0,o=t.length;u<o;++u)(i=t[u]).vx+=(e[u]-i.x)*r[u]*n}function f(){if(t){var i,o=t.length;for(r=new Array(o),e=new Array(o),i=0;i<o;++i)r[i]=isNaN(e[i]=+n(t[i],i,t))?0:+u(t[i],i,t)}}return"function"!=typeof n&&(n=i(null==n?0:+n)),o.initialize=function(n){t=n,f()},o.strength=function(n){return arguments.length?(u="function"==typeof n?n:i(+n),f(),o):u},o.x=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),f(),o):n},o},n.forceY=function(n){var t,r,e,u=i(.1);function o(n){for(var i,u=0,o=t.length;u<o;++u)(i=t[u]).vy+=(e[u]-i.y)*r[u]*n}function f(){if(t){var i,o=t.length;for(r=new Array(o),e=new Array(o),i=0;i<o;++i)r[i]=isNaN(e[i]=+n(t[i],i,t))?0:+u(t[i],i,t)}}return"function"!=typeof n&&(n=i(null==n?0:+n)),o.initialize=function(n){t=n,f()},o.strength=function(n){return arguments.length?(u="function"==typeof n?n:i(+n),f(),o):u},o.y=function(t){return arguments.length?(n="function"==typeof t?t:i(+t),f(),o):n},o},Object.defineProperty(n,"__esModule",{value:!0})});
 `
 
+export const DEFAULT_SIMULATION_OPTIONS: LayoutOptions = {
+  nodeStrength: -600,
+  linkDistance: 300,
+  linkStrength: undefined,
+  centerStrength: 0.01,
+  nodePadding: 8,
+  tick: 300,
+}
 
 declare const d3: {
   forceSimulation: typeof forceSimulation
@@ -48,70 +36,48 @@ declare const d3: {
 
 declare const self: Worker
 
+export type SimulationNode = {
+  id: string
+  radius: number
+} & SimulationNodeDatum
+
+export type SimulationEdge = SimulationLinkDatum<SimulationNode>
+
 export type TypedMessageEvent<T = unknown> = {
   [K in keyof MessageEvent]: K extends 'data' ? T : MessageEvent[K]
 }
 
-export type LayoutEvent = {
-  type: 'layout',
+export type RunEvent = {
+  type: 'run',
   nodes: Node[]
   edges: Edge[]
   options?: Partial<LayoutOptions>
 }
 
-export type DragStartEvent = {
-  type: 'dragStart'
-  id: string
-  x: number
-  y: number
+export type UpdateEvent = {
+  type: 'update'
+  nodes: PositionedNode[]
 }
 
-export type DragEvent = {
-  type: 'drag'
-  id: string
-  x: number
-  y: number
-}
-
-export type DragEndEvent = {
-  type: 'dragEnd'
-  id: string
-}
-
-export type Event = LayoutEvent
-  | DragStartEvent
-  | DragEvent
-  | DragEndEvent
+export type Event = RunEvent
+  | UpdateEvent
 
 export type LayoutResultEvent = {
-  nodes: PositionedNode[]
-  edges: PositionedEdge[]
+  nodes: {
+    id: string
+    radius: number
+    x: number
+    y: number
+    subGraph?: {
+      nodes: PositionedNode[],
+      edges: Edge[],
+      options?: Partial<LayoutOptions>
+    }
+  }[]
 }
 
 
-const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number) => {
-  const throttle = (fn: (() => void)) => {
-    let timeout: NodeJS.Timeout | undefined
-
-    return () => {
-      if (timeout === undefined) {
-        setTimeout(() => {
-          timeout = undefined
-          fn()
-        }, 0)
-      }
-    }
-  }
-
-  const DEFAULT_SUBGRAPH_SIMULATION_OPTIONS: LayoutOptions = {
-    nodeStrength: -50,
-    linkDistance: 100,
-    linkStrength: undefined,
-    centerStrength: 0.5,
-    nodePadding: 6,
-    tick: 100,
-  }
-
+const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
   class Simulation {
 
     private options: LayoutOptions = {
@@ -122,46 +88,34 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number
       nodePadding: DEFAULT_OPTIONS.nodePadding,
       tick: DEFAULT_OPTIONS.tick,
     }
+    private defaultSubgraphOptions: LayoutOptions = {
+      nodeStrength: -400,
+      linkDistance: 100,
+      linkStrength: undefined,
+      centerStrength: 0.2,
+      nodePadding: 6,
+      tick: 100,
+    }
 
-    private parent?: Simulation
-    private nodesById: { [key: string]: PositionedNode } = {}
-    private edgesById: { [key: string]: PositionedEdge } = {}
+    private nodesById: { [id: string]: SimulationNode } = {}
     private subGraphs: { [id: string]: Simulation } = {}
-    /**
-     * nodesById[nodeId].style.width property for nodes with subgraphs is computed width
-     * in order to properly compute whether the simlulation needs to update,
-     * we need to track not just previous computed width, but also previous original width
-     */
-    private previousWidth: { [id: string]: number | undefined } = {}
 
-    private forceLink = d3.forceLink<PositionedNode, PositionedEdge>().distance(this.options.linkDistance)
-    private forceManyBody = d3.forceManyBody().strength(this.options.nodeStrength).distanceMax(4000).theta(0.5)
-    private forceCollide = d3.forceCollide<PositionedNode>().radius((node) => {
-      return (node.style === undefined || node.style.width === undefined ?
-        DEFAULT_NODE_WIDTH * 0.5 :
-        node.style.width * 0.5
-      ) + this.options.nodePadding
-    })
-    private forceX = d3.forceX(0).strength(this.options.centerStrength)
-    private forceY = d3.forceY(0).strength(this.options.centerStrength)
+    forceLink = d3.forceLink<SimulationNode, SimulationEdge>().distance(this.options.linkDistance).id((node) => node.id)
+    forceManyBody = d3.forceManyBody().strength(this.options.nodeStrength).distanceMax(4000).theta(0.5)
+    forceCollide = d3.forceCollide<SimulationNode>().radius((node) => node.radius + this.options.nodePadding)
+    forceX = d3.forceX(0).strength(this.options.centerStrength)
+    forceY = d3.forceY(0).strength(this.options.centerStrength)
 
-    private simulation = d3.forceSimulation<PositionedNode>()
+    simulation = d3.forceSimulation<SimulationNode>()
       .force('charge', this.forceManyBody)
       .force('collision', this.forceCollide)
       .force('link', this.forceLink)
       .force('x', this.forceX)
       .force('y', this.forceY)
+      .force('center', d3.forceCenter())
       .stop()
 
-    constructor(parent?: Simulation) {
-      this.parent = parent
-    }
-
-    /**
-     * simulation handlers
-     */
-    // TODO - throttle causes data to get mutated unexpectedly.  expected: edge.source = Node. observed: edge.source = Node
-    layout = (
+    layout(
       nodes: Node[],
       edges: Edge[],
       {
@@ -171,155 +125,78 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number
         centerStrength = DEFAULT_OPTIONS.centerStrength,
         nodePadding = DEFAULT_OPTIONS.nodePadding,
         tick = DEFAULT_OPTIONS.tick,
-      }: Partial<LayoutOptions>
-    ) => {
-      let update = false
+      }: Partial<LayoutOptions> = DEFAULT_OPTIONS
+    ) {
+      this.forceManyBody.strength(nodeStrength)
+      this.forceLink.distance(linkDistance)
+      linkStrength !== undefined && this.forceLink.strength(linkStrength)
+      this.forceX.strength(centerStrength)
+      this.forceY.strength(centerStrength)
+      this.options.nodePadding = nodePadding
+      this.options.tick = tick
+
+
       let updateSubGraphs = false
-      const nodesById: { [id: string]: PositionedNode } = {}
-      const edgesById: { [id: string]: PositionedEdge } = {}
       const subGraphs: { [id: string]: Simulation } = {}
 
-      if (nodeStrength !== this.options.nodeStrength) {
-        this.forceManyBody.strength(nodeStrength)
-        this.options.nodeStrength = nodeStrength
-        update = true
-      }
-
-      if (linkDistance !== this.options.linkDistance) {
-        this.forceLink.distance(linkDistance)
-        this.options.linkDistance = linkDistance
-        update = true
-      }
-
-      if (linkStrength !== this.options.linkStrength) {
-        linkStrength !== undefined && this.forceLink.strength(linkStrength)
-        this.options.linkStrength = linkStrength
-        update = true
-      }
-
-      if (centerStrength !== this.options.centerStrength) {
-        this.forceX.strength(this.options.centerStrength)
-        this.forceY.strength(this.options.centerStrength)
-        this.options.centerStrength = centerStrength
-        update = true
-      }
-
-      if (nodePadding !== this.options.nodePadding) {
-        this.options.nodePadding = nodePadding
-        update = true
-      }
-
-      if (tick !== this.options.tick) {
-        this.options.tick = tick
-        update = true
-      }
-
       for (let i = 0; i < nodes.length; i++) {
-        // TODO - rewrite w/o casts
-        const node = nodes[i] as PositionedNode
+        const node = nodes[i]
+
+        /**
+         * convert Node to SimulationNode
+         */
         if (this.nodesById[node.id] === undefined) {
           // enter node
-          nodesById[node.id] = node
-          if (node.subGraph) {
-            // enter subgraph
-            subGraphs[node.id] = new Simulation(this).layout(
-              node.subGraph.nodes as Node[],
-              node.subGraph.edges as unknown as Edge[],
-              node.subGraph.options === undefined ? DEFAULT_SUBGRAPH_SIMULATION_OPTIONS : node.subGraph.options,
-            )
-            updateSubGraphs = true
-          }
-          update = true
+          (node as SimulationNode).fx = node.x
+          ;(node as SimulationNode).fy = node.y
         } else {
           // update node
-          node.x = this.nodesById[node.id].x
-          node.y = this.nodesById[node.id].y
-          node.fx = this.nodesById[node.id].fx
-          node.fy = this.nodesById[node.id].fy
-          node.vx = this.nodesById[node.id].vx
-          node.vy = this.nodesById[node.id].vy
-          node.index = this.nodesById[node.id].index
+          (node as SimulationNode).fx = node.x
+          ;(node as SimulationNode).fy = node.y
+          ;(node as SimulationNode).x = this.nodesById[node.id].x
+          ;(node as SimulationNode).y = this.nodesById[node.id].y
+          ;(node as SimulationNode).vx = this.nodesById[node.id].vx
+          ;(node as SimulationNode).vy = this.nodesById[node.id].vy
+          ;(node as SimulationNode).index = this.nodesById[node.id].index
+        }
 
-          if (node.style?.width !== this.previousWidth[node.id]) {
-            update = true
+        this.nodesById[node.id] = (node as SimulationNode)
+
+        /**
+         * calculate subGraphs
+         */
+        if (node.subGraph) {
+          if (this.subGraphs[node.id] === undefined) {
+            // enter subgraph
+            subGraphs[node.id] = new Simulation().layout(
+              node.subGraph.nodes,
+              node.subGraph.edges,
+              node.subGraph.options === undefined ? this.defaultSubgraphOptions : node.subGraph.options,
+            )
+          } else {
+            // update subgraph
+            subGraphs[node.id] = this.subGraphs[node.id].layout(
+              node.subGraph.nodes,
+              node.subGraph.edges,
+              node.subGraph.options === undefined ? this.defaultSubgraphOptions : node.subGraph.options,
+            )
           }
 
-          if (node.subGraph) {
-            if (this.subGraphs[node.id] === undefined) {
-              // enter subgraph
-              subGraphs[node.id] = new Simulation(this).layout(
-                node.subGraph.nodes as Node[],
-                node.subGraph.edges as unknown as Edge[],
-                node.subGraph.options === undefined ? DEFAULT_SUBGRAPH_SIMULATION_OPTIONS : node.subGraph.options,
-              )
-            } else {
-              // update subgraph
-              subGraphs[node.id] = this.subGraphs[node.id].layout(
-                node.subGraph.nodes as Node[],
-                node.subGraph.edges as unknown as Edge[],
-                node.subGraph.options === undefined ? DEFAULT_SUBGRAPH_SIMULATION_OPTIONS : node.subGraph.options,
-              )
-            }
-            updateSubGraphs = true
-          } else if (this.nodesById[node.id].subGraph) {
-            // exit subGraph
-            updateSubGraphs = true
-          }
-
-          nodesById[node.id] = node
-        }
-
-        this.previousWidth[node.id] = node.style?.width
-      }
-
-      for (const nodeId in this.nodesById) {
-        if (nodesById[nodeId] === undefined) {
-          // exit node
-          update = true
+          updateSubGraphs = true
+        } else if (this.subGraphs[node.id]) {
+          // exit subGraph
+          updateSubGraphs = true
         }
       }
 
-      for (let i = 0; i < edges.length; i++) {
-        const edge = edges[i] as unknown as PositionedEdge
-        edge.source = nodesById[edges[i].source]
-        edge.target = nodesById[edges[i].target]
-
-        if (this.edgesById[edge.id] === undefined) {
-          // enter edge
-          edgesById[edge.id] = edge
-          update = true
-        } else {
-          // update edge
-          if (
-            edge.source.id !== this.edgesById[edge.id].source.id ||
-            edge.target.id !== this.edgesById[edge.id].target.id
-          ) {
-            update = true
-          }
-          edgesById[edge.id] = edge
-        }
-      }
-
-      for (const edgeId in this.edgesById) {
-        if (edgesById[edgeId] === undefined) {
-          // exit edge
-          update = true
-        }
-      }
-
-
-      this.nodesById = nodesById
-      this.edgesById = edgesById
-      this.simulation.nodes(nodes as PositionedNode[])
-      this.forceLink.links(edges as unknown as PositionedEdge[])
+      this.simulation.nodes(nodes)
+      this.forceLink.links(edges)
 
       if (updateSubGraphs) {
-        this.fisheyeCollapse(nodes as PositionedNode[], this.subGraphs)
-        if (update) {
-          this.simulation.alpha(1).stop().tick(this.options.tick)
-        }
-        this.fisheyeExpand(nodes as PositionedNode[], subGraphs)
-      } else if (update) {
+        this.fisheyeCollapse(nodes as SimulationNode[], this.subGraphs)
+        this.simulation.alpha(1).stop().tick(this.options.tick)
+        this.fisheyeExpand(nodes as SimulationNode[], subGraphs)
+      } else {
         this.simulation.alpha(1).stop().tick(this.options.tick)
       }
 
@@ -328,34 +205,21 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number
       return this
     }
 
-    dragStart = (data: DragStartEvent) => {
-      if (this.nodesById[data.id]) {
-        this.nodesById[data.id].fx = data.x
-        this.nodesById[data.id].fy = data.y
+    update(nodes: PositionedNode[]) {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        this.nodesById[node.id].x = this.nodesById[node.id].fx = node.x
+        this.nodesById[node.id].y = this.nodesById[node.id].fy = node.y
       }
     }
 
-    drag = (data: DragEvent) => {
-      if (this.nodesById[data.id]) {
-        this.nodesById[data.id].x = this.nodesById[data.id].fx = data.x
-        this.nodesById[data.id].y = this.nodesById[data.id].fy = data.y
-      }
-    }
-
-    dragEnd = (data: DragEndEvent) => {
-      if (this.nodesById[data.id]) {
-        this.nodesById[data.id].fx = null
-        this.nodesById[data.id].fy = null
-      }
-    }
-
-    fisheyeCollapse = (nodes: PositionedNode[], subGraphs: { [id: string]: Simulation }) => {
+    fisheyeCollapse = (nodes: SimulationNode[], subGraphs: { [id: string]: Simulation }) => {
       let subGraphsById = Object.entries(subGraphs),
         id: string,
         x: number,
         y: number,
         radius: number,
-        node: PositionedNode,
+        node: SimulationNode,
         theta: number,
         xOffset: number,
         yOffset: number
@@ -381,13 +245,13 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number
       }
     }
 
-    fisheyeExpand = (nodes: PositionedNode[], subGraphs: { [id: string]: Simulation }) => {
+    fisheyeExpand = (nodes: SimulationNode[], subGraphs: { [id: string]: Simulation }) => {
       let subGraphsById = Object.entries(subGraphs),
         id: string,
         x: number,
         y: number,
         radius: number,
-        node: PositionedNode,
+        node: SimulationNode,
         theta: number,
         xOffset: number,
         yOffset: number
@@ -404,7 +268,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number
             /**
              * TODO - properly compute node w/ subGraph radius
              */
-            node.style === undefined ? node.style = { width: radius * 2 } : node.style.width = radius * 2
+            node.radius = radius
           } else if (node.x != undefined && node.y != undefined) {
             theta = Math.atan2(node.y - y, node.x - x)
             xOffset = Math.cos(theta) * radius
@@ -417,47 +281,28 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions, DEFAULT_NODE_WIDTH: number
         }
       }
     }
-
-    postLayout = throttle(() => {
-      self.postMessage({ nodes: this.simulation.nodes(), edges: this.forceLink.links() } as LayoutResultEvent)
-    })
   }
 
   const simulation = new Simulation()
-  /**
-   * event scheduling
-   * - throttle layout events: if multiple layouts events are triggered while simulation is running, drop all but the most recent one
-   * - run drag/start/end events synchronously: if multiple drag events are triggered while simulation is running, replay them all in order
-   * - throttle layout results before posting message, allowing drag events dispatched while layout was running to be played on top of that layout result
-   */
+
   self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
-    if (data.type === 'layout') {
-      simulation
-        .layout(data.nodes, data.edges, data.options ?? {})
-        .postLayout()
-    } else if (data.type === 'dragStart') {
-      simulation.dragStart(data)
-    } else if (data.type === 'drag') {
-      simulation.drag(data)
-    } else if (data.type === 'dragEnd') {
-      simulation.dragEnd(data)
+    if (data.type === 'run') {
+      simulation.layout(data.nodes, data.edges, data.options)
+      self.postMessage({ nodes: simulation.simulation.nodes() } as LayoutResultEvent)
+    } else if (data.type === 'update') {
+      simulation.update(data.nodes)
     }
   }
 }
 
 
-const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)}, ${DEFAULT_NODE_STYLES.width})`], { type: 'application/javascript' })
+const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(DEFAULT_SIMULATION_OPTIONS)})`], { type: 'application/javascript' })
 
 
 export const Simulation = () => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
 
-  /**
-   * TODO
-   * - return { simulation: Simulation, dispose: () => void }, where Simulation fully implements d3.Simulation,
-   *   with additional methods to update nodes/edges in place (e.g. so renderer can implement dragStart, drag, and dragEnd)
-   */
   return {
     worker,
     dispose: () => {

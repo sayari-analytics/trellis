@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import FontFaceObserver from 'fontfaceobserver'
 import { RendererOptions, RendererLayoutOptions } from '../options'
-import { PositionedNode, PositionedEdge } from '../../index'
+import { PositionedNode, Edge as PositionedEdge } from '../../layout/force'
 import { animationFrameLoop, noop } from '../../utils'
 import { Node } from './node'
 import { Edge } from './edge'
@@ -26,6 +26,7 @@ export class Renderer {
   renderTime = Date.now()
   animationDuration = 0
   animationPercent = 0
+  restartAnimation = false
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -35,6 +36,9 @@ export class Renderer {
   edgesById: { [id: string]: Edge } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
+
+  private prevNodes: PositionedNode[] | undefined
+  private prevEdges: PositionedEdge[] | undefined
 
   onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
   onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
@@ -160,9 +164,11 @@ export class Renderer {
   }
 
   /**
-   * TODO - handle case where layout is called while previous layout is still being interpolated
+   * TODO
+   * - handle case where layout is called while previous layout is still being interpolated
    * current approach essentially cancels previous layout and runs a new one
    * maybe instead stage new one, overwriting stagged layout if new layouts are called, and don't run until previous interpolation is done
+   * - do a better job diffing against existing nodes/edges/options
    */
   layout = ({ nodes, edges, options }: {
     nodes: PositionedNode[],
@@ -178,8 +184,10 @@ export class Renderer {
       this.app.renderer.resize(this.width, this.height)
     }
 
-    this.animationDuration = 0
-    this.animationPercent = 0
+    /**
+     * restart animation whenever a new layout is calculated: nodes/edges are added/removed from graph, subGraph is added/removed from graph
+     */
+    this.restartAnimation = false
     const nodesById: { [id: string]: Node } = {}
     const edgesById: { [id: string]: Edge } = {}
 
@@ -188,95 +196,124 @@ export class Renderer {
      * Build edge indices
      * TODO - is it possible to build edge indices and enter/update/exit edge containers in one pass?
      */
-    for (const edge of edges) {
-      const id = edge.id,
-        source = edge.source.id,
-        target = edge.target.id
+    if (edges !== this.prevEdges) {
+      for (const edge of edges) {
+        const id = edge.id,
+          source = edge.source,
+          target = edge.target
 
-      if (this.forwardEdgeIndex[source] === undefined) {
-        this.forwardEdgeIndex[source] = {}
-      }
-      if (this.forwardEdgeIndex[source][target] === undefined) {
-        this.forwardEdgeIndex[source][target] = new Set()
-      }
-      this.forwardEdgeIndex[source][target].add(id)
+        if (this.forwardEdgeIndex[source] === undefined) {
+          this.forwardEdgeIndex[source] = {}
+        }
+        if (this.forwardEdgeIndex[source][target] === undefined) {
+          this.forwardEdgeIndex[source][target] = new Set()
+        }
+        this.forwardEdgeIndex[source][target].add(id)
 
-      if (this.reverseEdgeIndex[target] === undefined) {
-        this.reverseEdgeIndex[target] = {}
+        if (this.reverseEdgeIndex[target] === undefined) {
+          this.reverseEdgeIndex[target] = {}
+        }
+        if (this.reverseEdgeIndex[target][source] === undefined) {
+          this.reverseEdgeIndex[target][source] = new Set()
+        }
+        this.reverseEdgeIndex[target][source].add(id)
       }
-      if (this.reverseEdgeIndex[target][source] === undefined) {
-        this.reverseEdgeIndex[target][source] = new Set()
-      }
-      this.reverseEdgeIndex[target][source].add(id)
     }
 
 
     /**
      * Ndge enter/update/exit
      */
-    for (const node of nodes) {
-      if (this.nodesById[node.id] === undefined) {
-        // node enter
-        let adjacentNode: Node | undefined
+    if (nodes !== this.prevNodes) {
+      for (const node of nodes) {
+        if (this.nodesById[node.id] === undefined) {
+          // node enter
+          this.dirty = true
+          this.restartAnimation = true
+          let adjacentNode: Node | undefined
 
-        if (this.reverseEdgeIndex[node.id]) {
-          // nodes w edges from existing nodes enter from one of those nodes
-          adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
-        } else if (this.forwardEdgeIndex[node.id]) {
-          // nodes w edges to existing nodes enter from one of those nodes
-          adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
+          if (this.reverseEdgeIndex[node.id]) {
+            // nodes w edges from existing nodes enter from one of those nodes
+            adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
+          } else if (this.forwardEdgeIndex[node.id]) {
+            // nodes w edges to existing nodes enter from one of those nodes
+            adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
+          }
+
+          nodesById[node.id] = new Node(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
+        } else { // TODO - if node can't be mutated, only set node if (node !== this.nodesById[node.id].node)
+          // node update
+          /**
+           * TODO - unclear whether or not node can get mutated by layout
+           */
+          this.dirty = true
+          if (node.subGraph !== this.nodesById[node.id].node.subGraph || node.radius !== this.nodesById[node.id].node.radius) {
+            this.restartAnimation = true
+          }
+
+          nodesById[node.id] = this.nodesById[node.id].set(node)
         }
-
-        nodesById[node.id] = new Node(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
-        this.dirty = true
-      } else {
-        // node update
-        nodesById[node.id] = this.nodesById[node.id].set(node)
-        this.dirty = true
       }
-    }
 
-    for (const nodeId in this.nodesById) {
-      if (nodesById[nodeId] === undefined) {
-        // node exit
-        this.nodesById[nodeId].delete()
-        this.dirty = true
+      for (const nodeId in this.nodesById) {
+        if (nodesById[nodeId] === undefined) {
+          // node exit
+          this.dirty = true
+          this.restartAnimation = true
+          this.nodesById[nodeId].delete()
+        }
       }
+
+      this.nodesById = nodesById
+      this.prevNodes = nodes
     }
 
 
     /**
      * Edge enter/update/exit
      */
-    for (const edge of edges) {
-      const id = edge.id
-      if (this.edgesById[id] === undefined) {
-        // edge enter
-        edgesById[id] = new Edge(this, this.edgesLayer).set(edge)
-        this.dirty = true
-      } else {
-        // edge update
-        edgesById[id] = this.edgesById[id].set(edge)
-        this.dirty = true
+    if (edges !== this.prevEdges) {
+      for (const edge of edges) {
+        const id = edge.id
+        if (this.edgesById[id] === undefined) {
+          // edge enter
+          this.dirty = true
+          this.restartAnimation = true
+          edgesById[id] = new Edge(this, this.edgesLayer).set(edge)
+        } else if (edge !== this.edgesById[id].edge) {
+          // edge update
+          this.dirty = true
+          edgesById[id] = this.edgesById[id].set(edge)
+        } else {
+          this.dirty = true
+          edgesById[id] = this.edgesById[id].set(edge)
+        }
       }
+
+      for (const edgeId in this.edgesById) {
+        if (edgesById[edgeId] === undefined) {
+          // edge exit
+          this.dirty = true
+          this.restartAnimation = true
+          this.edgesById[edgeId].delete()
+        }
+      }
+
+      this.edgesById = edgesById
+      this.prevEdges = edges
     }
 
-    for (const edgeId in this.edgesById) {
-      if (edgesById[edgeId] === undefined) {
-        // edge exit
-        this.edgesById[edgeId].delete()
-        this.dirty = true
-      }
+
+    if (this.restartAnimation) {
+      this.restartAnimation = false
+      this.animationDuration = 0
+      this.animationPercent = 0
     }
-
-
-    this.nodesById = nodesById
-    this.edgesById = edgesById
   }
 
   private render = () => {
     const now = Date.now()
-    // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
+    // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime)) // clamp to 0 <= x <= 16 to make animations appear slower and smoother
     this.animationDuration += now - this.renderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.renderTime = now
@@ -333,6 +370,7 @@ export class Renderer {
     }
 
     const measurements = performance.getEntriesByType('measure')
+
     if (this.debug?.logPerformance && measurements.length === 1) {
       const total = measurements[0].duration
       console.log(
@@ -348,6 +386,7 @@ export class Renderer {
         'color: #666'
       )
     }
+
     performance.clearMarks()
     performance.clearMeasures()
   }
