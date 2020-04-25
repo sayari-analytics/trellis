@@ -78,6 +78,19 @@ export type LayoutResultEvent = {
 
 
 const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
+  const throttle = (fn: (() => void)) => {
+    let timeout: NodeJS.Timeout | undefined
+
+    return () => {
+      if (timeout === undefined) {
+        setTimeout(() => {
+          timeout = undefined
+          fn()
+        }, 0)
+      }
+    }
+  }
+
   class Simulation {
 
     private options: LayoutOptions = {
@@ -281,14 +294,29 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         }
       }
     }
+
+    postLayout = throttle(() => {
+      self.postMessage({ nodes: simulation.simulation.nodes() } as LayoutResultEvent)
+    })
   }
 
   const simulation = new Simulation()
 
+  let runEvent: RunEvent | undefined
+
   self.onmessage = ({ data }: TypedMessageEvent<Event>) => {
     if (data.type === 'run') {
-      simulation.layout(data.nodes, data.edges, data.options)
-      self.postMessage({ nodes: simulation.simulation.nodes() } as LayoutResultEvent)
+      /**
+       * drop synchronous run events
+       */
+      if (runEvent === undefined) {
+        setTimeout(() => {
+          simulation.layout(runEvent!.nodes, runEvent!.edges, runEvent!.options)
+          self.postMessage({ nodes: simulation.simulation.nodes() } as LayoutResultEvent)
+          runEvent = undefined
+        }, 0)
+      }
+      runEvent = data
     } else if (data.type === 'update') {
       simulation.update(data.nodes)
     }

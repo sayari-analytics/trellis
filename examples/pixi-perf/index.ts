@@ -140,11 +140,11 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout(({ nodes, edges }) => renderer({ nodes, edges, options: renderOptions }))
+const layout = Layout(({ nodes, edges }) => { console.log('layout emit'), renderer({ nodes, edges, options: renderOptions }) })
 
 const renderer = Renderer({
   container,
-  debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: false }
 })
 
 
