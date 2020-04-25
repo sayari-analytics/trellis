@@ -1,6 +1,7 @@
 import Stats from 'stats.js'
 import { Layout, Node, Edge, PositionedNode, LayoutOptions } from '../../src/layout/force'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
+import graphData from '../../tmp-data'
 
 
 export const stats = new Stats()
@@ -13,32 +14,66 @@ document.body.appendChild(stats.dom)
  */
 const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
 const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
+const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
+const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
+const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
+const data = {
+  nodes: Object.values(graphData.nodes)
+    .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
+    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
+    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
+    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
+    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
+    .map<Node>(({ id, label, type }) => ({
+      id,
+      label,
+      radius: 32,
+      style: {
+        fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
+        stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
+        strokeWidth: 4,
+        icon: type === 'company' ? 'business' : 'person',
+      }
+    })),
+  edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
+    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
+    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
+    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
+    // .concat([
+    //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
+    //   ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
+    //   ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
+    //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
+    //   ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
+    //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
+    //   ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
+    //   ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
+    //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
+    // ])
+    .map<Edge>(([id, { field, source, target }]) => ({
+      id,
+      source,
+      target,
+      label: field.replace(/_/g, ' '),
+    }))
+}
 
-let nodes: Node[] = [
-  { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' }, { id: 'f', label: 'F' }, { id: 'g', label: 'G' },
-  { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
-  { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
-]
-  .map<Node>(({ id, label }, idx) => ({
-    id,
-    label,
-    radius: id === 'a' ? 62 : (20 - idx) * 4,
-    style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE
-  }))
+let nodes: Node[] = []
+let edges: Edge[] = []
 
-let edges: Edge[] = [
-  { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' }, { id: 'da', source: 'a', target: 'd', label: 'Related To' }, { id: 'ea', source: 'a', target: 'e', label: 'Related To' },
-  { id: 'fa', source: 'a', target: 'f', label: 'Related To' }, { id: 'ga', source: 'a', target: 'g', label: 'Related To' }, { id: 'ha', source: 'a', target: 'h', label: 'Related To' }, { id: 'ia', source: 'a', target: 'i', label: 'Related To' },
-  { id: 'ja', source: 'b', target: 'j', label: 'Related To' }, { id: 'ka', source: 'b', target: 'k', label: 'Related To' }, { id: 'la', source: 'b', target: 'l', label: 'Related To' }, { id: 'ma', source: 'l', target: 'm', label: 'Related To' },
-  { id: 'na', source: 'c', target: 'n', label: 'Related To' }, { id: 'oa', source: 'c', target: 'o', label: 'Related To' }, { id: 'pa', source: 'c', target: 'p', label: 'Related To' }, { id: 'qa', source: 'c', target: 'q', label: 'Related To' },
-]
+const updateData = (idx: number) => {
+  const nodeIds = new Set()
+  nodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK)
+  nodes.forEach(({ id }) => nodeIds.add(id))
+  edges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+}
 
 
 /**
  * Initialize Layout and Renderer Options
  */
 const layoutOptions: Partial<LayoutOptions> = {
-  nodeStrength: -500,
+  nodeStrength: -600,
 }
 
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
@@ -57,17 +92,17 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
     layout({ nodes, edges, options: layoutOptions })
   },
-  // onNodePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
-  //   nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
-  //   layout({ nodes, edges, options: layoutOptions })
-  // },
-  // onNodePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
-  //   nodes = nodes.map((node) => (node.id === id ?
-  //     { ...node, radius: node.radius / 4, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
-  //     node
-  //   ))
-  //   layout({ nodes, edges, options: layoutOptions })
-  // },
+  onNodePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  onNodePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    nodes = nodes.map((node) => (node.id === id ?
+      { ...node, radius: node.radius / 4, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
+      node
+    ))
+    layout({ nodes, edges, options: layoutOptions })
+  },
   onEdgePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     layout({ nodes, edges, options: layoutOptions })
@@ -82,9 +117,9 @@ const renderOptions: Partial<RendererOptions> = {
       style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
       subGraph: {
         nodes: [
-          { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}a`, radius: 21, label: 'A', type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}b`, radius: 21, label: 'B', type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}c`, radius: 21, label: 'C', type: 'company', style: { ...COMPANY_STYLE } },
         ],
         edges: []
       },
@@ -109,11 +144,24 @@ const layout = Layout(({ nodes, edges }) => renderer({ nodes, edges, options: re
 
 const renderer = Renderer({
   container,
-  debug: { stats, logPerformance: false }
+  debug: { stats, logPerformance: true }
 })
 
 
 /**
  * Layout and Render Graph
  */
+const NODES_PER_TICK = 200
+const INTERVAL = 1400
+const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
+let idx = 0
+
+console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${nodes.length} \nedge count ${edges.length}`)
+
+const interval = setInterval(() => {
+  updateData(idx++)
+  layout({ nodes, edges, options: layoutOptions })
+  if (idx === COUNT) clearInterval(interval)
+}, INTERVAL)
+
 layout({ nodes, edges, options: layoutOptions })

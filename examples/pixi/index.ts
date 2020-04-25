@@ -1,145 +1,119 @@
-import { interval, combineLatest, Subject } from 'rxjs'
-import { map, take, startWith } from 'rxjs/operators'
 import Stats from 'stats.js'
-import { Node, Edge, Graph } from '../../src/index'
-import { PixiRenderer } from '../../src/renderers/pixi'
-import graphData from '../../tmp-data'
-
+import { Layout, Node, Edge, PositionedNode, LayoutOptions } from '../../src/layout/force'
+import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-const nodeClick$ = new Subject<string | null>()
-const nodeHover$ = new Subject<string | null>()
-const nodeDoubleClick$ = new Subject<string | null>()
 
-const graph = new Graph()
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
-const renderer = PixiRenderer({
-  container,
-  width: container.offsetWidth,
-  height: container.offsetHeight,
-  onNodePointerEnter: (_, { id }) => {
-    nodeHover$.next(id)
-  },
-  onNodePointerLeave: () => {
-    nodeHover$.next(null)
-  },
-  onNodePointerDown: (_, { id }, x, y) => graph.dragStart(id, x, y),
-  onNodeDrag: (_, { id }, x, y) => graph.drag(id, x, y),
-  onNodePointerUp: (_, { id }) => {
-    graph.dragEnd(id)
-    nodeClick$.next(id)
-  },
-  onNodeDoubleClick: (_, { id }) => {
-    nodeDoubleClick$.next(id)
-  },
-  onContainerPointerUp: () => {
-    nodeClick$.next(null)
-    nodeDoubleClick$.next(null)
-  },
-  debug: { stats, logPerformance: true }
-})
-graph.onLayout(renderer.layout)
+/**
+ * Initialize Data
+ */
+const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
+const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
 
-
-const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
-const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
-const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
-
-const nodes: Node[] = Object.values(graphData.nodes)
-  .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
-  .map<Node>(({ id, label, type }) => ({
+let nodes: Node[] = [
+  { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' }, { id: 'f', label: 'F' }, { id: 'g', label: 'G' },
+  { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
+  { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
+]
+  .map<Node>(({ id, label }, idx) => ({
     id,
     label,
-    style: {
-      width: 66,
-      fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-      stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
-      strokeWidth: 4,
-      icon: type === 'company' ? 'business' : 'person',
-    }
+    radius: id === 'a' ? 62 : (20 - idx) * 4,
+    style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE
   }))
 
-const edges: Edge[] = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-  // .concat([
-  //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
-  //   ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
-  //   ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
-  //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
-  //   ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
-  //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
-  //   ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
-  //   ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
-  //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
-  // ])
-  .map<Edge>(([id, { field, source, target }]) => ({
-    id,
-    source,
-    target,
-    label: field.replace(/_/g, ' '),
-  }))
+let edges: Edge[] = [
+  { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' }, { id: 'da', source: 'a', target: 'd', label: 'Related To' }, { id: 'ea', source: 'a', target: 'e', label: 'Related To' },
+  { id: 'fa', source: 'a', target: 'f', label: 'Related To' }, { id: 'ga', source: 'a', target: 'g', label: 'Related To' }, { id: 'ha', source: 'a', target: 'h', label: 'Related To' }, { id: 'ia', source: 'a', target: 'i', label: 'Related To' },
+  { id: 'ja', source: 'b', target: 'j', label: 'Related To' }, { id: 'ka', source: 'b', target: 'k', label: 'Related To' }, { id: 'la', source: 'b', target: 'l', label: 'Related To' }, { id: 'ma', source: 'l', target: 'm', label: 'Related To' },
+  { id: 'na', source: 'c', target: 'n', label: 'Related To' }, { id: 'oa', source: 'c', target: 'o', label: 'Related To' }, { id: 'pa', source: 'c', target: 'p', label: 'Related To' }, { id: 'qa', source: 'c', target: 'q', label: 'Related To' },
+]
 
 
-const NODES_PER_TICK = 200
-const INTERVAL = 1400
-const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
+/**
+ * Initialize Layout and Renderer Options
+ */
+const layoutOptions: Partial<LayoutOptions> = {
+  nodeStrength: -500,
+}
 
-console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${nodes.length} \nedge count ${edges.length}`)
+const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const renderOptions: Partial<RendererOptions> = {
+  width: container.offsetWidth,
+  height: container.offsetHeight,
+  onNodePointerDown: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  onNodeDrag: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  onNodePointerUp: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  // onNodePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  //   nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
+  //   layout({ nodes, edges, options: layoutOptions })
+  // },
+  // onNodePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  //   nodes = nodes.map((node) => (node.id === id ?
+  //     { ...node, radius: node.radius / 4, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
+  //     node
+  //   ))
+  //   layout({ nodes, edges, options: layoutOptions })
+  // },
+  onEdgePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  onEdgePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  onNodeDoubleClick: (_, { id }) => {
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+      subGraph: {
+        nodes: [
+          { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
+        ],
+        edges: []
+      },
+    } : node))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+  onContainerPointerUp: () => {
+    nodes = nodes.map((node, idx) => (node.subGraph ? {
+      ...node,
+      style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
+      subGraph: undefined,
+    } : node))
+    layout({ nodes, edges, options: layoutOptions })
+  },
+}
 
 
-combineLatest(
-  interval(INTERVAL).pipe(take(COUNT)),
-  // nodeClick$.pipe(
-  //   scan((clickedNodes, nodeId) => {
-  //     clickedNodes.add(nodeId)
-  //     return clickedNodes
-  //   }, new Set<string>()),
-  //   startWith(new Set<string>()),
-  // ),
-  // nodeClick$.pipe(startWith(null)),
-  nodeDoubleClick$.pipe(startWith(null)),
-  // nodeHover$.pipe(startWith(null))
-).pipe(
-  map(([idx, clickedNode, hoverNode]) => {
-    const nodeIds = new Set()
-    return {
-      nodes: nodes
-        .slice(0, (idx + 1) * NODES_PER_TICK)
-        // .filter((node) => !clickedNode.has(node.id))
-        // .map((node) => {
-        //   if (node.id === hoverNode) {
-        //     return { ...node, style: { ...node.style, width: 550, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined } }
-        //   }
-        //   return node
-        // })
-        .map((node) => {
-          if (node.id === clickedNode) {
-            return {
-              ...node,
-              style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, stroke: '#ccc', strokeWidth: 1, icon: undefined },
-              subGraph: { nodes: [], edges: [] },
-            }
-          }
-          return node
-        })
-        .map((node) => (nodeIds.add(node.id), node)),
-      edges: edges
-        .filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)),
-      options: { nodeStrength: -600, }
-    }
-  })
-).subscribe({
-  next: (graphData) => graph.layout(graphData),
-  error: (err) => console.error(err),
-  complete: () => console.log('complete'),
+/**
+ * Initialize Layout and Renderer
+ */
+const layout = Layout(({ nodes, edges }) => renderer({ nodes, edges, options: renderOptions }))
+
+const renderer = Renderer({
+  container,
+  debug: { stats, logPerformance: false }
 })
+
+
+/**
+ * Layout and Render Graph
+ */
+layout({ nodes, edges, options: layoutOptions })
