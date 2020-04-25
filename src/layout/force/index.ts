@@ -1,4 +1,4 @@
-import { Simulation, LayoutResultEvent, TypedMessageEvent, RunEvent, UpdateEvent, DEFAULT_SIMULATION_OPTIONS } from './simulation'
+import { Simulation, LayoutResultEvent, TypedMessageEvent, RunEvent, UpdateEvent, LAYOUT_OPTIONS } from './simulation'
 import { NodeStyle, EdgeStyle } from '../../renderers/options'
 import { noop } from '../../utils'
 
@@ -49,7 +49,7 @@ export type LayoutOptions = {
 }
 
 
-export class Layout {
+class ForceLayout {
 
   worker: Worker
   dispose: () => void
@@ -81,10 +81,10 @@ export class Layout {
     }
   }
 
-  layout = ({
+  apply = ({
     nodes,
     edges,
-    options = DEFAULT_SIMULATION_OPTIONS
+    options = LAYOUT_OPTIONS
   }: {
     nodes: Node[],
     edges: Edge[],
@@ -195,4 +195,10 @@ export class Layout {
 
     return this
   }
+}
+
+
+export const Layout = (handler: (graph: { nodes: PositionedNode[], edges: Edge[] }) => void = noop) => {
+  const forceLayout = new ForceLayout(handler)
+  return (graph: { nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }) => forceLayout.apply(graph)
 }

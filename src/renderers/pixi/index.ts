@@ -1,11 +1,38 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import FontFaceObserver from 'fontfaceobserver'
-import { RendererOptions, RendererLayoutOptions } from '../options'
 import { PositionedNode, Edge as PositionedEdge } from '../../layout/force'
 import { animationFrameLoop, noop } from '../../utils'
 import { Node } from './node'
 import { Edge } from './edge'
+
+
+export type RendererOptions = {
+  width: number
+  height: number
+  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
+  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onContainerPointerEnter: (event: PointerEvent) => void
+  onContainerPointerDown: (event: PointerEvent) => void
+  onContainerPointerMove: (event: PointerEvent) => void
+  onContainerPointerUp: (event: PointerEvent) => void
+  onContainerPointerLeave: (event: PointerEvent) => void
+}
+
+export const RENDERER_OPTIONS: RendererOptions = {
+  width: 800, height: 600,
+  onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
+  onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
+  onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop,
+}
 
 
 new FontFaceObserver('Material Icons').load()
@@ -15,11 +42,8 @@ const POSITION_ANIMATION_DURATION = 800
 PIXI.utils.skipHello()
 
 
-export class Renderer {
+class PIXIRenderer {
 
-  width: number
-  height: number
-  debug: RendererOptions['debug']
   hoveredNode?: Node
   clickedNode?: Node
   dirty = false
@@ -40,48 +64,29 @@ export class Renderer {
   private prevNodes: PositionedNode[] | undefined
   private prevEdges: PositionedEdge[] | undefined
 
-  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-
+  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
+  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
+  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
+  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
+  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
+  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
+  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
+  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
+  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
+  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
+  width = RENDERER_OPTIONS.width
+  height = RENDERER_OPTIONS.height
   app: PIXI.Application
   viewport: Viewport
+  debug: { logPerformance?: boolean, stats?: Stats }
 
-  constructor({
-    container, width = 800, height = 600, debug,
-    onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
-    onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
-    onContainerPointerEnter, onContainerPointerDown, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave,
-  }: RendererOptions) {
-    this.width = width
-    this.height = height
-    this.onNodePointerEnter = onNodePointerEnter
-    this.onNodePointerDown = onNodePointerDown
-    this.onNodeDrag = onNodeDrag
-    this.onNodePointerUp = onNodePointerUp
-    this.onNodePointerLeave = onNodePointerLeave
-    this.onNodeDoubleClick = onNodeDoubleClick
-    this.onEdgePointerEnter = onEdgePointerEnter
-    this.onEdgePointerDown = onEdgePointerDown
-    this.onEdgePointerUp = onEdgePointerUp
-    this.onEdgePointerLeave = onEdgePointerLeave
-    this.debug = debug
-
+  constructor({ container, debug = {} }: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
     if (!(container instanceof HTMLCanvasElement)) {
       throw new Error('container must be an instance of HTMLCanvasElement')
     }
 
-    /**
-     * TODO - max out render performance, even on machines w/o dedicated GPU
-     * just twist all the knobs...
-     */
+    this.debug = debug
+
     this.app = new PIXI.Application({
       view: container,
       width: this.width,
@@ -93,43 +98,6 @@ export class Renderer {
       autoStart: false,
       powerPreference: 'high-performance',
     })
-
-    // TODO - these shouldn't fire on edge hover or click either
-    if (onContainerPointerEnter) {
-      this.app.view.onpointerenter = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerPointerEnter(e)
-        }
-      }
-    }
-    if (onContainerPointerDown) {
-      this.app.view.onpointerdown = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerPointerDown(e)
-        }
-      }
-    }
-    if (onContainerPointerMove) {
-      this.app.view.onpointermove = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerPointerMove(e)
-        }
-      }
-    }
-    if (onContainerPointerUp) {
-      this.app.view.onpointerup = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerPointerUp(e)
-        }
-      }
-    }
-    if (onContainerPointerLeave) {
-      this.app.view.onpointerleave = (e) => {
-        if (this.hoveredNode === undefined && this.clickedNode === undefined) {
-          onContainerPointerLeave(e)
-        }
-      }
-    }
 
     this.labelsLayer.interactiveChildren = false
     this.nodesLayer.sortableChildren = true // TODO - perf test
@@ -165,24 +133,44 @@ export class Renderer {
 
   /**
    * TODO
-   * - handle case where layout is called while previous layout is still being interpolated
-   * current approach essentially cancels previous layout and runs a new one
-   * maybe instead stage new one, overwriting stagged layout if new layouts are called, and don't run until previous interpolation is done
+   * - handle case where apply is called while previous apply is still being interpolated
+   * current approach essentially cancels previous apply and runs a new one
+   * maybe instead stage new one, overwriting stagged apply if new applys are called, and don't run until previous interpolation is done
    * - do a better job diffing against existing nodes/edges/options
    */
-  layout = ({ nodes, edges, options }: {
-    nodes: PositionedNode[],
-    edges: PositionedEdge[],
-    options?: RendererLayoutOptions
-  }) => {
-    if (
-      (options?.width !== undefined && options.width !== this.width) ||
-      (options?.height !== undefined && options.height !== this.height)
-    ) {
-      this.width = options.width ?? this.width
-      this.height = options.height ?? this.height
-      this.app.renderer.resize(this.width, this.height)
+  apply = ({
+    nodes,
+    edges,
+    options: {
+      width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height,
+      onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
+      onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
+      onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop,
+    } = RENDERER_OPTIONS
+  }: { nodes: PositionedNode[], edges: PositionedEdge[], options?: Partial<RendererOptions> }) => {
+    if (width !== this.width || height !== this.height) {
+      this.width = width
+      this.height = height
+      this.app.renderer.resize(width, height)
     }
+
+    // TODO - these shouldn't fire on edge hover or click either
+    this.app.view.onpointerenter = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerEnter(e)
+    this.app.view.onpointerdown = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerDown(e)
+    this.app.view.onpointermove = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerMove(e)
+    this.app.view.onpointerup = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerUp(e)
+    this.app.view.onpointerleave = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerLeave(e)
+    this.onNodePointerEnter = onNodePointerEnter
+    this.onNodePointerDown = onNodePointerDown
+    this.onNodeDrag = onNodeDrag
+    this.onNodePointerUp = onNodePointerUp
+    this.onNodePointerLeave = onNodePointerLeave
+    this.onNodeDoubleClick = onNodeDoubleClick
+    this.onEdgePointerEnter = onEdgePointerEnter
+    this.onEdgePointerDown = onEdgePointerDown
+    this.onEdgePointerUp = onEdgePointerUp
+    this.onEdgePointerLeave = onEdgePointerLeave
+
 
     /**
      * restart animation whenever a new layout is calculated: nodes/edges are added/removed from graph, subGraph is added/removed from graph
@@ -393,4 +381,7 @@ export class Renderer {
 }
 
 
-export const PixiRenderer = (options: RendererOptions) => new Renderer(options)
+export const Renderer = (options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+  const pixiRenderer = new PIXIRenderer(options)
+  return (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options?: Partial<RendererOptions> }) => pixiRenderer.apply(graph)
+}

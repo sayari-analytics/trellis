@@ -2,12 +2,13 @@ import { select, event } from 'd3-selection'
 import { zoom } from 'd3-zoom'
 import { drag as dragBehavior } from 'd3-drag'
 import raf from 'raf'
-import { PositionedNode, PositionedEdge } from '../index'
-import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES, RendererOptions } from './options'
-import { interpolateDuration, noop } from '../utils'
+import { PositionedNode, PositionedEdge } from '../../index'
+import { DEFAULT_NODE_STYLES, DEFAULT_EDGE_STYLES } from '../options'
+import { interpolateDuration, noop } from '../../utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { nodeStyleSelector, edgeStyleSelector } from './utils'
-import { LayoutOptions } from '../simulation'
+import { nodeStyleSelector, edgeStyleSelector } from '../utils'
+import { LayoutOptions } from '../../simulation'
+import { RendererOptions } from '../pixi'
 
 
 type PositionedNodeWithInitialPosition = PositionedNode & { x0?: number, y0?: number }
