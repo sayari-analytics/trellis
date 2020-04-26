@@ -17,6 +17,7 @@ export type Node = {
     options?: Partial<LayoutOptions>
   }
 }
+
 export type Edge = {
   id: string
   label?: string
@@ -55,12 +56,12 @@ class ForceLayout {
   dispose: () => void
   handler: (graph: { nodes: PositionedNode[], edges: Edge[] }) => void
 
-  private nodes: Node[] = []
-  private edges: Edge[] = []
-  private nodesById: { [id: string]: Node } = {}
-  private edgesById: { [id: string]: Edge } = {}
-  private positionedNodes: PositionedNode[] = []
-  private positionedNodesById: { [id: string]: PositionedNode } = {}
+  nodes: Node[] = []
+  edges: Edge[] = []
+  nodesById: { [id: string]: Node } = {}
+  edgesById: { [id: string]: Edge } = {}
+  positionedNodes: PositionedNode[] = []
+  positionedNodesById: { [id: string]: PositionedNode } = {}
   private options: Partial<LayoutOptions> = {}
   private run = false
 
@@ -70,25 +71,27 @@ class ForceLayout {
     this.worker = worker
     this.dispose = dispose
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
-      for (let node of event.data.nodes) {
-        // TODO - is it safe to mutate node?  or should this be an immutable update?  does layout need to depend on diffing update nodes by equality?
-        this.positionedNodesById[node.id].x = node.x
-        this.positionedNodesById[node.id].y = node.y
-        this.positionedNodesById[node.id].radius = node.radius
-        this.positionedNodesById[node.id].subGraph = node.subGraph
+      const positionedNodes: PositionedNode[] = []
+      const positionedNodesById: { [id: string]: PositionedNode } = {}
+
+      for (const node of event.data.nodes) {
+        if (this.positionedNodesById[node.id]) {
+          positionedNodes.push(node)
+          positionedNodesById[node.id] = node
+        }
       }
-      this.handler({ nodes: this.positionedNodes, edges: this.edges })
+
+      this.positionedNodes = positionedNodes
+      this.positionedNodesById = positionedNodesById
+
+      this.handler({ nodes: positionedNodes, edges: this.edges })
     }
   }
 
   apply = ({
-    nodes,
-    edges,
-    options = LAYOUT_OPTIONS
+    nodes, edges, options = LAYOUT_OPTIONS
   }: {
-    nodes: Node[],
-    edges: Edge[],
-    options?: Partial<LayoutOptions>
+    nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions>
   }) => {
     const nodesById: { [id: string]: Node } = {}
     const edgesById: { [id: string]: Edge } = {}
@@ -200,5 +203,9 @@ class ForceLayout {
 
 export const Layout = (handler: (graph: { nodes: PositionedNode[], edges: Edge[] }) => void = noop) => {
   const forceLayout = new ForceLayout(handler)
-  return (graph: { nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }) => forceLayout.apply(graph)
+  const apply = (graph: { nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }) => forceLayout.apply(graph)
+  apply.nodes = () => forceLayout.positionedNodes
+  apply.edges = () => forceLayout.edges
+
+  return apply
 }

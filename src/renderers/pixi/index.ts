@@ -56,13 +56,12 @@ class PIXIRenderer {
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
+  nodes: PositionedNode[] | undefined
+  edges: PositionedEdge[] | undefined
   nodesById: { [id: string]: Node } = {}
   edgesById: { [id: string]: Edge } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
-
-  private prevNodes: PositionedNode[] | undefined
-  private prevEdges: PositionedEdge[] | undefined
 
   onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
   onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
@@ -184,7 +183,7 @@ class PIXIRenderer {
      * Build edge indices
      * TODO - is it possible to build edge indices and enter/update/exit edge containers in one pass?
      */
-    if (edges !== this.prevEdges) {
+    if (edges !== this.edges) {
       for (const edge of edges) {
         const id = edge.id,
           source = edge.source,
@@ -212,7 +211,7 @@ class PIXIRenderer {
     /**
      * Ndge enter/update/exit
      */
-    if (nodes !== this.prevNodes) {
+    if (nodes !== this.nodes) {
       for (const node of nodes) {
         if (this.nodesById[node.id] === undefined) {
           // node enter
@@ -253,14 +252,14 @@ class PIXIRenderer {
       }
 
       this.nodesById = nodesById
-      this.prevNodes = nodes
+      this.nodes = nodes
     }
 
 
     /**
      * Edge enter/update/exit
      */
-    if (edges !== this.prevEdges) {
+    if (edges !== this.edges) {
       for (const edge of edges) {
         const id = edge.id
         if (this.edgesById[id] === undefined) {
@@ -288,7 +287,7 @@ class PIXIRenderer {
       }
 
       this.edgesById = edgesById
-      this.prevEdges = edges
+      this.edges = edges
     }
 
 
@@ -383,5 +382,9 @@ class PIXIRenderer {
 
 export const Renderer = (options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer(options)
-  return (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options?: Partial<RendererOptions> }) => pixiRenderer.apply(graph)
+  const apply = (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options?: Partial<RendererOptions> }) => pixiRenderer.apply(graph)
+  apply.nodes = () => pixiRenderer.nodes
+  apply.edges = () => pixiRenderer.edges
+
+  return apply
 }
