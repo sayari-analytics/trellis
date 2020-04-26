@@ -93,11 +93,13 @@ const renderOptions: Partial<RendererOptions> = {
     layout({ nodes, edges, options: layoutOptions })
   },
   onNodePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    // nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
     nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
     layout({ nodes, edges, options: layoutOptions })
   },
   onNodePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
     nodes = nodes.map((node) => (node.id === id ?
+      // { ...node, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       { ...node, radius: node.radius / 4, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       node
     ))
@@ -111,36 +113,13 @@ const renderOptions: Partial<RendererOptions> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onNodeDoubleClick: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ? {
-      ...node,
-      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
-      subGraph: {
-        nodes: [
-          { id: `${node.id}a`, radius: 21, label: 'A', type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}b`, radius: 21, label: 'B', type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}c`, radius: 21, label: 'C', type: 'company', style: { ...COMPANY_STYLE } },
-        ],
-        edges: []
-      },
-    } : node))
-    layout({ nodes, edges, options: layoutOptions })
-  },
-  onContainerPointerUp: () => {
-    nodes = nodes.map((node, idx) => (node.subGraph ? {
-      ...node,
-      style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
-      subGraph: undefined,
-    } : node))
-    layout({ nodes, edges, options: layoutOptions })
-  },
 }
 
 
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout(({ nodes, edges }) => { console.log('layout emit'), renderer({ nodes, edges, options: renderOptions }) })
+const layout = Layout(({ nodes, edges }) => { renderer({ nodes, edges, options: renderOptions }) })
 
 const renderer = Renderer({
   container,
@@ -165,3 +144,5 @@ const interval = setInterval(() => {
 }, INTERVAL)
 
 layout({ nodes, edges, options: layoutOptions })
+
+;(window as any).renderer = renderer
