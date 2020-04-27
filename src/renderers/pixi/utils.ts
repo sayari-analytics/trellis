@@ -1,5 +1,5 @@
 import { color } from 'd3-color'
-import { Renderer } from '.'
+import { PIXIRenderer as Renderer } from '.'
 import { Node } from './node'
 
 

@@ -1,5 +1,6 @@
 import Stats from 'stats.js'
-import { Layout, Node, Edge, PositionedNode, LayoutOptions } from '../../src/layout/force'
+import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -20,10 +21,10 @@ const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 const data = {
   nodes: Object.values(graphData.nodes)
     .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
-    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
-    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
-    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
-    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .map<Node>(({ id, label, type }) => ({
       id,
       label,
@@ -36,20 +37,20 @@ const data = {
       }
     })),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
-    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
-    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-    // .concat([
-    //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
-    //   ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
-    //   ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
-    //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
-    //   ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
-    //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
-    //   ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
-    //   ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
-    //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
-    // ])
+    .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
+    .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
+    .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
+    .concat([
+      ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
+      ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
+      ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
+      ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
+      ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
+      ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
+      ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
+      ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
+      ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
+    ])
     .map<Edge>(([id, { field, source, target }]) => ({
       id,
       source,
@@ -123,19 +124,21 @@ const layout = Layout(({ nodes, edges }) => { renderer({ nodes, edges, options: 
 
 const renderer = Renderer({
   container,
-  debug: { stats, logPerformance: false }
+  debug: { stats, logPerformance: true }
 })
 
 
 /**
  * Layout and Render Graph
  */
-const NODES_PER_TICK = 200
+const NODES_PER_TICK = 40
 const INTERVAL = 1400
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
-console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${nodes.length} \nedge count ${edges.length}`)
+
+console.log(`Rendering ${NODES_PER_TICK} nodes every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`)
+
 
 const interval = setInterval(() => {
   updateData(idx++)
@@ -144,5 +147,6 @@ const interval = setInterval(() => {
 }, INTERVAL)
 
 layout({ nodes, edges, options: layoutOptions })
+
 
 ;(window as any).renderer = renderer

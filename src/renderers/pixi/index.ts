@@ -1,10 +1,26 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import FontFaceObserver from 'fontfaceobserver'
-import { PositionedNode, Edge as PositionedEdge } from '../../layout/force'
+import { PositionedNode, Edge as PositionedEdge } from '../../types'
 import { animationFrameLoop, noop } from '../../utils'
 import { Node } from './node'
 import { Edge } from './edge'
+
+
+export type NodeStyle = {
+  strokeWidth: number
+  fill: string
+  stroke: string
+  fillOpacity: number
+  strokeOpacity: number
+  icon?: string
+}
+
+export type EdgeStyle = {
+  width: number
+  stroke: string
+  strokeOpacity: number
+}
 
 
 export type RendererOptions = {
@@ -35,6 +51,38 @@ export const RENDERER_OPTIONS: RendererOptions = {
 }
 
 
+export const NODE_STYLES: NodeStyle = {
+  strokeWidth: 2,
+  fill: '#ff4b4b',
+  stroke: '#bb0000',
+  fillOpacity: 1,
+  strokeOpacity: 1,
+}
+
+export const EDGE_STYLES: EdgeStyle = {
+  width: 1,
+  stroke: '#ccc',
+  strokeOpacity: 1,
+}
+
+
+export const nodeStyleSelector = (nodeStyles: NodeStyle) => <T extends keyof NodeStyle>(node: PositionedNode<{}, NodeStyle>, attribute: T) => {
+  if (node.style === undefined || node.style![attribute] === undefined) {
+    return nodeStyles[attribute]
+  }
+
+  return node.style[attribute] as NodeStyle[T]
+}
+
+
+export const edgeStyleSelector = (edgeStyles: EdgeStyle) => <T extends keyof EdgeStyle>(edge: PositionedEdge<{}, EdgeStyle>, attribute: T) => {
+  if (edge.style === undefined || edge.style![attribute] === undefined) {
+    return edgeStyles[attribute]
+  }
+
+  return edge.style[attribute] as EdgeStyle[T]
+}
+
 new FontFaceObserver('Material Icons').load()
 
 const POSITION_ANIMATION_DURATION = 800
@@ -42,7 +90,7 @@ const POSITION_ANIMATION_DURATION = 800
 PIXI.utils.skipHello()
 
 
-class PIXIRenderer {
+export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends object = any>{
 
   hoveredNode?: Node
   clickedNode?: Node
@@ -56,23 +104,23 @@ class PIXIRenderer {
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodes: PositionedNode[] | undefined
-  edges: PositionedEdge[] | undefined
+  nodes: PositionedNode<NodeProps, NodeStyle>[] | undefined
+  edges: PositionedEdge<EdgeProps, EdgeStyle>[] | undefined
   nodesById: { [id: string]: Node } = {}
   edgesById: { [id: string]: Edge } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
-  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
-  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
-  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
-  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
-  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
-  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void = noop
-  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
-  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
-  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
-  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void = noop
+  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   app: PIXI.Application
@@ -146,7 +194,7 @@ class PIXIRenderer {
       onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
       onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop,
     } = RENDERER_OPTIONS
-  }: { nodes: PositionedNode[], edges: PositionedEdge[], options?: Partial<RendererOptions> }) => {
+  }: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: PositionedEdge<EdgeProps, EdgeStyle>[], options?: Partial<RendererOptions> }) => {
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
@@ -362,14 +410,14 @@ class PIXIRenderer {
       const total = measurements[0].duration
       console.log(
         `%c${total.toFixed(2)}ms %c(update: 0.00, render: ${measurements[0].duration.toFixed(2)})`,
-        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 50 ? '#e22' : '#b00'}`,
+        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 40 ? '#e22' : '#a00'}`,
         'color: #666'
       )
     } else if (this.debug?.logPerformance && measurements.length === 2) {
       const total = measurements[0].duration + measurements[1].duration
       console.log(
         `%c${total.toFixed(2)}ms %c(${measurements.map(({ name, duration }) => `${name}: ${duration.toFixed(2)}`).join(', ')}}`,
-        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 50 ? '#e22' : '#b00'}`,
+        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 40 ? '#e22' : '#a00'}`,
         'color: #666'
       )
     }
@@ -380,9 +428,9 @@ class PIXIRenderer {
 }
 
 
-export const Renderer = (options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+export const Renderer = <NodeProps extends object = {}, EdgeProps extends object = {}>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer(options)
-  const apply = (graph: { nodes: PositionedNode[], edges: PositionedEdge[], options?: Partial<RendererOptions> }) => pixiRenderer.apply(graph)
+  const apply = (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: PositionedEdge<EdgeProps, EdgeStyle>[], options?: Partial<RendererOptions> }) => pixiRenderer.apply(graph)
   apply.nodes = () => pixiRenderer.nodes
   apply.edges = () => pixiRenderer.edges
 

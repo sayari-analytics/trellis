@@ -1,6 +1,7 @@
 /* eslint-disable no-useless-escape */
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge, LayoutOptions, PositionedNode } from '.'
+import { LayoutOptions } from '.'
+import { Node, Edge, PositionedNode } from '../../types'
 
 
 const d3ForceScript = `

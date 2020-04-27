@@ -1,5 +1,6 @@
 import Stats from 'stats.js'
-import { Layout, Node, Edge, PositionedNode, LayoutOptions } from '../../src/layout/force'
+import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -30,7 +31,8 @@ const data = {
         strokeWidth: 4,
         icon: type === 'company' ? 'business' : 'person',
       }
-    })),
+    }))
+    .slice(0, 1),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
     .map<Edge>(([id, { field, source, target }]) => ({
       id,
@@ -138,7 +140,7 @@ const INTERVAL = 1400
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
-console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${nodes.length} \nedge count ${edges.length}`)
+console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`)
 
 const interval = setInterval(() => {
   updateData(idx++)

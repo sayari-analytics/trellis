@@ -1,18 +1,16 @@
 import * as PIXI from 'pixi.js'
-import { nodeStyleSelector } from '../utils'
-import { PositionedNode } from '../../layout/force'
-import { colorToNumber, parentInFront } from './utils'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { Renderer } from '.'
-import { DEFAULT_NODE_STYLES } from '../options'
+import { PositionedNode } from '../../types'
+import { PIXIRenderer as Renderer, NODE_STYLES, nodeStyleSelector, NodeStyle } from '.'
+import { colorToNumber, parentInFront } from './utils'
 
 
 const LABEL_Y_PADDING = 4
 
 
-export class Node {
+export class Node<NodeProps extends object = any>{
 
-  node: PositionedNode
+  node: PositionedNode<NodeProps, NodeStyle>
   x: number
   y: number
   radius = -1
@@ -24,7 +22,7 @@ export class Node {
   subGraphNodes: { [id: string]: Node } = {}
   parent?: Node
 
-  private renderer: Renderer
+  private renderer: Renderer<NodeProps, any>
   private depth: number
   private startX = 0
   private startY = 0
@@ -45,9 +43,9 @@ export class Node {
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
-  private static nodeStyleSelector = nodeStyleSelector(DEFAULT_NODE_STYLES)
+  private static nodeStyleSelector = nodeStyleSelector(NODE_STYLES)
 
-  constructor(renderer: Renderer, node: PositionedNode, x: number, y: number, parent?: Node) {
+  constructor(renderer: Renderer<NodeProps>, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number, parent?: Node) {
     this.renderer = renderer
 
     this.parent = parent
@@ -83,7 +81,7 @@ export class Node {
     this.set(node)
   }
 
-  set(node: PositionedNode) {
+  set(node: PositionedNode<NodeProps, NodeStyle>) {
     /**
      * TODO - only interpolate movement if node is not being dragged
      */

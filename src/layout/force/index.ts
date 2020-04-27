@@ -1,44 +1,7 @@
 import { Simulation, LayoutResultEvent, TypedMessageEvent, RunEvent, UpdateEvent, LAYOUT_OPTIONS } from './simulation'
-import { NodeStyle, EdgeStyle } from '../../renderers/options'
+import { Node, PositionedNode, Edge } from '../../types'
 import { noop } from '../../utils'
 
-
-// TODO - move these to types, as they're shared across renderers and layouts
-export type Node = {
-  id: string
-  radius: number
-  x?: number
-  y?: number
-  label?: string
-  style?: Partial<NodeStyle>
-  subGraph?: {
-    nodes: Node[],
-    edges: Edge[],
-    options?: Partial<LayoutOptions>
-  }
-}
-
-export type Edge = {
-  id: string
-  label?: string
-  source: string
-  target: string
-  style?: Partial<EdgeStyle>
-}
-
-export type PositionedNode = {
-  id: string
-  radius: number
-  x: number
-  y: number
-  label?: string
-  style?: Partial<NodeStyle>
-  subGraph?: {
-    nodes: PositionedNode[],
-    edges: Edge[],
-    options?: Partial<LayoutOptions>
-  }
-}
 
 export type LayoutOptions = {
   nodeStrength: number
@@ -115,14 +78,18 @@ class ForceLayout {
         } else if (this.nodesById[node.id] !== node) {
           // node update
           nodesById[node.id] = node
-          const positionedNode = { ...node, x: node.x ?? this.positionedNodesById[node.id].x, y: node.y ?? this.positionedNodesById[node.id].y } as PositionedNode
+          const positionedNode = {
+            ...node,
+            x: node.x ?? this.positionedNodesById[node.id].x,
+            y: node.y ?? this.positionedNodesById[node.id].y,
+            radius: node.subGraph !== undefined ? this.positionedNodesById[node.id].radius : node.radius
+          } as PositionedNode
           positionedNodes.push(positionedNode)
           positionedNodesById[node.id] = positionedNode
 
           /**
            * TODO - if subGraphs have changed, but nothing else has, then rather than rerunning the entire simulation,
-           * could instead just rerun the subGraph repositioning
-           * more efficient and less disruptive
+           * could instead just rerun the subGraph repositioning: more efficient and less disruptive
            */
           if (node.radius !== this.nodesById[node.id].radius || node.subGraph !== this.nodesById[node.id].subGraph) {
             this.run = true
@@ -137,6 +104,9 @@ class ForceLayout {
         }
       }
 
+      /**
+       * TODO - if ((number of node updates) < this.nodes.length) { this.run = true }
+       */
       for (const nodeId in this.nodesById) {
         if (nodesById[nodeId] === undefined) {
           // node exit
@@ -163,6 +133,9 @@ class ForceLayout {
         // no edge update
       }
 
+      /**
+       * TODO - if ((number of edge updates) < this.edge.length) { this.run = true }
+       */
       for (const edgeId in this.edgesById) {
         if (edgesById[edgeId] === undefined) {
           // edge exit

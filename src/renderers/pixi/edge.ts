@@ -1,9 +1,7 @@
 import * as PIXI from 'pixi.js'
-import { Edge as PositionedEdge } from '../../layout/force'
-import { edgeStyleSelector } from '../utils'
+import { Edge as PositionedEdge } from '../../types'
+import { PIXIRenderer as Renderer, EDGE_STYLES, edgeStyleSelector, EdgeStyle } from '.'
 import { colorToNumber } from './utils'
-import { Renderer } from '.'
-import { DEFAULT_EDGE_STYLES } from '../options'
 
 
 const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
@@ -22,9 +20,9 @@ const ARROW_HEIGHT = 16
 const ARROW_WIDTH = 8
 
 
-export class Edge {
+export class Edge<Props extends object = any>{
 
-  edge: PositionedEdge = { id: '', source: '', target: '' }
+  edge: PositionedEdge<Props, EdgeStyle> | undefined
 
   private renderer: Renderer
   private label?: string
@@ -43,7 +41,7 @@ export class Edge {
   private curveControlPointA?: [number, number]
   private curveControlPointB?: [number, number]
   private curve: number = 0
-  private static edgeStyleSelector = edgeStyleSelector(DEFAULT_EDGE_STYLES)
+  private static edgeStyleSelector = edgeStyleSelector(EDGE_STYLES)
 
   constructor(renderer: Renderer, edgesLayer: PIXI.Container) {
     this.renderer = renderer
@@ -61,7 +59,7 @@ export class Edge {
     edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
-  set(edge: PositionedEdge) {
+  set(edge: PositionedEdge<Props, EdgeStyle>) {
     this.edge = edge
 
 
@@ -126,8 +124,8 @@ export class Edge {
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render() {
-    const sourceContainer = this.renderer.nodesById[this.edge.source],
-      targetContainer = this.renderer.nodesById[this.edge.target],
+    const sourceContainer = this.renderer.nodesById[this.edge!.source],
+      targetContainer = this.renderer.nodesById[this.edge!.target],
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
       start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceContainer.radius),
       end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + ARROW_HEIGHT),
@@ -272,9 +270,9 @@ export class Edge {
     this.edgeGfx.destroy()
     this.arrow.destroy()
     this.labelContainer.destroy()
-    delete this.renderer.edgesById[this.edge.id]
-    this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target].delete(this.edge.id)
-    this.renderer.reverseEdgeIndex[this.edge.target][this.edge.source].delete(this.edge.id)
+    delete this.renderer.edgesById[this.edge!.id]
+    this.renderer.forwardEdgeIndex[this.edge!.source][this.edge!.target].delete(this.edge!.id)
+    this.renderer.reverseEdgeIndex[this.edge!.target][this.edge!.source].delete(this.edge!.id)
   }
 
   private pointerEnter = (event: PIXI.interaction.InteractionEvent) => {
@@ -282,7 +280,7 @@ export class Edge {
       this.hoveredEdge = true
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onEdgePointerEnter(event, this.edge, x, y)
+      this.renderer.onEdgePointerEnter(event, this.edge!, x, y)
     }
   }
 
@@ -292,17 +290,17 @@ export class Edge {
       this.renderer.dirty = true
 
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onEdgePointerLeave(event, this.edge, x, y)
+      this.renderer.onEdgePointerLeave(event, this.edge!, x, y)
     }
   }
 
   private pointerDown = (event: PIXI.interaction.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onEdgePointerDown(event, this.edge, x, y)
+    this.renderer.onEdgePointerDown(event, this.edge!, x, y)
   }
 
   private pointerUp = (event: PIXI.interaction.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onEdgePointerUp(event, this.edge, x, y)
+    this.renderer.onEdgePointerUp(event, this.edge!, x, y)
   }
 }
