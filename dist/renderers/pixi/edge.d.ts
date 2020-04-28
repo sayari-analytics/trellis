@@ -1,8 +1,7 @@
 import * as PIXI from 'pixi.js';
-import { Edge as PositionedEdge } from '../../types';
-import { PIXIRenderer as Renderer, EdgeStyle } from '.';
-export declare class Edge<Props extends object = any> {
-    edge: PositionedEdge<Props, EdgeStyle> | undefined;
+import { PIXIRenderer as Renderer, NodeDatum, EdgeDatum } from '.';
+export declare class Edge<N extends NodeDatum, E extends EdgeDatum> {
+    edge: E | undefined;
     private renderer;
     private label?;
     private width;
@@ -20,8 +19,8 @@ export declare class Edge<Props extends object = any> {
     private curveControlPointA?;
     private curveControlPointB?;
     private curve;
-    constructor(renderer: Renderer, edgesLayer: PIXI.Container);
-    set(edge: PositionedEdge<Props, EdgeStyle>): this;
+    constructor(renderer: Renderer<N, E>, edgesLayer: PIXI.Container);
+    set(edge: E): this;
     /**
      * TODO - perf boost: render cheap version of things while still animating position
      */

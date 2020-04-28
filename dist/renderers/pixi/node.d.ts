@@ -1,7 +1,6 @@
-import { PositionedNode } from '../../types';
-import { PIXIRenderer as Renderer, NodeStyle } from '.';
-export declare class Node<NodeProps extends object = any> {
-    node: PositionedNode<NodeProps, NodeStyle>;
+import { PIXIRenderer as Renderer, NodeDatum, EdgeDatum } from '.';
+export declare class Node<N extends NodeDatum, E extends EdgeDatum> {
+    node: N;
     x: number;
     y: number;
     radius: number;
@@ -11,9 +10,9 @@ export declare class Node<NodeProps extends object = any> {
     fill: number;
     fillOpacity: number;
     subGraphNodes: {
-        [id: string]: Node;
+        [id: string]: Node<N, E>;
     };
-    parent?: Node;
+    parent?: Node<N, E>;
     private renderer;
     private depth;
     private startX;
@@ -35,8 +34,8 @@ export declare class Node<NodeProps extends object = any> {
     private doubleClick;
     private nodeMoveXOffset;
     private nodeMoveYOffset;
-    constructor(renderer: Renderer<NodeProps>, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number, parent?: Node);
-    set(node: PositionedNode<NodeProps, NodeStyle>): this;
+    constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, parent?: Node<N, E>);
+    set(node: N): this;
     /**
      * TODO - perf boost: render cheap version of things while still animating position
      */

@@ -206,6 +206,4 @@ exports.Layout = function (handler) {
     apply.edges = function () { return forceLayout.edges; };
     return apply;
 };
-// TODO - simpler?
-// export const Layout2 = <N extends Node, E extends Edge>(handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }) => void = noop) => {}
 //# sourceMappingURL=index.js.map

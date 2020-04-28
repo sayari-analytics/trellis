@@ -1,4 +1,4 @@
-import { Node, PositionedNode, Edge } from '../../types';
+import { Node, Edge, PositionNode } from '../../types';
 export declare type LayoutOptions = {
     nodeStrength: number;
     linkDistance: number;
@@ -7,46 +7,46 @@ export declare type LayoutOptions = {
     nodePadding: number;
     tick: number;
 };
-export declare class ForceLayout<NodeProps extends object = any, EdgeProps extends object = any, NodeStyle extends object = any, EdgeStyle extends object = any> {
+export declare class ForceLayout<N extends Node<E>, E extends Edge> {
     worker: Worker;
     dispose: () => void;
     handler: (graph: {
-        nodes: PositionedNode<NodeProps, NodeStyle>[];
-        edges: Edge[];
+        nodes: PositionNode<N, E>[];
+        edges: E[];
     }) => void;
-    nodes: Node<NodeProps, NodeStyle>[];
-    edges: Edge<EdgeProps, EdgeStyle>[];
+    nodes: N[];
+    edges: E[];
     nodesById: {
-        [id: string]: Node<NodeProps, NodeStyle>;
+        [id: string]: N;
     };
     edgesById: {
-        [id: string]: Edge<EdgeProps, EdgeStyle>;
+        [id: string]: E;
     };
-    positionedNodes: PositionedNode<NodeProps, NodeStyle>[];
+    positionedNodes: PositionNode<N, E>[];
     positionedNodesById: {
-        [id: string]: PositionedNode<NodeProps, NodeStyle>;
+        [id: string]: PositionNode<N, E>;
     };
     private options;
     private run;
     constructor(handler?: (graph: {
-        nodes: PositionedNode<NodeProps, NodeStyle>[];
-        edges: Edge[];
+        nodes: PositionNode<N, E>[];
+        edges: E[];
     }) => void);
     apply: ({ nodes, edges, options }: {
-        nodes: any[];
-        edges: any[];
+        nodes: N[];
+        edges: E[];
         options?: Partial<LayoutOptions> | undefined;
     }) => this;
 }
-export declare const Layout: <NodeProps extends object = any, EdgeProps extends object = any, NodeStyle extends object = any, EdgeStyle extends object = any>(handler?: (graph: {
-    nodes: PositionedNode<NodeProps, NodeStyle, unknown>[];
-    edges: Edge<EdgeProps, EdgeStyle>[];
+export declare const Layout: <N extends Node<E>, E extends Edge>(handler?: (graph: {
+    nodes: PositionNode<N, E>[];
+    edges: E[];
 }) => void) => {
     (graph: {
-        nodes: any[];
-        edges: any[];
+        nodes: N[];
+        edges: E[];
         options?: Partial<LayoutOptions> | undefined;
-    }): ForceLayout<NodeProps, any, NodeStyle, any>;
-    nodes(): PositionedNode<NodeProps, NodeStyle, unknown>[];
-    edges(): any[];
+    }): ForceLayout<N, E>;
+    nodes(): PositionNode<N, E>[];
+    edges(): E[];
 };

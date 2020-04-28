@@ -1,29 +1,29 @@
 /// <reference types="stats" />
 import { Component, ReactNode } from 'react';
-import { Node, Edge, PositionedNode } from '../../../types';
+import { Node, Edge, PositionNode } from '../../../types';
 import { LayoutOptions } from '..';
-declare type Props<NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}> = {
+export declare type Props<N extends Node<E>, E extends Edge> = {
     debug?: {
         logPerformance?: boolean;
         stats?: Stats;
     };
-    nodes: Node<NodeProps, NodeStyle>[];
-    edges: Edge<EdgeProps, EdgeStyle>[];
+    nodes: N[];
+    edges: E[];
     options?: Partial<LayoutOptions>;
     children: (graph: {
-        nodes: PositionedNode<NodeProps, NodeStyle>[];
-        edges: Edge<EdgeProps, EdgeStyle>[];
+        nodes: PositionNode<N, E>[];
+        edges: E[];
     }) => ReactNode;
 };
-declare type State<NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}> = {
-    nodes: PositionedNode<NodeProps, NodeStyle>[];
-    edges: Edge<EdgeProps, EdgeStyle>[];
+declare type State<N extends Node<E>, E extends Edge> = {
+    nodes: PositionNode<N, E>[];
+    edges: E[];
 };
-export declare class Layout<NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}> extends Component<Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>> {
-    state: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>;
+export declare class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N, E>, State<N, E>> {
+    state: State<N, E>;
     private layout;
     componentDidMount(): void;
-    UNSAFE_componentWillReceiveProps(): void;
+    UNSAFE_componentWillReceiveProps(nextProps: Props<N, E>): void;
     render(): ReactNode;
 }
 export {};

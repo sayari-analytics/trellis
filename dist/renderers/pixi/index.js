@@ -238,6 +238,7 @@ var PIXIRenderer = /** @class */ (function () {
                 _this.animationDuration = 0;
                 _this.animationPercent = 0;
             }
+            return _this;
         };
         this.render = function () {
             var now = Date.now();

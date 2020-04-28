@@ -25,9 +25,6 @@ var Layout = /** @class */ (function (_super) {
         });
         return _this;
     }
-    // shouldComponentUpdate(_: Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, prevState: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>) {
-    //   return this.state !== prevState
-    // }
     Layout.prototype.componentDidMount = function () {
         this.layout.apply({
             nodes: this.props.nodes,
@@ -35,12 +32,11 @@ var Layout = /** @class */ (function (_super) {
             options: this.props.options,
         });
     };
-    // componentWillReceiveProps() {
-    Layout.prototype.UNSAFE_componentWillReceiveProps = function () {
+    Layout.prototype.UNSAFE_componentWillReceiveProps = function (nextProps) {
         this.layout.apply({
-            nodes: this.props.nodes,
-            edges: this.props.edges,
-            options: this.props.options,
+            nodes: nextProps.nodes,
+            edges: nextProps.edges,
+            options: nextProps.options,
         });
     };
     Layout.prototype.render = function () {

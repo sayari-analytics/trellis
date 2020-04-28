@@ -10,29 +10,18 @@ export declare type SimulationEdge = SimulationLinkDatum<SimulationNode>;
 export declare type TypedMessageEvent<T = unknown> = {
     [K in keyof MessageEvent]: K extends 'data' ? T : MessageEvent[K];
 };
-export declare type RunEvent = {
+export declare type RunEvent<N extends Node<E>, E extends Edge> = {
     type: 'run';
-    nodes: Node[];
-    edges: Edge[];
+    nodes: N[];
+    edges: E[];
     options?: Partial<LayoutOptions>;
 };
-export declare type UpdateEvent = {
+export declare type UpdateEvent<N extends PositionedNode<E>, E extends Edge> = {
     type: 'update';
-    nodes: PositionedNode[];
+    nodes: N[];
 };
-export declare type Event = RunEvent | UpdateEvent;
-export declare type LayoutResultEvent = {
-    nodes: {
-        id: string;
-        radius: number;
-        x: number;
-        y: number;
-        subGraph?: {
-            nodes: PositionedNode[];
-            edges: Edge[];
-            options?: Partial<LayoutOptions>;
-        };
-    }[];
+export declare type LayoutResultEvent<N extends PositionedNode<E>, E extends Edge> = {
+    nodes: N[];
 };
 export declare const Simulation: () => {
     worker: Worker;

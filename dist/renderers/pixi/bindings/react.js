@@ -23,7 +23,12 @@ var Renderer = /** @class */ (function (_super) {
         return _this;
     }
     Renderer.prototype.componentDidMount = function () {
-        this.renderer = new __1.PIXIRenderer({ container: this.container.current, debug: this.props.debug });
+        this.renderer = new __1.PIXIRenderer({ container: this.container.current, debug: this.props.debug })
+            .apply({
+            nodes: this.props.nodes,
+            edges: this.props.edges,
+            options: this.props.options,
+        });
     };
     Renderer.prototype.componentDidUpdate = function () {
         this.renderer.apply({

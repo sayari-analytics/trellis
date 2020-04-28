@@ -1,21 +1,19 @@
 /// <reference types="stats" />
 import { Component } from 'react';
-import { RendererOptions, NodeStyle, EdgeStyle } from '..';
-import { PositionedNode, Edge } from '../../../types';
-declare type Props<NodeProps extends object = {}, EdgeProps extends object = {}> = {
+import { RendererOptions, NodeDatum, EdgeDatum } from '..';
+export declare type Props<N extends NodeDatum, E extends EdgeDatum> = {
     debug?: {
         logPerformance?: boolean;
         stats?: Stats;
     };
-    nodes: PositionedNode<NodeProps, NodeStyle>[];
-    edges: Edge<EdgeProps, EdgeStyle>[];
-    options?: Partial<RendererOptions>;
+    nodes: N[];
+    edges: E[];
+    options?: Partial<RendererOptions<N, E>>;
 };
-export declare class Renderer<NodeProps extends object = {}, EdgeProps extends object = {}> extends Component<Props<NodeProps, EdgeProps>> {
+export declare class Renderer<N extends NodeDatum, E extends EdgeDatum> extends Component<Props<N, E>> {
     private container;
     private renderer;
     componentDidMount(): void;
     componentDidUpdate(): void;
     render(): import("react").DetailedReactHTMLElement<import("react").HTMLAttributes<HTMLCanvasElement>, HTMLCanvasElement>;
 }
-export {};
