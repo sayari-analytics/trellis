@@ -1,10 +1,9 @@
-import { createElement } from 'react'
+import { createElement, SFC, useState, useCallback } from 'react'
 import { render } from 'react-dom'
 import Stats from 'stats.js'
-import { LayoutOptions } from '../../src/layout/force'
 import { Layout } from '../../src/layout/force/bindings/react'
 import { Node, Edge, PositionedNode } from '../../src/types'
-import { RendererOptions, NodeStyle, EdgeStyle } from '../../src/renderers/pixi'
+import { NodeStyle, EdgeStyle } from '../../src/renderers/pixi'
 import { Renderer } from '../../src/renderers/pixi/bindings/react'
 
 
@@ -39,99 +38,94 @@ let edges: Edge<{}, EdgeStyle>[] = [
 
 
 /**
- * Initialize Layout and Renderer Options
+ * Render React Layout and Renderer Components
  */
-const layoutOptions: Partial<LayoutOptions> = {
-  nodeStrength: -500,
+const App: SFC = () => {
+  const [graph, setGraph] = useState({ nodes, edges })
+
+  const onNodePointerDown = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+    setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
+  }, [])
+  const onNodeDrag = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+    setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
+  }, [])
+  const onNodePointerUp = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node)), edges }))
+  }, [])
+  const onNodePointerEnter = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node)), edges }))
+  }, [])
+  const onNodePointerLeave = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+    setGraph(({ nodes, edges }) => ({
+      nodes: nodes.map((node) => (node.id === id ?
+        { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
+        node
+      )),
+      edges
+    }))
+  }, [])
+  const onEdgePointerEnter = useCallback((_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+    setGraph(({ nodes, edges }) => ({ nodes, edges: edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge)) }))
+  }, [])
+  const onEdgePointerLeave = useCallback((_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+    setGraph(({ nodes, edges }) => ({ nodes, edges: edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge)) }))
+  }, [])
+  const onNodeDoubleClick = useCallback((_, { id }) => {
+    setGraph(({ nodes, edges }) => ({
+      nodes: nodes.map((node) => (node.id === id ? {
+        ...node,
+        style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+        subGraph: {
+          nodes: [
+            { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
+            { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
+            { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
+          ],
+          edges: []
+        },
+      } : node)),
+      edges
+    }))
+  }, [])
+  const onContainerPointerUp = useCallback(() => {
+    setGraph(({ nodes, edges }) => ({
+      nodes: nodes.map((node, idx) => (node.subGraph ? {
+        ...node,
+        style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
+        subGraph: undefined,
+      } : node)),
+      edges
+    }))
+  }, [])
+
+  return (
+    createElement(Layout, {
+      nodes: graph.nodes,
+      edges: graph.edges,
+      options: { nodeStrength: -500 },
+      children: ({ nodes, edges }) => (
+        createElement(Renderer, {
+          nodes,
+          edges,
+          options: {
+            onNodePointerDown,
+            onNodeDrag,
+            onNodePointerUp,
+            onNodePointerEnter,
+            onNodePointerLeave,
+            onEdgePointerEnter,
+            onEdgePointerLeave,
+            onNodeDoubleClick,
+            onContainerPointerUp,
+          }
+        })
+      ),
+    })
+  )
 }
 
-const renderOptions: Partial<RendererOptions> = {
-  onNodePointerDown: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onNodeDrag: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onNodePointerUp: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onNodePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onNodePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
-    nodes = nodes.map((node) => (node.id === id ?
-      { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
-      node
-    ))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onEdgePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
-    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onEdgePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
-    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onNodeDoubleClick: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ? {
-      ...node,
-      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
-      subGraph: {
-        nodes: [
-          { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
-        ],
-        edges: []
-      },
-    } : node))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-  onContainerPointerUp: () => {
-    nodes = nodes.map((node, idx) => (node.subGraph ? {
-      ...node,
-      style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
-      subGraph: undefined,
-    } : node))
-    // layout({ nodes, edges, options: layoutOptions })
-  },
-}
 
 render(
-  createElement(Layout, {
-    nodes,
-    edges,
-    options: layoutOptions,
-    children: (graph) => (
-      createElement(Renderer, {
-        nodes: graph.nodes,
-        edges: graph.edges,
-        options: renderOptions
-      })
-    ),
-  }),
+  createElement(App),
   document.querySelector('#graph')
 )
-
-
-
-// /**
-//  * Initialize Layout and Renderer
-//  */
-// const layout = Layout(({ nodes, edges }) => renderer({ nodes, edges, options: renderOptions }))
-
-// const renderer = Renderer({
-//   container,
-//   debug: { stats, logPerformance: false }
-// })
-
-
-// /**
-//  * Layout and Render Graph
-//  */
-// layout({ nodes, edges, options: layoutOptions })

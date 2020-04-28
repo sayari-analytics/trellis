@@ -13,6 +13,12 @@ export type LayoutOptions = {
 }
 
 
+const optionsEqual = (a: Partial<LayoutOptions>, b: Partial<LayoutOptions>) => {
+  return a.nodeStrength === b.nodeStrength && a.linkDistance === b.linkDistance && a.linkStrength === b.linkStrength &&
+    a.centerStrength === b.centerStrength && a.nodePadding === b.nodePadding && a.tick === b.tick
+}
+
+
 export class ForceLayout<NodeProps extends object = any, EdgeProps extends object = any, NodeStyle extends object = any, EdgeStyle extends object = any>{
 
   worker: Worker
@@ -150,7 +156,7 @@ export class ForceLayout<NodeProps extends object = any, EdgeProps extends objec
     /**
      * run simulation on options update
      */
-    if (options !== this.options) { // TODO - shallow equals
+    if (!optionsEqual(options, this.options)) {
       // update options
       this.options = options
       this.run = true

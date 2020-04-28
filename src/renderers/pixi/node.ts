@@ -329,7 +329,6 @@ export class Node<NodeProps extends object = any>{
     this.renderer.clickedNode = this
     this.renderer.app.renderer.plugins.interaction.on('pointermove', this.nodeMove)
     this.renderer.viewport.pause = true
-    this.renderer.dirty = true
     const position = this.renderer.viewport.toWorld(event.data.global)
     this.nodeMoveXOffset = position.x - this.x
     this.nodeMoveYOffset = position.y - this.y
@@ -342,7 +341,6 @@ export class Node<NodeProps extends object = any>{
     this.renderer.clickedNode = undefined
     this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
     this.renderer.viewport.pause = false
-    this.renderer.dirty = true
     this.nodeMoveXOffset = 0
     this.nodeMoveYOffset = 0
     this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
@@ -357,10 +355,7 @@ export class Node<NodeProps extends object = any>{
     if (this.renderer.clickedNode === undefined) return
 
     const position = this.renderer.viewport.toWorld(event.data.global)
-    this.startX = this.endX = this.x = position.x - this.nodeMoveXOffset
-    this.startY = this.endY = this.y = position.y - this.nodeMoveYOffset
-    this.renderer.dirty = true
-    this.renderer.onNodeDrag(event, this.node, this.x, this.y)
+    this.renderer.onNodeDrag(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
   }
 
 

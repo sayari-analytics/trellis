@@ -24,6 +24,10 @@ var __values = (this && this.__values) || function(o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var simulation_1 = require("./simulation");
 var utils_1 = require("../../utils");
+var optionsEqual = function (a, b) {
+    return a.nodeStrength === b.nodeStrength && a.linkDistance === b.linkDistance && a.linkStrength === b.linkStrength &&
+        a.centerStrength === b.centerStrength && a.nodePadding === b.nodePadding && a.tick === b.tick;
+};
 var ForceLayout = /** @class */ (function () {
     function ForceLayout(handler) {
         var _this = this;
@@ -144,7 +148,7 @@ var ForceLayout = /** @class */ (function () {
             /**
              * run simulation on options update
              */
-            if (options !== _this.options) { // TODO - shallow equals
+            if (!optionsEqual(options, _this.options)) {
                 // update options
                 _this.options = options;
                 _this.run = true;

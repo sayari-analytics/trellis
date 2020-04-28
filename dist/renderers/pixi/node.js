@@ -104,7 +104,6 @@ var Node = /** @class */ (function () {
             _this.renderer.clickedNode = _this;
             _this.renderer.app.renderer.plugins.interaction.on('pointermove', _this.nodeMove);
             _this.renderer.viewport.pause = true;
-            _this.renderer.dirty = true;
             var position = _this.renderer.viewport.toWorld(event.data.global);
             _this.nodeMoveXOffset = position.x - _this.x;
             _this.nodeMoveYOffset = position.y - _this.y;
@@ -116,7 +115,6 @@ var Node = /** @class */ (function () {
             _this.renderer.clickedNode = undefined;
             _this.renderer.app.renderer.plugins.interaction.off('pointermove', _this.nodeMove);
             _this.renderer.viewport.pause = false;
-            _this.renderer.dirty = true;
             _this.nodeMoveXOffset = 0;
             _this.nodeMoveYOffset = 0;
             _this.renderer.onNodePointerUp(event, _this.node, _this.x, _this.y);
@@ -129,10 +127,7 @@ var Node = /** @class */ (function () {
             if (_this.renderer.clickedNode === undefined)
                 return;
             var position = _this.renderer.viewport.toWorld(event.data.global);
-            _this.startX = _this.endX = _this.x = position.x - _this.nodeMoveXOffset;
-            _this.startY = _this.endY = _this.y = position.y - _this.nodeMoveYOffset;
-            _this.renderer.dirty = true;
-            _this.renderer.onNodeDrag(event, _this.node, _this.x, _this.y);
+            _this.renderer.onNodeDrag(event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
