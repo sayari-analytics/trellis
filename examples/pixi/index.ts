@@ -1,5 +1,6 @@
 import Stats from 'stats.js'
-import { Layout, Node, Edge, PositionedNode, LayoutOptions } from '../../src/layout/force'
+import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 

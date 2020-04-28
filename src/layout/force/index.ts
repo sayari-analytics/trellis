@@ -13,34 +13,34 @@ export type LayoutOptions = {
 }
 
 
-class ForceLayout {
+export class ForceLayout<NodeProps extends object = any, EdgeProps extends object = any, NodeStyle extends object = any, EdgeStyle extends object = any>{
 
   worker: Worker
   dispose: () => void
-  handler: (graph: { nodes: PositionedNode[], edges: Edge[] }) => void
+  handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge[] }) => void
 
-  nodes: Node[] = []
-  edges: Edge[] = []
-  nodesById: { [id: string]: Node } = {}
-  edgesById: { [id: string]: Edge } = {}
-  positionedNodes: PositionedNode[] = []
-  positionedNodesById: { [id: string]: PositionedNode } = {}
+  nodes: Node<NodeProps, NodeStyle>[] = []
+  edges: Edge<EdgeProps,EdgeStyle>[] = []
+  nodesById: { [id: string]: Node<NodeProps, NodeStyle> } = {}
+  edgesById: { [id: string]: Edge<EdgeProps, EdgeStyle> } = {}
+  positionedNodes: PositionedNode<NodeProps, NodeStyle>[] = []
+  positionedNodesById: { [id: string]: PositionedNode<NodeProps, NodeStyle> } = {}
   private options: Partial<LayoutOptions> = {}
   private run = false
 
-  constructor(handler: (graph: { nodes: PositionedNode[], edges: Edge[] }) => void = noop) {
+  constructor(handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge[] }) => void = noop) {
     this.handler = handler
     const { worker, dispose } = Simulation()
     this.worker = worker
     this.dispose = dispose
     this.worker.onmessage = (event: TypedMessageEvent<LayoutResultEvent>) => {
-      const positionedNodes: PositionedNode[] = []
-      const positionedNodesById: { [id: string]: PositionedNode } = {}
+      const positionedNodes: PositionedNode<NodeProps, NodeStyle>[] = []
+      const positionedNodesById: { [id: string]: PositionedNode<NodeProps, NodeStyle> } = {}
 
       for (const node of event.data.nodes) {
         if (this.positionedNodesById[node.id]) {
-          positionedNodes.push(node)
-          positionedNodesById[node.id] = node
+          positionedNodes.push(node as PositionedNode<NodeProps, NodeStyle>)
+          positionedNodesById[node.id] = node as PositionedNode<NodeProps, NodeStyle>
         }
       }
 
@@ -58,9 +58,9 @@ class ForceLayout {
   }) => {
     const nodesById: { [id: string]: Node } = {}
     const edgesById: { [id: string]: Edge } = {}
-    const positionedNodes: PositionedNode[] = []
-    const positionedNodesById: { [id: string]: PositionedNode } = {}
-    const updateNodes: PositionedNode[] = []
+    const positionedNodes: PositionedNode<NodeProps, NodeStyle>[] = []
+    const positionedNodesById: { [id: string]: PositionedNode<NodeProps, NodeStyle> } = {}
+    const updateNodes: PositionedNode<NodeProps, NodeStyle>[] = []
 
     /**
      * run simulation on node enter/exit, node update radius/subGraph
@@ -71,7 +71,7 @@ class ForceLayout {
         if (this.nodesById[node.id] === undefined) {
           // node enter
           nodesById[node.id] = node
-          const positionedNode = { ...node, x: node.x ?? 0, y: node.y ?? 0 } as PositionedNode
+          const positionedNode = { ...node, x: node.x ?? 0, y: node.y ?? 0 } as PositionedNode<NodeProps, NodeStyle>
           positionedNodes.push(positionedNode)
           positionedNodesById[node.id] = positionedNode
           this.run = true
@@ -83,7 +83,7 @@ class ForceLayout {
             x: node.x ?? this.positionedNodesById[node.id].x,
             y: node.y ?? this.positionedNodesById[node.id].y,
             radius: node.subGraph !== undefined ? this.positionedNodesById[node.id].radius : node.radius
-          } as PositionedNode
+          } as PositionedNode<NodeProps, NodeStyle>
           positionedNodes.push(positionedNode)
           positionedNodesById[node.id] = positionedNode
 
@@ -174,7 +174,8 @@ class ForceLayout {
 }
 
 
-export const Layout = (handler: (graph: { nodes: PositionedNode[], edges: Edge[] }) => void = noop) => {
+
+export const Layout = <NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}>(handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }) => void = noop) => {
   const forceLayout = new ForceLayout(handler)
   const apply = (graph: { nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }) => forceLayout.apply(graph)
   apply.nodes = () => forceLayout.positionedNodes
@@ -182,3 +183,6 @@ export const Layout = (handler: (graph: { nodes: PositionedNode[], edges: Edge[]
 
   return apply
 }
+
+// TODO - simpler?
+// export const Layout2 = <N extends Node, E extends Edge>(handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }) => void = noop) => {}
