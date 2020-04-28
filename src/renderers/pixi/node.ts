@@ -1,11 +1,19 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { PositionedNode } from '../../types'
-import { PIXIRenderer as Renderer, NODE_STYLES, nodeStyleSelector, NodeStyle } from '.'
+import { PIXIRenderer as Renderer, NodeStyle } from '.'
 import { colorToNumber, parentInFront } from './utils'
 
 
 const LABEL_Y_PADDING = 4
+
+const NODE_STYLES: NodeStyle = {
+  strokeWidth: 2,
+  fill: '#ff4b4b',
+  stroke: '#bb0000',
+  fillOpacity: 1,
+  strokeOpacity: 1,
+}
 
 
 export class Node<NodeProps extends object = any>{
@@ -43,7 +51,6 @@ export class Node<NodeProps extends object = any>{
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
-  private static nodeStyleSelector = nodeStyleSelector(NODE_STYLES)
 
   constructor(renderer: Renderer<NodeProps>, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number, parent?: Node) {
     this.renderer = renderer
@@ -114,7 +121,6 @@ export class Node<NodeProps extends object = any>{
      * Radius Interpolation
      */
     const radius = node.radius
-    const strokeWidth = Node.nodeStyleSelector(node, 'strokeWidth')
 
     this.startRadius = this.radius === -1 ? radius : this.radius
     this.endRadius = radius
@@ -129,11 +135,11 @@ export class Node<NodeProps extends object = any>{
     /**
      * Styles
      */
-    this.strokeWidth = strokeWidth
-    this.stroke = colorToNumber(Node.nodeStyleSelector(this.node, 'stroke'))
-    this.strokeOpacity = Node.nodeStyleSelector(this.node, 'strokeOpacity')
-    this.fill = colorToNumber(Node.nodeStyleSelector(this.node, 'fill'))
-    this.fillOpacity = Node.nodeStyleSelector(this.node, 'fillOpacity')
+    this.strokeWidth = this.node.style?.strokeWidth ?? NODE_STYLES.strokeWidth
+    this.stroke = colorToNumber(this.node.style?.stroke ?? NODE_STYLES.stroke)
+    this.strokeOpacity = this.node.style?.strokeOpacity ?? NODE_STYLES.strokeOpacity
+    this.fill = colorToNumber(this.node.style?.fill ?? NODE_STYLES.fill)
+    this.fillOpacity = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity
 
 
     /**

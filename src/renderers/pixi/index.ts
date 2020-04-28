@@ -7,6 +7,8 @@ import { Node } from './node'
 import { Edge } from './edge'
 
 
+export type Event = PIXI.interaction.InteractionEvent
+
 export type NodeStyle = {
   strokeWidth: number
   fill: string
@@ -22,20 +24,19 @@ export type EdgeStyle = {
   strokeOpacity: number
 }
 
-
 export type RendererOptions = {
   width: number
   height: number
-  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode, x: number, y: number) => void
-  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge, x: number, y: number) => void
+  onNodePointerEnter: (event: Event, node: PositionedNode, x: number, y: number) => void
+  onNodePointerDown: (event: Event, node: PositionedNode, x: number, y: number) => void
+  onNodeDrag: (event: Event, node: PositionedNode, x: number, y: number) => void
+  onNodePointerUp: (event: Event, node: PositionedNode, x: number, y: number) => void
+  onNodePointerLeave: (event: Event, node: PositionedNode, x: number, y: number) => void
+  onNodeDoubleClick: (event: Event, node: PositionedNode, x: number, y: number) => void
+  onEdgePointerEnter: (event: Event, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerDown: (event: Event, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerUp: (event: Event, edge: PositionedEdge, x: number, y: number) => void
+  onEdgePointerLeave: (event: Event, edge: PositionedEdge, x: number, y: number) => void
   onContainerPointerEnter: (event: PointerEvent) => void
   onContainerPointerDown: (event: PointerEvent) => void
   onContainerPointerMove: (event: PointerEvent) => void
@@ -43,44 +44,12 @@ export type RendererOptions = {
   onContainerPointerLeave: (event: PointerEvent) => void
 }
 
+
 export const RENDERER_OPTIONS: RendererOptions = {
   width: 800, height: 600,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
   onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop,
-}
-
-
-export const NODE_STYLES: NodeStyle = {
-  strokeWidth: 2,
-  fill: '#ff4b4b',
-  stroke: '#bb0000',
-  fillOpacity: 1,
-  strokeOpacity: 1,
-}
-
-export const EDGE_STYLES: EdgeStyle = {
-  width: 1,
-  stroke: '#ccc',
-  strokeOpacity: 1,
-}
-
-
-export const nodeStyleSelector = (nodeStyles: NodeStyle) => <T extends keyof NodeStyle>(node: PositionedNode<{}, NodeStyle>, attribute: T) => {
-  if (node.style === undefined || node.style![attribute] === undefined) {
-    return nodeStyles[attribute]
-  }
-
-  return node.style[attribute] as NodeStyle[T]
-}
-
-
-export const edgeStyleSelector = (edgeStyles: EdgeStyle) => <T extends keyof EdgeStyle>(edge: PositionedEdge<{}, EdgeStyle>, attribute: T) => {
-  if (edge.style === undefined || edge.style![attribute] === undefined) {
-    return edgeStyles[attribute]
-  }
-
-  return edge.style[attribute] as EdgeStyle[T]
 }
 
 new FontFaceObserver('Material Icons').load()
@@ -111,16 +80,16 @@ export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends obje
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
-  onNodePointerEnter: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
-  onNodePointerDown: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
-  onNodeDrag: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
-  onNodePointerUp: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
-  onNodePointerLeave: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
-  onNodeDoubleClick: (event: PIXI.interaction.InteractionEvent, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
-  onEdgePointerEnter: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
-  onEdgePointerDown: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
-  onEdgePointerUp: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
-  onEdgePointerLeave: (event: PIXI.interaction.InteractionEvent, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onNodePointerEnter: (event: Event, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodePointerDown: (event: Event, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodeDrag: (event: Event, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodePointerUp: (event: Event, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodePointerLeave: (event: Event, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onNodeDoubleClick: (event: Event, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number) => void = noop
+  onEdgePointerEnter: (event: Event, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onEdgePointerDown: (event: Event, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onEdgePointerUp: (event: Event, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
+  onEdgePointerLeave: (event: Event, edge: PositionedEdge<EdgeProps, EdgeStyle>, x: number, y: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   app: PIXI.Application

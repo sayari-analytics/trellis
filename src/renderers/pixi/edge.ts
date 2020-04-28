@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { Edge as PositionedEdge } from '../../types'
-import { PIXIRenderer as Renderer, EDGE_STYLES, edgeStyleSelector, EdgeStyle } from '.'
+import { PIXIRenderer as Renderer,  EdgeStyle } from '.'
 import { colorToNumber } from './utils'
 
 
@@ -18,6 +18,12 @@ const THREE_HALF_PI = HALF_PI * 3
 const LINE_HOVER_RADIUS = 4
 const ARROW_HEIGHT = 16
 const ARROW_WIDTH = 8
+
+const EDGE_STYLES: EdgeStyle = {
+  width: 1,
+  stroke: '#ccc',
+  strokeOpacity: 1,
+}
 
 
 export class Edge<Props extends object = any>{
@@ -41,7 +47,6 @@ export class Edge<Props extends object = any>{
   private curveControlPointA?: [number, number]
   private curveControlPointB?: [number, number]
   private curve: number = 0
-  private static edgeStyleSelector = edgeStyleSelector(EDGE_STYLES)
 
   constructor(renderer: Renderer, edgesLayer: PIXI.Container) {
     this.renderer = renderer
@@ -66,9 +71,9 @@ export class Edge<Props extends object = any>{
     /**
      * Style
      */
-    this.width = Edge.edgeStyleSelector(edge, 'width')
-    this.stroke = colorToNumber(Edge.edgeStyleSelector(edge, 'stroke'))
-    this.strokeOpacity = Edge.edgeStyleSelector(edge, 'strokeOpacity')
+    this.width = this.edge.style?.width ?? EDGE_STYLES.width
+    this.stroke = colorToNumber(edge.style?.stroke ?? EDGE_STYLES.stroke)
+    this.strokeOpacity = edge.style?.strokeOpacity ?? EDGE_STYLES.strokeOpacity
 
 
     /**
