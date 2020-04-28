@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { Edge as PositionedEdge } from '../../types'
-import { PIXIRenderer as Renderer,  EdgeStyle } from '.'
+import { PIXIRenderer as Renderer,  EdgeStyle, NodeDatum, EdgeDatum } from '.'
 import { colorToNumber } from './utils'
 
 
@@ -26,11 +25,11 @@ const EDGE_STYLES: EdgeStyle = {
 }
 
 
-export class Edge<Props extends object = any>{
+export class Edge<N extends NodeDatum, E extends EdgeDatum>{
 
-  edge: PositionedEdge<Props, EdgeStyle> | undefined
+  edge: E | undefined
 
-  private renderer: Renderer
+  private renderer: Renderer<N, E>
   private label?: string
   private width: number = 0
   private stroke: number = 0
@@ -48,7 +47,7 @@ export class Edge<Props extends object = any>{
   private curveControlPointB?: [number, number]
   private curve: number = 0
 
-  constructor(renderer: Renderer, edgesLayer: PIXI.Container) {
+  constructor(renderer: Renderer<N, E>, edgesLayer: PIXI.Container) {
     this.renderer = renderer
     this.edgeGfx.interactive = true
     this.edgeGfx.buttonMode = true
@@ -64,7 +63,7 @@ export class Edge<Props extends object = any>{
     edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
-  set(edge: PositionedEdge<Props, EdgeStyle>) {
+  set(edge: E) {
     this.edge = edge
 
 

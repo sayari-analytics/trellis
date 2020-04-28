@@ -1,35 +1,45 @@
-export type Node<Props extends object = any, NodeStyle extends object = any, SubgraphLayoutOptions = unknown> = {
+export type Node<E extends Edge = Edge> = {
   id: string
   radius: number
-  x?: number
-  y?: number
-  label?: string
-  style?: NodeStyle
+  x?: number | undefined
+  y?: number | undefined
+  label?: string | undefined
+  style?: {}
   subGraph?: {
-    nodes: Node<Props, NodeStyle>[],
-    edges: Edge[],
-    options?: SubgraphLayoutOptions
+    nodes: Node<E>[], // TODO - how to ensure that types that extend Node have their subgraph.nodes type also extended?
+    edges: E[],
+    options?: {}
   }
-} & Props
+}
 
-export type Edge<Props extends object = any, EdgeStyle extends object = any> = {
+export type Edge = {
   id: string
-  label?: string
   source: string
   target: string
-  style?: EdgeStyle
-} & Props
+  label?: string
+  style?: {}
+}
 
-export type PositionedNode<Props extends object = any, NodeStyle extends object = any, SubgraphLayoutOptions = unknown> = {
+export type PositionedNode<E extends Edge = Edge> = {
   id: string
   radius: number
   x: number
   y: number
   label?: string
-  style?: NodeStyle
+  style?: {}
   subGraph?: {
-    nodes: PositionedNode<Props, NodeStyle>[],
-    edges: Edge[],
-    options?: SubgraphLayoutOptions
+    nodes: PositionedNode<E>[], // TODO - how to ensure that types that extend Node have their subgraph.nodes type also extended?
+    edges: E[],
+    options?: {}
   }
-} & Props
+}
+
+export type PositionNode<N extends Node<E>, E extends Edge = Edge> = Omit<N, 'x' | 'y' | 'subGraph'> & {
+  x: number,
+  y: number,
+  subGraph?: {
+    nodes: PositionNode<N, E>[],
+    edges: E[],
+    options?: Exclude<N['subGraph'], undefined>['options']
+  }
+}

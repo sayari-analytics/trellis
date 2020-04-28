@@ -1,46 +1,35 @@
 import { Component, ReactNode } from 'react'
-import { Node, Edge, PositionedNode } from '../../../types'
+import { Node, Edge, PositionNode } from '../../../types'
 import { ForceLayout, LayoutOptions } from '..'
 
 
-type Props<
-  NodeProps extends object = {},
-  EdgeProps extends object = {},
-  NodeStyle extends object = {},
-  EdgeStyle extends object = {},
-> = {
+type Props<N extends Node<E>, E extends Edge> = {
   debug?: { logPerformance?: boolean, stats?: Stats }
-  nodes: Node<NodeProps, NodeStyle>[]
-  edges: Edge<EdgeProps, EdgeStyle>[]
+  nodes: N[]
+  edges: E[]
   options?: Partial<LayoutOptions>
   children: (graph: {
-    nodes: PositionedNode<NodeProps, NodeStyle>[],
-    edges: Edge<EdgeProps, EdgeStyle>[],
+    nodes: PositionNode<N, E>[],
+    edges: E[],
   }) => ReactNode
 }
 
-type State<
-  NodeProps extends object = {},
-  EdgeProps extends object = {},
-  NodeStyle extends object = {},
-  EdgeStyle extends object = {},
-> = {
-  nodes: PositionedNode<NodeProps, NodeStyle>[],
-  edges: Edge<EdgeProps, EdgeStyle>[]
+type State<N extends Node<E>, E extends Edge> = {
+  nodes: PositionNode<N, E>[],
+  edges: E[]
 }
 
 
-export class Layout<NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}>
-  extends Component<Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>> {
+export class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N, E>, State<N, E>> {
 
-  state: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle> = { nodes: [], edges: [] }
+  state: State<N, E> = { nodes: [], edges: [] }
 
-  private layout = new ForceLayout((graph: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>) => {
+  private layout = new ForceLayout((graph: State<N, E>) => {
     this.setState(graph)
   })
 
-  // shouldComponentUpdate(_: Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, prevState: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>) {
-  //   return this.state !== prevState
+  // shouldComponentUpdate(prevProps: Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, prevState: State<N, E>) {
+  //   return this.props.children !== prevProps.children && this.state !== prevState
   // }
 
   componentDidMount() {

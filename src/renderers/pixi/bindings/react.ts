@@ -1,24 +1,22 @@
 import { createElement, createRef, Component, RefObject } from 'react'
-import { PIXIRenderer, RendererOptions, NodeStyle, EdgeStyle } from '..'
-import { PositionedNode, Edge } from '../../../types'
+import { PIXIRenderer, RendererOptions, NodeDatum, EdgeDatum } from '..'
 
 
-type Props<NodeProps extends object = {}, EdgeProps extends object = {}> = {
+type Props<N extends NodeDatum, E extends EdgeDatum> = {
   debug?: { logPerformance?: boolean, stats?: Stats }
-  nodes: PositionedNode<NodeProps, NodeStyle>[]
-  edges: Edge<EdgeProps, EdgeStyle>[]
-  options?: Partial<RendererOptions>
+  nodes: N[]
+  edges: E[]
+  options?: Partial<RendererOptions<N, E>>
 }
 
 
-export class Renderer<NodeProps extends object = {}, EdgeProps extends object = {}>
-  extends Component<Props<NodeProps, EdgeProps>> {
+export class Renderer<N extends NodeDatum, E extends EdgeDatum> extends Component<Props<N, E>> {
 
   private container: RefObject<HTMLCanvasElement> = createRef<HTMLCanvasElement>()
-  private renderer: PIXIRenderer | undefined
+  private renderer: PIXIRenderer<N, E> | undefined
 
   componentDidMount() {
-    this.renderer = new PIXIRenderer({ container: this.container.current!, debug: this.props.debug })
+    this.renderer = new PIXIRenderer<N, E>({ container: this.container.current!, debug: this.props.debug })
   }
 
   componentDidUpdate() {

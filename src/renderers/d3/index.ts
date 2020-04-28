@@ -22,16 +22,21 @@ type EdgeStyle = {
   stroke: string
   strokeOpacity: number
 }
-type PositionedNodeWithInitialPosition = PositionedNode & { x0?: number, y0?: number }
-type PositionedEdgeWithInitialPosition<Props extends object = {}, Style extends object = {}> = Omit<Edge<Props, Style>, 'source' | 'target'> &
+
+export type NodeDatum = Exclude<PositionedNode<EdgeDatum>, 'style'> & { style?: NodeStyle }
+
+export type EdgeDatum = Exclude<Edge, 'style'> & { style?: EdgeStyle }
+
+type PositionedNodeWithInitialPosition = NodeDatum & { x0?: number, y0?: number }
+type PositionedEdgeWithInitialPosition<Props extends object = {}, Style extends object = {}> = Omit<EdgeDatum, 'source' | 'target'> &
   { source: PositionedNodeWithInitialPosition, target: PositionedNodeWithInitialPosition }
 type RenderOptions = {
   id: string
   nodeStyle: Partial<NodeStyle>
   edgeStyle: Partial<EdgeStyle>
-  onNodeMouseDown: (node: PositionedNode, location: { x: number, y: number }) => void
-  onNodeDrag: (node: PositionedNode, location: { x: number, y: number }) => void
-  onNodeMouseUp: (node: PositionedNode, location: { x: number, y: number }) => void
+  onNodeMouseDown: (node: NodeDatum, location: { x: number, y: number }) => void
+  onNodeDrag: (node: NodeDatum, location: { x: number, y: number }) => void
+  onNodeMouseUp: (node: NodeDatum, location: { x: number, y: number }) => void
 }
 
 
@@ -49,8 +54,8 @@ const EDGE_STYLES: EdgeStyle = {
   strokeOpacity: 1,
 }
 
-export type NodeStyleSelector = <T extends keyof NodeStyle>(node: PositionedNode<{}, Partial<NodeStyle>>, attribute: T) => NodeStyle[T]
-export const nodeStyleSelector = (nodeStyles: NodeStyle): NodeStyleSelector => <T extends keyof NodeStyle>(node: PositionedNode<{}, Partial<NodeStyle>>, attribute: T) => {
+export type NodeStyleSelector = <T extends keyof NodeStyle>(node: NodeDatum, attribute: T) => NodeStyle[T]
+export const nodeStyleSelector = (nodeStyles: NodeStyle): NodeStyleSelector => <T extends keyof NodeStyle>(node: NodeDatum, attribute: T) => {
   if (node.style === undefined || node.style![attribute] === undefined) {
     return nodeStyles[attribute]
   }
@@ -106,7 +111,7 @@ export const D3Renderer = ({
   let currentEdges: { [key: string]: PositionedEdgeWithInitialPosition }
   let currentOptions: LayoutOptions
 
-  const dragNode = dragBehavior<any, PositionedNode>()
+  const dragNode = dragBehavior<any, NodeDatum>()
     .on('start', (d) => (draggedNode = d.id, onNodeMouseDown(d, { x: event.x, y: event.y })))
     .on('drag', (d) => {
       render({ nodes: currentNodes, edges: currentEdges, options: currentOptions })
@@ -116,11 +121,11 @@ export const D3Renderer = ({
 
   const _nodeStyleSelector = nodeStyleSelector({ ...NODE_STYLES, ...nodeStyle })
   const _edgeStyleSelector = edgeStyleSelector({ ...EDGE_STYLES, ...edgeStyle })
-  const nodeStrokeWidthSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'strokeWidth')
-  const nodeFillSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'fill')
-  const nodeStrokeSelector = (node: PositionedNode) => _nodeStyleSelector(node, 'stroke')
-  const nodeFillOpacitySelector = (node: PositionedNode) => _nodeStyleSelector(node, 'fillOpacity')
-  const nodeStrokeOpacitySelector = (node: PositionedNode) => _nodeStyleSelector(node, 'strokeOpacity')
+  const nodeStrokeWidthSelector = (node: NodeDatum) => _nodeStyleSelector(node, 'strokeWidth')
+  const nodeFillSelector = (node: NodeDatum) => _nodeStyleSelector(node, 'fill')
+  const nodeStrokeSelector = (node: NodeDatum) => _nodeStyleSelector(node, 'stroke')
+  const nodeFillOpacitySelector = (node: NodeDatum) => _nodeStyleSelector(node, 'fillOpacity')
+  const nodeStrokeOpacitySelector = (node: NodeDatum) => _nodeStyleSelector(node, 'strokeOpacity')
   const edgeStrokeSelector = (edge: PositionedEdgeWithInitialPosition) => _edgeStyleSelector(edge, 'stroke')
   const edgeWidthSelector = (edge: PositionedEdgeWithInitialPosition) => _edgeStyleSelector(edge, 'width')
   const edgeStrokeOpacitySelector = (edge: PositionedEdgeWithInitialPosition) => _edgeStyleSelector(edge, 'strokeOpacity')
@@ -137,7 +142,7 @@ export const D3Renderer = ({
   }
 
   const render = ({ nodes, edges, options }: {
-    nodes: { [key: string]: PositionedNode },
+    nodes: { [key: string]: NodeDatum },
     edges: { [key: string]: PositionedEdgeWithInitialPosition },
     options: LayoutOptions
   }) => {
@@ -158,7 +163,7 @@ export const D3Renderer = ({
      */
     (draggedNode !== undefined || options.tick === null ? synchronousLayout : interpolateLayout)((n: number) => {
       nodesContainer
-        .selectAll<SVGLineElement, PositionedNode & { x0?: number, y0?: number }>('circle')
+        .selectAll<SVGLineElement, NodeDatum & { x0?: number, y0?: number }>('circle')
         .data(Object.values(currentNodes), (d) => d.id)
         .join('circle')
         .attr('cx', (d) => {

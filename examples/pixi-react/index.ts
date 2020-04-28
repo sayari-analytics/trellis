@@ -3,7 +3,7 @@ import { render } from 'react-dom'
 import Stats from 'stats.js'
 import { Layout } from '../../src/layout/force/bindings/react'
 import { Node, Edge, PositionedNode } from '../../src/types'
-import { NodeStyle, EdgeStyle } from '../../src/renderers/pixi'
+import { NodeStyle } from '../../src/renderers/pixi'
 import { Renderer } from '../../src/renderers/pixi/bindings/react'
 
 
@@ -17,19 +17,19 @@ document.body.appendChild(stats.dom)
 const COMPANY_STYLE: Partial<NodeStyle> = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
 const PERSON_STYLE: Partial<NodeStyle> = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
 
-let nodes: Node<{}, Partial<NodeStyle>>[] = [
+let nodes = [
   { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' }, { id: 'f', label: 'F' }, { id: 'g', label: 'G' },
   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
   { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
 ]
-  .map(({ id, label }, idx) => ({
+  .map<Node>(({ id, label }, idx) => ({
     id,
     label,
     radius: id === 'a' ? 62 : (20 - idx) * 4,
     style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE
   }))
 
-let edges: Edge<{}, EdgeStyle>[] = [
+let edges: Edge[] = [
   { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' }, { id: 'da', source: 'a', target: 'd', label: 'Related To' }, { id: 'ea', source: 'a', target: 'e', label: 'Related To' },
   { id: 'fa', source: 'a', target: 'f', label: 'Related To' }, { id: 'ga', source: 'a', target: 'g', label: 'Related To' }, { id: 'ha', source: 'a', target: 'h', label: 'Related To' }, { id: 'ia', source: 'a', target: 'i', label: 'Related To' },
   { id: 'ja', source: 'b', target: 'j', label: 'Related To' }, { id: 'ka', source: 'b', target: 'k', label: 'Related To' }, { id: 'la', source: 'b', target: 'l', label: 'Related To' }, { id: 'ma', source: 'l', target: 'm', label: 'Related To' },

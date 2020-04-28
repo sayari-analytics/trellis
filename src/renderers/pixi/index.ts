@@ -24,19 +24,23 @@ export type EdgeStyle = {
   strokeOpacity: number
 }
 
-export type RendererOptions = {
+export type NodeDatum = Exclude<PositionedNode<EdgeDatum>, 'style'> & { style?: Partial<NodeStyle> }
+
+export type EdgeDatum = Exclude<PositionedEdge, 'style'> & { style?: Partial<EdgeStyle> }
+
+export type RendererOptions<N extends NodeDatum = NodeDatum, E extends EdgeDatum = EdgeDatum> = {
   width: number
   height: number
-  onNodePointerEnter: (event: Event, node: PositionedNode, x: number, y: number) => void
-  onNodePointerDown: (event: Event, node: PositionedNode, x: number, y: number) => void
-  onNodeDrag: (event: Event, node: PositionedNode, x: number, y: number) => void
-  onNodePointerUp: (event: Event, node: PositionedNode, x: number, y: number) => void
-  onNodePointerLeave: (event: Event, node: PositionedNode, x: number, y: number) => void
-  onNodeDoubleClick: (event: Event, node: PositionedNode, x: number, y: number) => void
-  onEdgePointerEnter: (event: Event, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerDown: (event: Event, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerUp: (event: Event, edge: PositionedEdge, x: number, y: number) => void
-  onEdgePointerLeave: (event: Event, edge: PositionedEdge, x: number, y: number) => void
+  onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerDown: (event: Event, node: N, x: number, y: number) => void
+  onNodeDrag: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerUp: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerLeave: (event: Event, node: N, x: number, y: number) => void
+  onNodeDoubleClick: (event: Event, node: N, x: number, y: number) => void
+  onEdgePointerEnter: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void
   onContainerPointerEnter: (event: PointerEvent) => void
   onContainerPointerDown: (event: PointerEvent) => void
   onContainerPointerMove: (event: PointerEvent) => void
@@ -45,7 +49,7 @@ export type RendererOptions = {
 }
 
 
-export const RENDERER_OPTIONS: RendererOptions = {
+export const RENDERER_OPTIONS: RendererOptions<NodeDatum, EdgeDatum> = {
   width: 800, height: 600,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
@@ -59,10 +63,10 @@ const POSITION_ANIMATION_DURATION = 800
 PIXI.utils.skipHello()
 
 
-export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends object = any>{
+export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
 
-  hoveredNode?: Node
-  clickedNode?: Node
+  hoveredNode?: Node<N, E>
+  clickedNode?: Node<N, E>
   dirty = false
   renderTime = Date.now()
   animationDuration = 0
@@ -73,23 +77,23 @@ export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends obje
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodes: PositionedNode<NodeProps, Partial<NodeStyle>>[] | undefined
-  edges: PositionedEdge<EdgeProps, Partial<EdgeStyle>>[] | undefined
-  nodesById: { [id: string]: Node } = {}
-  edgesById: { [id: string]: Edge } = {}
+  nodes: N[] | undefined
+  edges: E[] | undefined
+  nodesById: { [id: string]: Node<N, E> } = {}
+  edgesById: { [id: string]: Edge<N, E> } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
-  onNodePointerEnter: (event: Event, node: PositionedNode<NodeProps, Partial<NodeStyle>>, x: number, y: number) => void = noop
-  onNodePointerDown: (event: Event, node: PositionedNode<NodeProps, Partial<NodeStyle>>, x: number, y: number) => void = noop
-  onNodeDrag: (event: Event, node: PositionedNode<NodeProps, Partial<NodeStyle>>, x: number, y: number) => void = noop
-  onNodePointerUp: (event: Event, node: PositionedNode<NodeProps, Partial<NodeStyle>>, x: number, y: number) => void = noop
-  onNodePointerLeave: (event: Event, node: PositionedNode<NodeProps, Partial<NodeStyle>>, x: number, y: number) => void = noop
-  onNodeDoubleClick: (event: Event, node: PositionedNode<NodeProps, Partial<NodeStyle>>, x: number, y: number) => void = noop
-  onEdgePointerEnter: (event: Event, edge: PositionedEdge<EdgeProps, Partial<EdgeStyle>>, x: number, y: number) => void = noop
-  onEdgePointerDown: (event: Event, edge: PositionedEdge<EdgeProps, Partial<EdgeStyle>>, x: number, y: number) => void = noop
-  onEdgePointerUp: (event: Event, edge: PositionedEdge<EdgeProps, Partial<EdgeStyle>>, x: number, y: number) => void = noop
-  onEdgePointerLeave: (event: Event, edge: PositionedEdge<EdgeProps, Partial<EdgeStyle>>, x: number, y: number) => void = noop
+  onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void = noop
+  onNodePointerDown: (event: Event, node: N, x: number, y: number) => void = noop
+  onNodeDrag: (event: Event, node: N, x: number, y: number) => void = noop
+  onNodePointerUp: (event: Event, node: N, x: number, y: number) => void = noop
+  onNodePointerLeave: (event: Event, node: N, x: number, y: number) => void = noop
+  onNodeDoubleClick: (event: Event, node: N, x: number, y: number) => void = noop
+  onEdgePointerEnter: (event: Event, edge: E, x: number, y: number) => void = noop
+  onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void = noop
+  onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void = noop
+  onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   app: PIXI.Application
@@ -163,7 +167,7 @@ export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends obje
       onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
       onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop,
     } = RENDERER_OPTIONS
-  }: { nodes: PositionedNode<NodeProps, Partial<NodeStyle>>[], edges: PositionedEdge<EdgeProps, Partial<EdgeStyle>>[], options?: Partial<RendererOptions> }) => {
+  }: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
@@ -192,8 +196,8 @@ export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends obje
      * restart animation whenever a new layout is calculated: nodes/edges are added/removed from graph, subGraph is added/removed from graph
      */
     this.restartAnimation = false
-    const nodesById: { [id: string]: Node } = {}
-    const edgesById: { [id: string]: Edge } = {}
+    const nodesById: { [id: string]: Node<N, E> } = {}
+    const edgesById: { [id: string]: Edge<N, E> } = {}
 
 
     /**
@@ -234,7 +238,7 @@ export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends obje
           // node enter
           this.dirty = true
           this.restartAnimation = true
-          let adjacentNode: Node | undefined
+          let adjacentNode: Node<N, E> | undefined
 
           if (this.reverseEdgeIndex[node.id]) {
             // nodes w edges from existing nodes enter from one of those nodes
@@ -397,9 +401,9 @@ export class PIXIRenderer<NodeProps extends object = any, EdgeProps extends obje
 }
 
 
-export const Renderer = <NodeProps extends object = {}, EdgeProps extends object = {}>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
-  const pixiRenderer = new PIXIRenderer(options)
-  const apply = (graph: { nodes: PositionedNode<NodeProps, Partial<NodeStyle>>[], edges: PositionedEdge<EdgeProps, Partial<EdgeStyle>>[], options?: Partial<RendererOptions> }) => pixiRenderer.apply(graph)
+export const Renderer = <N extends NodeDatum, E extends EdgeDatum>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+  const pixiRenderer = new PIXIRenderer<N, E>(options)
+  const apply = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => pixiRenderer.apply(graph)
   apply.nodes = () => pixiRenderer.nodes
   apply.edges = () => pixiRenderer.edges
 

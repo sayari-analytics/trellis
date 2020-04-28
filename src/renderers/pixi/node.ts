@@ -1,7 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { PositionedNode } from '../../types'
-import { PIXIRenderer as Renderer, NodeStyle } from '.'
+import { PIXIRenderer as Renderer, NodeStyle, NodeDatum, EdgeDatum } from '.'
 import { colorToNumber, parentInFront } from './utils'
 
 
@@ -16,9 +15,9 @@ const NODE_STYLES: NodeStyle = {
 }
 
 
-export class Node<NodeProps extends object = any>{
+export class Node<N extends NodeDatum, E extends EdgeDatum>{
 
-  node: PositionedNode<NodeProps, NodeStyle>
+  node: N
   x: number
   y: number
   radius = -1
@@ -27,10 +26,10 @@ export class Node<NodeProps extends object = any>{
   strokeOpacity = 0
   fill = 0
   fillOpacity = 0
-  subGraphNodes: { [id: string]: Node } = {}
-  parent?: Node
+  subGraphNodes: { [id: string]: Node<N, E> } = {}
+  parent?: Node<N, E>
 
-  private renderer: Renderer<NodeProps, any>
+  private renderer: Renderer<N, E>
   private depth: number
   private startX = 0
   private startY = 0
@@ -52,7 +51,7 @@ export class Node<NodeProps extends object = any>{
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
 
-  constructor(renderer: Renderer<NodeProps>, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number, parent?: Node) {
+  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, parent?: Node<N, E>) {
     this.renderer = renderer
 
     this.parent = parent
@@ -88,7 +87,7 @@ export class Node<NodeProps extends object = any>{
     this.set(node)
   }
 
-  set(node: PositionedNode<NodeProps, NodeStyle>) {
+  set(node: N) {
     /**
      * TODO - only interpolate movement if node is not being dragged
      */
@@ -195,15 +194,15 @@ export class Node<NodeProps extends object = any>{
     /**
      * SubGraph Node
      */
-    const subGraphNodes: { [id: string]: Node } = {}
+    const subGraphNodes: { [id: string]: Node<N, E> } = {}
     if (node.subGraph?.nodes) {
       for (const subGraphNode of node.subGraph.nodes) {
         if (this.subGraphNodes[subGraphNode.id] === undefined) {
           // enter subGraph node
-          subGraphNodes[subGraphNode.id] = new Node(this.renderer, subGraphNode, 0, 0, this)
+          subGraphNodes[subGraphNode.id] = new Node<N, E>(this.renderer, subGraphNode as N, 0, 0, this)
         } else {
           // update subGraph node
-          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode)
+          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode as N)
         }
       }
     }
