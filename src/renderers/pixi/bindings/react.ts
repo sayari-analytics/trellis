@@ -11,7 +11,8 @@ type Props<NodeProps extends object = {}, EdgeProps extends object = {}> = {
 }
 
 
-export class Renderer extends Component<Props> {
+export class Renderer<NodeProps extends object = {}, EdgeProps extends object = {}>
+  extends Component<Props<NodeProps, EdgeProps>> {
 
   private container: RefObject<HTMLCanvasElement> = createRef<HTMLCanvasElement>()
   private renderer: PIXIRenderer | undefined

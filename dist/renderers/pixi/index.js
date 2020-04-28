@@ -33,30 +33,6 @@ exports.RENDERER_OPTIONS = {
     onEdgePointerEnter: utils_1.noop, onEdgePointerDown: utils_1.noop, onEdgePointerUp: utils_1.noop, onEdgePointerLeave: utils_1.noop,
     onContainerPointerEnter: utils_1.noop, onContainerPointerDown: utils_1.noop, onContainerPointerMove: utils_1.noop, onContainerPointerUp: utils_1.noop, onContainerPointerLeave: utils_1.noop,
 };
-exports.NODE_STYLES = {
-    strokeWidth: 2,
-    fill: '#ff4b4b',
-    stroke: '#bb0000',
-    fillOpacity: 1,
-    strokeOpacity: 1,
-};
-exports.EDGE_STYLES = {
-    width: 1,
-    stroke: '#ccc',
-    strokeOpacity: 1,
-};
-exports.nodeStyleSelector = function (nodeStyles) { return function (node, attribute) {
-    if (node.style === undefined || node.style[attribute] === undefined) {
-        return nodeStyles[attribute];
-    }
-    return node.style[attribute];
-}; };
-exports.edgeStyleSelector = function (edgeStyles) { return function (edge, attribute) {
-    if (edge.style === undefined || edge.style[attribute] === undefined) {
-        return edgeStyles[attribute];
-    }
-    return edge.style[attribute];
-}; };
 new fontfaceobserver_1.default('Material Icons').load();
 var POSITION_ANIMATION_DURATION = 800;
 PIXI.utils.skipHello();

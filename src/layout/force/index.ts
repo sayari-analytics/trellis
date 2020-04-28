@@ -175,7 +175,7 @@ export class ForceLayout<NodeProps extends object = any, EdgeProps extends objec
 
 
 
-export const Layout = <NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}>(handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }) => void = noop) => {
+export const Layout = <NodeProps extends object = any, EdgeProps extends object = any, NodeStyle extends object = any, EdgeStyle extends object = any>(handler: (graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }) => void = noop) => {
   const forceLayout = new ForceLayout(handler)
   const apply = (graph: { nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }) => forceLayout.apply(graph)
   apply.nodes = () => forceLayout.positionedNodes

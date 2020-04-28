@@ -20,9 +20,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var PIXI = __importStar(require("pixi.js"));
 var d3_interpolate_1 = require("d3-interpolate");
-var _1 = require(".");
 var utils_1 = require("./utils");
 var LABEL_Y_PADDING = 4;
+var NODE_STYLES = {
+    strokeWidth: 2,
+    fill: '#ff4b4b',
+    stroke: '#bb0000',
+    fillOpacity: 1,
+    strokeOpacity: 1,
+};
 var Node = /** @class */ (function () {
     function Node(renderer, node, x, y, parent) {
         var _this = this;
@@ -165,7 +171,7 @@ var Node = /** @class */ (function () {
     Node.prototype.set = function (node) {
         var e_1, _a;
         var _this = this;
-        var _b, _c;
+        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
         /**
          * TODO - only interpolate movement if node is not being dragged
          */
@@ -197,7 +203,6 @@ var Node = /** @class */ (function () {
          * Radius Interpolation
          */
         var radius = node.radius;
-        var strokeWidth = Node.nodeStyleSelector(node, 'strokeWidth');
         this.startRadius = this.radius === -1 ? radius : this.radius;
         this.endRadius = radius;
         if (this.startRadius !== this.endRadius) {
@@ -210,18 +215,18 @@ var Node = /** @class */ (function () {
         /**
          * Styles
          */
-        this.strokeWidth = strokeWidth;
-        this.stroke = utils_1.colorToNumber(Node.nodeStyleSelector(this.node, 'stroke'));
-        this.strokeOpacity = Node.nodeStyleSelector(this.node, 'strokeOpacity');
-        this.fill = utils_1.colorToNumber(Node.nodeStyleSelector(this.node, 'fill'));
-        this.fillOpacity = Node.nodeStyleSelector(this.node, 'fillOpacity');
+        this.strokeWidth = (_c = (_b = this.node.style) === null || _b === void 0 ? void 0 : _b.strokeWidth) !== null && _c !== void 0 ? _c : NODE_STYLES.strokeWidth;
+        this.stroke = utils_1.colorToNumber((_e = (_d = this.node.style) === null || _d === void 0 ? void 0 : _d.stroke) !== null && _e !== void 0 ? _e : NODE_STYLES.stroke);
+        this.strokeOpacity = (_g = (_f = this.node.style) === null || _f === void 0 ? void 0 : _f.strokeOpacity) !== null && _g !== void 0 ? _g : NODE_STYLES.strokeOpacity;
+        this.fill = utils_1.colorToNumber((_j = (_h = this.node.style) === null || _h === void 0 ? void 0 : _h.fill) !== null && _j !== void 0 ? _j : NODE_STYLES.fill);
+        this.fillOpacity = (_l = (_k = this.node.style) === null || _k === void 0 ? void 0 : _k.fillOpacity) !== null && _l !== void 0 ? _l : NODE_STYLES.fillOpacity;
         /**
          * Label
          */
         if (node.label !== this.label) {
             this.label = node.label;
             if (node.label) {
-                (_b = this.labelSprite) === null || _b === void 0 ? void 0 : _b.destroy();
+                (_m = this.labelSprite) === null || _m === void 0 ? void 0 : _m.destroy();
                 this.labelSprite = new PIXI.Text(node.label || '', {
                     fontFamily: 'Helvetica',
                     fontSize: 12 * 2.5,
@@ -264,10 +269,10 @@ var Node = /** @class */ (function () {
          * SubGraph Node
          */
         var subGraphNodes = {};
-        if ((_c = node.subGraph) === null || _c === void 0 ? void 0 : _c.nodes) {
+        if ((_o = node.subGraph) === null || _o === void 0 ? void 0 : _o.nodes) {
             try {
-                for (var _d = __values(node.subGraph.nodes), _e = _d.next(); !_e.done; _e = _d.next()) {
-                    var subGraphNode = _e.value;
+                for (var _p = __values(node.subGraph.nodes), _q = _p.next(); !_q.done; _q = _p.next()) {
+                    var subGraphNode = _q.value;
                     if (this.subGraphNodes[subGraphNode.id] === undefined) {
                         // enter subGraph node
                         subGraphNodes[subGraphNode.id] = new Node(this.renderer, subGraphNode, 0, 0, this);
@@ -281,7 +286,7 @@ var Node = /** @class */ (function () {
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
+                    if (_q && !_q.done && (_a = _p.return)) _a.call(_p);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
@@ -339,7 +344,6 @@ var Node = /** @class */ (function () {
         }
         delete this.renderer.nodesById[this.node.id];
     };
-    Node.nodeStyleSelector = _1.nodeStyleSelector(_1.NODE_STYLES);
     return Node;
 }());
 exports.Node = Node;

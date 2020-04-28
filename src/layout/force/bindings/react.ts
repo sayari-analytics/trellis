@@ -19,19 +19,40 @@ type Props<
   }) => ReactNode
 }
 
+type State<
+  NodeProps extends object = {},
+  EdgeProps extends object = {},
+  NodeStyle extends object = {},
+  EdgeStyle extends object = {},
+> = {
+  nodes: PositionedNode<NodeProps, NodeStyle>[],
+  edges: Edge<EdgeProps, EdgeStyle>[]
+}
+
 
 export class Layout<NodeProps extends object = {}, EdgeProps extends object = {}, NodeStyle extends object = {}, EdgeStyle extends object = {}>
-  extends Component<Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }> {
+  extends Component<Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>> {
 
-  state: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] } = { nodes: [], edges: [] }
+  state: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle> = { nodes: [], edges: [] }
 
-  private layout = new ForceLayout((graph: { nodes: PositionedNode<NodeProps, NodeStyle>[], edges: Edge<EdgeProps, EdgeStyle>[] }) => {
+  private layout = new ForceLayout((graph: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>) => {
     this.setState(graph)
   })
-  private nodes: PositionedNode<NodeProps, NodeStyle>[] = []
-  private edges: Edge<EdgeProps, EdgeStyle>[] = []
 
-  componentDidUpdate() {
+  // shouldComponentUpdate(_: Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, prevState: State<NodeProps, EdgeProps, NodeStyle, EdgeStyle>) {
+  //   return this.state !== prevState
+  // }
+
+  componentDidMount() {
+    this.layout!.apply({
+      nodes: this.props.nodes,
+      edges: this.props.edges,
+      options: this.props.options,
+    })
+  }
+
+  // componentWillReceiveProps() {
+  UNSAFE_componentWillReceiveProps() {
     this.layout!.apply({
       nodes: this.props.nodes,
       edges: this.props.edges,
@@ -40,6 +61,6 @@ export class Layout<NodeProps extends object = {}, EdgeProps extends object = {}
   }
 
   render() {
-    return this.props.children({ nodes: this.nodes, edges: this.edges })
+    return this.props.children({ nodes: this.state.nodes, edges: this.state.edges })
   }
 }

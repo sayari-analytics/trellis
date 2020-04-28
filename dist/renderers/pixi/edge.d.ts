@@ -20,7 +20,6 @@ export declare class Edge<Props extends object = any> {
     private curveControlPointA?;
     private curveControlPointB?;
     private curve;
-    private static edgeStyleSelector;
     constructor(renderer: Renderer, edgesLayer: PIXI.Container);
     set(edge: PositionedEdge<Props, EdgeStyle>): this;
     /**

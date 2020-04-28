@@ -19,7 +19,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var PIXI = __importStar(require("pixi.js"));
-var _1 = require(".");
 var utils_1 = require("./utils");
 var movePoint = function (x, y, angle, distance) { return [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]; };
 var midPoint = function (x0, y0, x1, y1) { return [(x0 + x1) / 2, (y0 + y1) / 2]; };
@@ -31,6 +30,11 @@ var THREE_HALF_PI = HALF_PI * 3;
 var LINE_HOVER_RADIUS = 4;
 var ARROW_HEIGHT = 16;
 var ARROW_WIDTH = 8;
+var EDGE_STYLES = {
+    width: 1,
+    stroke: '#ccc',
+    strokeOpacity: 1,
+};
 var Edge = /** @class */ (function () {
     function Edge(renderer, edgesLayer) {
         var _this = this;
@@ -85,13 +89,14 @@ var Edge = /** @class */ (function () {
     }
     Edge.prototype.set = function (edge) {
         var e_1, _a;
+        var _b, _c, _d, _e, _f, _g;
         this.edge = edge;
         /**
          * Style
          */
-        this.width = Edge.edgeStyleSelector(edge, 'width');
-        this.stroke = utils_1.colorToNumber(Edge.edgeStyleSelector(edge, 'stroke'));
-        this.strokeOpacity = Edge.edgeStyleSelector(edge, 'strokeOpacity');
+        this.width = (_c = (_b = this.edge.style) === null || _b === void 0 ? void 0 : _b.width) !== null && _c !== void 0 ? _c : EDGE_STYLES.width;
+        this.stroke = utils_1.colorToNumber((_e = (_d = edge.style) === null || _d === void 0 ? void 0 : _d.stroke) !== null && _e !== void 0 ? _e : EDGE_STYLES.stroke);
+        this.strokeOpacity = (_g = (_f = edge.style) === null || _f === void 0 ? void 0 : _f.strokeOpacity) !== null && _g !== void 0 ? _g : EDGE_STYLES.strokeOpacity;
         /**
          * Label
          */
@@ -121,8 +126,8 @@ var Edge = /** @class */ (function () {
          */
         this.curve = (this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target].size - 1) * 0.5;
         try {
-            for (var _b = __values(this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target]), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var edgeId = _c.value;
+            for (var _h = __values(this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target]), _j = _h.next(); !_j.done; _j = _h.next()) {
+                var edgeId = _j.value;
                 if (edgeId === this.edge.id) {
                     break;
                 }
@@ -132,7 +137,7 @@ var Edge = /** @class */ (function () {
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (_j && !_j.done && (_a = _h.return)) _a.call(_h);
             }
             finally { if (e_1) throw e_1.error; }
         }
@@ -282,7 +287,6 @@ var Edge = /** @class */ (function () {
         this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target].delete(this.edge.id);
         this.renderer.reverseEdgeIndex[this.edge.target][this.edge.source].delete(this.edge.id);
     };
-    Edge.edgeStyleSelector = _1.edgeStyleSelector(_1.EDGE_STYLES);
     return Edge;
 }());
 exports.Edge = Edge;

@@ -35,7 +35,6 @@ export declare class Node<NodeProps extends object = any> {
     private doubleClick;
     private nodeMoveXOffset;
     private nodeMoveYOffset;
-    private static nodeStyleSelector;
     constructor(renderer: Renderer<NodeProps>, node: PositionedNode<NodeProps, NodeStyle>, x: number, y: number, parent?: Node);
     set(node: PositionedNode<NodeProps, NodeStyle>): this;
     /**
