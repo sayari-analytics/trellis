@@ -3,7 +3,7 @@ import { Node, Edge, PositionNode } from '../../../types'
 import { ForceLayout, LayoutOptions } from '..'
 
 
-type Props<N extends Node<E>, E extends Edge> = {
+export type Props<N extends Node<E>, E extends Edge> = {
   debug?: { logPerformance?: boolean, stats?: Stats }
   nodes: N[]
   edges: E[]
@@ -20,32 +20,28 @@ type State<N extends Node<E>, E extends Edge> = {
 }
 
 
+
 export class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N, E>, State<N, E>> {
 
   state: State<N, E> = { nodes: [], edges: [] }
 
-  private layout = new ForceLayout((graph: State<N, E>) => {
+  private layout = new ForceLayout<N, E>((graph) => {
     this.setState(graph)
   })
 
-  // shouldComponentUpdate(prevProps: Props<NodeProps, EdgeProps, NodeStyle, EdgeStyle>, prevState: State<N, E>) {
-  //   return this.props.children !== prevProps.children && this.state !== prevState
-  // }
-
   componentDidMount() {
-    this.layout!.apply({
+    this.layout.apply({
       nodes: this.props.nodes,
       edges: this.props.edges,
       options: this.props.options,
     })
   }
 
-  // componentWillReceiveProps() {
-  UNSAFE_componentWillReceiveProps() {
-    this.layout!.apply({
-      nodes: this.props.nodes,
-      edges: this.props.edges,
-      options: this.props.options,
+  UNSAFE_componentWillReceiveProps(nextProps: Props<N, E>) {
+    this.layout.apply({
+      nodes: nextProps.nodes,
+      edges: nextProps.edges,
+      options: nextProps.options,
     })
   }
 

@@ -317,6 +317,8 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
       this.animationDuration = 0
       this.animationPercent = 0
     }
+
+    return this
   }
 
   private render = () => {
