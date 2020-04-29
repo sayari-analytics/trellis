@@ -19,6 +19,11 @@ const optionsEqual = (a: Partial<LayoutOptions>, b: Partial<LayoutOptions>) => {
 }
 
 
+/**
+ * TODO - how to simplify?  purpose: diff current graph against previous graph, rerunning simulation if certain cases are met
+ * - do we need to always lookup by id?  instead, assume stable node/edge order and lookup by index?  then, only need to maintain: nodes, edges, positionedNodes
+ * - make diff generic
+ */
 export class ForceLayout<N extends Node<E>, E extends Edge>{
 
   worker: Worker
@@ -75,7 +80,7 @@ export class ForceLayout<N extends Node<E>, E extends Edge>{
     if (nodes !== this.nodes) {
       for (const node of nodes) {
         if (this.nodesById[node.id] === undefined) {
-          // node enter
+          // node enter [and subgraph enter]
           nodesById[node.id] = node
           const positionedNode = { ...node, x: node.x ?? 0, y: node.y ?? 0 }
           positionedNodes.push(positionedNode)
@@ -88,8 +93,37 @@ export class ForceLayout<N extends Node<E>, E extends Edge>{
             ...node,
             x: node.x ?? this.positionedNodesById[node.id].x,
             y: node.y ?? this.positionedNodesById[node.id].y,
-            radius: node.subGraph !== undefined ? this.positionedNodesById[node.id].radius : node.radius
+            radius: node.subGraph !== undefined ? this.positionedNodesById[node.id].radius : node.radius,
           }
+
+          // TODO - make recursive (currently doesn't handle subgraphs at depth > 1)
+          if (node.subGraph) {
+            if (node.subGraph !== this.nodesById[node.id].subGraph) {
+              // subgraph update
+              positionedNode.subGraph = { nodes: [], edges: node.subGraph.edges }
+              for (let i = 0; i < node.subGraph.nodes.length; i++) {
+                const subnode = node.subGraph.nodes[i]
+                const prevSubnode = this.positionedNodesById[node.id].subGraph?.nodes[i]
+
+                positionedNode.subGraph?.nodes.push({
+                  ...subnode,
+                  x: subnode.x ?? prevSubnode?.x,
+                  y: subnode.y ?? prevSubnode?.y,
+                })
+
+                if (subnode.radius !== prevSubnode?.radius || subnode.subGraph !== prevSubnode.subGraph) {
+                  this.run = true
+                } else if (subnode.x !== prevSubnode.x || subnode.y !== prevSubnode.y) {
+                  // TODO - track parent ids.  otherwise, won't be found
+                  updateNodes.push(positionedNode)
+                }
+              }
+            } else {
+              positionedNode.subGraph = this.positionedNodesById[node.id].subGraph
+            }
+          }
+          // subgraph exit [noop]
+
           positionedNodes.push(positionedNode)
           positionedNodesById[node.id] = positionedNode
 
@@ -178,7 +212,6 @@ export class ForceLayout<N extends Node<E>, E extends Edge>{
     return this
   }
 }
-
 
 
 export const Layout = <N extends Node<E>, E extends Edge>(handler: (graph: { nodes: PositionNode<N, E>[], edges: E[] }) => void = noop) => {

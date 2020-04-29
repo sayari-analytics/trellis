@@ -49,3 +49,22 @@ export class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N
     return this.props.children({ nodes: this.state.nodes, edges: this.state.edges })
   }
 }
+
+// export const Layout2 = <N extends Node<E>, E extends Edge>(props: Props<N, E>) => {
+
+//   const [graph, setGraph] = useState<State<N, E>>({ nodes: [], edges: [] })
+
+//   const layout = useMemo(() => {
+//     return new ForceLayout<N, E>((graph) => setGraph(graph))
+//   }, [])
+
+//   useLayoutEffect(() => {
+//     layout.apply({
+//       nodes: props.nodes,
+//       edges: props.edges,
+//       options: props.options,
+//     })
+//   })
+
+//   return useMemo(() => props.children({ nodes: graph.nodes, edges: graph.edges }), [props.children, graph.nodes, graph.edges])
+// }
