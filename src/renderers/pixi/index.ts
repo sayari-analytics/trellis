@@ -7,7 +7,7 @@ import { Node } from './node'
 import { Edge } from './edge'
 
 
-export type Event = PIXI.interaction.InteractionEvent
+export type Event = PIXI.InteractionEvent
 
 export type NodeStyle = {
   strokeWidth: number

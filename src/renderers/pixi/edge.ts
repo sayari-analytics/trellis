@@ -279,7 +279,7 @@ export class Edge<N extends NodeDatum, E extends EdgeDatum>{
     this.renderer.reverseEdgeIndex[this.edge!.target][this.edge!.source].delete(this.edge!.id)
   }
 
-  private pointerEnter = (event: PIXI.interaction.InteractionEvent) => {
+  private pointerEnter = (event: PIXI.InteractionEvent) => {
     if (!this.hoveredEdge) {
       this.hoveredEdge = true
       this.renderer.dirty = true
@@ -288,7 +288,7 @@ export class Edge<N extends NodeDatum, E extends EdgeDatum>{
     }
   }
 
-  private pointerLeave = (event: PIXI.interaction.InteractionEvent) => {
+  private pointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.hoveredEdge) {
       this.hoveredEdge = false
       this.renderer.dirty = true
@@ -298,12 +298,12 @@ export class Edge<N extends NodeDatum, E extends EdgeDatum>{
     }
   }
 
-  private pointerDown = (event: PIXI.interaction.InteractionEvent) => {
+  private pointerDown = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
     this.renderer.onEdgePointerDown(event, this.edge!, x, y)
   }
 
-  private pointerUp = (event: PIXI.interaction.InteractionEvent) => {
+  private pointerUp = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
     this.renderer.onEdgePointerUp(event, this.edge!, x, y)
   }

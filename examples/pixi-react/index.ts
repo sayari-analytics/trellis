@@ -48,19 +48,19 @@ const App: SFC = () => {
 
   const [graph, setGraph] = useState({ nodes, edges })
 
-  const onNodePointerDown = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  const onNodePointerDown = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
   }, [])
-  const onNodeDrag = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  const onNodeDrag = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
   }, [])
-  const onNodePointerUp = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  const onNodePointerUp = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node)), edges }))
   }, [])
-  const onNodePointerEnter = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  const onNodePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node)), edges }))
   }, [])
-  const onNodePointerLeave = useCallback((_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  const onNodePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     setGraph(({ nodes, edges }) => ({
       nodes: nodes.map((node) => (node.id === id ?
         { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
@@ -69,10 +69,10 @@ const App: SFC = () => {
       edges
     }))
   }, [])
-  const onEdgePointerEnter = useCallback((_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+  const onEdgePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: Edge) => {
     setGraph(({ nodes, edges }) => ({ nodes, edges: edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge)) }))
   }, [])
-  const onEdgePointerLeave = useCallback((_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+  const onEdgePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Edge) => {
     setGraph(({ nodes, edges }) => ({ nodes, edges: edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge)) }))
   }, [])
   const onNodeDoubleClick = useCallback((_, { id }) => {

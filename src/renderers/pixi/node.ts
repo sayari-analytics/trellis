@@ -270,7 +270,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
   }
 
 
-  private nodePointerEnter = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerEnter = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) return
 
     this.renderer.hoveredNode = this
@@ -294,7 +294,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     this.renderer.onNodePointerEnter(event, this.node, position.x, position.y)
   }
 
-  private nodePointerLeave = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) return
 
     this.renderer.hoveredNode = undefined
@@ -318,7 +318,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     this.renderer.onNodePointerLeave(event, this.node, position.x, position.y)
   }
 
-  private nodePointerDown = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerDown = (event: PIXI.InteractionEvent) => {
     if (this.doubleClickTimeout === undefined) {
       this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
     } else {
@@ -334,7 +334,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     this.renderer.onNodePointerDown(event, this.node, this.x, this.y)
   }
 
-  private nodePointerUp = (event: PIXI.interaction.InteractionEvent) => {
+  private nodePointerUp = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) return
 
     this.renderer.clickedNode = undefined
@@ -350,7 +350,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     }
   }
 
-  private nodeMove = (event: PIXI.interaction.InteractionEvent) => {
+  private nodeMove = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) return
 
     const position = this.renderer.viewport.toWorld(event.data.global)

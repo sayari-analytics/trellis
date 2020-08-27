@@ -84,24 +84,24 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onNodeDrag: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onNodePointerUp: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onNodePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     // nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
     nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onNodePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     nodes = nodes.map((node) => (node.id === id ?
       // { ...node, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       { ...node, radius: node.radius / 4, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
@@ -109,11 +109,11 @@ const renderOptions: Partial<RendererOptions> = {
     ))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onEdgePointerEnter: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+  onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     layout({ nodes, edges, options: layoutOptions })
   },
-  onEdgePointerLeave: (_: PIXI.interaction.InteractionEvent, { id }: Edge) => {
+  onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     layout({ nodes, edges, options: layoutOptions })
   },
