@@ -130,7 +130,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
     ) {
       this.forceManyBody.strength(nodeStrength)
       this.forceLink.distance(linkDistance)
-      this.forceLink.strength(linkStrength ?? 0)
+      linkStrength !== undefined && this.forceLink.strength(linkStrength)
       this.forceX.strength(centerStrength)
       this.forceY.strength(centerStrength)
       this.options.nodePadding = nodePadding
