@@ -101,6 +101,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
      * Position Interpolation
      *
      * TODO - if node position is currently being interpolated, instead of reinterpolating from 0 velocity, smooth interpolation change
+     * also, consider changing interpolation logic if start and end are close to one another, so that animation ends early
      */
     if (this.startX !== this.endX) {
       const interpolateXNumber = interpolateNumber(this.startX, this.endX)
@@ -108,6 +109,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     } else {
       this.interpolateX = () => this.endX
     }
+
     if (this.startY !== this.endY) {
       const interpolateYNumber = interpolateNumber(this.startY, this.endY)
       this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), this.endY])

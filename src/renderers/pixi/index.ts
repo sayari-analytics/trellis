@@ -68,7 +68,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
   hoveredNode?: Node<N, E>
   clickedNode?: Node<N, E>
   dirty = false
-  renderTime = Date.now()
+  previousRenderTime = Date.now()
   animationDuration = 0
   animationPercent = 0
   restartAnimation = false
@@ -98,9 +98,9 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
   height = RENDERER_OPTIONS.height
   app: PIXI.Application
   viewport: Viewport
-  debug: { logPerformance?: boolean, stats?: Stats }
+  debug?: { logPerformance?: boolean, stats?: Stats }
 
-  constructor({ container, debug = {} }: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
+  constructor({ container, debug }: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
     if (!(container instanceof HTMLCanvasElement)) {
       throw new Error('container must be an instance of HTMLCanvasElement')
     }
@@ -152,11 +152,14 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
   }
 
   /**
+   * Update Graph style, position, and/or options
+   * - if either style or position of any node/edge is updated, set dirty = true
+   * - if position, subgraph, or radius of any non-clicked node is udpated, restart animation
+   *
    * TODO
    * - handle case where apply is called while previous apply is still being interpolated
    * current approach essentially cancels previous apply and runs a new one
    * maybe instead stage new one, overwriting stagged apply if new applys are called, and don't run until previous interpolation is done
-   * - do a better job diffing against existing nodes/edges/options
    */
   apply = ({
     nodes,
@@ -202,7 +205,8 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
 
     /**
      * Build edge indices
-     * TODO - is it possible to build edge indices and enter/update/exit edge containers in one pass?
+     * TODO
+     * - is it possible to build edge indices and enter/update/exit edge containers in one pass?
      */
     if (edges !== this.edges) {
       for (const edge of edges) {
@@ -249,16 +253,22 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
           }
 
           nodesById[node.id] = new Node(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
-        } else { // TODO - if node can't be mutated, only set node if (node !== this.nodesById[node.id].node)
-          // node update
-          /**
-           * TODO - unclear whether or not node can get mutated by layout
-           */
+        } else if (node !== this.nodesById[node.id].node) {
           this.dirty = true
-          if (node.subGraph !== this.nodesById[node.id].node.subGraph || node.radius !== this.nodesById[node.id].node.radius) {
+
+          if (
+            this.clickedNode?.node.id !== node.id && (
+              node.x !== this.nodesById[node.id].node.x ||
+              node.y !== this.nodesById[node.id].node.y ||
+              node.subGraph !== this.nodesById[node.id].node.subGraph ||
+              node.radius !== this.nodesById[node.id].node.radius
+            )
+          ) {
             this.restartAnimation = true
           }
 
+          nodesById[node.id] = this.nodesById[node.id].set(node)
+        } else {
           nodesById[node.id] = this.nodesById[node.id].set(node)
         }
       }
@@ -267,7 +277,6 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
         if (nodesById[nodeId] === undefined) {
           // node exit
           this.dirty = true
-          this.restartAnimation = true
           this.nodesById[nodeId].delete()
         }
       }
@@ -322,11 +331,11 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
   }
 
   private render = () => {
-    const now = Date.now()
-    // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime)) // clamp to 0 <= x <= 16 to make animations appear slower and smoother
-    this.animationDuration += now - this.renderTime
+    const currentRenderTime = Date.now()
+    // this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime)) // clamp to 0 <= x <= 16 to make animations appear slower and smoother
+    this.animationDuration += currentRenderTime - this.previousRenderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
-    this.renderTime = now
+    this.previousRenderTime = currentRenderTime
 
     if (this.dirty) {
       for (const nodeId in this.nodesById) {
@@ -349,11 +358,11 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
   private debugRender = () => {
     this.debug?.stats?.update()
 
-    const now = Date.now()
-    // this.animationDuration += Math.min(16, Math.max(0, now - this.renderTime))
-    this.animationDuration += now - this.renderTime
+    const currentRenderTime = Date.now()
+    // this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime))
+    this.animationDuration += currentRenderTime - this.previousRenderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
-    this.renderTime = now
+    this.previousRenderTime = currentRenderTime
 
     if (this.dirty) {
       performance.mark('update')

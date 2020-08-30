@@ -1,4 +1,5 @@
 import Stats from 'stats.js'
+// import { Layout, LayoutOptions } from '../../src/layout/force'
 import { Layout, LayoutOptions } from '../../src/layout/force'
 import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
@@ -20,12 +21,12 @@ let nodes = [
   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
   { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
 ]
-  .map<Node>(({ id, label }, idx) => ({
+  .map<PositionedNode>(({ id, label }, idx) => ({
     id,
     label,
     radius: id === 'a' ? 62 : (20 - idx) * 4,
     style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE
-  }))
+  } as unknown as PositionedNode))
 
 let edges: Edge[] = [
   { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' }, { id: 'da', source: 'a', target: 'd', label: 'Related To' }, { id: 'ea', source: 'a', target: 'e', label: 'Related To' },
@@ -48,56 +49,58 @@ const renderOptions: Partial<RendererOptions> = {
   height: container.offsetHeight,
   onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-    layout({ nodes, edges, options: layoutOptions })
-  },
+  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
+  //   renderer({ nodes, edges, options: renderOptions })
+  // },
   onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     nodes = nodes.map((node) => (node.id === id ?
       { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
       node
     ))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
-  onNodeDoubleClick: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ? {
-      ...node,
-      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
-      subGraph: {
-        nodes: [
-          { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
-        ],
-        edges: []
-      },
-    } : node))
-    layout({ nodes, edges, options: layoutOptions })
-  },
+  // onNodeDoubleClick: (_, { id }) => {
+  //   nodes = nodes.map((node) => (node.id === id ? {
+  //     ...node,
+  //     style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+  //     subGraph: {
+  //       nodes: [
+  //         { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
+  //         { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
+  //         { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
+  //       ],
+  //       edges: []
+  //     },
+  //   } : node))
+  //   renderer({ nodes, edges, options: renderOptions })
+  // },
   onContainerPointerUp: () => {
-    nodes = nodes.map((node, idx) => (node.subGraph ? {
-      ...node,
-      style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
-      subGraph: undefined,
-    } : node))
+    // nodes = nodes.map((node, idx) => (node.subGraph ? {
+    //   ...node,
+    //   style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
+    //   subGraph: undefined,
+    // } : node))
+    // renderer({ nodes, edges, options: renderOptions })
+
     layout({ nodes, edges, options: layoutOptions })
   },
 }
@@ -106,11 +109,14 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout(({ nodes, edges }) => renderer({ nodes, edges, options: renderOptions }))
+const layout = Layout((graph) => {
+  nodes = graph.nodes
+  renderer({ nodes, edges, options: renderOptions })
+})
 
 const renderer = Renderer({
   container,
-  debug: { stats, logPerformance: false }
+  // debug: { stats, logPerformance: true }
 })
 
 

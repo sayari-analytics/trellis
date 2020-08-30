@@ -1,5 +1,5 @@
 import Stats from 'stats.js'
-import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Layout, LayoutOptions } from '../../src/layout/force/v2'
 import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions, NodeStyle } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
@@ -86,16 +86,16 @@ const renderOptions: Partial<RendererOptions> = {
   height: container.offsetHeight,
   onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-    layout({ nodes, edges, options: layoutOptions })
-  },
+  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
+  //   renderer({ nodes, edges, options: renderOptions })
+  // },
   onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     // nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
     nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
@@ -111,11 +111,11 @@ const renderOptions: Partial<RendererOptions> = {
   },
   onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    layout({ nodes, edges, options: layoutOptions })
+    renderer({ nodes, edges, options: renderOptions })
   },
 }
 
@@ -123,7 +123,10 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout(({ nodes, edges }) => { renderer({ nodes, edges, options: renderOptions }) })
+const layout = Layout((graph) => {
+  nodes = graph.nodes
+  renderer({ nodes, edges, options: renderOptions })
+})
 
 const renderer = Renderer({
   container,

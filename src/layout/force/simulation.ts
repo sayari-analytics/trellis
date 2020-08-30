@@ -145,16 +145,18 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 
         /**
          * convert Node to SimulationNode
+         *
+         * TODO - is this even necessary anymore?  the simulation is now stateless, meaning it doesn't have to cache the positions
          */
         if (this.nodesById[node.id] === undefined) {
           // enter node
-          (node as SimulationNode).fx = node.x
-          ;(node as SimulationNode).fy = node.y
+          // (node as SimulationNode).fx = node.x
+          // ;(node as SimulationNode).fy = node.y
         } else {
           // update node
-          (node as SimulationNode).fx = node.x
-          ;(node as SimulationNode).fy = node.y
-          ;(node as SimulationNode).x = this.nodesById[node.id].x
+          // (node as SimulationNode).fx = node.x
+          // ;(node as SimulationNode).fy = node.y
+          (node as SimulationNode).x = this.nodesById[node.id].x
           ;(node as SimulationNode).y = this.nodesById[node.id].y
           ;(node as SimulationNode).vx = this.nodesById[node.id].vx
           ;(node as SimulationNode).vy = this.nodesById[node.id].vy

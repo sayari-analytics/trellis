@@ -1,12 +1,12 @@
 export type Node<E extends Edge = Edge> = {
   id: string
-  radius: number
-  x?: number | undefined
+  radius: number // if radius is ignored for nodes with a subGraph, should node be a typed union?
+  x?: number | undefined // TODO - add prop for fixed position
   y?: number | undefined
   label?: string | undefined
   style?: {}
   subGraph?: {
-    nodes: Node<E>[], // TODO - how to ensure that types that extend Node have their subgraph.nodes type also extended?
+    nodes: Node<E>[],
     edges: E[],
     options?: {}
   }
@@ -20,6 +20,20 @@ export type Edge = {
   style?: {}
 }
 
+// export type PositionedNode<E extends Edge = Edge, Props extends Record<string, unknown> = {}> = {
+//   id: string
+//   radius: number
+//   x: number
+//   y: number
+//   label?: string
+//   style?: {}
+//   subGraph?: {
+//     nodes: PositionedNode<E, Props>[],
+//     edges: E[],
+//     options?: {}
+//   }
+// } & Props
+
 export type PositionedNode<E extends Edge = Edge> = {
   id: string
   radius: number
@@ -28,7 +42,7 @@ export type PositionedNode<E extends Edge = Edge> = {
   label?: string
   style?: {}
   subGraph?: {
-    nodes: PositionedNode<E>[], // TODO - how to ensure that types that extend Node have their subgraph.nodes type also extended?
+    nodes: PositionedNode<E>[],
     edges: E[],
     options?: {}
   }
