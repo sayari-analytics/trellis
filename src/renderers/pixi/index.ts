@@ -269,7 +269,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
 
           nodesById[node.id] = this.nodesById[node.id].set(node)
         } else {
-          nodesById[node.id] = this.nodesById[node.id].set(node)
+          nodesById[node.id] = this.nodesById[node.id]
         }
       }
 
@@ -295,15 +295,13 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
         if (this.edgesById[id] === undefined) {
           // edge enter
           this.dirty = true
-          this.restartAnimation = true
           edgesById[id] = new Edge(this, this.edgesLayer).set(edge)
         } else if (edge !== this.edgesById[id].edge) {
           // edge update
           this.dirty = true
           edgesById[id] = this.edgesById[id].set(edge)
         } else {
-          this.dirty = true
-          edgesById[id] = this.edgesById[id].set(edge)
+          edgesById[id] = this.edgesById[id]
         }
       }
 
@@ -311,7 +309,6 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
         if (edgesById[edgeId] === undefined) {
           // edge exit
           this.dirty = true
-          this.restartAnimation = true
           this.edgesById[edgeId].delete()
         }
       }
