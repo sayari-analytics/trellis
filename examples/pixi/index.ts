@@ -1,9 +1,7 @@
 import Stats from 'stats.js'
-// import { Layout, LayoutOptions } from '../../src/layout/force'
-import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Layout, LayoutOptions } from '../../src/layout/force/v2'
 import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
-
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -21,12 +19,12 @@ let nodes = [
   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
   { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
 ]
-  .map<PositionedNode>(({ id, label }, idx) => ({
+  .map<Node>(({ id, label }, idx) => ({
     id,
     label,
     radius: id === 'a' ? 62 : (20 - idx) * 4,
     style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE
-  } as unknown as PositionedNode))
+  }))
 
 let edges: Edge[] = [
   { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' }, { id: 'da', source: 'a', target: 'd', label: 'Related To' }, { id: 'ea', source: 'a', target: 'e', label: 'Related To' },
@@ -78,30 +76,30 @@ const renderOptions: Partial<RendererOptions> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
-  // onNodeDoubleClick: (_, { id }) => {
-  //   nodes = nodes.map((node) => (node.id === id ? {
-  //     ...node,
-  //     style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
-  //     subGraph: {
-  //       nodes: [
-  //         { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
-  //         { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
-  //         { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
-  //       ],
-  //       edges: []
-  //     },
-  //   } : node))
-  //   renderer({ nodes, edges, options: renderOptions })
-  // },
+  onNodeDoubleClick: (_, { id }) => {
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      radius: 160,
+      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+      subGraph: {
+        nodes: [
+          { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
+          { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
+        ],
+        edges: []
+      },
+    } : node))
+    renderer({ nodes, edges, options: renderOptions })
+  },
   onContainerPointerUp: () => {
-    // nodes = nodes.map((node, idx) => (node.subGraph ? {
-    //   ...node,
-    //   style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
-    //   subGraph: undefined,
-    // } : node))
-    // renderer({ nodes, edges, options: renderOptions })
-
-    layout({ nodes, edges, options: layoutOptions })
+    nodes = nodes.map((node, idx) => (node.subGraph ? {
+      ...node,
+      radius: node.id === 'a' ? 62 : (20 - idx) * 4,
+      style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
+      subGraph: undefined,
+    } : node))
+    renderer({ nodes, edges, options: renderOptions })
   },
 }
 
@@ -109,10 +107,7 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout((graph) => {
-  nodes = graph.nodes
-  renderer({ nodes, edges, options: renderOptions })
-})
+const layout = Layout()
 
 const renderer = Renderer({
   container,
@@ -123,4 +118,7 @@ const renderer = Renderer({
 /**
  * Layout and Render Graph
  */
-layout({ nodes, edges, options: layoutOptions })
+layout({ nodes, edges, options: layoutOptions }).then((graph) => {
+  nodes = graph.nodes
+  renderer({ nodes, edges, options: renderOptions })
+})

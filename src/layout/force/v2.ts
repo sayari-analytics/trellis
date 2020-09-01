@@ -1,7 +1,6 @@
 /* eslint-disable no-useless-escape */
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge, PositionedNode } from '../../types'
-import { noop } from '../../utils'
+import { Node, Edge, PositionedNode, Extend } from '../../types'
 
 
 export type LayoutOptions = {
@@ -69,28 +68,15 @@ const d3ForceScript = `
 
 
 const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
-  class Simulation{
+  class Simulation {
 
     private nodePadding = DEFAULT_OPTIONS.nodePadding
     private tick = DEFAULT_OPTIONS.tick
-
-    private defaultSubgraphOptions: LayoutOptions = {
-      nodeStrength: -400,
-      linkDistance: 100,
-      linkStrength: 0,
-      centerStrength: 0.2,
-      nodePadding: 6,
-      tick: 100,
-    }
-
-    private nodesById: { [id: string]: SimulationNode } = {}
-    private subGraphs: { [id: string]: Simulation } = {}
-
-    forceManyBody = d3.forceManyBody().distanceMax(4000).theta(0.5)
-    forceLink = d3.forceLink<SimulationNode, SimulationLinkDatum<SimulationNode>>().id((node) => node.id)
-    forceCollide = d3.forceCollide<SimulationNode>().radius((node) => node.radius + this.nodePadding)
-    forceX = d3.forceX(0)
-    forceY = d3.forceY(0)
+    private forceManyBody = d3.forceManyBody().distanceMax(4000).theta(0.5)
+    private forceLink = d3.forceLink<SimulationNode, SimulationLinkDatum<SimulationNode>>().id((node) => node.id)
+    private forceCollide = d3.forceCollide<SimulationNode>().radius((node) => node.radius + this.nodePadding)
+    private forceX = d3.forceX(0)
+    private forceY = d3.forceY(0)
 
     simulation = d3.forceSimulation<SimulationNode>()
       .force('charge', this.forceManyBody)
@@ -121,121 +107,12 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
       this.nodePadding = nodePadding
       this.tick = tick
 
-
-      let updateSubGraphs = false
-      const subGraphs: { [id: string]: Simulation } = {}
-
-      // for (let i = 0; i < nodes.length; i++) {
-      //   const node = nodes[i]
-
-      //   /**
-      //    * calculate subGraphs
-      //    */
-      //   if (node.subGraph) {
-      //     if (this.subGraphs[node.id] === undefined) {
-      //       // enter subgraph
-      //       subGraphs[node.id] = new Simulation().layout(
-      //         node.subGraph.nodes,
-      //         node.subGraph.edges,
-      //         node.subGraph.options === undefined ? this.defaultSubgraphOptions : node.subGraph.options,
-      //       )
-      //     } else {
-      //       // update subgraph
-      //       subGraphs[node.id] = this.subGraphs[node.id].layout(
-      //         node.subGraph.nodes as N[],
-      //         node.subGraph.edges,
-      //         node.subGraph.options === undefined ? this.defaultSubgraphOptions : node.subGraph.options,
-      //       )
-      //     }
-
-      //     updateSubGraphs = true
-      //   } else if (this.subGraphs[node.id]) {
-      //     // exit subGraph
-      //     updateSubGraphs = true
-      //   }
-      // }
-
       this.simulation.nodes(nodes)
       this.forceLink.links(edges)
 
-      if (updateSubGraphs) {
-        this.fisheyeCollapse(nodes as SimulationNode[], this.subGraphs)
-        this.simulation.alpha(1).stop().tick(this.tick)
-        this.fisheyeExpand(nodes as SimulationNode[], subGraphs)
-      } else {
-        this.simulation.alpha(1).stop().tick(this.tick)
-      }
+      this.simulation.alpha(1).stop().tick(this.tick)
 
-      this.subGraphs = subGraphs
-    }
-
-    fisheyeCollapse = (nodes: SimulationNode[], subGraphs: { [id: string]: Simulation }) => {
-      let subGraphsById = Object.entries(subGraphs),
-        id: string,
-        x: number,
-        y: number,
-        radius: number,
-        node: SimulationNode,
-        theta: number,
-        xOffset: number,
-        yOffset: number
-
-      for (let i = subGraphsById.length - 1; i >= 0; i--) {
-        id = subGraphsById[i][0]
-        x = this.nodesById[id].x! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        y = this.nodesById[id].y! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        radius = 200
-
-        for (let i = 0; i < nodes.length; i++) {
-          node = nodes[i]
-          if (node.id !== id && node.x != undefined && node.y != undefined) {
-            theta = Math.atan2(y - node.y, x - node.x)
-            xOffset = Math.cos(theta) * radius
-            yOffset = Math.sin(theta) * radius
-            node.x += xOffset
-            node.y += yOffset
-            if (node.fx != undefined) node.fx += xOffset
-            if (node.fy != undefined) node.fy += yOffset
-          }
-        }
-      }
-    }
-
-    fisheyeExpand = (nodes: SimulationNode[], subGraphs: { [id: string]: Simulation }) => {
-      let subGraphsById = Object.entries(subGraphs),
-        id: string,
-        x: number,
-        y: number,
-        radius: number,
-        node: SimulationNode,
-        theta: number,
-        xOffset: number,
-        yOffset: number
-
-      for (let i = 0; i < subGraphsById.length; i++) {
-        id = subGraphsById[i][0]
-        x = this.nodesById[id].x!
-        y = this.nodesById[id].y!
-        radius = 200
-
-        for (let i = 0; i < nodes.length; i++) {
-          node = nodes[i]
-          if (node.id === id) {
-            /**
-             * TODO - properly compute node w/ subGraph radius
-             */
-            node.radius = radius
-          } else if (node.x != undefined && node.y != undefined) {
-            theta = Math.atan2(node.y - y, node.x - x)
-            xOffset = Math.cos(theta) * radius
-            yOffset = Math.sin(theta) * radius
-            node.x += xOffset
-            node.y += yOffset
-            if (node.fx != undefined) node.fx += xOffset
-            if (node.fy != undefined) node.fy += yOffset
-          }
-        }
-      }
+      return this
     }
   }
 
@@ -262,22 +139,25 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOUT_OPTIONS)})`], { type: 'application/javascript' })
 
 
-export const Layout = <N extends Node<E>, E extends Edge>(handler: (graph: { nodes: PositionedNode<E>[], edges: E[] }) => void) => {
+// TODO - add debugging perf logs
+export const Layout = <N extends Node<E>, E extends Edge>() => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
 
   let _edges: E[] = []
   let v = 0
 
-  worker.onmessage = ({ data }: Message<LayoutResultEvent<E>>) => {
-    if (data.v === v) {
-      handler({ nodes: data.nodes, edges: _edges })
-    }
-  }
-
   const layout = (graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
     _edges = graph.edges
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: ++v } as LayoutEvent)
+
+    return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve) => {
+      worker.onmessage = ({ data }: Message<LayoutResultEvent<E>>) => {
+        if (data.v === v) {
+          resolve({ nodes: data.nodes, edges: _edges })
+        }
+      }
+    })
   }
 
   layout.dispose = () => {

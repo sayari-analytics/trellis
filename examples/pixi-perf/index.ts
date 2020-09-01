@@ -24,10 +24,10 @@ const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 const data = {
   nodes: Object.values(graphData.nodes)
     .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
-    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .map<NodeDatum>(({ id, label, type }) => ({
       id,
       label,
@@ -65,14 +65,6 @@ const data = {
 let nodes: NodeDatum[] = []
 let edges: Edge[] = []
 
-const updateData = (idx: number) => {
-  const nodeIds = new Set()
-  nodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK)
-  nodes.forEach(({ id }) => nodeIds.add(id))
-  edges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
-}
-
-
 /**
  * Initialize Layout and Renderer Options
  */
@@ -86,36 +78,34 @@ const renderOptions: Partial<RendererOptions> = {
   height: container.offsetHeight,
   onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
   //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-  //   renderer({ nodes, edges, options: renderOptions })
+  //   render({ nodes, edges, options: renderOptions })
   // },
   onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
-    // nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
     nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
     nodes = nodes.map((node) => (node.id === id ?
-      // { ...node, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       { ...node, radius: node.radius / 4, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       node
     ))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
 }
 
@@ -123,14 +113,11 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout((graph) => {
-  nodes = graph.nodes
-  renderer({ nodes, edges, options: renderOptions })
-})
+const layout = Layout()
 
-const renderer = Renderer({
+const render = Renderer({
   container,
-  debug: { stats, logPerformance: true }
+  // debug: { stats, logPerformance: true }
 })
 
 
@@ -147,12 +134,30 @@ console.log(`Rendering ${NODES_PER_TICK} nodes every ${INTERVAL}ms ${COUNT} time
 
 
 const interval = setInterval(() => {
-  updateData(idx++)
-  layout({ nodes, edges, options: layoutOptions })
+  idx++
+  // TODO - why does preserving node position perform poorly
+  // const newNodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK).map((node) => nodes.find(({ id }) => id === node.id) ?? node)
+  const newNodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK)
+  const nodeIds = newNodes.reduce<Set<string>>((ids, { id }) => ids.add(id), new Set())
+  const newEdges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+
+  layout({
+    nodes: newNodes,
+    edges: newEdges,
+    options: layoutOptions
+  }).then((graph) => {
+    nodes = graph.nodes
+    edges = graph.edges
+    render({ nodes, edges, options: renderOptions })
+  })
   if (idx === COUNT) clearInterval(interval)
 }, INTERVAL)
 
-layout({ nodes, edges, options: layoutOptions })
+layout({ nodes, edges, options: layoutOptions }).then((graph) => {
+  nodes = graph.nodes
+  edges = graph.edges
+  render({ nodes, edges, options: renderOptions })
+})
 
 
-;(window as any).renderer = renderer
+;(window as any).render = render

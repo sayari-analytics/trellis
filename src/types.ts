@@ -57,3 +57,7 @@ export type PositionNode<N extends Node<E>, E extends Edge = Edge> = Omit<N, 'x'
     options?: Exclude<N['subGraph'], undefined>['options']
   }
 }
+
+export type Extend<T, R> = {
+  [K in Exclude<keyof T, keyof R>]: T[K];
+} & R

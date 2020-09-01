@@ -269,7 +269,13 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
 
           nodesById[node.id] = this.nodesById[node.id].set(node)
         } else {
-          nodesById[node.id] = this.nodesById[node.id]
+          /**
+           * there's some overhead to calling .set(node) when the node has not changed
+           * it's required in order to reinitialize stuff like interpolation functions
+           * and doesn't appear to introduce noticable overhead
+           * but if it does, we could make a cheaper reinit() method w/ less overhead
+           */
+          nodesById[node.id] = this.nodesById[node.id].set(node)
         }
       }
 
@@ -301,7 +307,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
           this.dirty = true
           edgesById[id] = this.edgesById[id].set(edge)
         } else {
-          edgesById[id] = this.edgesById[id]
+          edgesById[id] = this.edgesById[id].set(edge)
         }
       }
 
