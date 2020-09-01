@@ -1,10 +1,13 @@
+import { NodeStyle, EdgeStyle } from './renderers/pixi'
+
+
 export type Node<E extends Edge = Edge> = {
   id: string
   radius: number // if radius is ignored for nodes with a subGraph, should node be a typed union?
   x?: number | undefined // TODO - add prop for fixed position
   y?: number | undefined
   label?: string | undefined
-  style?: {}
+  style?: Partial<NodeStyle>
   subGraph?: {
     nodes: Node<E>[],
     edges: E[],
@@ -17,7 +20,7 @@ export type Edge = {
   source: string
   target: string
   label?: string
-  style?: {}
+  style?: Partial<EdgeStyle>
 }
 
 // export type PositionedNode<E extends Edge = Edge, Props extends Record<string, unknown> = {}> = {

@@ -1,8 +1,9 @@
 import { createElement, createRef, Component, RefObject } from 'react'
-import { PIXIRenderer, RendererOptions, NodeDatum, EdgeDatum } from '..'
+import { PIXIRenderer, RendererOptions } from '..'
+import { Node, Edge } from '../../../types'
 
 
-export type Props<N extends NodeDatum, E extends EdgeDatum> = {
+export type Props<N extends Node, E extends Edge> = {
   debug?: { logPerformance?: boolean, stats?: Stats }
   nodes: N[]
   edges: E[]
@@ -10,7 +11,7 @@ export type Props<N extends NodeDatum, E extends EdgeDatum> = {
 }
 
 
-export class Renderer<N extends NodeDatum, E extends EdgeDatum> extends Component<Props<N, E>> {
+export class Renderer<N extends Node, E extends Edge> extends Component<Props<N, E>> {
 
   private container: RefObject<HTMLCanvasElement> = createRef<HTMLCanvasElement>()
   private renderer: PIXIRenderer<N, E> | undefined

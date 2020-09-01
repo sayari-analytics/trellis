@@ -1,7 +1,7 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force/v2'
 import { Node, Edge, PositionedNode } from '../../src/types'
-import { Renderer, RendererOptions, NodeStyle } from '../../src/renderers/pixi'
+import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
 
@@ -13,9 +13,6 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-type NodeDatum = Exclude<Node, 'style'> & { style: Partial<NodeStyle> }
-
-
 const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
 const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
@@ -28,7 +25,7 @@ const data = {
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
-    .map<NodeDatum>(({ id, label, type }) => ({
+    .map<Node>(({ id, label, type }) => ({
       id,
       label,
       radius: 32,
@@ -62,7 +59,7 @@ const data = {
     }))
 }
 
-let nodes: NodeDatum[] = []
+let nodes: Node[] = []
 let edges: Edge[] = []
 
 /**

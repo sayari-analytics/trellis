@@ -1,10 +1,10 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 import FontFaceObserver from 'fontfaceobserver'
-import { PositionedNode, Edge as PositionedEdge } from '../../types'
+import { Node, Edge } from '../../types'
 import { animationFrameLoop, noop } from '../../utils'
-import { Node } from './node'
-import { Edge } from './edge'
+import { NodeRenderer } from './node'
+import { EdgeRenderer } from './edge'
 
 
 export type Event = PIXI.InteractionEvent
@@ -24,11 +24,7 @@ export type EdgeStyle = {
   strokeOpacity: number
 }
 
-export type NodeDatum = Exclude<PositionedNode<EdgeDatum>, 'style'> & { style?: Partial<NodeStyle> }
-
-export type EdgeDatum = Exclude<PositionedEdge, 'style'> & { style?: Partial<EdgeStyle> }
-
-export type RendererOptions<N extends NodeDatum = NodeDatum, E extends EdgeDatum = EdgeDatum> = {
+export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   width: number
   height: number
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void
@@ -49,7 +45,7 @@ export type RendererOptions<N extends NodeDatum = NodeDatum, E extends EdgeDatum
 }
 
 
-export const RENDERER_OPTIONS: RendererOptions<NodeDatum, EdgeDatum> = {
+export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
   width: 800, height: 600,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
@@ -63,10 +59,10 @@ const POSITION_ANIMATION_DURATION = 800
 PIXI.utils.skipHello()
 
 
-export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
+export class PIXIRenderer<N extends Node, E extends Edge>{
 
-  hoveredNode?: Node<N, E>
-  clickedNode?: Node<N, E>
+  hoveredNode?: NodeRenderer<N, E>
+  clickedNode?: NodeRenderer<N, E>
   dirty = false
   previousRenderTime = Date.now()
   animationDuration = 0
@@ -79,8 +75,8 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
   frontLabelLayer = new PIXI.Container()
   nodes: N[] | undefined
   edges: E[] | undefined
-  nodesById: { [id: string]: Node<N, E> } = {}
-  edgesById: { [id: string]: Edge<N, E> } = {}
+  nodesById: { [id: string]: NodeRenderer<N, E> } = {}
+  edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
 
@@ -199,8 +195,8 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
      * restart animation whenever a new layout is calculated: nodes/edges are added/removed from graph, subGraph is added/removed from graph
      */
     this.restartAnimation = false
-    const nodesById: { [id: string]: Node<N, E> } = {}
-    const edgesById: { [id: string]: Edge<N, E> } = {}
+    const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
+    const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
 
 
     /**
@@ -242,7 +238,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
           // node enter
           this.dirty = true
           this.restartAnimation = true
-          let adjacentNode: Node<N, E> | undefined
+          let adjacentNode: NodeRenderer<N, E> | undefined
 
           if (this.reverseEdgeIndex[node.id]) {
             // nodes w edges from existing nodes enter from one of those nodes
@@ -252,7 +248,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
             adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
           }
 
-          nodesById[node.id] = new Node(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
+          nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
         } else if (node !== this.nodesById[node.id].node) {
           this.dirty = true
 
@@ -301,7 +297,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
         if (this.edgesById[id] === undefined) {
           // edge enter
           this.dirty = true
-          edgesById[id] = new Edge(this, this.edgesLayer).set(edge)
+          edgesById[id] = new EdgeRenderer(this, this.edgesLayer).set(edge)
         } else if (edge !== this.edgesById[id].edge) {
           // edge update
           this.dirty = true
@@ -415,7 +411,7 @@ export class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum>{
 }
 
 
-export const Renderer = <N extends NodeDatum, E extends EdgeDatum>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer<N, E>(options)
   const apply = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => pixiRenderer.apply(graph)
   apply.nodes = () => pixiRenderer.nodes

@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js'
-import { PIXIRenderer as Renderer,  EdgeStyle, NodeDatum, EdgeDatum } from '.'
+import { PIXIRenderer as Renderer, EdgeStyle } from '.'
 import { colorToNumber } from './utils'
+import { Node, Edge } from '../../types'
 
 
 const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
@@ -25,7 +26,7 @@ const EDGE_STYLES: EdgeStyle = {
 }
 
 
-export class Edge<N extends NodeDatum, E extends EdgeDatum>{
+export class EdgeRenderer<N extends Node, E extends Edge>{
 
   edge: E | undefined
 

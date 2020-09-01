@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { PIXIRenderer as Renderer, NodeStyle, NodeDatum, EdgeDatum } from '.'
+import { PIXIRenderer as Renderer, NodeStyle } from '.'
 import { colorToNumber, parentInFront } from './utils'
+import { Node, Edge } from '../../types'
 
 
 const LABEL_Y_PADDING = 4
@@ -15,7 +16,7 @@ const NODE_STYLES: NodeStyle = {
 }
 
 
-export class Node<N extends NodeDatum, E extends EdgeDatum>{
+export class NodeRenderer<N extends Node, E extends Edge>{
 
   node: N
   x: number
@@ -26,8 +27,8 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
   strokeOpacity = 0
   fill = 0
   fillOpacity = 0
-  subGraphNodes: { [id: string]: Node<N, E> } = {}
-  parent?: Node<N, E>
+  subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
+  parent?: NodeRenderer<N, E>
 
   private renderer: Renderer<N, E>
   private depth: number
@@ -51,7 +52,7 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
 
-  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, parent?: Node<N, E>) {
+  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, parent?: NodeRenderer<N, E>) {
     this.renderer = renderer
 
     this.parent = parent
@@ -94,8 +95,8 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     this.node = node
     this.startX = this.x
     this.startY = this.y
-    this.endX = node.x!
-    this.endY = node.y!
+    this.endX = node.x ?? 0
+    this.endY = node.y ?? 0
 
     /**
      * Position Interpolation
@@ -196,12 +197,12 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
     /**
      * SubGraph Node
      */
-    const subGraphNodes: { [id: string]: Node<N, E> } = {}
+    const subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
     if (node.subGraph?.nodes) {
       for (const subGraphNode of node.subGraph.nodes) {
         if (this.subGraphNodes[subGraphNode.id] === undefined) {
           // enter subGraph node
-          subGraphNodes[subGraphNode.id] = new Node<N, E>(this.renderer, subGraphNode as N, 0, 0, this)
+          subGraphNodes[subGraphNode.id] = new NodeRenderer<N, E>(this.renderer, subGraphNode as N, 0, 0, this)
         } else {
           // update subGraph node
           subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode as N)
@@ -273,6 +274,8 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
 
 
   private nodePointerEnter = (event: PIXI.InteractionEvent) => {
+    // if (this.renderer.animationPercent < 1) return
+
     if (this.renderer.clickedNode !== undefined) return
 
     this.renderer.hoveredNode = this
@@ -297,6 +300,8 @@ export class Node<N extends NodeDatum, E extends EdgeDatum>{
   }
 
   private nodePointerLeave = (event: PIXI.InteractionEvent) => {
+    // if (this.renderer.animationPercent < 1 && this.renderer.hoveredNode !== this) return
+
     if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) return
 
     this.renderer.hoveredNode = undefined

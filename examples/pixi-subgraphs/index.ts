@@ -1,7 +1,7 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
 import { Node, Edge, PositionedNode } from '../../src/types'
-import { Renderer, RendererOptions, NodeStyle } from '../../src/renderers/pixi'
+import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
 
@@ -13,9 +13,6 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-type NodeDatum = Exclude<Node, 'style'> & { style: Partial<NodeStyle> }
-
-
 const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
 const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
@@ -24,7 +21,7 @@ const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 const data = {
   nodes: Object.values(graphData.nodes)
     .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
-    .map<NodeDatum>(({ id, label, type }) => ({
+    .map<Node>(({ id, label, type }) => ({
       id,
       label,
       radius: 32,
@@ -45,7 +42,7 @@ const data = {
     }))
 }
 
-let nodes: NodeDatum[] = []
+let nodes: Node[] = []
 let edges: Edge[] = []
 
 const updateData = (idx: number) => {

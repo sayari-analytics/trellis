@@ -1,6 +1,7 @@
 import { color } from 'd3-color'
-import { PIXIRenderer as Renderer, EdgeDatum, NodeDatum } from '.'
-import { Node } from './node'
+import { PIXIRenderer as Renderer } from '.'
+import { NodeRenderer } from './node'
+import { Node, Edge } from '../../types'
 
 
 export const colorToNumber = (colorString: string): number => {
@@ -13,7 +14,7 @@ export const colorToNumber = (colorString: string): number => {
 }
 
 
-export const parentInFront = <N extends NodeDatum, E extends EdgeDatum>(renderer: Renderer<N, E>, parent: Node<N, E> | undefined) => {
+export const parentInFront = <N extends Node, E extends Edge>(renderer: Renderer<N, E>, parent: NodeRenderer<N, E> | undefined) => {
   while (parent) {
     if (renderer.hoveredNode === parent) {
       return true

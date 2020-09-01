@@ -1,6 +1,6 @@
 /* eslint-disable no-useless-escape */
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge, PositionedNode, Extend } from '../../types'
+import { Node, Edge, Extend } from '../../types'
 
 
 export type LayoutOptions = {
@@ -39,9 +39,9 @@ type LayoutEvent = {
   options?: Partial<LayoutOptions>
 }
 
-type LayoutResultEvent<E extends Edge = Edge> = {
+type LayoutResultEvent<N extends Node<E>, E extends Edge> = {
   v: number
-  nodes: PositionedNode<E>[]
+  nodes: Extend<N, { x: number, y: number }>[]
 }
 
 
@@ -140,21 +140,19 @@ const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOU
 
 
 // TODO - add debugging perf logs
-export const Layout = <N extends Node<E>, E extends Edge>() => {
+export const Layout = () => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
-
-  let _edges: E[] = []
   let v = 0
 
-  const layout = (graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
-    _edges = graph.edges
+  const layout = <N extends Node<E>, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
+    const edges = graph.edges
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: ++v } as LayoutEvent)
 
     return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve) => {
-      worker.onmessage = ({ data }: Message<LayoutResultEvent<E>>) => {
+      worker.onmessage = ({ data }: Message<LayoutResultEvent<N, E>>) => {
         if (data.v === v) {
-          resolve({ nodes: data.nodes, edges: _edges })
+          resolve({ nodes: data.nodes, edges })
         }
       }
     })
