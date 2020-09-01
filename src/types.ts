@@ -23,20 +23,6 @@ export type Edge = {
   style?: Partial<EdgeStyle>
 }
 
-// export type PositionedNode<E extends Edge = Edge, Props extends Record<string, unknown> = {}> = {
-//   id: string
-//   radius: number
-//   x: number
-//   y: number
-//   label?: string
-//   style?: {}
-//   subGraph?: {
-//     nodes: PositionedNode<E, Props>[],
-//     edges: E[],
-//     options?: {}
-//   }
-// } & Props
-
 export type PositionedNode<E extends Edge = Edge> = {
   id: string
   radius: number

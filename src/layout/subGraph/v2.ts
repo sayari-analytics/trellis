@@ -70,8 +70,9 @@ const d3ForceScript = `
 const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
   class Simulation {
 
-    private progenetorGraph: boolean
     private subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
+
+    private progenetorGraph: boolean
     private nodePadding = DEFAULT_OPTIONS.nodePadding
     private tick = DEFAULT_OPTIONS.tick
     private forceManyBody = d3.forceManyBody().distanceMax(4000).theta(0.5)
@@ -105,36 +106,34 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         nodePadding = DEFAULT_OPTIONS.nodePadding,
         tick = DEFAULT_OPTIONS.tick,
       } = DEFAULT_OPTIONS,
-      v
-    }: LayoutEvent) {
+    }: {
+      nodes: Node[]
+      edges: Edge[]
+      options?: Partial<LayoutOptions>
+    }) {
       const subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i]
 
-        /**
-         * calculate subGraphs
-         */
         if (node.subGraph) {
           if (this.subGraphs[node.id] === undefined) {
             // enter subgraph
             subGraphs[node.id] = {
               node,
-              simulation: new Simulation(true).layout({
+              simulation: new Simulation(false).layout({
                 nodes: node.subGraph.nodes,
                 edges: node.subGraph.edges,
                 options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {}),
-                v
               })
             }
           } else {
             // update subgraph
-            this.subGraphs[node.id].node = node
-            this.subGraphs[node.id].simulation.layout({
+            subGraphs[node.id] = this.subGraphs[node.id]
+            subGraphs[node.id].simulation.layout({
               nodes: node.subGraph.nodes,
               edges: node.subGraph.edges,
               options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {}),
-              v
             })
           }
         }
@@ -153,7 +152,6 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         this.simulation.nodes(nodes)
         this.forceLink.links(edges)
 
-        this.simulation.alpha(1).stop().tick(this.tick)
         this.simulation.alpha(1).stop().tick(this.tick)
       }
       this.fisheyeExpand(nodes as SimulationNode[], subGraphs)
@@ -176,8 +174,8 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 
       for (let i = subGraphsById.length - 1; i >= 0; i--) {
         id = subGraphsById[i][0]
-        x = subGraphsById[i][1].node.x! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        y = subGraphsById[i][1].node.y! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
+        x = subGraphsById[i][1].node.x!
+        y = subGraphsById[i][1].node.y!
         radius = subGraphsById[i][1].node.radius
 
         for (let i = 0; i < nodes.length; i++) {
@@ -208,8 +206,8 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 
       for (let i = 0; i < subGraphsById.length; i++) {
         id = subGraphsById[i][0]
-        x = subGraphsById[i][1].node.x! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        y = subGraphsById[i][1].node.y! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
+        x = subGraphsById[i][1].node.x!
+        y = subGraphsById[i][1].node.y!
         radius = 200
 
         for (let i = 0; i < nodes.length; i++) {
@@ -243,12 +241,6 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
      */
     if (event === undefined) {
       setTimeout(() => {
-        /**
-         * - collapse previous subgraphs
-         * - layout subgraphs recursively
-         *   - but not top level graph?
-         * - expand new subgraphs
-         */
         simulation.layout(event!)
         self.postMessage({ nodes: event!.nodes, v: data.v })
         event = undefined

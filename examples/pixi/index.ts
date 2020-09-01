@@ -1,6 +1,7 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force/v2'
 import * as SubGraph from '../../src/layout/subGraph/v2'
+// import * as SubGraph from '../../src/layout/subGraph'
 import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 
