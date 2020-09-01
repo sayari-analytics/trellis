@@ -1,6 +1,7 @@
 import Stats from 'stats.js'
-import { Layout, LayoutOptions } from '../../src/layout/force'
-import { Node, Edge, PositionedNode } from '../../src/types'
+import * as Force from '../../src/layout/force'
+import * as SubGraph from '../../src/layout/subGraph'
+import { Node, Edge } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -34,7 +35,7 @@ const data = {
     }))
     .slice(0, 1),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-    .map(([id, { field, source, target }]) => ({
+    .map<Edge>(([id, { field, source, target }]) => ({
       id,
       source,
       target,
@@ -45,18 +46,11 @@ const data = {
 let nodes: Node[] = []
 let edges: Edge[] = []
 
-const updateData = (idx: number) => {
-  const nodeIds = new Set()
-  nodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK)
-  nodes.forEach(({ id }) => nodeIds.add(id))
-  edges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
-}
-
 
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Partial<LayoutOptions> = {
+const layoutOptions: Partial<Force.LayoutOptions> = {
   nodeStrength: -600,
 }
 
@@ -64,36 +58,36 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerUp: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ?
       { ...node, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       node
     ))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    layout({ nodes, edges, options: layoutOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDoubleClick: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -108,7 +102,11 @@ const renderOptions: Partial<RendererOptions> = {
         edges: []
       },
     } : node))
-    layout({ nodes, edges, options: layoutOptions })
+
+    subGraph({ nodes, edges }).then((graph) => {
+      nodes = graph.nodes
+      render({ nodes, edges, options: renderOptions })
+    })
   },
   onContainerPointerUp: () => {
     nodes = nodes.map((node, idx) => (node.subGraph ? {
@@ -116,7 +114,11 @@ const renderOptions: Partial<RendererOptions> = {
       style: node.id === 'a' ? COMPANY_STYLE : { ...PERSON_STYLE, width: (20 - idx) * 8 },
       subGraph: undefined,
     } : node))
-    layout({ nodes, edges, options: layoutOptions })
+
+    subGraph({ nodes, edges }).then((graph) => {
+      nodes = graph.nodes
+      render({ nodes, edges, options: renderOptions })
+    })
   },
 }
 
@@ -124,9 +126,9 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout(({ nodes, edges }) => { renderer({ nodes, edges, options: renderOptions }) })
-
-const renderer = Renderer({
+const layout = Force.Layout()
+const subGraph = SubGraph.Layout()
+const render = Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -143,11 +145,29 @@ let idx = 0
 console.log(`Rendering ${NODES_PER_TICK} every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`)
 
 const interval = setInterval(() => {
-  updateData(idx++)
-  layout({ nodes, edges, options: layoutOptions })
+  idx++
+  // TODO - why does preserving node position perform poorly
+  // const newNodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK).map((node) => nodes.find(({ id }) => id === node.id) ?? node)
+  const newNodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK)
+  const nodeIds = newNodes.reduce<Set<string>>((ids, { id }) => ids.add(id), new Set())
+  const newEdges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+
+  layout({
+    nodes: newNodes,
+    edges: newEdges,
+    options: layoutOptions
+  }).then((graph) => {
+    nodes = graph.nodes
+    edges = graph.edges
+    render({ nodes, edges, options: renderOptions })
+  })
   if (idx === COUNT) clearInterval(interval)
 }, INTERVAL)
 
-layout({ nodes, edges, options: layoutOptions })
+layout({ nodes, edges, options: layoutOptions }).then((graph) => {
+  nodes = graph.nodes
+  edges = graph.edges
+  render({ nodes, edges, options: renderOptions })
+})
 
-;(window as any).renderer = renderer
+;(window as any).render = render

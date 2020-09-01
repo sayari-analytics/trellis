@@ -23,30 +23,6 @@ export type Edge = {
   style?: Partial<EdgeStyle>
 }
 
-export type PositionedNode<E extends Edge = Edge> = {
-  id: string
-  radius: number
-  x: number
-  y: number
-  label?: string
-  style?: {}
-  subGraph?: {
-    nodes: PositionedNode<E>[],
-    edges: E[],
-    options?: {}
-  }
-}
-
-export type PositionNode<N extends Node<E>, E extends Edge = Edge> = Omit<N, 'x' | 'y' | 'subGraph'> & {
-  x: number,
-  y: number,
-  subGraph?: {
-    nodes: PositionNode<N, E>[],
-    edges: E[],
-    options?: Exclude<N['subGraph'], undefined>['options']
-  }
-}
-
 export type Extend<T, R> = {
   [K in Exclude<keyof T, keyof R>]: T[K];
 } & R

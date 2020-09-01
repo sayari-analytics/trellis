@@ -70,8 +70,7 @@ const d3ForceScript = `
 const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
   class Simulation {
 
-    private subGraphs: { [id: string]: { simulation: Simulation, node: Node } } = {}
-    private nodesById: { [id: string]: SimulationNode } = {}
+    private subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
 
     private progenetorGraph: boolean
     private nodePadding = DEFAULT_OPTIONS.nodePadding
@@ -91,6 +90,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
       .force('center', d3.forceCenter())
       .stop()
 
+
     constructor(progenetorGraph: boolean) {
       this.progenetorGraph = progenetorGraph
     }
@@ -105,44 +105,36 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         centerStrength = DEFAULT_OPTIONS.centerStrength,
         nodePadding = DEFAULT_OPTIONS.nodePadding,
         tick = DEFAULT_OPTIONS.tick,
-      } = DEFAULT_OPTIONS
+      } = DEFAULT_OPTIONS,
     }: {
       nodes: Node[]
       edges: Edge[]
       options?: Partial<LayoutOptions>
     }) {
-      const subGraphs: { [id: string]: { simulation: Simulation, node: Node } } = {}
+      const subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i]
 
-        /**
-         * calculate subGraphs
-         */
-        this.nodesById[node.id] = (node as SimulationNode)
         if (node.subGraph) {
           if (this.subGraphs[node.id] === undefined) {
             // enter subgraph
             subGraphs[node.id] = {
+              node,
               simulation: new Simulation(false).layout({
                 nodes: node.subGraph.nodes,
                 edges: node.subGraph.edges,
-                options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {})
-              }),
-              node
+                options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {}),
+              })
             }
           } else {
             // update subgraph
-            // this.subGraphs[node.id].node = node
-            subGraphs[node.id] = {
-              simulation: this.subGraphs[node.id].simulation.layout({
-                nodes: node.subGraph.nodes,
-                edges: node.subGraph.edges,
-                options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {})
-              }),
-              // node
-              node: this.subGraphs[node.id].node
-            }
+            subGraphs[node.id] = this.subGraphs[node.id]
+            subGraphs[node.id].simulation.layout({
+              nodes: node.subGraph.nodes,
+              edges: node.subGraph.edges,
+              options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {}),
+            })
           }
         }
       }
@@ -156,8 +148,10 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         this.forceY.strength(centerStrength)
         this.nodePadding = nodePadding
         this.tick = tick
+
         this.simulation.nodes(nodes)
         this.forceLink.links(edges)
+
         this.simulation.alpha(1).stop().tick(this.tick)
       }
       this.fisheyeExpand(nodes as SimulationNode[], subGraphs)
@@ -167,7 +161,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
       return this
     }
 
-    fisheyeCollapse = (nodes: SimulationNode[], subGraphs: { [id: string]: { simulation: Simulation, node: Node } }) => {
+    fisheyeCollapse = (nodes: SimulationNode[], subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
       let subGraphsById = Object.entries(subGraphs),
         id: string,
         x: number,
@@ -180,14 +174,9 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 
       for (let i = subGraphsById.length - 1; i >= 0; i--) {
         id = subGraphsById[i][0]
-
-        x = subGraphsById[i][1].node.x! // this.nodesById[id].x! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        y = subGraphsById[i][1].node.y! // this.nodesById[id].y! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-
-        // x = this.nodesById[id].x! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        // y = this.nodesById[id].y! // TODO - x/y position should be a property on each subGraph simulation (as should radius)
-        console.log('x', this.nodesById[id].x!, subGraphsById[i][1].node.x!, 'y', this.nodesById[id].y!, subGraphsById[i][1].node.y!)
-        radius = 200
+        x = subGraphsById[i][1].node.x!
+        y = subGraphsById[i][1].node.y!
+        radius = subGraphsById[i][1].node.radius
 
         for (let i = 0; i < nodes.length; i++) {
           node = nodes[i]
@@ -204,7 +193,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
       }
     }
 
-    fisheyeExpand = (nodes: SimulationNode[], subGraphs: { [id: string]: { simulation: Simulation, node: Node } }) => {
+    fisheyeExpand = (nodes: SimulationNode[], subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
       let subGraphsById = Object.entries(subGraphs),
         id: string,
         x: number,
@@ -217,8 +206,8 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 
       for (let i = 0; i < subGraphsById.length; i++) {
         id = subGraphsById[i][0]
-        x = this.nodesById[id].x!
-        y = this.nodesById[id].y!
+        x = subGraphsById[i][1].node.x!
+        y = subGraphsById[i][1].node.y!
         radius = 200
 
         for (let i = 0; i < nodes.length; i++) {

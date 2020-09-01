@@ -1,21 +1,21 @@
 import { Component, ReactNode } from 'react'
-import { Node, Edge, PositionNode } from '../../../types'
-import { ForceLayout, LayoutOptions } from '..'
+import { Node, Edge } from '../../../types'
+import * as ForceLayout from '..'
 
 
 export type Props<N extends Node<E>, E extends Edge> = {
   debug?: { logPerformance?: boolean, stats?: Stats }
   nodes: N[]
   edges: E[]
-  options?: Partial<LayoutOptions>
+  options?: Partial<ForceLayout.LayoutOptions>
   children: (graph: {
-    nodes: PositionNode<N, E>[],
+    nodes: N[],
     edges: E[],
   }) => ReactNode
 }
 
 type State<N extends Node<E>, E extends Edge> = {
-  nodes: PositionNode<N, E>[],
+  nodes: N[],
   edges: E[]
 }
 
@@ -25,12 +25,10 @@ export class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N
 
   state: State<N, E> = { nodes: [], edges: [] }
 
-  private layout = new ForceLayout<N, E>((graph) => {
-    this.setState(graph)
-  })
+  private layout = ForceLayout.Layout()
 
   componentDidMount() {
-    this.layout.apply({
+    this.layout({
       nodes: this.props.nodes,
       edges: this.props.edges,
       options: this.props.options,
@@ -38,7 +36,7 @@ export class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N
   }
 
   UNSAFE_componentWillReceiveProps(nextProps: Props<N, E>) {
-    this.layout.apply({
+    this.layout({
       nodes: nextProps.nodes,
       edges: nextProps.edges,
       options: nextProps.options,
@@ -49,22 +47,3 @@ export class Layout<N extends Node<E>, E extends Edge> extends Component<Props<N
     return this.props.children({ nodes: this.state.nodes, edges: this.state.edges })
   }
 }
-
-// export const Layout2 = <N extends Node<E>, E extends Edge>(props: Props<N, E>) => {
-
-//   const [graph, setGraph] = useState<State<N, E>>({ nodes: [], edges: [] })
-
-//   const layout = useMemo(() => {
-//     return new ForceLayout<N, E>((graph) => setGraph(graph))
-//   }, [])
-
-//   useLayoutEffect(() => {
-//     layout.apply({
-//       nodes: props.nodes,
-//       edges: props.edges,
-//       options: props.options,
-//     })
-//   })
-
-//   return useMemo(() => props.children({ nodes: graph.nodes, edges: graph.edges }), [props.children, graph.nodes, graph.edges])
-// }

@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
-import { Layout, LayoutOptions } from '../../src/layout/force/v2'
-import { Node, Edge, PositionedNode } from '../../src/types'
+import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Node, Edge } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -73,23 +73,23 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: Node) => {
   //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
   //   render({ nodes, edges, options: renderOptions })
   // },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ?
       { ...node, radius: node.radius / 4, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       node

@@ -413,7 +413,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
 export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer<N, E>(options)
-  const apply = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => pixiRenderer.apply(graph)
+  const apply = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => { pixiRenderer.apply(graph) }
   apply.nodes = () => pixiRenderer.nodes
   apply.edges = () => pixiRenderer.edges
 

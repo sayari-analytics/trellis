@@ -1,8 +1,7 @@
 import Stats from 'stats.js'
-import * as Force from '../../src/layout/force/v2'
-import * as SubGraph from '../../src/layout/subGraph/v2'
-// import * as SubGraph from '../../src/layout/subGraph'
-import { Node, Edge, PositionedNode } from '../../src/types'
+import * as Force from '../../src/layout/force'
+import * as SubGraph from '../../src/layout/subGraph'
+import { Node, Edge } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 
@@ -48,23 +47,23 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: Node) => {
   //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
   //   renderer({ nodes, edges, options: renderOptions })
   // },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ?
       { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
       node

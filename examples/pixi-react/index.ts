@@ -2,7 +2,7 @@ import { createElement, SFC, useState, useCallback } from 'react'
 import { render } from 'react-dom'
 import Stats from 'stats.js'
 import { Layout } from '../../src/layout/force/bindings/react'
-import { Node, Edge, PositionedNode } from '../../src/types'
+import { Node, Edge } from '../../src/types'
 import { NodeStyle } from '../../src/renderers/pixi'
 import { Renderer } from '../../src/renderers/pixi/bindings/react'
 
@@ -47,19 +47,19 @@ const App: SFC = () => {
 
   const [graph, setGraph] = useState({ nodes, edges })
 
-  const onNodePointerDown = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  const onNodePointerDown = useCallback((_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
   }, [])
-  const onNodeDrag = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode, x: number, y: number) => {
+  const onNodeDrag = useCallback((_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
   }, [])
-  const onNodePointerUp = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  const onNodePointerUp = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node)), edges }))
   }, [])
-  const onNodePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  const onNodePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node)), edges }))
   }, [])
-  const onNodePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: PositionedNode) => {
+  const onNodePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
     setGraph(({ nodes, edges }) => ({
       nodes: nodes.map((node) => (node.id === id ?
         { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
