@@ -1,5 +1,6 @@
 import Stats from 'stats.js'
-import { Layout, LayoutOptions } from '../../src/layout/force/v2'
+import * as Force from '../../src/layout/force/v2'
+import * as SubGraph from '../../src/layout/subGraph/v2'
 import { Node, Edge, PositionedNode } from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 
@@ -37,7 +38,7 @@ let edges: Edge[] = [
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Partial<LayoutOptions> = {
+const layoutOptions: Partial<Force.LayoutOptions> = {
   nodeStrength: -500,
 }
 
@@ -90,7 +91,11 @@ const renderOptions: Partial<RendererOptions> = {
         edges: []
       },
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+
+    subGraph({ nodes, edges }).then((graph) => {
+      nodes = graph.nodes
+      renderer({ nodes, edges, options: renderOptions })
+    })
   },
   onContainerPointerUp: () => {
     nodes = nodes.map((node, idx) => (node.subGraph ? {
@@ -99,7 +104,11 @@ const renderOptions: Partial<RendererOptions> = {
       style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
       subGraph: undefined,
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+
+    subGraph({ nodes, edges }).then((graph) => {
+      nodes = graph.nodes
+      renderer({ nodes, edges, options: renderOptions })
+    })
   },
 }
 
@@ -107,8 +116,8 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const layout = Layout()
-
+const force = Force.Layout()
+const subGraph = SubGraph.Layout()
 const renderer = Renderer({
   container,
   // debug: { stats, logPerformance: true }
@@ -118,7 +127,7 @@ const renderer = Renderer({
 /**
  * Layout and Render Graph
  */
-layout({ nodes, edges, options: layoutOptions }).then((graph) => {
+force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
   renderer({ nodes, edges, options: renderOptions })
 })
