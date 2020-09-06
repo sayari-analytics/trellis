@@ -248,7 +248,11 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
             adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
           }
 
-          nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0)
+          nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0, node.radius)
+          /**
+           * alternatively, don't animate graph on load
+           */
+          // nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? node.x ?? 0, adjacentNode?.y ?? node.y ?? 0, node.radius)
         } else if (node !== this.nodesById[node.id].node) {
           this.dirty = true
 
@@ -272,6 +276,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
            * but if it does, we could make a cheaper reinit() method w/ less overhead
            */
           nodesById[node.id] = this.nodesById[node.id].set(node)
+          // nodesById[node.id] = this.nodesById[node.id]
         }
       }
 

@@ -129,7 +129,12 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
             }
           } else {
             // update subgraph
+            /**
+             * need to update node.subGraph for the radius calculation in expand
+             * but x/y/radius needs to track the unexpanded node to collapse?
+             */
             subGraphs[node.id] = this.subGraphs[node.id]
+            subGraphs[node.id].node = node // this won't work...
             subGraphs[node.id].simulation.layout({
               nodes: node.subGraph.nodes,
               edges: node.subGraph.edges,
@@ -138,6 +143,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
           }
         }
       }
+
 
       this.fisheyeCollapse(nodes as SimulationNode[], this.subGraphs)
       if (!this.progenetorGraph) {
@@ -155,6 +161,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         this.simulation.alpha(1).stop().tick(this.tick)
       }
       this.fisheyeExpand(nodes as SimulationNode[], subGraphs)
+
 
       this.subGraphs = subGraphs
 
@@ -208,7 +215,17 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         id = subGraphsById[i][0]
         x = subGraphsById[i][1].node.x!
         y = subGraphsById[i][1].node.y!
-        radius = 200
+
+        // const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
+        const r = subGraphsById[i][1].node.subGraph?.nodes.reduce((radius, node) => {
+          const newRadius = Math.max(radius, Math.hypot(node.x ?? 0 - x, node.y ?? 0 - y)) + node.radius
+          // const newRadius = Math.max(radius, Math.hypot(node.x ?? 0 - 0, node.y ?? 0 - 0)) + node.radius
+          // console.log('potential radius', radius, newRadius)
+          return Math.max(radius, newRadius)
+        }, 0) ?? 0
+        // console.log('final radius', r + 10)
+        const padding = (subGraphsById[i][1].node.subGraph?.options as LayoutOptions | undefined)?.nodePadding ?? DEFAULT_OPTIONS.nodePadding
+        radius = r + padding
 
         for (let i = 0; i < nodes.length; i++) {
           node = nodes[i]

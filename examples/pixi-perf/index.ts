@@ -114,7 +114,7 @@ const layout = Layout()
 
 const render = Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: true }
 })
 
 

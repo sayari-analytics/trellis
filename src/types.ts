@@ -12,7 +12,7 @@ export type Node<E extends Edge = Edge> = {
     nodes: Node<E>[],
     edges: E[],
     options?: {}
-  }
+  } | undefined
 }
 
 export type Edge = {

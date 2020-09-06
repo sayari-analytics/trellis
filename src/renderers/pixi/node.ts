@@ -21,7 +21,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   node: N
   x: number
   y: number
-  radius = -1
+  radius: number
   strokeWidth = 0
   stroke = 0
   strokeOpacity = 0
@@ -32,12 +32,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
   private renderer: Renderer<N, E>
   private depth: number
-  private startX = 0
-  private startY = 0
-  private startRadius = 0
-  private endX = 0
-  private endY = 0
-  private endRadius = 0
+  private startX: number
+  private startY: number
+  private startRadius: number
+  private endX: number
+  private endY: number
+  private endRadius: number
   private interpolateX: (percent: number) => number = () => this.endX
   private interpolateY: (percent: number) => number = () => this.endY
   private interpolateRadius: (percent: number) => number = () => this.endRadius
@@ -52,7 +52,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
 
-  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, parent?: NodeRenderer<N, E>) {
+  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, radius: number, parent?: NodeRenderer<N, E>) {
     this.renderer = renderer
 
     this.parent = parent
@@ -82,55 +82,37 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.renderer.labelsLayer.addChild(this.labelContainer)
     }
 
-    this.node = node
-    this.x = x
-    this.y = y
+    this.startX = this.endX = this.x = x
+    this.startY = this.endY = this.y = y
+    this.startRadius = this.endRadius = this.radius = radius
     this.set(node)
   }
 
   set(node: N) {
-    /**
-     * TODO - only interpolate movement if node is not being dragged
-     */
     this.node = node
-    this.startX = this.x
-    this.startY = this.y
-    this.endX = node.x ?? 0
-    this.endY = node.y ?? 0
 
-    /**
-     * Position Interpolation
-     *
-     * TODO - if node position is currently being interpolated, instead of reinterpolating from 0 velocity, smooth interpolation change
-     * also, consider changing interpolation logic if start and end are close to one another, so that animation ends early
-     */
-    if (this.startX !== this.endX) {
+    if (this.node.x !== this.endX || this.renderer.animationPercent < 1) {
+      this.startX = this.x
+      this.endX = node.x ?? 0
+
       const interpolateXNumber = interpolateNumber(this.startX, this.endX)
-      this.interpolateX = interpolateBasis([this.startX, interpolateXNumber(0.1), interpolateXNumber(0.8), interpolateXNumber(0.95), this.endX])
-    } else {
-      this.interpolateX = () => this.endX
+      this.interpolateX = interpolateBasis([this.startX, interpolateXNumber(0.7), interpolateXNumber(0.95), this.endX])
     }
 
-    if (this.startY !== this.endY) {
+    if (this.node.y !== this.endY || this.renderer.animationPercent < 1) {
+      this.startY = this.y
+      this.endY = node.y ?? 0
+
       const interpolateYNumber = interpolateNumber(this.startY, this.endY)
-      this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.1), interpolateYNumber(0.8), interpolateYNumber(0.95), this.endY])
-    } else {
-      this.interpolateY = () => this.endY
+      this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.7), interpolateYNumber(0.95), this.endY])
     }
 
+    if (this.node.radius !== this.endRadius || this.renderer.animationPercent < 1) {
+      this.startRadius = this.radius
+      this.endRadius = node.radius ?? 0
 
-    /**
-     * Radius Interpolation
-     */
-    const radius = node.radius
-
-    this.startRadius = this.radius === -1 ? radius : this.radius
-    this.endRadius = radius
-    if (this.startRadius !== this.endRadius) {
       const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
-      this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.1), interpolateRadiusNumber(0.8), interpolateRadiusNumber(0.95), this.endRadius])
-    } else {
-      this.interpolateRadius = () => this.endRadius
+      this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.7), interpolateRadiusNumber(0.95), this.endRadius])
     }
 
 
@@ -161,7 +143,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           strokeThickness: 2 * 2,
           align: 'center',
         })
-        this.labelSprite.position.set(0, radius + LABEL_Y_PADDING)
+        this.labelSprite.position.set(0, node.radius + LABEL_Y_PADDING)
         this.labelSprite.scale.set(0.4)
         this.labelSprite.anchor.set(0.5, 0)
         this.labelContainer.addChild(this.labelSprite)
@@ -180,7 +162,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       if (node.style.icon) {
         const icon = new PIXI.Text(node.style.icon, {
           fontFamily: 'Material Icons',
-          fontSize: radius / Math.SQRT2 * 1.7,
+          fontSize: node.radius / Math.SQRT2 * 1.7,
           fill: 0xffffff
         })
         icon.name = 'icon'
@@ -199,13 +181,13 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     const subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
     if (node.subGraph?.nodes) {
-      for (const subGraphNode of node.subGraph.nodes) {
+      for (const subGraphNode of node.subGraph.nodes as N[]) {
         if (this.subGraphNodes[subGraphNode.id] === undefined) {
           // enter subGraph node
-          subGraphNodes[subGraphNode.id] = new NodeRenderer<N, E>(this.renderer, subGraphNode as N, 0, 0, this)
+          subGraphNodes[subGraphNode.id] = new NodeRenderer<N, E>(this.renderer, subGraphNode, 0, 0, subGraphNode.radius, this)
         } else {
           // update subGraph node
-          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode as N)
+          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode)
         }
       }
     }
@@ -230,11 +212,14 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.animationPercent < 1) {
       this.x = this.interpolateX(this.renderer.animationPercent)
       this.y = this.interpolateY(this.renderer.animationPercent)
-      this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
+      this.radius = this.interpolateRadius(this.renderer.animationPercent) // this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
     } else {
-      this.x = this.endX
-      this.y = this.endY
-      this.radius = this.endRadius
+      this.x = this.startX = this.endX
+      this.y = this.startY = this.endY
+      this.radius = this.startRadius = this.endRadius
+      this.interpolateX = () => this.x
+      this.interpolateY = () => this.y
+      this.interpolateRadius = () => this.radius
     }
 
     if (this.parent) {

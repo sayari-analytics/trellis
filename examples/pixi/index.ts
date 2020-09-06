@@ -55,10 +55,6 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: Node) => {
-  //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-  //   renderer({ nodes, edges, options: renderOptions })
-  // },
   onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
     renderer({ nodes, edges, options: renderOptions })
@@ -84,11 +80,12 @@ const renderOptions: Partial<RendererOptions> = {
       radius: 160,
       style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
       subGraph: {
-        nodes: [
-          { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, type: 'company', style: { ...COMPANY_STYLE } },
-          { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, type: 'company', style: { ...COMPANY_STYLE } },
-        ],
+        nodes: (node.subGraph?.nodes ?? []).concat([
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: COMPANY_STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: COMPANY_STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: COMPANY_STYLE },
+        ])
+          .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
       },
     } : node))
