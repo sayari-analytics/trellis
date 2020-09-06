@@ -1,41 +1,35 @@
-import { createElement, createRef, Component, RefObject } from 'react'
+import { createElement, useRef, useEffect } from 'react'
 import * as PixiRenderer from '..'
 import { Node, Edge } from '../../../types'
 
 
-export type Props<N extends Node, E extends Edge> = {
-  debug?: { logPerformance?: boolean, stats?: Stats }
-  nodes: N[]
-  edges: E[]
-  options?: Partial<PixiRenderer.RendererOptions<N, E>>
-}
-
-
-export class Renderer<N extends Node, E extends Edge> extends Component<Props<N, E>> {
-
-  private container: RefObject<HTMLCanvasElement> = createRef<HTMLCanvasElement>()
-  private renderer: ((graph: { nodes: N[], edges: E[], options?: Partial<PixiRenderer.RendererOptions<N, E>> }) => void) | undefined
-
-  componentDidMount() {
-    this.renderer = PixiRenderer.Renderer<N, E>({ container: this.container.current!, debug: this.props.debug })
-    this.renderer({
-      nodes: this.props.nodes,
-      edges: this.props.edges,
-      options: this.props.options,
-    })
+export type Props<N extends Node, E extends Edge> =
+  Partial<PixiRenderer.RendererOptions<N, E>> &
+  {
+    debug?: { logPerformance?: boolean, stats?: Stats }
+    nodes: N[]
+    edges: E[]
   }
 
-  componentDidUpdate() {
-    this.renderer!({
-      nodes: this.props.nodes,
-      edges: this.props.edges,
-      options: this.props.options,
-    })
-  }
 
-  render() {
-    return (
-      createElement('canvas', { ref: this.container })
-    )
-  }
+export const Renderer = <N extends Node, E extends Edge>(props: Props<N, E>) => {
+
+  const ref = useRef<HTMLCanvasElement>(null)
+  const renderer = useRef<(graph: { nodes: N[], edges: E[], options?: Partial<PixiRenderer.RendererOptions<N, E>> }) => void>()
+
+  useEffect(() => {
+    renderer.current = PixiRenderer.Renderer<N, E>({ container: ref.current!, debug: props.debug })
+  }, [])
+
+  useEffect(() => {
+    if (renderer.current) {
+      const { nodes, edges, ...options } = props
+      renderer.current({ nodes, edges, options })
+    }
+  }, [props])
+
+
+  return (
+    createElement('canvas', { ref: ref })
+  )
 }
