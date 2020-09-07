@@ -67,14 +67,11 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   previousRenderTime = Date.now()
   animationDuration = 0
   animationPercent = 0
-  restartAnimation = false
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
-  nodes: N[] | undefined
-  edges: E[] | undefined
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
@@ -147,16 +144,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     animationFrameLoop(this.debug ? this.debugRender : this.render)
   }
 
-  /**
-   * Update Graph style, position, and/or options
-   * - if either style or position of any node/edge is updated, set dirty = true
-   * - if position, subgraph, or radius of any non-clicked node is udpated, restart animation
-   *
-   * TODO
-   * - handle case where apply is called while previous apply is still being interpolated
-   * current approach essentially cancels previous apply and runs a new one
-   * maybe instead stage new one, overwriting stagged apply if new applys are called, and don't run until previous interpolation is done
-   */
   apply = ({
     nodes,
     edges,
@@ -190,146 +177,97 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
 
-
-    /**
-     * restart animation whenever a new layout is calculated: nodes/edges are added/removed from graph, subGraph is added/removed from graph
-     */
-    this.restartAnimation = false
     const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
     const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
 
 
     /**
      * Build edge indices
-     * TODO
-     * - is it possible to build edge indices and enter/update/exit edge containers in one pass?
      */
-    if (edges !== this.edges) {
-      for (const edge of edges) {
-        const id = edge.id,
-          source = edge.source,
-          target = edge.target
+    for (const edge of edges) {
+      const id = edge.id,
+        source = edge.source,
+        target = edge.target
 
-        if (this.forwardEdgeIndex[source] === undefined) {
-          this.forwardEdgeIndex[source] = {}
-        }
-        if (this.forwardEdgeIndex[source][target] === undefined) {
-          this.forwardEdgeIndex[source][target] = new Set()
-        }
-        this.forwardEdgeIndex[source][target].add(id)
-
-        if (this.reverseEdgeIndex[target] === undefined) {
-          this.reverseEdgeIndex[target] = {}
-        }
-        if (this.reverseEdgeIndex[target][source] === undefined) {
-          this.reverseEdgeIndex[target][source] = new Set()
-        }
-        this.reverseEdgeIndex[target][source].add(id)
+      if (this.forwardEdgeIndex[source] === undefined) {
+        this.forwardEdgeIndex[source] = {}
       }
+      if (this.forwardEdgeIndex[source][target] === undefined) {
+        this.forwardEdgeIndex[source][target] = new Set()
+      }
+      this.forwardEdgeIndex[source][target].add(id)
+
+      if (this.reverseEdgeIndex[target] === undefined) {
+        this.reverseEdgeIndex[target] = {}
+      }
+      if (this.reverseEdgeIndex[target][source] === undefined) {
+        this.reverseEdgeIndex[target][source] = new Set()
+      }
+      this.reverseEdgeIndex[target][source].add(id)
     }
 
 
     /**
      * Ndge enter/update/exit
      */
-    if (nodes !== this.nodes) {
-      for (const node of nodes) {
-        if (this.nodesById[node.id] === undefined) {
-          // node enter
-          this.dirty = true
-          this.restartAnimation = true
-          let adjacentNode: NodeRenderer<N, E> | undefined
+    for (const node of nodes) {
+      if (this.nodesById[node.id] === undefined) {
+        // node enter
+        let adjacentNode: NodeRenderer<N, E> | undefined
 
-          if (this.reverseEdgeIndex[node.id]) {
-            // nodes w edges from existing nodes enter from one of those nodes
-            adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
-          } else if (this.forwardEdgeIndex[node.id]) {
-            // nodes w edges to existing nodes enter from one of those nodes
-            adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
-          }
-
-          nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0, node.radius)
-          /**
-           * alternatively, don't animate graph on load
-           */
-          // nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? node.x ?? 0, adjacentNode?.y ?? node.y ?? 0, node.radius)
-        } else if (node !== this.nodesById[node.id].node) {
-          this.dirty = true
-
-          if (
-            this.clickedNode?.node.id !== node.id && (
-              node.x !== this.nodesById[node.id].node.x ||
-              node.y !== this.nodesById[node.id].node.y ||
-              node.subGraph !== this.nodesById[node.id].node.subGraph ||
-              node.radius !== this.nodesById[node.id].node.radius
-            )
-          ) {
-            this.restartAnimation = true
-          }
-
-          nodesById[node.id] = this.nodesById[node.id].set(node)
-        } else {
-          /**
-           * there's some overhead to calling .set(node) when the node has not changed
-           * it's required in order to reinitialize stuff like interpolation functions
-           * and doesn't appear to introduce noticable overhead
-           * but if it does, we could make a cheaper reinit() method w/ less overhead
-           */
-          nodesById[node.id] = this.nodesById[node.id].set(node)
-          // nodesById[node.id] = this.nodesById[node.id]
+        if (this.reverseEdgeIndex[node.id]) {
+          // nodes w edges from existing nodes enter from one of those nodes
+          adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
+        } else if (this.forwardEdgeIndex[node.id]) {
+          // nodes w edges to existing nodes enter from one of those nodes
+          adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
         }
-      }
 
-      for (const nodeId in this.nodesById) {
-        if (nodesById[nodeId] === undefined) {
-          // node exit
-          this.dirty = true
-          this.nodesById[nodeId].delete()
-        }
+        nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0, node.radius)
+        /**
+         * alternatively, don't animate graph on load
+         */
+        // nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? node.x ?? 0, adjacentNode?.y ?? node.y ?? 0, node.radius)
+      } else {
+        nodesById[node.id] = this.nodesById[node.id].set(node)
       }
+    }
 
-      this.nodesById = nodesById
-      this.nodes = nodes
+    for (const nodeId in this.nodesById) {
+      if (nodesById[nodeId] === undefined) {
+        // node exit
+        this.nodesById[nodeId].delete()
+      }
     }
 
 
     /**
      * Edge enter/update/exit
      */
-    if (edges !== this.edges) {
-      for (const edge of edges) {
-        const id = edge.id
-        if (this.edgesById[id] === undefined) {
-          // edge enter
-          this.dirty = true
-          edgesById[id] = new EdgeRenderer(this, this.edgesLayer).set(edge)
-        } else if (edge !== this.edgesById[id].edge) {
-          // edge update
-          this.dirty = true
-          edgesById[id] = this.edgesById[id].set(edge)
-        } else {
-          edgesById[id] = this.edgesById[id].set(edge)
-        }
+    for (const edge of edges) {
+      const id = edge.id
+      if (this.edgesById[id] === undefined) {
+        // edge enter
+        edgesById[id] = new EdgeRenderer(this, this.edgesLayer).set(edge)
+      } else if (edge !== this.edgesById[id].edge) {
+        // edge update
+        edgesById[id] = this.edgesById[id].set(edge)
+      } else {
+        edgesById[id] = this.edgesById[id].set(edge)
       }
-
-      for (const edgeId in this.edgesById) {
-        if (edgesById[edgeId] === undefined) {
-          // edge exit
-          this.dirty = true
-          this.edgesById[edgeId].delete()
-        }
-      }
-
-      this.edgesById = edgesById
-      this.edges = edges
     }
 
-
-    if (this.restartAnimation) {
-      this.restartAnimation = false
-      this.animationDuration = 0
-      this.animationPercent = 0
+    for (const edgeId in this.edgesById) {
+      if (edgesById[edgeId] === undefined) {
+        // edge exit
+        this.edgesById[edgeId].delete()
+      }
     }
+
+    this.dirty = true
+    this.nodesById = nodesById
+    this.edgesById = edgesById
+    this.animationDuration = 0
 
     return this
   }
@@ -418,9 +356,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
 export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer<N, E>(options)
-  const apply = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => { pixiRenderer.apply(graph) }
-  apply.nodes = () => pixiRenderer.nodes
-  apply.edges = () => pixiRenderer.edges
 
-  return apply
+  return (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
+    pixiRenderer.apply(graph)
+  }
 }

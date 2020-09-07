@@ -82,6 +82,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.renderer.labelsLayer.addChild(this.labelContainer)
     }
 
+    this.node = node
     this.startX = this.endX = this.x = x
     this.startY = this.endY = this.y = y
     this.startRadius = this.endRadius = this.radius = radius
@@ -91,29 +92,23 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   set(node: N) {
     this.node = node
 
-    if (this.node.x !== this.endX || this.renderer.animationPercent < 1) {
-      this.startX = this.x
-      this.endX = node.x ?? 0
+    this.startX = this.x
+    this.endX = node.x ?? 0
 
-      const interpolateXNumber = interpolateNumber(this.startX, this.endX)
-      this.interpolateX = interpolateBasis([this.startX, interpolateXNumber(0.7), interpolateXNumber(0.95), this.endX])
-    }
+    const interpolateXNumber = interpolateNumber(this.startX, this.endX)
+    this.interpolateX = interpolateBasis([this.startX, interpolateXNumber(0.7), interpolateXNumber(0.95), this.endX])
 
-    if (this.node.y !== this.endY || this.renderer.animationPercent < 1) {
-      this.startY = this.y
-      this.endY = node.y ?? 0
+    this.startY = this.y
+    this.endY = node.y ?? 0
 
-      const interpolateYNumber = interpolateNumber(this.startY, this.endY)
-      this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.7), interpolateYNumber(0.95), this.endY])
-    }
+    const interpolateYNumber = interpolateNumber(this.startY, this.endY)
+    this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.7), interpolateYNumber(0.95), this.endY])
 
-    if (this.node.radius !== this.endRadius || this.renderer.animationPercent < 1) {
-      this.startRadius = this.radius
-      this.endRadius = node.radius ?? 0
+    this.startRadius = this.radius
+    this.endRadius = node.radius
 
-      const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
-      this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.7), interpolateRadiusNumber(0.95), this.endRadius])
-    }
+    const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
+    this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.7), interpolateRadiusNumber(0.95), this.endRadius])
 
 
     /**
@@ -209,7 +204,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
    * TODO - perf boost: render cheap version of things while still animating position
    */
   render() {
-    if (this.renderer.animationPercent < 1) {
+    if (this.renderer.animationPercent < 1 && this.renderer.clickedNode?.node.id !== this.node.id) {
       this.x = this.interpolateX(this.renderer.animationPercent)
       this.y = this.interpolateY(this.renderer.animationPercent)
       this.radius = this.interpolateRadius(this.renderer.animationPercent) // this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
@@ -259,8 +254,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
 
   private nodePointerEnter = (event: PIXI.InteractionEvent) => {
-    // if (this.renderer.animationPercent < 1) return
-
     if (this.renderer.clickedNode !== undefined) return
 
     this.renderer.hoveredNode = this
@@ -285,8 +278,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
   private nodePointerLeave = (event: PIXI.InteractionEvent) => {
-    // if (this.renderer.animationPercent < 1 && this.renderer.hoveredNode !== this) return
-
     if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) return
 
     this.renderer.hoveredNode = undefined

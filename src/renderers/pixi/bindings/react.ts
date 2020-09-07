@@ -22,10 +22,8 @@ export const Renderer = <N extends Node, E extends Edge>(props: Props<N, E>) => 
   }, [])
 
   useEffect(() => {
-    if (renderer.current) {
-      const { nodes, edges, ...options } = props
-      renderer.current({ nodes, edges, options })
-    }
+    const { nodes, edges, ...options } = props
+    renderer.current!({ nodes, edges, options })
   }, [props])
 
 
