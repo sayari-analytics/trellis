@@ -44,8 +44,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private label?: string
   private icon?: string
   private nodeContainer = new PIXI.Container()
+  private fillSpriteContainer = new PIXI.Container()
+  private strokeSpriteContainer = new PIXI.Container()
   private labelContainer = new PIXI.Container()
-  private nodeGfx = new PIXI.Graphics()
+  private fillSprite: PIXI.Sprite
+  private strokeSprite: PIXI.Sprite
   private labelSprite?: PIXI.Text
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
@@ -60,13 +63,20 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
+
+    this.fillSprite = this.renderer.circle.create()
+    this.strokeSprite = this.renderer.circle.create()
+    this.fillSpriteContainer.addChild(this.fillSprite)
+    this.strokeSpriteContainer.addChild(this.strokeSprite)
+
     this.nodeContainer
       .on('pointerover', this.nodePointerEnter)
       .on('pointerout', this.nodePointerLeave)
       .on('pointerdown', this.nodePointerDown)
       .on('pointerup', this.nodePointerUp)
       .on('pointerupoutside', this.nodePointerUp)
-      .addChild(this.nodeGfx)
+      .addChild(this.strokeSpriteContainer)
+      .addChild(this.fillSpriteContainer)
 
     this.nodeContainer.zIndex = this.depth
 
@@ -119,6 +129,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.strokeOpacity = this.node.style?.strokeOpacity ?? NODE_STYLES.strokeOpacity
     this.fill = colorToNumber(this.node.style?.fill ?? NODE_STYLES.fill)
     this.fillOpacity = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity
+
+    this.fillSprite.tint = this.fill
+    // this.fillSprite.alpha = this.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
+    this.strokeSprite.tint = this.stroke
+    this.strokeSprite.alpha = this.strokeOpacity
 
 
     /**
@@ -225,11 +240,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.nodeContainer.y = this.labelContainer.y = this.y
     }
 
-    this.nodeGfx
-      .clear()
-      .lineStyle(this.strokeWidth, this.stroke, this.strokeOpacity, 0)
-      .beginFill(this.fill, this.fillOpacity)
-      .drawCircle(0, 0, this.radius)
+    this.fillSprite.scale.set(this.radius / 1000)
+    this.strokeSprite.scale.set((this.radius + this.strokeWidth) / 1000)
+    this.nodeContainer.hitArea = new PIXI.Circle(0, 0, this.radius + this.strokeWidth)
 
     if (this.labelSprite) {
       this.labelSprite.y = this.radius + LABEL_Y_PADDING

@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js'
 import { PIXIRenderer as Renderer, EdgeStyle } from '.'
 import { colorToNumber } from './utils'
 import { Node, Edge } from '../../types'
-import { EdgeArrowRenderer } from './edgeArrow'
+import { ArrowRenderer } from './edgeArrow'
 
 
 const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
@@ -125,9 +125,11 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   render() {
     const sourceContainer = this.renderer.nodesById[this.edge!.source],
       targetContainer = this.renderer.nodesById[this.edge!.target],
+      sourceRadius = sourceContainer.radius + sourceContainer.strokeWidth,
+      targetRadius = targetContainer.radius + targetContainer.strokeWidth,
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
-      start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceContainer.radius),
-      end = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius + EdgeArrowRenderer.ARROW_HEIGHT),
+      start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius),
+      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowRenderer.ARROW_HEIGHT),
       center = midPoint(start[0], start[1], end[0], end[1])
 
     if (this.curve === 0) {
@@ -152,7 +154,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
       // TODO - don't bother rendering arrow when animating position
-      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetContainer.radius)
+      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
       this.arrow.x = arrowPosition[0]
       this.arrow.y = arrowPosition[1]
       this.arrow.rotation = theta
@@ -179,8 +181,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.curvePeak = movePoint(center[0], center[1], theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI, this.curve * 20)
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
-      const curveStart = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceContainer.radius)
-      const curveEnd = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius + EdgeArrowRenderer.ARROW_HEIGHT)
+      const curveStart = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius)
+      const curveEnd = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + ArrowRenderer.ARROW_HEIGHT)
       this.x0 = curveStart[0]
       this.y0 = curveStart[1]
       this.x1 = curveEnd[0]
@@ -202,7 +204,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.y = this.curvePeak[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
-      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetContainer.radius)
+      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
       this.arrow.x = arrowPosition[0]
       this.arrow.y = arrowPosition[1]
       this.arrow.rotation = thetaCurveEnd
