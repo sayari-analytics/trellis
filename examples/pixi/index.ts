@@ -13,8 +13,19 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
-const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
+const createCompanyStyle = (radius: number) => ({
+  fill: '#FFAF1D',
+  stroke: '#F7CA4D',
+  strokeWidth: 4,
+  icon: { type: 'fontIcon' as const, family: 'Material Icons', code: 'business', color: '#fff', size: radius / 1.6 }
+})
+
+const createPersonStyle = (radius: number) => ({
+  fill: '#7CBBF3',
+  stroke: '#90D7FB',
+  strokeWidth: 4,
+  icon: { type: 'fontIcon' as const, family: 'Material Icons', code: 'person', color: '#fff', size: radius / 1.6 }
+})
 
 let nodes = [
   { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' }, { id: 'f', label: 'F' }, { id: 'g', label: 'G' },
@@ -25,7 +36,7 @@ let nodes = [
     id,
     label,
     radius: id === 'a' ? 62 : (20 - idx) * 4,
-    style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE
+    style: id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4)
   }))
 
 let edges: Edge[] = [
@@ -61,7 +72,7 @@ const renderOptions: Partial<RendererOptions> = {
   },
   onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
+      { ...node, style: { ...node.style, stroke: id === 'a' ? '#F7CA4D' : '#90D7FB' } } :
       node
     ))
     renderer({ nodes, edges, options: renderOptions })
@@ -81,9 +92,9 @@ const renderOptions: Partial<RendererOptions> = {
       style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
       subGraph: {
         nodes: (node.subGraph?.nodes ?? []).concat([
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: COMPANY_STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: COMPANY_STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: COMPANY_STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle(21) },
         ])
           .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
@@ -99,7 +110,7 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node, idx) => (node.subGraph ? {
       ...node,
       radius: node.id === 'a' ? 62 : (20 - idx) * 4,
-      style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
+      style: node.id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
       subGraph: undefined,
     } : node))
 
@@ -118,7 +129,7 @@ const force = Force.Layout()
 const subGraph = SubGraph.Layout()
 const renderer = Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: true }
 })
 
 

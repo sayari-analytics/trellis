@@ -1,8 +1,9 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { PIXIRenderer as Renderer, NodeStyle } from '.'
+import { PIXIRenderer as Renderer, NodeStyle, FontIcon, ImageIcon } from '.'
 import { colorToNumber, parentInFront } from './utils'
 import { Node, Edge } from '../../types'
+import { equals } from '../../utils'
 
 
 const LABEL_Y_PADDING = 4
@@ -42,7 +43,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private interpolateY: (percent: number) => number = () => this.endY
   private interpolateRadius: (percent: number) => number = () => this.endRadius
   private label?: string
-  private icon?: string
+  private icon?: FontIcon | ImageIcon
   private nodeContainer = new PIXI.Container()
   private fillSpriteContainer = new PIXI.Container()
   private strokeSpriteContainer = new PIXI.Container()
@@ -166,20 +167,26 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Icon
      */
-    if (node.style && node.style.icon !== this.icon) {
-      this.icon = node.style.icon
+    if (!equals(node.style?.icon, this.icon)) {
+      this.icon = node.style?.icon
 
-      if (node.style.icon) {
-        const icon = new PIXI.Text(node.style.icon, {
-          fontFamily: 'Material Icons',
-          fontSize: node.radius / Math.SQRT2 * 1.7,
-          fill: 0xffffff
-        })
-        icon.name = 'icon'
-        icon.position.set(0,0)
-        icon.anchor.set(0.5)
-
-        this.nodeContainer.addChild(icon)
+      if (this.icon !== undefined) {
+        if (this.icon.type === 'fontIcon') {
+          // TOOD - reuse icon sprites
+          const icon = new PIXI.Text(this.icon.code, {
+            fontFamily: this.icon.family,
+            fontSize: this.icon.size * 2,
+            fill: this.icon.color,
+          })
+          icon.name = 'icon'
+          icon.position.set(0, 0)
+          icon.anchor.set(0.5)
+          this.nodeContainer.addChild(icon)
+        } else if (this.icon.type === 'imageIcon') {
+          // TODO
+        } else {
+          // never()
+        }
       } else {
         this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }

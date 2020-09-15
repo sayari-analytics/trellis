@@ -131,3 +131,36 @@ export const interpolateDuration = (duration: number) => {
     frame = raf(rafCallback)
   }
 }
+
+
+export const equals = <T>(a: T, b: T) => {
+  if (a === b) {
+    return true
+  } else if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) {
+      return false
+    }
+
+    for (let i = 0; i < a.length; i++) {
+      if (!equals(a[i], b[i])) {
+        return false
+      }
+    }
+
+    return true
+  } else if (typeof a === 'object' && typeof b === 'object') {
+    if (Object.keys(a).length !== Object.keys(b).length) {
+      return false
+    }
+
+    for (const key in a) {
+      if (!equals(a[key], b[key])) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  return false
+}

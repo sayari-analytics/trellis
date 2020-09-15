@@ -33,7 +33,9 @@ const data = {
         fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
         stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
         strokeWidth: 4,
-        icon: type === 'company' ? 'business' : 'person',
+        icon: {
+          type: 'fontIcon' as const, family: 'Material Icons', code: 'person', color: '#fff', size: 32 / 1.6
+        },
       }
     })),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
@@ -87,7 +89,7 @@ const renderOptions: Partial<RendererOptions> = {
   },
   onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, radius: node.radius / 4, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
+      { ...node, radius: 32, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       node
     ))
     render({ nodes, edges, options: renderOptions })
@@ -146,8 +148,11 @@ const update = () => {
 }
 
 const interval = setInterval(() => {
-  update()
-  if (idx === COUNT) clearInterval(interval)
+  if (idx === COUNT) {
+    clearInterval(interval)
+  } else {
+    update()
+  }
 }, INTERVAL)
 update()
 

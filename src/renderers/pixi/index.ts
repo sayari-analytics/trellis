@@ -11,13 +11,26 @@ import { CircleRenderer } from './circle'
 
 export type Event = PIXI.InteractionEvent
 
+export type FontIcon = {
+  type: 'fontIcon'
+  family: string
+  code: string
+  color: string
+  size: number
+}
+
+export type ImageIcon = {
+  type: 'imageIcon'
+  image: string
+}
+
 export type NodeStyle = {
   strokeWidth: number
   fill: string
   stroke: string
   fillOpacity: number
   strokeOpacity: number
-  icon?: string
+  icon?: FontIcon | ImageIcon
 }
 
 export type EdgeStyle = {

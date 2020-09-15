@@ -2,7 +2,6 @@ import { createElement, SFC, useState, useCallback, useEffect, useRef } from 're
 import { render } from 'react-dom'
 import Stats from 'stats.js'
 import { Node, Edge } from '../../src/types'
-import { NodeStyle } from '../../src/renderers/pixi'
 import { Renderer } from '../../src/renderers/pixi/bindings/react'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
@@ -12,8 +11,18 @@ const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-const COMPANY_STYLE: Partial<NodeStyle> = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
-const PERSON_STYLE: Partial<NodeStyle> = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
+const createCompanyStyle = (radius: number) => ({
+  fill: '#FFAF1D',
+  stroke: '#F7CA4D',
+  strokeWidth: 4,
+  icon: { type: 'fontIcon' as const, family: 'Material Icons', code: 'business', color: '#fff', size: radius / 1.6 }
+})
+const createPersonStyle = (radius: number) => ({
+  fill: '#7CBBF3',
+  stroke: '#90D7FB',
+  strokeWidth: 4,
+  icon: { type: 'fontIcon' as const, family: 'Material Icons', code: 'person', color: '#fff', size: radius / 1.6 }
+})
 
 let nodes: Node[] = [
   { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' },
@@ -25,7 +34,7 @@ let nodes: Node[] = [
     id,
     label,
     radius: id === 'a' ? 62 : (20 - idx) * 4,
-    style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
+    style: id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
     subGraph: undefined,
   }))
 
@@ -70,7 +79,7 @@ const App: SFC = () => {
   const onNodePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
     setGraph(({ nodes, edges }) => ({
       nodes: nodes.map((node) => (node.id === id ?
-        { ...node, style: { ...node.style, stroke: id === 'a' ? COMPANY_STYLE.stroke : PERSON_STYLE.stroke } } :
+        { ...node, style: { ...node.style, stroke: id === 'a' ? '#F7CA4D' : '#90D7FB' } } :
         node
       )),
       edges
@@ -89,9 +98,9 @@ const App: SFC = () => {
         style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
         subGraph: {
           nodes: [
-            { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, style: COMPANY_STYLE },
-            { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, style: COMPANY_STYLE },
-            { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, style: COMPANY_STYLE },
+            { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, style: createCompanyStyle(21) },
+            { id: `${node.id}b`, radius: 21, label: `${node.id.toUpperCase()}B`, style: createCompanyStyle(21) },
+            { id: `${node.id}c`, radius: 21, label: `${node.id.toUpperCase()}C`, style: createCompanyStyle(21) },
           ],
           edges: []
         },
@@ -104,7 +113,7 @@ const App: SFC = () => {
       nodes: graph.nodes.map((node, idx) => (node.subGraph ? {
         ...node,
         radius: node.id === 'a' ? 62 : (20 - idx) * 4,
-        style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
+        style: node.id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
         subGraph: undefined,
       } : node)),
       edges: graph.edges
