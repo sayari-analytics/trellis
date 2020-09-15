@@ -21,10 +21,10 @@ const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 const data = {
   nodes: Object.values(graphData.nodes)
     .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
-    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .map<Node>(({ id, label, type }) => ({
       id,
       label,
@@ -42,13 +42,13 @@ const data = {
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
     .concat([
       ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
-      ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
-      ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
       ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
-      ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
-      ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
       ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
+      ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
+      ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
       ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
+      ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
+      ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
       ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
     ])
     .map<Edge>(([id, { field, source, target }]) => ({
@@ -81,10 +81,6 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  // onNodePointerUp: (_: PIXI.InteractionEvent, { id }: Node) => {
-  //   nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
-  //   render({ nodes, edges, options: renderOptions })
-  // },
   onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
     render({ nodes, edges, options: renderOptions })
@@ -130,7 +126,7 @@ let idx = 0
 console.log(`Rendering ${NODES_PER_TICK} nodes every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`)
 
 
-const interval = setInterval(() => {
+const update = () => {
   idx++
   // TODO - why does preserving node position perform poorly
   // const newNodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK).map((node) => nodes.find(({ id }) => id === node.id) ?? node)
@@ -147,14 +143,13 @@ const interval = setInterval(() => {
     edges = graph.edges
     render({ nodes, edges, options: renderOptions })
   })
+}
+
+const interval = setInterval(() => {
+  update()
   if (idx === COUNT) clearInterval(interval)
 }, INTERVAL)
-
-layout({ nodes, edges, options: layoutOptions }).then((graph) => {
-  nodes = graph.nodes
-  edges = graph.edges
-  render({ nodes, edges, options: renderOptions })
-})
+update()
 
 
 ;(window as any).render = render
