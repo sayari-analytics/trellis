@@ -5,6 +5,7 @@ import { Node, Edge } from '../../types'
 import { animationFrameLoop, noop } from '../../utils'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
+import { EdgeArrowRenderer } from './edgeArrow'
 
 
 export type Event = PIXI.InteractionEvent
@@ -76,6 +77,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
   reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
+  arrow: EdgeArrowRenderer<N, E>
 
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void = noop
   onNodePointerDown: (event: Event, node: N, x: number, y: number) => void = noop
@@ -133,6 +135,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.viewport.addChild(this.frontNodeLayer)
     this.viewport.addChild(this.frontLabelLayer)
     this.app.stage.addChild(this.viewport)
+
+    this.arrow = new EdgeArrowRenderer<N, E>(this)
 
     // this.nodesLayer.addChild(
     //   new PIXI.Graphics().lineStyle(1, 0x666666).moveTo(-10000, 0).lineTo(10000, 0).endFill(),
