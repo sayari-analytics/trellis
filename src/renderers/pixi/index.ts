@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
-import FontFaceObserver from 'fontfaceobserver'
 import { Node, Edge } from '../../types'
 import { animationFrameLoop, noop } from '../../utils'
 import { NodeRenderer } from './node'
@@ -66,8 +65,6 @@ export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
   onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop,
 }
-
-new FontFaceObserver('Material Icons').load()
 
 const POSITION_ANIMATION_DURATION = 800
 

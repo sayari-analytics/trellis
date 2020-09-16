@@ -4,6 +4,7 @@ import { PIXIRenderer as Renderer, NodeStyle, FontIcon, ImageIcon } from '.'
 import { colorToNumber, parentInFront } from './utils'
 import { Node, Edge } from '../../types'
 import { equals } from '../../utils'
+import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 const LABEL_Y_PADDING = 4
@@ -51,6 +52,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private fillSprite: PIXI.Sprite
   private strokeSprite: PIXI.Sprite
   private labelSprite?: PIXI.Text
+  private iconSprite?: PIXI.Text
+  private fontIconLoader?: CancellablePromise<void>
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
@@ -170,23 +173,27 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (!equals(node.style?.icon, this.icon)) {
       this.icon = node.style?.icon
 
-      if (this.icon !== undefined) {
-        if (this.icon.type === 'fontIcon') {
-          // TOOD - reuse icon sprites
-          const icon = new PIXI.Text(this.icon.code, {
+      if (this.icon?.type === 'fontIcon') {
+        // TOOD - reuse icon sprites
+
+        this.fontIconLoader?.cancel()
+        this.fontIconLoader = FontLoader(this.icon.family)
+        this.fontIconLoader.then(() => {
+          if (this.icon?.type !== 'fontIcon') return
+          this.renderer.dirty = true
+          this.iconSprite?.destroy()
+          this.iconSprite = new PIXI.Text(this.icon.code, {
             fontFamily: this.icon.family,
             fontSize: this.icon.size * 2,
             fill: this.icon.color,
           })
-          icon.name = 'icon'
-          icon.position.set(0, 0)
-          icon.anchor.set(0.5)
-          this.nodeContainer.addChild(icon)
-        } else if (this.icon.type === 'imageIcon') {
-          // TODO
-        } else {
-          // never()
-        }
+          this.iconSprite.name = 'icon'
+          this.iconSprite.position.set(0, 0)
+          this.iconSprite.anchor.set(0.5)
+          this.nodeContainer.addChild(this.iconSprite)
+        })
+      // } else if (this.icon?.type === 'imageIcon') {
+      //   TODO
       } else {
         this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }
