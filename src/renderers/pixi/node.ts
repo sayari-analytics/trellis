@@ -58,6 +58,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
+  private fontsLoaded = false
 
   constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, radius: number, parent?: NodeRenderer<N, E>) {
     this.renderer = renderer
@@ -170,19 +171,19 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Icon
      */
-    if (!equals(node.style?.icon, this.icon)) {
+    if (!equals(node.style?.icon, this.icon) || this.renderer.fontsLoaded !== this.fontsLoaded) {
       this.icon = node.style?.icon
 
-      if (this.icon?.type === 'fontIcon') {
+      if (this.icon?.type === 'textIcon') {
         // TOOD - reuse icon sprites
 
         this.fontIconLoader?.cancel()
         this.fontIconLoader = FontLoader(this.icon.family)
         this.fontIconLoader.then(() => {
-          if (this.icon?.type !== 'fontIcon') return
+          if (this.icon?.type !== 'textIcon') return
           this.renderer.dirty = true
           this.iconSprite?.destroy()
-          this.iconSprite = new PIXI.Text(this.icon.code, {
+          this.iconSprite = new PIXI.Text(this.icon.text, {
             fontFamily: this.icon.family,
             fontSize: this.icon.size * 2,
             fill: this.icon.color,
@@ -198,6 +199,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }
     }
+
+    this.fontsLoaded = this.renderer.fontsLoaded
 
 
     /**

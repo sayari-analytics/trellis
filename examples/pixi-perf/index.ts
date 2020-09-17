@@ -34,7 +34,7 @@ const data = {
         stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
         strokeWidth: 4,
         icon: {
-          type: 'fontIcon' as const, family: 'Material Icons', code: 'person', color: '#fff', size: 32 / 1.6
+          type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 / 1.6
         },
       }
     })),

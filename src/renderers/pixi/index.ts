@@ -11,9 +11,9 @@ import { CircleRenderer } from './circle'
 export type Event = PIXI.InteractionEvent
 
 export type FontIcon = {
-  type: 'fontIcon'
+  type: 'textIcon'
   family: string
-  code: string
+  text: string
   color: string
   size: number
 }
@@ -79,6 +79,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   previousRenderTime = Date.now()
   animationDuration = 0
   animationPercent = 0
+  fontsLoaded = false
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()

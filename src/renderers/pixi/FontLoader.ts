@@ -12,7 +12,9 @@ export class CancellablePromise <T> {
   constructor(resolver: (resolve: (result: T) => void) => void) {
     resolver((result) => {
       this.result = result
-      this.thenCallback && this.thenCallback(result)
+      if (this.thenCallback && !this.cancelled) {
+        this.thenCallback(result)
+      }
     })
   }
 
@@ -28,6 +30,7 @@ export class CancellablePromise <T> {
 
   cancel() {
     this.cancelled = true
+    this.thenCallback = undefined
   }
 }
 
@@ -35,9 +38,19 @@ export class CancellablePromise <T> {
 export const FontLoader = (family: string) => {
   if (cache[family]) {
     return new CancellablePromise<void>((resolve) => resolve())
+  } else if ((document as any)?.fonts?.load) {
+    return new CancellablePromise<void>((resolve) => {
+      (document as any).fonts.load(`1em ${family}`).then(() => {
+        cache[family] = true
+        resolve()
+      })
+    })
   } else {
     return new CancellablePromise<void>((resolve) => {
-      new FontFaceObserver(family).load().then(() => resolve())
+      new FontFaceObserver(family).load().then(() => {
+        cache[family] = true
+        resolve()
+      })
     })
   }
 }

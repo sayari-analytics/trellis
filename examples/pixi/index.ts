@@ -17,14 +17,14 @@ const createCompanyStyle = (radius: number) => ({
   fill: '#FFAF1D',
   stroke: '#F7CA4D',
   strokeWidth: 4,
-  icon: { type: 'fontIcon' as const, family: 'Material Icons', code: 'business', color: '#fff', size: radius / 1.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
 })
 
 const createPersonStyle = (radius: number) => ({
   fill: '#7CBBF3',
   stroke: '#90D7FB',
   strokeWidth: 4,
-  icon: { type: 'fontIcon' as const, family: 'Material Icons', code: 'person', color: '#fff', size: radius / 1.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius / 1.6 }
 })
 
 let nodes = [
