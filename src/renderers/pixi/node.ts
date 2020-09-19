@@ -19,9 +19,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   x: number
   y: number
   radius: number
-  fill = 0
-  stroke?: NodeStyle['stroke']
-  strokeTotalWidth = 0
+  strokeWidth = 0
   subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
   parent?: NodeRenderer<N, E>
 
@@ -36,6 +34,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private interpolateX: (percent: number) => number = () => this.endX
   private interpolateY: (percent: number) => number = () => this.endY
   private interpolateRadius: (percent: number) => number = () => this.endRadius
+  private stroke?: NodeStyle['stroke']
   private label?: string
   private icon?: FontIcon | ImageIcon
   private nodeContainer = new PIXI.Container()
@@ -90,10 +89,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.startX = this.endX = this.x = x
     this.startY = this.endY = this.y = y
     this.startRadius = this.endRadius = this.radius = radius
-    this.set(node)
+    this.update(node)
   }
 
-  set(node: N) {
+  update(node: N) {
     this.node = node
 
     this.startX = this.x
@@ -118,7 +117,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Styles
      */
-    this.fill = this.fillSprite.tint = colorToNumber(this.node.style?.fill ?? DEFAULT_NODE_FILL)
+    this.fillSprite.tint = colorToNumber(this.node.style?.color ?? DEFAULT_NODE_FILL)
     // this.fillOpacity = this.fillSprite.alpha = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
 
 
@@ -133,10 +132,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
       this.strokeSprites = []
       this.strokeSpriteContainer = []
-      this.strokeTotalWidth = 0
+      this.strokeWidth = 0
 
       if (this.stroke) {
-        this.strokeTotalWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
+        this.strokeWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
 
         for (const stroke of this.stroke) {
           const strokeSprite = this.renderer.circle.create()
@@ -220,7 +219,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           subGraphNodes[subGraphNode.id] = new NodeRenderer<N, E>(this.renderer, subGraphNode, 0, 0, subGraphNode.radius, this)
         } else {
           // update subGraph node
-          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].set(subGraphNode)
+          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].update(subGraphNode)
         }
       }
     }
@@ -271,10 +270,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
     }
 
-    this.nodeContainer.hitArea = new PIXI.Circle(0, 0, this.radius + this.strokeTotalWidth)
+    this.nodeContainer.hitArea = new PIXI.Circle(0, 0, this.radius + this.strokeWidth)
 
     if (this.labelSprite) {
-      this.labelSprite.y = this.radius + this.strokeTotalWidth + LABEL_Y_PADDING
+      this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
     }
 
     for (const subGraphNodeId in this.subGraphNodes) {

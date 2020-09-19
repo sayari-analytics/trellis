@@ -14,7 +14,7 @@ document.body.appendChild(stats.dom)
  * Initialize Data
  */
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
-  fill: '#FFAF1D',
+  color: '#FFAF1D',
   stroke: [{
     color: '#F7CA4D',
     width: 6,
@@ -29,7 +29,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
 })
 
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
-  fill: '#7CBBF3',
+  color: '#7CBBF3',
   stroke: [{
     color: '#90D7FB',
     width: 6,
@@ -38,7 +38,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
 })
 
 const createSubgraphStyle = (radius: number): Partial<NodeStyle> => ({
-  fill: '#FFAF1D',
+  color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
 })
@@ -122,7 +122,7 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       radius: 160,
-      style: { ...node.style, fill: '#EFEFEF', icon: undefined },
+      style: { ...node.style, color: '#EFEFEF', icon: undefined },
       subGraph: {
         nodes: (node.subGraph?.nodes ?? []).concat([
           { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(21) },

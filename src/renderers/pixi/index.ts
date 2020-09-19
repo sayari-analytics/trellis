@@ -24,7 +24,7 @@ export type ImageIcon = {
 }
 
 export type NodeStyle = {
-  fill: string
+  color: string
   stroke: Partial<{
     color: string
     width: number
@@ -246,7 +246,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
          */
         // nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? node.x ?? 0, adjacentNode?.y ?? node.y ?? 0, node.radius)
       } else {
-        nodesById[node.id] = this.nodesById[node.id].set(node)
+        nodesById[node.id] = this.nodesById[node.id].update(node)
       }
     }
 
@@ -265,12 +265,12 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       const id = edge.id
       if (this.edgesById[id] === undefined) {
         // edge enter
-        edgesById[id] = new EdgeRenderer(this, this.edgesLayer).set(edge)
+        edgesById[id] = new EdgeRenderer(this, this.edgesLayer).update(edge)
       } else if (edge !== this.edgesById[id].edge) {
         // edge update
-        edgesById[id] = this.edgesById[id].set(edge)
+        edgesById[id] = this.edgesById[id].update(edge)
       } else {
-        edgesById[id] = this.edgesById[id].set(edge)
+        edgesById[id] = this.edgesById[id].update(edge)
       }
     }
 

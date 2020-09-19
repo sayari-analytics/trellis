@@ -65,7 +65,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
   }
 
-  set(edge: E) {
+  update(edge: E) {
     this.edge = edge
 
 
@@ -125,8 +125,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   render() {
     const sourceContainer = this.renderer.nodesById[this.edge!.source],
       targetContainer = this.renderer.nodesById[this.edge!.target],
-      sourceRadius = sourceContainer.radius + sourceContainer.strokeTotalWidth,
-      targetRadius = targetContainer.radius + targetContainer.strokeTotalWidth,
+      sourceRadius = sourceContainer.radius + sourceContainer.strokeWidth,
+      targetRadius = targetContainer.radius + targetContainer.strokeWidth,
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
       start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius),
       end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowRenderer.ARROW_HEIGHT),
