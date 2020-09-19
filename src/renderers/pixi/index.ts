@@ -39,6 +39,9 @@ export type EdgeStyle = {
   width: number
   stroke: string
   strokeOpacity: number
+  labelFamily: string
+  labelColor: string
+  labelSize: number
 }
 
 export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {

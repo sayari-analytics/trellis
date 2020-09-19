@@ -18,11 +18,12 @@ const TWO_PI = Math.PI * 2
 const THREE_HALF_PI = HALF_PI * 3
 const LINE_HOVER_RADIUS = 4
 
-const EDGE_STYLES: EdgeStyle = {
-  width: 1,
-  stroke: '#ccc',
-  strokeOpacity: 1,
-}
+const DEFAULT_EDGE_WIDTH = 1
+const DEFAULT_EDGE_COLOR = '#ccc'
+const DEFAULT_EDGE_OPACITY = 1
+const DEFAULT_LABEL_FAMILY = 'Helvetica'
+const DEFAULT_LABEL_COLOR = '#222'
+const DEFAULT_LABEL_SIZE = 14
 
 
 export class EdgeRenderer<N extends Node, E extends Edge>{
@@ -31,6 +32,9 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
   private renderer: Renderer<N, E>
   private label?: string
+  private labelFamily?: string
+  private labelColor?: string
+  private labelSize?: number
   private width: number = 0
   private stroke: number = 0
   private strokeOpacity: number = 0
@@ -72,9 +76,9 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     /**
      * Style
      */
-    this.width = this.edge.style?.width ?? EDGE_STYLES.width
-    this.stroke = colorToNumber(edge.style?.stroke ?? EDGE_STYLES.stroke)
-    this.strokeOpacity = edge.style?.strokeOpacity ?? EDGE_STYLES.strokeOpacity
+    this.width = this.edge.style?.width ?? DEFAULT_EDGE_WIDTH
+    this.stroke = colorToNumber(edge.style?.stroke ?? DEFAULT_EDGE_COLOR)
+    this.strokeOpacity = edge.style?.strokeOpacity ?? DEFAULT_EDGE_OPACITY
     this.arrow.tint = this.stroke
     this.arrow.alpha = this.strokeOpacity
 
@@ -82,14 +86,23 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     /**
      * Label
      */
-    if (edge.label !== this.label) {
+    const labelFamily = edge.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
+    const labelColor = edge.style?.labelColor ?? DEFAULT_LABEL_COLOR
+    const labelSize = edge.style?.labelSize ?? DEFAULT_LABEL_SIZE
+
+    if (
+      edge.label !== this.label ||
+      labelFamily !== this.labelFamily ||
+      labelColor !== this.labelColor ||
+      labelSize !== this.labelSize
+    ) {
       this.label = edge.label
 
-      if (edge.label) {
-        const labelText = new PIXI.Text(edge.label, {
-          fontFamily: 'Helvetica',
-          fontSize: 10 * 2.5,
-          fill: 0x444444,
+      if (this.label) {
+        const labelText = new PIXI.Text(this.label, {
+          fontFamily: labelFamily,
+          fontSize: labelSize * 2.5,
+          fill: labelColor,
           lineJoin: 'round',
           stroke: '#fafafaee',
           strokeThickness: 2 * 2.5,

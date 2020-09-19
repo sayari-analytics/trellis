@@ -163,6 +163,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     const labelFamily = node.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
     const labelColor = node.style?.labelColor ?? DEFAULT_LABEL_COLOR
     const labelSize = node.style?.labelSize ?? DEFAULT_LABEL_SIZE
+
     if (
       node.label !== this.label ||
       labelFamily !== this.labelFamily ||
