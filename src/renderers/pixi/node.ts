@@ -8,7 +8,6 @@ import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 const LABEL_Y_PADDING = 4
-
 const DEFAULT_NODE_FILL = '#444'
 const DEFAULT_NODE_STROKE = '#aaa'
 const DEFAULT_NODE_STROKE_WIDTH = 6
@@ -47,7 +46,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private strokeSprites: { sprite: PIXI.Sprite, width: number }[] = []
   private labelSprite?: PIXI.Text
   private iconSprite?: PIXI.Text
-  private fontIconLoader?: CancellablePromise<void>
+  private fontIconLoader?: CancellablePromise<string>
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
@@ -128,16 +127,16 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     if (!equals(node.style?.stroke, this.stroke)) {
       this.stroke = node.style?.stroke
+      for (const container of this.strokeSpriteContainer) {
+        this.nodeContainer.removeChild(container)
+        container.destroy()
+      }
+      this.strokeSprites = []
+      this.strokeSpriteContainer = []
+      this.strokeTotalWidth = 0
 
       if (this.stroke) {
-        for (const container of this.strokeSpriteContainer) {
-          this.nodeContainer.removeChild(container) // ??
-          container.destroy()
-        }
-
         this.strokeTotalWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
-        this.strokeSprites = []
-        this.strokeSpriteContainer = []
 
         for (const stroke of this.stroke) {
           const strokeSprite = this.renderer.circle.create()
@@ -149,15 +148,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           this.strokeSpriteContainer.push(container)
           this.nodeContainer.addChildAt(container, 0)
         }
-      } else {
-        for (const container of this.strokeSpriteContainer) {
-          container.destroy()
-          this.nodeContainer.removeChild(container)
-        }
-
-        this.strokeTotalWidth = 0
-        this.strokeSprites = []
-        this.strokeSpriteContainer = []
       }
     }
 
@@ -167,11 +157,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     if (node.label !== this.label) {
       this.label = node.label
+      this.labelContainer.removeChildren()
+      this.labelSprite?.destroy()
+      this.labelSprite = undefined
 
       if (this.label) {
-        // this.labelContainer.removeChildren() ??
-        this.labelSprite?.destroy()
-        this.labelSprite = new PIXI.Text(node.label || '', {
+        this.labelSprite = new PIXI.Text(this.label, {
           fontFamily: 'Helvetica',
           fontSize: 12 * 2.5,
           fill: 0x333333,
@@ -184,9 +175,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.labelSprite.scale.set(0.4)
         this.labelSprite.anchor.set(0.5, 0)
         this.labelContainer.addChild(this.labelSprite)
-      } else {
-        this.labelSprite = undefined
-        this.labelContainer.removeChildren()
       }
     }
 
@@ -196,17 +184,17 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     if (!equals(node.style?.icon, this.icon)) {
       this.icon = node.style?.icon
+      this.iconSprite?.destroy()
+      this.iconSprite = undefined
+      this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
 
       if (this.icon?.type === 'textIcon') {
         // TOOD - reuse icon sprites
 
         this.fontIconLoader?.cancel()
         this.fontIconLoader = FontLoader(this.icon.family)
-        this.fontIconLoader.then(() => {
-          if (this.icon?.type !== 'textIcon') return
-          this.renderer.dirty = true
-          // this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon')) ??
-          this.iconSprite?.destroy()
+        this.fontIconLoader.then((family) => {
+          if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
           this.iconSprite = new PIXI.Text(this.icon.text, {
             fontFamily: this.icon.family,
             fontSize: this.icon.size * 2,
@@ -217,11 +205,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           this.iconSprite.anchor.set(0.5)
           this.nodeContainer.addChild(this.iconSprite)
         })
-      // } else if (this.icon?.type === 'imageIcon') {
-      //   TODO
-      } else {
-        this.iconSprite = undefined
-        this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }
     }
 

@@ -25,9 +25,6 @@ export type ImageIcon = {
 
 export type NodeStyle = {
   fill: string
-  // stroke: string
-  // strokeOpacity: number
-  // strokeWidth: number
   stroke: Partial<{
     color: string
     width: number
@@ -294,7 +291,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
   private render = () => {
     const currentRenderTime = Date.now()
-    this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime)) // clamp to 0 <= x <= 16 to make animations appear slower and smoother
+    this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime)) // clamp to 0 <= x <= 16 to smooth animations
     // this.animationDuration += currentRenderTime - this.previousRenderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.previousRenderTime = currentRenderTime
