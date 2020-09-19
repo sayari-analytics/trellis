@@ -74,6 +74,15 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
     private tick = DEFAULT_OPTIONS.tick
     private forceManyBody = d3.forceManyBody().distanceMax(4000).theta(0.5)
     private forceLink = d3.forceLink<SimulationNode, SimulationLinkDatum<SimulationNode>>().id((node) => node.id)
+    /**
+     * TODO - should be node.radius + node.totalStrokeWidth + this.nodePadding
+     * also, only calculate once:
+     * (node) => (this.nodeRadii[node.id] !== undefined ?
+     *   this.nodeRadii[node.id] :
+     *   (this.nodeRadii[node.id] = node.radius + node.totalStrokeWidth + this.nodePadding, this.nodeRadii[node.id])
+     * )
+     * (node) => (this.nodeRadii[node.id] ??= node.radius + node.totalStrokeWidth + this.nodePadding)
+     */
     private forceCollide = d3.forceCollide<SimulationNode>().radius((node) => node.radius + this.nodePadding)
     private forceX = d3.forceX(0)
     private forceY = d3.forceY(0)

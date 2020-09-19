@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { PIXIRenderer as Renderer, NodeStyle, FontIcon, ImageIcon } from '.'
+import { PIXIRenderer as Renderer, FontIcon, ImageIcon, NodeStyle } from '.'
 import { colorToNumber, parentInFront } from './utils'
 import { Node, Edge } from '../../types'
 import { equals } from '../../utils'
@@ -9,13 +9,9 @@ import { CancellablePromise, FontLoader } from './FontLoader'
 
 const LABEL_Y_PADDING = 4
 
-const NODE_STYLES: NodeStyle = {
-  strokeWidth: 2,
-  fill: '#ff4b4b',
-  stroke: '#bb0000',
-  fillOpacity: 1,
-  strokeOpacity: 1,
-}
+const DEFAULT_NODE_FILL = '#444'
+const DEFAULT_NODE_STROKE = '#aaa'
+const DEFAULT_NODE_STROKE_WIDTH = 6
 
 
 export class NodeRenderer<N extends Node, E extends Edge>{
@@ -24,11 +20,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   x: number
   y: number
   radius: number
-  strokeWidth = 0
-  stroke = 0
-  strokeOpacity = 0
   fill = 0
-  fillOpacity = 0
+  stroke?: NodeStyle['stroke']
+  strokeTotalWidth = 0
   subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
   parent?: NodeRenderer<N, E>
 
@@ -47,10 +41,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private icon?: FontIcon | ImageIcon
   private nodeContainer = new PIXI.Container()
   private fillSpriteContainer = new PIXI.Container()
-  private strokeSpriteContainer = new PIXI.Container()
+  private strokeSpriteContainer: PIXI.Container[] = []
   private labelContainer = new PIXI.Container()
   private fillSprite: PIXI.Sprite
-  private strokeSprite: PIXI.Sprite
+  private strokeSprites: { sprite: PIXI.Sprite, width: number }[] = []
   private labelSprite?: PIXI.Text
   private iconSprite?: PIXI.Text
   private fontIconLoader?: CancellablePromise<void>
@@ -58,7 +52,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
-  private fontsLoaded = false
 
   constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, radius: number, parent?: NodeRenderer<N, E>) {
     this.renderer = renderer
@@ -70,9 +63,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.nodeContainer.buttonMode = true
 
     this.fillSprite = this.renderer.circle.create()
-    this.strokeSprite = this.renderer.circle.create()
     this.fillSpriteContainer.addChild(this.fillSprite)
-    this.strokeSpriteContainer.addChild(this.strokeSprite)
 
     this.nodeContainer
       .on('pointerover', this.nodePointerEnter)
@@ -80,7 +71,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       .on('pointerdown', this.nodePointerDown)
       .on('pointerup', this.nodePointerUp)
       .on('pointerupoutside', this.nodePointerUp)
-      .addChild(this.strokeSpriteContainer)
       .addChild(this.fillSpriteContainer)
 
     this.nodeContainer.zIndex = this.depth
@@ -129,16 +119,47 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Styles
      */
-    this.strokeWidth = this.node.style?.strokeWidth ?? NODE_STYLES.strokeWidth
-    this.stroke = colorToNumber(this.node.style?.stroke ?? NODE_STYLES.stroke)
-    this.strokeOpacity = this.node.style?.strokeOpacity ?? NODE_STYLES.strokeOpacity
-    this.fill = colorToNumber(this.node.style?.fill ?? NODE_STYLES.fill)
-    this.fillOpacity = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity
+    this.fill = this.fillSprite.tint = colorToNumber(this.node.style?.fill ?? DEFAULT_NODE_FILL)
+    // this.fillOpacity = this.fillSprite.alpha = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
 
-    this.fillSprite.tint = this.fill
-    // this.fillSprite.alpha = this.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
-    this.strokeSprite.tint = this.stroke
-    this.strokeSprite.alpha = this.strokeOpacity
+
+    /**
+     * Strokes
+     */
+    if (!equals(node.style?.stroke, this.stroke)) {
+      this.stroke = node.style?.stroke
+
+      if (this.stroke) {
+        for (const container of this.strokeSpriteContainer) {
+          this.nodeContainer.removeChild(container) // ??
+          container.destroy()
+        }
+
+        this.strokeTotalWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
+        this.strokeSprites = []
+        this.strokeSpriteContainer = []
+
+        for (const stroke of this.stroke) {
+          const strokeSprite = this.renderer.circle.create()
+          strokeSprite.tint = colorToNumber(stroke.color ?? DEFAULT_NODE_STROKE)
+          this.strokeSprites.push({ sprite: strokeSprite, width: stroke.width ?? DEFAULT_NODE_STROKE_WIDTH })
+
+          const container = new PIXI.Container()
+          container.addChild(strokeSprite)
+          this.strokeSpriteContainer.push(container)
+          this.nodeContainer.addChildAt(container, 0)
+        }
+      } else {
+        for (const container of this.strokeSpriteContainer) {
+          container.destroy()
+          this.nodeContainer.removeChild(container)
+        }
+
+        this.strokeTotalWidth = 0
+        this.strokeSprites = []
+        this.strokeSpriteContainer = []
+      }
+    }
 
 
     /**
@@ -147,7 +168,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (node.label !== this.label) {
       this.label = node.label
 
-      if (node.label) {
+      if (this.label) {
+        // this.labelContainer.removeChildren() ??
         this.labelSprite?.destroy()
         this.labelSprite = new PIXI.Text(node.label || '', {
           fontFamily: 'Helvetica',
@@ -163,6 +185,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.labelSprite.anchor.set(0.5, 0)
         this.labelContainer.addChild(this.labelSprite)
       } else {
+        this.labelSprite = undefined
         this.labelContainer.removeChildren()
       }
     }
@@ -171,7 +194,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Icon
      */
-    if (!equals(node.style?.icon, this.icon) || this.renderer.fontsLoaded !== this.fontsLoaded) {
+    if (!equals(node.style?.icon, this.icon)) {
       this.icon = node.style?.icon
 
       if (this.icon?.type === 'textIcon') {
@@ -182,6 +205,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.fontIconLoader.then(() => {
           if (this.icon?.type !== 'textIcon') return
           this.renderer.dirty = true
+          // this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon')) ??
           this.iconSprite?.destroy()
           this.iconSprite = new PIXI.Text(this.icon.text, {
             fontFamily: this.icon.family,
@@ -196,11 +220,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       // } else if (this.icon?.type === 'imageIcon') {
       //   TODO
       } else {
+        this.iconSprite = undefined
         this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
       }
     }
-
-    this.fontsLoaded = this.renderer.fontsLoaded
 
 
     /**
@@ -232,14 +255,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     return this
   }
 
-  /**
-   * TODO - perf boost: render cheap version of things while still animating position
-   */
   render() {
     if (this.renderer.animationPercent < 1 && this.renderer.clickedNode?.node.id !== this.node.id) {
       this.x = this.interpolateX(this.renderer.animationPercent)
       this.y = this.interpolateY(this.renderer.animationPercent)
-      this.radius = this.interpolateRadius(this.renderer.animationPercent) // this.radius = this.interpolateRadius(this.renderer.animationDuration / 400)
+      this.radius = this.interpolateRadius(this.renderer.animationPercent)
     } else {
       this.x = this.startX = this.endX
       this.y = this.startY = this.endY
@@ -258,11 +278,20 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     this.fillSprite.scale.set(this.radius / 1000)
-    this.strokeSprite.scale.set((this.radius + this.strokeWidth) / 1000)
-    this.nodeContainer.hitArea = new PIXI.Circle(0, 0, this.radius + this.strokeWidth)
+
+    let strokeWidths = this.radius
+
+    if (this.stroke !== undefined) {
+      for (const { sprite, width } of this.strokeSprites) {
+        strokeWidths += width
+        sprite.scale.set(strokeWidths / 1000)
+      }
+    }
+
+    this.nodeContainer.hitArea = new PIXI.Circle(0, 0, this.radius + this.strokeTotalWidth)
 
     if (this.labelSprite) {
-      this.labelSprite.y = this.radius + LABEL_Y_PADDING
+      this.labelSprite.y = this.radius + this.strokeTotalWidth + LABEL_Y_PADDING
     }
 
     for (const subGraphNodeId in this.subGraphNodes) {
@@ -273,12 +302,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
   delete() {
-    this.nodeContainer.destroy()
-    this.labelContainer.destroy()
     for (const subGraphNodeId in this.subGraphNodes) {
       // exit subGraph node
       this.subGraphNodes[subGraphNodeId].delete()
     }
+    this.nodeContainer.destroy()
+    this.labelContainer.destroy()
     delete this.renderer.nodesById[this.node.id]
   }
 

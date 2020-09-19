@@ -2,7 +2,7 @@ import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
 import { Node, Edge } from '../../src/types'
-import { Renderer, RendererOptions } from '../../src/renderers/pixi'
+import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 
 export const stats = new Stats()
@@ -13,18 +13,34 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (radius: number) => ({
+const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   fill: '#FFAF1D',
-  stroke: '#F7CA4D',
-  strokeWidth: 4,
+  stroke: [{
+    color: '#F7CA4D',
+    width: 6,
+  }, {
+    color: '#FFF',
+    width: 8,
+  }, {
+    color: '#F7CA4D',
+    width: 6,
+  }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
 })
 
-const createPersonStyle = (radius: number) => ({
+const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   fill: '#7CBBF3',
-  stroke: '#90D7FB',
-  strokeWidth: 4,
+  stroke: [{
+    color: '#90D7FB',
+    width: 6,
+  }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius / 1.6 }
+})
+
+const createSubgraphStyle = (radius: number): Partial<NodeStyle> => ({
+  fill: '#FFAF1D',
+  stroke: [{ color: '#F7CA4D', width: 6 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
 })
 
 let nodes = [
@@ -67,12 +83,29 @@ const renderOptions: Partial<RendererOptions> = {
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
+    nodes = nodes.map((node) => (node.id === id ?
+      {
+        ...node,
+        style: {
+          ...node.style,
+          stroke: node.style.stroke.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 1 ? '#FFF' : '#CCC' }))
+        }
+      } :
+      node
+    ))
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, style: { ...node.style, stroke: id === 'a' ? '#F7CA4D' : '#90D7FB' } } :
+      {
+        ...node,
+        style: {
+          ...node.style,
+          stroke: node.id === 'a' ?
+            createCompanyStyle(node.radius).stroke :
+            createPersonStyle(node.radius).stroke
+        }
+      } :
       node
     ))
     renderer({ nodes, edges, options: renderOptions })
@@ -89,12 +122,12 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       radius: 160,
-      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+      style: { ...node.style, fill: '#EFEFEF', icon: undefined },
       subGraph: {
         nodes: (node.subGraph?.nodes ?? []).concat([
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(21) },
         ])
           .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
@@ -129,7 +162,7 @@ const force = Force.Layout()
 const subGraph = SubGraph.Layout()
 const renderer = Renderer({
   container,
-  debug: { stats, logPerformance: true }
+  // debug: { stats, logPerformance: true }
 })
 
 

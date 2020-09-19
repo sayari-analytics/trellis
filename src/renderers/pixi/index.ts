@@ -24,12 +24,15 @@ export type ImageIcon = {
 }
 
 export type NodeStyle = {
-  strokeWidth: number
   fill: string
-  stroke: string
-  fillOpacity: number
-  strokeOpacity: number
-  icon?: FontIcon | ImageIcon
+  // stroke: string
+  // strokeOpacity: number
+  // strokeWidth: number
+  stroke: Partial<{
+    color: string
+    width: number
+  }>[]
+  icon: FontIcon | ImageIcon
 }
 
 export type EdgeStyle = {
@@ -79,7 +82,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   previousRenderTime = Date.now()
   animationDuration = 0
   animationPercent = 0
-  fontsLoaded = false
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
