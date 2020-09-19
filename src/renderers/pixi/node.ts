@@ -8,9 +8,12 @@ import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 const LABEL_Y_PADDING = 4
-const DEFAULT_NODE_FILL = '#444'
+const DEFAULT_NODE_FILL = '#666'
 const DEFAULT_NODE_STROKE = '#aaa'
 const DEFAULT_NODE_STROKE_WIDTH = 6
+const DEFAULT_LABEL_FAMILY = 'Helvetica'
+const DEFAULT_LABEL_COLOR = '#222'
+const DEFAULT_LABEL_SIZE = 14
 
 
 export class NodeRenderer<N extends Node, E extends Edge>{
@@ -36,6 +39,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private interpolateRadius: (percent: number) => number = () => this.endRadius
   private stroke?: NodeStyle['stroke']
   private label?: string
+  private labelFamily?: string
+  private labelColor?: string
+  private labelSize?: number
   private icon?: FontIcon | ImageIcon
   private nodeContainer = new PIXI.Container()
   private fillSpriteContainer = new PIXI.Container()
@@ -154,17 +160,28 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Label
      */
-    if (node.label !== this.label) {
+    const labelFamily = node.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
+    const labelColor = node.style?.labelColor ?? DEFAULT_LABEL_COLOR
+    const labelSize = node.style?.labelSize ?? DEFAULT_LABEL_SIZE
+    if (
+      node.label !== this.label ||
+      labelFamily !== this.labelFamily ||
+      labelColor !== this.labelColor ||
+      labelSize !== this.labelSize
+    ) {
       this.label = node.label
+      this.labelFamily = labelFamily
+      this.labelColor = labelColor
+      this.labelSize = labelSize
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
 
       if (this.label) {
         this.labelSprite = new PIXI.Text(this.label, {
-          fontFamily: 'Helvetica',
-          fontSize: 12 * 2.5,
-          fill: 0x333333,
+          fontFamily: this.labelFamily,
+          fontSize: this.labelSize * 2.5,
+          fill: this.labelColor,
           lineJoin: 'round',
           stroke: '#fafafaee',
           strokeThickness: 2 * 2,

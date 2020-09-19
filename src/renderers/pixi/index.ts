@@ -30,6 +30,9 @@ export type NodeStyle = {
     width: number
   }>[]
   icon: FontIcon | ImageIcon
+  labelFamily: string
+  labelColor: string
+  labelSize: number
 }
 
 export type EdgeStyle = {
