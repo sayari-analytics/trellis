@@ -1,26 +1,29 @@
 import { createElement, SFC, useState, useCallback, useEffect, useRef } from 'react'
 import { render } from 'react-dom'
 import Stats from 'stats.js'
-import { Node, Edge } from '../../src/types'
+import * as Graph from '../../src/types'
 import { Renderer } from '../../src/renderers/pixi/bindings/react'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
+import { NodeStyle } from '../../src/renderers/pixi'
 
 
 const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-const createCompanyStyle = (radius: number) => ({
-  fill: '#FFAF1D',
-  stroke: '#F7CA4D',
-  strokeWidth: 4,
+
+type Node = Graph.Node & { type: string }
+
+
+const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+  color: '#FFAF1D',
+  stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
 })
-const createPersonStyle = (radius: number) => ({
-  fill: '#7CBBF3',
-  stroke: '#90D7FB',
-  strokeWidth: 4,
+const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+  color: '#7CBBF3',
+  stroke: [{ color: '#90D7FB', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius / 1.6 }
 })
 
@@ -34,11 +37,12 @@ let nodes: Node[] = [
     id,
     label,
     radius: id === 'a' ? 62 : (20 - idx) * 4,
+    type: id === 'a' ? 'company' : 'person',
     style: id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
     subGraph: undefined,
   }))
 
-let edges: Edge[] = [
+let edges: Graph.Edge[] = [
   { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' },
   { id: 'da', source: 'a', target: 'd', label: 'Related To' }, { id: 'ea', source: 'a', target: 'e', label: 'Related To' },
   { id: 'fa', source: 'a', target: 'f', label: 'Related To' }, { id: 'ga', source: 'a', target: 'g', label: 'Related To' },
@@ -79,23 +83,29 @@ const App: SFC = () => {
   const onNodePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
     setGraph(({ nodes, edges }) => ({
       nodes: nodes.map((node) => (node.id === id ?
-        { ...node, style: { ...node.style, stroke: id === 'a' ? '#F7CA4D' : '#90D7FB' } } :
+        {
+          ...node,
+          style: {
+            ...node.style,
+            stroke: id === 'a' ? '#F7CA4D' : '#90D7FB'
+          }
+        } :
         node
       )),
       edges
     }))
   }, [])
-  const onEdgePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: Edge) => {
+  const onEdgePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: Graph.Edge) => {
     setGraph(({ nodes, edges }) => ({ nodes, edges: edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge)) }))
   }, [])
-  const onEdgePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Edge) => {
+  const onEdgePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Graph.Edge) => {
     setGraph(({ nodes, edges }) => ({ nodes, edges: edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge)) }))
   }, [])
   const onNodeDoubleClick = useCallback((_, { id }) => {
     subGraph({
       nodes: graph.nodes.map((node) => (node.id === id ? {
         ...node,
-        style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+        style: { ...node.style, color: '#efefef', icon: undefined },
         subGraph: {
           nodes: [
             { id: `${node.id}a`, radius: 21, label: `${node.id.toUpperCase()}A`, style: createCompanyStyle(21) },

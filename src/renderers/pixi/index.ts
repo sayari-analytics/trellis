@@ -10,7 +10,7 @@ import { CircleRenderer } from './circle'
 
 export type Event = PIXI.InteractionEvent
 
-export type FontIcon = {
+export type TextIcon = {
   type: 'textIcon'
   family: string
   text: string
@@ -29,7 +29,7 @@ export type NodeStyle = {
     color: string
     width: number
   }>[]
-  icon: FontIcon | ImageIcon
+  icon: TextIcon | ImageIcon
   labelFamily: string
   labelColor: string
   labelSize: number

@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
-import { Node, Edge } from '../../src/types'
+import * as Graph from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -8,6 +8,9 @@ import graphData from '../../tmp-data'
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
+
+
+type Node = Graph.Node & { type: string }
 
 
 /**
@@ -32,13 +35,13 @@ let nodes = Object.values(graphData.nodes)
     id,
     label,
     radius: 32,
+    type,
     style: {
-      fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-      stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
-      strokeWidth: 4,
-      icon: {
-        type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 / 1.6
-      },
+      color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
+      stroke: type === 'company' ?
+        [{ color: '#F7CA4D', width: 4 }] :
+        [{ color: '#90D7FB', width: 4 }],
+      icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
     }
   }))
 
@@ -63,7 +66,7 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
     ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
     ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
   ])
-  .map<Edge>(([id, { field, source, target }]) => ({
+  .map<Graph.Edge>(([id, { field, source, target }]) => ({
     id,
     source,
     target,
@@ -83,30 +86,46 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
+  onNodePointerEnter: (_, { id }) => {
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      radius: node.radius * 4,
+      style: {
+        ...node.style,
+        stroke: [{ color: '#CCC', width: 4 }]
+      }
+    } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, radius: 32, style: { ...node.style, stroke: node.style.fill === '#7CBBF3' ? '#90D7FB' : '#F7CA4D' } } :
+      {
+        ...node,
+        radius: 32,
+        style: {
+          ...node.style,
+          stroke: node.type === 'company' ?
+            [{ color: '#F7CA4D', width: 4 }] :
+            [{ color: '#90D7FB', width: 4 }],
+        }
+      } :
       node
     ))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },

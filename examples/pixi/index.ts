@@ -74,15 +74,15 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerEnter: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
       {
         ...node,
@@ -95,7 +95,7 @@ const renderOptions: Partial<RendererOptions> = {
     ))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
       {
         ...node,
@@ -110,11 +110,11 @@ const renderOptions: Partial<RendererOptions> = {
     ))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },

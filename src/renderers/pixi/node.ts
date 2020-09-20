@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { PIXIRenderer as Renderer, FontIcon, ImageIcon, NodeStyle } from '.'
+import { PIXIRenderer as Renderer, TextIcon, ImageIcon, NodeStyle } from '.'
 import { colorToNumber, parentInFront } from './utils'
 import { Node, Edge } from '../../types'
 import { equals } from '../../utils'
@@ -42,7 +42,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private labelFamily?: string
   private labelColor?: string
   private labelSize?: number
-  private icon?: FontIcon | ImageIcon
+  private icon?: TextIcon | ImageIcon
   private nodeContainer = new PIXI.Container()
   private fillSpriteContainer = new PIXI.Container()
   private strokeSpriteContainer: PIXI.Container[] = []

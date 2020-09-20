@@ -1,8 +1,8 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
-import { Node, Edge } from '../../src/types'
-import { Renderer, RendererOptions } from '../../src/renderers/pixi'
+import * as Graph from '../../src/types'
+import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
 
@@ -11,11 +11,22 @@ stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
 
+type Node = Graph.Node & { type: string }
+
+
 /**
  * Initialize Data
  */
-const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
-const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
+const COMPANY_STYLE: Partial<NodeStyle> = {
+  color: '#FFAF1D',
+  stroke: [{ color: '#F7CA4D', width: 4 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 32 * 0.6 }
+}
+const PERSON_STYLE: Partial<NodeStyle> = {
+  color: '#7CBBF3',
+  stroke: [{ color: '#90D7FB', width: 4 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 }
+}
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
@@ -26,16 +37,16 @@ const data = {
       id,
       label,
       radius: 32,
+      type,
       style: {
-        fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-        stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
-        strokeWidth: 4,
-        icon: type === 'company' ? 'business' : 'person',
+        color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
+        stroke: [{ color: type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }],
+        icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
       }
     }))
     .slice(0, 1),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-    .map<Edge>(([id, { field, source, target }]) => ({
+    .map<Graph.Edge>(([id, { field, source, target }]) => ({
       id,
       source,
       target,
@@ -44,7 +55,7 @@ const data = {
 }
 
 let nodes: Node[] = []
-let edges: Edge[] = []
+let edges: Graph.Edge[] = []
 
 
 /**
@@ -58,41 +69,41 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerUp: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerUp: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x: undefined, y: undefined } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node))
+  onNodePointerEnter: (_, { id }) => {
+    nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] } } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
+      { ...node, style: { ...node.style, stroke: node.type === 'person' ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
       node
     ))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onNodeDoubleClick: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
-      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+      style: { ...node.style, color: '#efefef', icon: undefined },
       subGraph: {
         nodes: [
           { id: `${node.id}a`, radius: 21, label: 'A', type: 'company', style: { ...COMPANY_STYLE } },

@@ -2,7 +2,7 @@ import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
 import { Node, Edge } from '../../src/types'
-import { Renderer, RendererOptions } from '../../src/renderers/pixi'
+import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 
 export const stats = new Stats()
@@ -13,17 +13,15 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (radius: number) => ({
-  fill: '#FFAF1D',
-  stroke: '#F7CA4D',
-  strokeWidth: 6,
+const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+  color: '#FFAF1D',
+  stroke: [{ color: '#F7CA4D', width: 6 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
 })
 
-const createPersonStyle = (radius: number) => ({
-  fill: '#7CBBF3',
-  stroke: '#90D7FB',
-  strokeWidth: 6,
+const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+  color: '#7CBBF3',
+  stroke: [{ color: '#90D7FB', width: 6 }],
   icon: radius > 60 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius / 1.6 } :
     { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius / 1.6 }
@@ -60,30 +58,30 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#ddd' } } : node))
+  onNodePointerEnter: (_, { id }) => {
+    nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: [{ color: '#ddd', width: 6 }] } } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, style: { ...node.style, stroke: id === 'a' ? '#F7CA4D' : '#90D7FB' } } :
+      { ...node, style: { ...node.style, stroke: [{ color: id === 'a' ? '#F7CA4D' : '#90D7FB', width: 6 }] } } :
       node
     ))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
@@ -91,7 +89,7 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       radius: 160,
-      style: { ...node.style, fill: '#efefef', fillOpacity: 0.8, icon: undefined },
+      style: { ...node.style, color: '#efefef', icon: undefined },
       subGraph: {
         nodes: (node.subGraph?.nodes ?? []).concat([
           { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle(21) },

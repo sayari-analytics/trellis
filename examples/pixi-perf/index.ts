@@ -1,7 +1,7 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
-import { Node, Edge } from '../../src/types'
-import { Renderer, RendererOptions } from '../../src/renderers/pixi'
+import * as Graph from '../../src/types'
+import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
 
@@ -10,11 +10,22 @@ stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
 
+type Node = Graph.Node & { type: string }
+
+
 /**
  * Initialize Data
  */
-const COMPANY_STYLE = { fill: '#FFAF1D', stroke: '#F7CA4D', strokeWidth: 4, icon: 'business' }
-const PERSON_STYLE = { fill: '#7CBBF3', stroke: '#90D7FB', strokeWidth: 4, icon: 'person' }
+const COMPANY_STYLE: Partial<NodeStyle> = {
+  color: '#FFAF1D',
+  stroke: [{ color: '#F7CA4D', width: 4 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 32 * 0.6 }
+}
+const PERSON_STYLE: Partial<NodeStyle> = {
+  color: '#7CBBF3',
+  stroke: [{ color: '#90D7FB', width: 4 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 }
+}
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
@@ -29,13 +40,11 @@ const data = {
       id,
       label,
       radius: 32,
+      type,
       style: {
-        fill: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-        stroke: type === 'company' ? '#F7CA4D' : '#90D7FB',
-        strokeWidth: 4,
-        icon: {
-          type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 / 1.6
-        },
+        color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
+        stroke: [{ color: type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }],
+        icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
       }
     })),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
@@ -53,7 +62,7 @@ const data = {
       ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
       ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
     ])
-    .map<Edge>(([id, { field, source, target }]) => ({
+    .map<Graph.Edge>(([id, { field, source, target }]) => ({
       id,
       source,
       target,
@@ -62,7 +71,7 @@ const data = {
 }
 
 let nodes: Node[] = []
-let edges: Edge[] = []
+let edges: Graph.Edge[] = []
 
 /**
  * Initialize Layout and Renderer Options
@@ -72,33 +81,40 @@ const layoutOptions: Partial<LayoutOptions> = {
 }
 
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
-const renderOptions: Partial<RendererOptions> = {
+const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_: PIXI.InteractionEvent, { id }: Node, x: number, y: number) => {
+  onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_: PIXI.InteractionEvent, { id }: Node) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, radius: node.radius * 4, style: { ...node.style, stroke: '#CCC' } } : node))
-    render({ nodes, edges, options: renderOptions })
-  },
-  onNodePointerLeave: (_: PIXI.InteractionEvent, { id }: Node) => {
+  onNodePointerEnter: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
-      { ...node, radius: 32, style: { ...node.style, stroke: node.style.fill === PERSON_STYLE.fill ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke } } :
+      { ...node, radius: node.radius * 4, style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] } } :
       node
     ))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onNodePointerLeave: (_, { id }) => {
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      radius: 32,
+      style: {
+        ...node.style,
+        stroke: node.type === 'person' ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke
+      }
+    } : node))
+    render({ nodes, edges, options: renderOptions })
+  },
+  onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_: PIXI.InteractionEvent, { id }: Edge) => {
+  onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
@@ -110,7 +126,7 @@ const renderOptions: Partial<RendererOptions> = {
  */
 const layout = Layout()
 
-const render = Renderer({
+const render = Renderer<Node, Graph.Edge>({
   container,
   debug: { stats, logPerformance: true }
 })
