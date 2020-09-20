@@ -28,49 +28,78 @@ let nodes = Object.values(graphData.nodes)
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_6` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_7` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_8` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_9` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_10` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_11` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_9` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_10` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_11` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_12` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_13` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_14` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_15` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_16` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_17` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_18` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_19` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_20` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_21` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_22` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_23` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_24` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_25` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_26` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_27` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_28` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_29` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_30` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_31` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_32` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_33` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_34` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_35` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_36` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_37` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_38` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_39` })))
   .map<Node>(({ id, label, type }) => ({
     id,
-    label,
+    // label,
     radius: 32,
     type,
     style: {
       color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-      stroke: type === 'company' ?
-        [{ color: '#F7CA4D', width: 4 }] :
-        [{ color: '#90D7FB', width: 4 }],
-      icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+      // stroke: type === 'company' ?
+      //   [{ color: '#F7CA4D', width: 4 }] :
+      //   [{ color: '#90D7FB', width: 4 }],
+      // icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
     }
   }))
 
-let edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_6`, { ...edge, source: `${edge.source}_6`, target: `${edge.target}_6` }]))
+let edges = []
+// Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
+  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
+  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
+  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
+  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
+  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_6`, { ...edge, source: `${edge.source}_6`, target: `${edge.target}_6` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_7`, { ...edge, source: `${edge.source}_7`, target: `${edge.target}_7` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_8`, { ...edge, source: `${edge.source}_8`, target: `${edge.target}_8` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_9`, { ...edge, source: `${edge.source}_9`, target: `${edge.target}_9` }]))
   // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_10`, { ...edge, source: `${edge.source}_10`, target: `${edge.target}_10` }]))
-  .concat([
-    ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
-    ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
-    ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
-    ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
-    ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
-    ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
-    ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
-    ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
-    ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
-  ])
+  // .concat([
+  //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
+  //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
+  //   ['connect_g', { field: 'related_to', source: `${Object.values(graphData.nodes)[30].id}`, target: `${Object.values(graphData.nodes)[30].id}_2` }],
+  //   ['connect_b', { field: 'related_to', source: `${Object.values(graphData.nodes)[5].id}_2`, target: `${Object.values(graphData.nodes)[5].id}_3` }],
+  //   ['connect_e', { field: 'related_to', source: `${Object.values(graphData.nodes)[20].id}_2`, target: `${Object.values(graphData.nodes)[20].id}_3` }],
+  //   ['connect_h', { field: 'related_to', source: `${Object.values(graphData.nodes)[35].id}_2`, target: `${Object.values(graphData.nodes)[35].id}_3` }],
+  //   ['connect_c', { field: 'related_to', source: `${Object.values(graphData.nodes)[10].id}_3`, target: `${Object.values(graphData.nodes)[10].id}_4` }],
+  //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
+  //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
+  // ])
   .map<Graph.Edge>(([id, { field, source, target }]) => ({
     id,
     source,
     target,
-    label: field.replace(/_/g, ' '),
+    // label: field.replace(/_/g, ' '),
   }))
 
 
@@ -98,10 +127,10 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       radius: node.radius * 4,
-      style: {
-        ...node.style,
-        stroke: [{ color: '#CCC', width: 4 }]
-      }
+      // style: {
+      //   ...node.style,
+      //   stroke: [{ color: '#CCC', width: 4 }]
+      // }
     } : node))
     render({ nodes, edges, options: renderOptions })
   },
@@ -110,12 +139,12 @@ const renderOptions: Partial<RendererOptions> = {
       {
         ...node,
         radius: 32,
-        style: {
-          ...node.style,
-          stroke: node.type === 'company' ?
-            [{ color: '#F7CA4D', width: 4 }] :
-            [{ color: '#90D7FB', width: 4 }],
-        }
+        // style: {
+        //   ...node.style,
+        //   stroke: node.type === 'company' ?
+        //     [{ color: '#F7CA4D', width: 4 }] :
+        //     [{ color: '#90D7FB', width: 4 }],
+        // }
       } :
       node
     ))
