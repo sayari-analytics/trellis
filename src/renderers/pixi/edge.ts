@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { PIXIRenderer as Renderer, EdgeStyle } from '.'
+import { PIXIRenderer as Renderer } from '.'
 import { colorToNumber } from './utils'
 import { Node, Edge } from '../../types'
 import { ArrowRenderer } from './edgeArrow'
@@ -42,6 +42,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private arrow: PIXI.Sprite
   private hoveredEdge = false
   private labelContainer: PIXI.Container = new PIXI.Container()
+  private labelSprite?: PIXI.Text
   private x0: number = 0
   private y0: number = 0
   private x1: number = 0
@@ -97,22 +98,26 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       labelSize !== this.labelSize
     ) {
       this.label = edge.label
+      this.labelFamily = labelFamily
+      this.labelColor = labelColor
+      this.labelSize = labelSize
+      this.labelContainer.removeChildren()
+      this.labelSprite?.destroy()
+      this.labelSprite = undefined
 
       if (this.label) {
-        const labelText = new PIXI.Text(this.label, {
-          fontFamily: labelFamily,
-          fontSize: labelSize * 2.5,
-          fill: labelColor,
+        this.labelSprite = new PIXI.Text(this.label, {
+          fontFamily: this.labelFamily,
+          fontSize: this.labelSize * 2.5,
+          fill: this.labelColor,
           lineJoin: 'round',
           stroke: '#fafafaee',
           strokeThickness: 2 * 2.5,
         })
-        labelText.name = 'text'
-        labelText.scale.set(0.4)
-        labelText.anchor.set(0.5, 0.6)
-        this.labelContainer.addChild(labelText)
-      } else {
-        this.labelContainer.removeChildren()
+        this.labelSprite.name = 'text'
+        this.labelSprite.scale.set(0.4)
+        this.labelSprite.anchor.set(0.5, 0.5)
+        this.labelContainer.addChild(this.labelSprite)
       }
     }
 
