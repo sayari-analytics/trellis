@@ -42,6 +42,7 @@ export type EdgeStyle = {
   labelFamily: string
   labelColor: string
   labelSize: number
+  arrow: 'forward' | 'reverse' | 'both' | 'none'
 }
 
 export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
@@ -156,11 +157,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
-
-    // this.nodesLayer.addChild(
-    //   new PIXI.Graphics().lineStyle(1, 0x666666).moveTo(-10000, 0).lineTo(10000, 0).endFill(),
-    //   new PIXI.Graphics().lineStyle(1, 0x666666).moveTo(0, -10000).lineTo(0, 10000).endFill()
-    // )
 
     this.app.view.addEventListener('wheel', (event) => { event.preventDefault() })
 

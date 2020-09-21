@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { PIXIRenderer as Renderer } from '.'
+import { EdgeStyle, PIXIRenderer as Renderer } from '.'
 import { colorToNumber } from './utils'
 import { Node, Edge } from '../../types'
 import { ArrowRenderer } from './edgeArrow'
@@ -24,6 +24,7 @@ const DEFAULT_EDGE_OPACITY = 1
 const DEFAULT_LABEL_FAMILY = 'Helvetica'
 const DEFAULT_LABEL_COLOR = '#222'
 const DEFAULT_LABEL_SIZE = 14
+const DEFAULT_ARROW = 'none'
 
 
 export class EdgeRenderer<N extends Node, E extends Edge>{
@@ -31,6 +32,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   edge: E | undefined
 
   private renderer: Renderer<N, E>
+  private edgesLayer: PIXI.Container
   private label?: string
   private labelFamily?: string
   private labelColor?: string
@@ -39,9 +41,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private stroke: number = 0
   private strokeOpacity: number = 0
   private line = new PIXI.Graphics()
-  private arrow: PIXI.Sprite
+  private arrowContainer = new PIXI.Container()
+  private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
+  private forwardArrow?: PIXI.Sprite
+  private reverseArrow?: PIXI.Sprite
   private hoveredEdge = false
-  private labelContainer: PIXI.Container = new PIXI.Container()
+  private labelContainer = new PIXI.Container()
   private labelSprite?: PIXI.Text
   private x0: number = 0
   private y0: number = 0
@@ -54,6 +59,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
   constructor(renderer: Renderer<N, E>, edgesLayer: PIXI.Container) {
     this.renderer = renderer
+    this.edgesLayer = edgesLayer
     this.line.interactive = true
     this.line.buttonMode = true
     this.line
@@ -63,11 +69,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       .on('pointerup', this.pointerUp)
       .on('pointerupoutside', this.pointerUp)
 
-    this.arrow = this.renderer.arrow.createSprite()
-
     edgesLayer.addChild(this.line)
-    edgesLayer.addChild(this.arrow)
-    edgesLayer.addChild(this.labelContainer) // TODO - add labelsContainer to edgeLabelLayer
+    /**
+     * TODO - perf test adding label/arrow directly to edgesLayer container, vs. creating label/arrow containers
+     */
+    edgesLayer.addChild(this.arrowContainer)
+    edgesLayer.addChild(this.labelContainer)
   }
 
   update(edge: E) {
@@ -80,8 +87,41 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.width = this.edge.style?.width ?? DEFAULT_EDGE_WIDTH
     this.stroke = colorToNumber(edge.style?.stroke ?? DEFAULT_EDGE_COLOR)
     this.strokeOpacity = edge.style?.strokeOpacity ?? DEFAULT_EDGE_OPACITY
-    this.arrow.tint = this.stroke
-    this.arrow.alpha = this.strokeOpacity
+
+
+    /**
+     * Arrow
+     */
+    const arrow = edge.style?.arrow ?? DEFAULT_ARROW
+    if (this.arrow !== arrow) {
+      this.arrow = arrow
+      this.arrowContainer.removeChildren()
+      this.forwardArrow?.destroy()
+      this.reverseArrow?.destroy()
+      this.forwardArrow = undefined
+      this.reverseArrow = undefined
+
+      if (this.arrow === 'forward') {
+        this.forwardArrow = this.renderer.arrow.createSprite()
+        this.forwardArrow.tint = this.stroke
+        this.forwardArrow.alpha = this.strokeOpacity
+        this.arrowContainer.addChild(this.forwardArrow)
+      } else if (this.arrow === 'reverse') {
+        this.reverseArrow = this.renderer.arrow.createSprite()
+        this.reverseArrow.tint = this.stroke
+        this.reverseArrow.alpha = this.strokeOpacity
+        this.arrowContainer.addChild(this.reverseArrow)
+      } else if (this.arrow === 'both') {
+        this.forwardArrow = this.renderer.arrow.createSprite()
+        this.reverseArrow = this.renderer.arrow.createSprite()
+        this.forwardArrow.tint = this.stroke
+        this.forwardArrow.alpha = this.strokeOpacity
+        this.reverseArrow.tint = this.stroke
+        this.reverseArrow.alpha = this.strokeOpacity
+        this.arrowContainer.addChild(this.forwardArrow)
+        this.arrowContainer.addChild(this.reverseArrow)
+      }
+    }
 
 
     /**
@@ -138,7 +178,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   /**
-   * TODO - perf boost: render cheap version of things while still animating position
+   * TODO - perf boost: render cheap version of things while still animating position or dragging
    */
   render() {
     const sourceContainer = this.renderer.nodesById[this.edge!.source],
@@ -147,18 +187,36 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       targetRadius = targetContainer.radius + targetContainer.strokeWidth,
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
       start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius),
-      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowRenderer.ARROW_HEIGHT),
+      startArrowOffset = this.reverseArrow ?
+        movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - ArrowRenderer.ARROW_HEIGHT) :
+        start,
+      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius),
+      endArrowOffset = this.forwardArrow ?
+        movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowRenderer.ARROW_HEIGHT) :
+        end,
       center = midPoint(start[0], start[1], end[0], end[1])
+
+    if (this.forwardArrow) {
+      this.forwardArrow.x = end[0]
+      this.forwardArrow.y = end[1]
+      this.forwardArrow.rotation = theta
+    }
+
+    if (this.reverseArrow) {
+      this.reverseArrow.x = start[0]
+      this.reverseArrow.y = start[1]
+      this.reverseArrow.rotation = theta + Math.PI
+    }
 
     if (this.curve === 0) {
       /**
        * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
        * TODO - once arrows are encorporated into the style spec, add/remove arrowHeight offset
        */
-      this.x0 = start[0]
-      this.y0 = start[1]
-      this.x1 = end[0]
-      this.y1 = end[1]
+      this.x0 = startArrowOffset[0]
+      this.y0 = startArrowOffset[1]
+      this.x1 = endArrowOffset[0]
+      this.y1 = endArrowOffset[1]
 
       this.line
         .clear()
@@ -171,26 +229,25 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.y = center[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
-      // TODO - don't bother rendering arrow when animating position
-      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
-      this.arrow.x = arrowPosition[0]
-      this.arrow.y = arrowPosition[1]
-      this.arrow.rotation = theta
+      // const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
+      // this.arrow.x = arrowPosition[0]
+      // this.arrow.y = arrowPosition[1]
+      // this.arrow.rotation = theta
 
-      // TODO - don't bother rendering hitArea when animating position
+      // TODO - don't bother rendering hitArea when animating position or dragging
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const perpendicular = theta + HALF_PI
       const hitAreaVerticies: number[] = new Array(8)
-      let point = movePoint(this.x0, this.y0, perpendicular, hoverRadius)
+      let point = movePoint(start[0], start[1], perpendicular, hoverRadius)
       hitAreaVerticies[0] = point[0]
       hitAreaVerticies[1] = point[1]
-      point = movePoint(arrowPosition[0], arrowPosition[1], perpendicular, hoverRadius)
+      point = movePoint(end[0], end[1], perpendicular, hoverRadius)
       hitAreaVerticies[2] = point[0]
       hitAreaVerticies[3] = point[1]
-      point = movePoint(arrowPosition[0], arrowPosition[1], perpendicular, -hoverRadius)
+      point = movePoint(end[0], end[1], perpendicular, -hoverRadius)
       hitAreaVerticies[4] = point[0]
       hitAreaVerticies[5] = point[1]
-      point = movePoint(this.x0, this.y0, perpendicular, -hoverRadius)
+      point = movePoint(start[0], start[1], perpendicular, -hoverRadius)
       hitAreaVerticies[6] = point[0]
       hitAreaVerticies[7] = point[1]
       this.line.hitArea = new PIXI.Polygon(hitAreaVerticies)
@@ -222,10 +279,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.y = this.curvePeak[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
-      const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
-      this.arrow.x = arrowPosition[0]
-      this.arrow.y = arrowPosition[1]
-      this.arrow.rotation = thetaCurveEnd
+      // const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
+      // this.arrow.x = arrowPosition[0]
+      // this.arrow.y = arrowPosition[1]
+      // this.arrow.rotation = thetaCurveEnd
 
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const hitAreaVerticies: number[] = new Array(12)
@@ -235,10 +292,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, hoverRadius)
       hitAreaVerticies[2] = point[0]
       hitAreaVerticies[3] = point[1]
-      point = movePoint(arrowPosition[0], arrowPosition[1], thetaCurveEnd + HALF_PI, hoverRadius)
+      point = movePoint(this.x1, this.y1, thetaCurveEnd + HALF_PI, hoverRadius)
       hitAreaVerticies[4] = point[0]
       hitAreaVerticies[5] = point[1]
-      point = movePoint(arrowPosition[0], arrowPosition[1], theta + HALF_PI, -hoverRadius)
+      point = movePoint(this.x1, this.y1, theta + HALF_PI, -hoverRadius)
       hitAreaVerticies[6] = point[0]
       hitAreaVerticies[7] = point[1]
       point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, -hoverRadius)
@@ -287,7 +344,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
   delete() {
     this.line.destroy()
-    this.arrow.destroy()
+    this.forwardArrow?.destroy()
+    this.reverseArrow?.destroy()
     this.labelContainer.destroy()
     delete this.renderer.edgesById[this.edge!.id]
     this.renderer.forwardEdgeIndex[this.edge!.source][this.edge!.target].delete(this.edge!.id)
