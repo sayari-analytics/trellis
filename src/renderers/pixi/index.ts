@@ -80,6 +80,7 @@ PIXI.utils.skipHello()
 
 export class PIXIRenderer<N extends Node, E extends Edge>{
 
+  update: (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => void
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
   dirty = false
@@ -118,8 +119,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     if (!(container instanceof HTMLCanvasElement)) {
       throw new Error('container must be an instance of HTMLCanvasElement')
     }
-
-    this.debug = debug
 
     this.app = new PIXI.Application({
       view: container,
@@ -160,10 +159,17 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
     this.app.view.addEventListener('wheel', (event) => { event.preventDefault() })
 
-    animationFrameLoop(this.debug ? this.debugRender : this.render)
+    this.debug = debug
+    if (this.debug) {
+      animationFrameLoop(this.debugRender)
+      this.update = this._debugUpdate
+    } else {
+      animationFrameLoop(this.render)
+      this.update = this._update
+    }
   }
 
-  apply = ({
+  private _update = ({
     nodes,
     edges,
     options: {
@@ -291,6 +297,12 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     return this
   }
 
+  private _debugUpdate = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
+    performance.mark('update')
+    this._update(graph)
+    performance.measure('update', 'update')
+  }
+
   private render = () => {
     const currentRenderTime = Date.now()
     this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime)) // clamp to 0 <= x <= 16 to smooth animations
@@ -316,17 +328,23 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     }
   }
 
+  private _debugFirstRender = true
   private debugRender = () => {
-    this.debug?.stats?.update()
-
     const currentRenderTime = Date.now()
     this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime))
     // this.animationDuration += currentRenderTime - this.previousRenderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.previousRenderTime = currentRenderTime
 
+    this.debug?.stats?.update()
+    if (!this._debugFirstRender) {
+      performance.measure('external', 'external')
+    } else {
+      this._debugFirstRender = false
+    }
+
     if (this.dirty) {
-      performance.mark('update')
+      performance.mark('render')
       for (const nodeId in this.nodesById) {
         this.nodesById[nodeId].render()
       }
@@ -334,41 +352,62 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       for (const edgeId in this.edgesById) {
         this.edgesById[edgeId].render()
       }
-      performance.measure('update', 'update')
+      performance.measure('render', 'render')
 
       this.dirty = this.animationPercent < 1
       this.viewport.dirty = false
 
-      performance.mark('render')
+      performance.mark('draw')
       this.app.render()
-      performance.measure('render', 'render')
+      performance.measure('draw', 'draw')
     } else if (this.viewport.dirty) {
       this.viewport.dirty = false
-      performance.mark('render')
+      performance.mark('draw')
       this.app.render()
-      performance.measure('render', 'render')
+      performance.measure('draw', 'draw')
     }
 
-    const measurements = performance.getEntriesByType('measure')
+    if (this.debug?.logPerformance && (this.dirty || this.viewport.dirty)) {
+      let external = 0
+      let update = 0
+      let render = 0
+      let draw = 0
+      let total = 0
+      for (const measurement of performance.getEntriesByType('measure')) {
+        if (measurement.name === 'update') {
+          update = measurement.duration
+          total += measurement.duration
+        } else if (measurement.name === 'render') {
+          render = measurement.duration
+          total += measurement.duration
+        } else if (measurement.name === 'draw') {
+          draw = measurement.duration
+          total += measurement.duration
+        } else if (measurement.name === 'external') {
+          external = measurement.duration
+          total += measurement.duration
+        }
+      }
 
-    if (this.debug?.logPerformance && measurements.length === 1) {
-      const total = measurements[0].duration
+      // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
       console.log(
-        `%c${total.toFixed(2)}ms %c(update: 0.00, render: ${measurements[0].duration.toFixed(2)})`,
-        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 40 ? '#e22' : '#a00'}`,
-        'color: #666'
-      )
-    } else if (this.debug?.logPerformance && measurements.length === 2) {
-      const total = measurements[0].duration + measurements[1].duration
-      console.log(
-        `%c${total.toFixed(2)}ms %c(${measurements.map(({ name, duration }) => `${name}: ${duration.toFixed(2)}`).join(', ')}}`,
-        `color: ${total < 17 ? '#6c6' : total < 25 ? '#f88' : total < 40 ? '#e22' : '#a00'}`,
-        'color: #666'
+        `%c${total.toFixed(1)}ms%c (update: %c${update.toFixed(1)}%c, render: %c${render.toFixed(1)}%c, draw: %c${draw.toFixed(1)}%c, external: %c${external.toFixed(1)}%c)`,
+        `color: ${total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'}`,
+        'color: #666',
+        `color: ${update <= 5 ? '#6c6' : update <= 10 ? '#f88' : update <= 20 ? '#e22' : '#a00'}`,
+        'color: #666',
+        `color: ${render <= 5 ? '#6c6' : render <= 10 ? '#f88' : render <= 20 ? '#e22' : '#a00'}`,
+        'color: #666',
+        `color: ${draw <= 5 ? '#6c6' : draw <= 10 ? '#f88' : draw <= 20 ? '#e22' : '#a00'}`,
+        'color: #666',
+        `color: ${external <= 5 ? '#6c6' : external <= 10 ? '#f88' : external <= 20 ? '#e22' : '#a00'}`,
+        'color: #666',
       )
     }
 
     performance.clearMarks()
     performance.clearMeasures()
+    performance.mark('external')
   }
 }
 
@@ -377,6 +416,6 @@ export const Renderer = <N extends Node, E extends Edge>(options: { container: H
   const pixiRenderer = new PIXIRenderer<N, E>(options)
 
   return (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
-    pixiRenderer.apply(graph)
+    pixiRenderer.update(graph)
   }
 }
