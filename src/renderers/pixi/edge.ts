@@ -249,8 +249,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.curvePeak = movePoint(center[0], center[1], theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI, this.curve * 20)
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
-      const curveStart = movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius)
-      const curveEnd = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + ArrowRenderer.ARROW_HEIGHT)
+      const curveStart = this.reverseArrow ?
+        movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius - ArrowRenderer.ARROW_HEIGHT) :
+        movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius)
+      const curveEnd = this.forwardArrow ?
+        movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + ArrowRenderer.ARROW_HEIGHT) :
+        movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
       this.x0 = curveStart[0]
       this.y0 = curveStart[1]
       this.x1 = curveEnd[0]
