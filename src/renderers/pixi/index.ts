@@ -92,6 +92,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   labelsLayer = new PIXI.Container()
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
+  edgesGraphic = new PIXI.Graphics()
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
   forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
@@ -147,6 +148,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       .on('drag-start', () => container.style.cursor = 'move')
       .on('drag-end', () => container.style.cursor = 'auto')
     this.viewport.center = new PIXI.Point(0, 0)
+    this.viewport.addChild(this.edgesGraphic)
     this.viewport.addChild(this.edgesLayer)
     this.viewport.addChild(this.nodesLayer)
     this.viewport.addChild(this.labelsLayer)
@@ -274,10 +276,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       if (this.edgesById[id] === undefined) {
         // edge enter
         edgesById[id] = new EdgeRenderer(this, this.edgesLayer).update(edge)
-      } else if (edge !== this.edgesById[id].edge) {
-        // edge update
-        edgesById[id] = this.edgesById[id].update(edge)
       } else {
+        // edge update
         edgesById[id] = this.edgesById[id].update(edge)
       }
     }
@@ -315,6 +315,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         this.nodesById[nodeId].render()
       }
 
+      this.edgesGraphic.clear()
       for (const edgeId in this.edgesById) {
         this.edgesById[edgeId].render()
       }
@@ -349,6 +350,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         this.nodesById[nodeId].render()
       }
 
+      this.edgesGraphic.clear()
       for (const edgeId in this.edgesById) {
         this.edgesById[edgeId].render()
       }

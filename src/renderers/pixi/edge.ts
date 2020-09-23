@@ -40,7 +40,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private width: number = 0
   private stroke: number = 0
   private strokeOpacity: number = 0
-  private line = new PIXI.Graphics()
+  private line = new PIXI.Container()
   private arrowContainer = new PIXI.Container()
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
@@ -69,12 +69,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       .on('pointerup', this.pointerUp)
       .on('pointerupoutside', this.pointerUp)
 
-    edgesLayer.addChild(this.line)
+    this.edgesLayer.addChild(this.line)
     /**
      * TODO - perf test adding label/arrow directly to edgesLayer container, vs. creating label/arrow containers
      */
-    edgesLayer.addChild(this.arrowContainer)
-    edgesLayer.addChild(this.labelContainer)
+    this.edgesLayer.addChild(this.arrowContainer)
+    this.edgesLayer.addChild(this.labelContainer)
   }
 
   update(edge: E) {
@@ -218,21 +218,14 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.x1 = endArrowOffset[0]
       this.y1 = endArrowOffset[1]
 
-      this.line
-        .clear()
-        .lineStyle(this.width, this.stroke, this.strokeOpacity)
+      this.renderer.edgesGraphic
         .moveTo(this.x0, this.y0)
+        .lineStyle(this.width, this.stroke, this.strokeOpacity)
         .lineTo(this.x1, this.y1)
-        .endFill()
 
       this.labelContainer.x = center[0]
       this.labelContainer.y = center[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
-
-      // const arrowPosition = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
-      // this.arrow.x = arrowPosition[0]
-      // this.arrow.y = arrowPosition[1]
-      // this.arrow.rotation = theta
 
       // TODO - don't bother rendering hitArea when animating position or dragging
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
@@ -251,7 +244,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       hitAreaVerticies[6] = point[0]
       hitAreaVerticies[7] = point[1]
       this.line.hitArea = new PIXI.Polygon(hitAreaVerticies)
-      // this.line.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
+      // this.renderer.edgesGraphic.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
     } else {
       this.curvePeak = movePoint(center[0], center[1], theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI, this.curve * 20)
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
@@ -267,22 +260,15 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.curveControlPointA = movePoint(this.curvePeak[0], this.curvePeak[1], theta, edgeLength / 4)
       this.curveControlPointB = movePoint(this.curvePeak[0], this.curvePeak[1], theta, edgeLength / -4)
 
-      this.line
-        .clear()
-        .lineStyle(this.width, this.stroke, this.strokeOpacity)
+      this.renderer.edgesGraphic
         .moveTo(this.x0, this.y0)
+        .lineStyle(this.width, this.stroke, this.strokeOpacity)
         .bezierCurveTo(this.x0, this.y0, this.curveControlPointA[0], this.curveControlPointA[1], this.curvePeak[0], this.curvePeak[1])
         .bezierCurveTo(this.curveControlPointB[0], this.curveControlPointB[1], this.x1, this.y1, this.x1, this.y1)
-        .endFill()
 
       this.labelContainer.x = this.curvePeak[0]
       this.labelContainer.y = this.curvePeak[1]
       this.labelContainer.rotation = theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
-
-      // const arrowPosition = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
-      // this.arrow.x = arrowPosition[0]
-      // this.arrow.y = arrowPosition[1]
-      // this.arrow.rotation = thetaCurveEnd
 
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const hitAreaVerticies: number[] = new Array(12)
@@ -305,7 +291,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       hitAreaVerticies[10] = point[0]
       hitAreaVerticies[11] = point[1]
       this.line.hitArea = new PIXI.Polygon(hitAreaVerticies)
-      // this.line.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
+      // this.renderer.edgesGraphic.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
     }
 
 
@@ -343,7 +329,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   delete() {
-    this.line.destroy()
+    // this.line.destroy()
     this.forwardArrow?.destroy()
     this.reverseArrow?.destroy()
     this.labelContainer.destroy()
