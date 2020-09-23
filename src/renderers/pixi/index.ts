@@ -357,13 +357,11 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       performance.measure('render', 'render')
 
       this.dirty = this.animationPercent < 1
-      this.viewport.dirty = false
 
       performance.mark('draw')
       this.app.render()
       performance.measure('draw', 'draw')
     } else if (this.viewport.dirty) {
-      this.viewport.dirty = false
       performance.mark('draw')
       this.app.render()
       performance.measure('draw', 'draw')
@@ -406,6 +404,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         'color: #666',
       )
     }
+
+    this.viewport.dirty = false
 
     performance.clearMarks()
     performance.clearMeasures()

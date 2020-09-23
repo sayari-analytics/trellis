@@ -3,6 +3,7 @@ import { Layout, LayoutOptions } from '../../src/layout/force'
 import * as Graph from '../../src/types'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
+import { throttleAnimationFrame } from '../../src/utils'
 
 
 export const stats = new Stats()
@@ -40,12 +41,12 @@ let nodes = Object.values(graphData.nodes)
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_18` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_19` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_20` })))
-  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_21` })))
-  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_22` })))
-  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_23` })))
-  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_24` })))
-  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_25` })))
-  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_26` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_21` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_22` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_23` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_24` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_25` })))
+  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_26` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_27` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_28` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_29` })))
@@ -66,24 +67,32 @@ let nodes = Object.values(graphData.nodes)
     type,
     style: {
       color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-      // stroke: type === 'company' ?
-      //   [{ color: '#F7CA4D', width: 4 }] :
-      //   [{ color: '#90D7FB', width: 4 }],
+      stroke: type === 'company' ?
+        [{ color: '#F7CA4D', width: 4 }] :
+        [{ color: '#90D7FB', width: 4 }],
       // icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
     }
   }))
 
-let edges = []
-// Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_6`, { ...edge, source: `${edge.source}_6`, target: `${edge.target}_6` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_7`, { ...edge, source: `${edge.source}_7`, target: `${edge.target}_7` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_8`, { ...edge, source: `${edge.source}_8`, target: `${edge.target}_8` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_9`, { ...edge, source: `${edge.source}_9`, target: `${edge.target}_9` }]))
-  // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_10`, { ...edge, source: `${edge.source}_10`, target: `${edge.target}_10` }]))
+let edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_6`, { ...edge, source: `${edge.source}_6`, target: `${edge.target}_6` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_7`, { ...edge, source: `${edge.source}_7`, target: `${edge.target}_7` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_8`, { ...edge, source: `${edge.source}_8`, target: `${edge.target}_8` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_9`, { ...edge, source: `${edge.source}_9`, target: `${edge.target}_9` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_10`, { ...edge, source: `${edge.source}_10`, target: `${edge.target}_10` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_11`, { ...edge, source: `${edge.source}_11`, target: `${edge.target}_11` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_12`, { ...edge, source: `${edge.source}_12`, target: `${edge.target}_12` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_13`, { ...edge, source: `${edge.source}_13`, target: `${edge.target}_13` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_14`, { ...edge, source: `${edge.source}_14`, target: `${edge.target}_14` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_15`, { ...edge, source: `${edge.source}_15`, target: `${edge.target}_15` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_16`, { ...edge, source: `${edge.source}_16`, target: `${edge.target}_16` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_17`, { ...edge, source: `${edge.source}_17`, target: `${edge.target}_17` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_18`, { ...edge, source: `${edge.source}_18`, target: `${edge.target}_18` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_19`, { ...edge, source: `${edge.source}_19`, target: `${edge.target}_19` }]))
   // .concat([
   //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
   //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
@@ -102,60 +111,47 @@ let edges = []
     // label: field.replace(/_/g, ' '),
   }))
 
+let nodesById: Record<string, Node>
+let edgesById: Record<string, Graph.Edge>
+
 
 /**
  * Initialize Layout and Renderer Options
  */
 const layoutOptions: Partial<LayoutOptions> = {
   nodeStrength: -600,
-  tick: 10,
+  tick: 50,
 }
 
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_, { id }, x, y) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    render({ nodes, edges, options: renderOptions })
-  },
   onNodeDrag: (_, { id }, x, y) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
+    nodesById[id].x = x
+    nodesById[id].y = y
     render({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ? {
-      ...node,
-      radius: node.radius * 4,
-      // style: {
-      //   ...node.style,
-      //   stroke: [{ color: '#CCC', width: 4 }]
-      // }
-    } : node))
+    nodesById[id].radius = 100
+    nodesById[id].style.stroke = [{ color: '#CCC', width: 4 }]
     render({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ?
-      {
-        ...node,
-        radius: 32,
-        // style: {
-        //   ...node.style,
-        //   stroke: node.type === 'company' ?
-        //     [{ color: '#F7CA4D', width: 4 }] :
-        //     [{ color: '#90D7FB', width: 4 }],
-        // }
-      } :
-      node
-    ))
+    nodesById[id].radius = 32
+    nodesById[id].style.stroke = nodesById[id].type === 'company' ?
+      [{ color: '#F7CA4D', width: 4 }] :
+      [{ color: '#90D7FB', width: 4 }]
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {
-    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
+    if (edgesById[id].style === undefined) edgesById[id].style = {}
+    edgesById[id].style.width = 3
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_, { id }) => {
-    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
+    if (edgesById[id].style === undefined) edgesById[id].style = {}
+    edgesById[id].style.width = 1
     render({ nodes, edges, options: renderOptions })
   },
 }
@@ -166,10 +162,12 @@ const renderOptions: Partial<RendererOptions> = {
  */
 const layout = Layout()
 
-const render = Renderer({
+const _render = Renderer({
   container,
   debug: { stats, logPerformance: true }
 })
+
+const render = throttleAnimationFrame(_render)
 
 
 /**
@@ -185,6 +183,8 @@ layout({
 }).then((graph) => {
   nodes = graph.nodes
   edges = graph.edges
+  nodesById = nodes.reduce<Record<string, Node>>((nodesById, node) => (nodesById[node.id] = node, nodesById), {})
+  edgesById = edges.reduce<Record<string, Graph.Edge>>((edgesById, edge) => (edgesById[edge.id] = edge, edgesById), {})
   render({ nodes, edges, options: renderOptions })
 })
 
