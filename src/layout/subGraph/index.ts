@@ -289,7 +289,7 @@ export const Layout = () => {
     })
   }
 
-  layout.dispose = () => {
+  layout.delete = () => {
     worker.terminate()
     URL.revokeObjectURL(workerUrl)
   }

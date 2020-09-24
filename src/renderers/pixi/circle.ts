@@ -23,4 +23,8 @@ export class CircleRenderer<N extends Node, E extends Edge>{
 
     return sprite
   }
+
+  delete() {
+    this.texture.destroy()
+  }
 }

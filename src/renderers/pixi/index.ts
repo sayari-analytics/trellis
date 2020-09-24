@@ -411,13 +411,23 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     performance.clearMeasures()
     performance.mark('external')
   }
+
+  delete = () => {
+    this.app.destroy(false, { children: true, texture: true, baseTexture: true })
+    this.circle.delete()
+    this.arrow.delete()
+  }
 }
 
 
 export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer<N, E>(options)
 
-  return (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
+  const render = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
     pixiRenderer.update(graph)
   }
+
+  render.delete = pixiRenderer.delete
+
+  return render
 }

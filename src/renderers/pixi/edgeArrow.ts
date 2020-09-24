@@ -28,4 +28,8 @@ export class ArrowRenderer<N extends Node, E extends Edge>{
 
     return sprite
   }
+
+  delete() {
+    this.texture.destroy()
+  }
 }
