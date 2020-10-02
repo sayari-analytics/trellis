@@ -1,4 +1,4 @@
-A simple Network layout library with a declarative API and plugable renderers
+A highly performant network visualization library with a simple, declarative API and plugable renderers
 
 ## Examples
 - WebGL

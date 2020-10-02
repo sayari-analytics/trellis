@@ -1,21 +1,11 @@
 import * as PIXI from 'pixi.js'
 import { EdgeStyle, PIXIRenderer as Renderer } from './'
-import { colorToNumber } from './utils'
+import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI } from './utils'
 import { Node, Edge } from '../../'
 import { ArrowRenderer } from './edgeArrow'
 
 
-const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
 
-const midPoint = (x0: number, y0: number, x1: number, y1: number): [number, number] => [(x0 + x1) / 2, (y0 + y1) / 2]
-
-const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
-
-const angle = (x0: number, y0: number, x1: number, y1: number) => Math.atan2(y0 - y1, x0 - x1)
-
-const HALF_PI = Math.PI / 2
-const TWO_PI = Math.PI * 2
-const THREE_HALF_PI = HALF_PI * 3
 const LINE_HOVER_RADIUS = 4
 
 const DEFAULT_EDGE_WIDTH = 1

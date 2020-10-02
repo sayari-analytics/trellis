@@ -16,16 +16,35 @@ document.body.appendChild(stats.dom)
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{
-    color: '#F7CA4D',
-    width: 6,
-  }, {
     color: '#FFF',
     width: 8,
   }, {
     color: '#F7CA4D',
-    width: 6,
   }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 },
+  badge: [{
+    position: 45,
+    color: '#FFAF1D',
+    stroke: '#FFF',
+    icon: {
+      type: 'textIcon',
+      family: 'Helvetica',
+      size: 18,
+      color: '#FFF',
+      text: '15',
+    }
+  }, {
+    position: 135,
+    color: '#E4171B',
+    stroke: '#FFF',
+    icon: {
+      type: 'textIcon',
+      family: 'Helvetica',
+      size: 18,
+      color: '#FFF',
+      text: '!',
+    }
+  }],
 })
 
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
@@ -34,13 +53,25 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
     color: '#90D7FB',
     width: 6,
   }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius / 1.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.25 },
+  badge: [{
+    position: 45,
+    color: '#7CBBF3',
+    stroke: '#FFF',
+    icon: {
+      type: 'textIcon',
+      family: 'Helvetica',
+      size: 18,
+      color: '#FFF',
+      text: '8',
+    }
+  }],
 })
 
 const createSubgraphStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius / 1.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 }
 })
 
 let nodes = [
@@ -48,11 +79,10 @@ let nodes = [
   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
   { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
 ]
-  .map<Node>(({ id, label }, idx) => ({
+  .map<Node>(({ id, label }) => ({
     id,
     label,
-    radius: id === 'a' ? 62 : (20 - idx) * 4,
-    style: id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4)
+    style: id === 'a' ? createCompanyStyle(48) : createPersonStyle(48)
   }))
 
 let edges: Edge[] = [
@@ -92,7 +122,9 @@ const renderOptions: Partial<RendererOptions> = {
         ...node,
         style: {
           ...node.style,
-          stroke: node.style.stroke.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 1 ? '#FFF' : '#CCC' }))
+          stroke: node.id === 'a' ?
+            node.style.stroke.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 0 ? '#FFF' : '#CCC' })) :
+            node.style.stroke.map((stroke) => ({ ...stroke, color: '#CCC' }))
         }
       } :
       node
@@ -106,8 +138,8 @@ const renderOptions: Partial<RendererOptions> = {
         style: {
           ...node.style,
           stroke: node.id === 'a' ?
-            createCompanyStyle(node.radius).stroke :
-            createPersonStyle(node.radius).stroke
+            createCompanyStyle(48).stroke :
+            createPersonStyle(48).stroke
         }
       } :
       node
@@ -125,7 +157,6 @@ const renderOptions: Partial<RendererOptions> = {
   onNodeDoubleClick: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
-      radius: 160,
       style: { ...node.style, color: '#EFEFEF', icon: undefined },
       subGraph: {
         nodes: (node.subGraph?.nodes ?? []).concat([
@@ -146,8 +177,8 @@ const renderOptions: Partial<RendererOptions> = {
   onContainerPointerUp: () => {
     nodes = nodes.map((node, idx) => (node.subGraph ? {
       ...node,
-      radius: node.id === 'a' ? 62 : (20 - idx) * 4,
-      style: node.id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
+      radius: 48,
+      style: node.id === 'a' ? createCompanyStyle(48) : createPersonStyle((20 - idx) * 4),
       subGraph: undefined,
     } : node))
 

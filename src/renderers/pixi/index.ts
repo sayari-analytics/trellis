@@ -29,6 +29,14 @@ export type NodeStyle = {
     color: string
     width: number
   }>[]
+  badge: {
+    position: number
+    radius?: number
+    color?: string
+    stroke?: string
+    strokeWidth?: number
+    icon?: TextIcon | ImageIcon
+  }[]
   icon: TextIcon | ImageIcon
   labelFamily: string
   labelColor: string

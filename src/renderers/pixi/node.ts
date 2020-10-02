@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
-import { PIXIRenderer as Renderer, TextIcon, ImageIcon, NodeStyle } from '.'
-import { colorToNumber, parentInFront } from './utils'
+import { PIXIRenderer as Renderer, NodeStyle } from '.'
+import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
 import { CancellablePromise, FontLoader } from './FontLoader'
@@ -14,6 +14,9 @@ const DEFAULT_NODE_STROKE_WIDTH = 6
 const DEFAULT_LABEL_FAMILY = 'Helvetica'
 const DEFAULT_LABEL_COLOR = '#222'
 const DEFAULT_LABEL_SIZE = 14
+const DEFAULT_RADIUS = 48
+const DEFAULT_BADGE_RADIUS = 16
+const DEFAULT_BADGE_STROKE_WIDTH = 4
 
 
 export class NodeRenderer<N extends Node, E extends Edge>{
@@ -37,18 +40,20 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private interpolateX: (percent: number) => number = () => this.endX
   private interpolateY: (percent: number) => number = () => this.endY
   private interpolateRadius: (percent: number) => number = () => this.endRadius
-  private stroke?: NodeStyle['stroke']
   private label?: string
   private labelFamily?: string
   private labelColor?: string
   private labelSize?: number
-  private icon?: TextIcon | ImageIcon
+  private stroke?: NodeStyle['stroke']
+  private icon?: NodeStyle['icon']
+  private badge?: NodeStyle['badge']
   private nodeContainer = new PIXI.Container()
-  private fillSpriteContainer = new PIXI.Container()
-  private strokeSpriteContainer: PIXI.Container[] = []
-  private labelContainer = new PIXI.Container()
   private fillSprite: PIXI.Sprite
+  private strokeSpriteContainer: PIXI.Container[] = []
   private strokeSprites: { sprite: PIXI.Sprite, width: number }[] = []
+  private badgeSpriteContainer?: PIXI.Container
+  private badgeSprites: { fill: PIXI.Sprite, stroke: PIXI.Sprite, icon?: PIXI.Sprite, angle: number }[] = []
+  private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
   private iconSprite?: PIXI.Text
   private fontIconLoader?: CancellablePromise<string>
@@ -57,7 +62,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
 
-  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, radius: number, parent?: NodeRenderer<N, E>) {
+  constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, radius?: number, parent?: NodeRenderer<N, E>) {
     this.renderer = renderer
 
     this.parent = parent
@@ -67,7 +72,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.nodeContainer.buttonMode = true
 
     this.fillSprite = this.renderer.circle.create()
-    this.fillSpriteContainer.addChild(this.fillSprite)
 
     this.nodeContainer
       .on('pointerover', this.nodePointerEnter)
@@ -75,7 +79,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       .on('pointerdown', this.nodePointerDown)
       .on('pointerup', this.nodePointerUp)
       .on('pointerupoutside', this.nodePointerUp)
-      .addChild(this.fillSpriteContainer)
+      .addChild(this.fillSprite)
 
     this.nodeContainer.zIndex = this.depth
 
@@ -94,7 +98,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.node = node
     this.startX = this.endX = this.x = x
     this.startY = this.endY = this.y = y
-    this.startRadius = this.endRadius = this.radius = radius
+    this.startRadius = this.endRadius = this.radius = radius ?? DEFAULT_RADIUS
     this.update(node)
   }
 
@@ -114,7 +118,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.7), interpolateYNumber(0.95), this.endY])
 
     this.startRadius = this.radius
-    this.endRadius = node.radius
+    this.endRadius = node.radius ?? DEFAULT_RADIUS
 
     const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
     this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.7), interpolateRadiusNumber(0.95), this.endRadius])
@@ -125,36 +129,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     this.fillSprite.tint = colorToNumber(this.node.style?.color ?? DEFAULT_NODE_FILL)
     // this.fillOpacity = this.fillSprite.alpha = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
-
-
-    /**
-     * Strokes
-     */
-    if (!equals(node.style?.stroke, this.stroke)) {
-      this.stroke = node.style?.stroke
-      for (const container of this.strokeSpriteContainer) {
-        this.nodeContainer.removeChild(container)
-        container.destroy()
-      }
-      this.strokeSprites = []
-      this.strokeSpriteContainer = []
-      this.strokeWidth = 0
-
-      if (this.stroke) {
-        this.strokeWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
-
-        for (const stroke of this.stroke) {
-          const strokeSprite = this.renderer.circle.create()
-          strokeSprite.tint = colorToNumber(stroke.color ?? DEFAULT_NODE_STROKE)
-          this.strokeSprites.push({ sprite: strokeSprite, width: stroke.width ?? DEFAULT_NODE_STROKE_WIDTH })
-
-          const container = new PIXI.Container()
-          container.addChild(strokeSprite)
-          this.strokeSpriteContainer.push(container)
-          this.nodeContainer.addChildAt(container, 0)
-        }
-      }
-    }
 
 
     /**
@@ -188,10 +162,40 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           strokeThickness: 2 * 2,
           align: 'center',
         })
-        this.labelSprite.position.set(0, node.radius + LABEL_Y_PADDING)
-        this.labelSprite.scale.set(0.4)
+        this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
         this.labelSprite.anchor.set(0.5, 0)
+        this.labelSprite.scale.set(0.4)
         this.labelContainer.addChild(this.labelSprite)
+      }
+    }
+
+
+    /**
+     * Strokes
+     */
+    if (!equals(node.style?.stroke, this.stroke)) {
+      this.stroke = node.style?.stroke
+      for (const container of this.strokeSpriteContainer) {
+        this.nodeContainer.removeChild(container)
+        container.destroy()
+      }
+      this.strokeSprites = []
+      this.strokeSpriteContainer = []
+      this.strokeWidth = 0
+
+      if (this.stroke) {
+        this.strokeWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
+
+        for (const stroke of this.stroke) {
+          const strokeSprite = this.renderer.circle.create()
+          strokeSprite.tint = colorToNumber(stroke.color ?? DEFAULT_NODE_STROKE)
+          this.strokeSprites.push({ sprite: strokeSprite, width: stroke.width ?? DEFAULT_NODE_STROKE_WIDTH })
+
+          const container = new PIXI.Container()
+          container.addChild(strokeSprite)
+          this.strokeSpriteContainer.push(container)
+          this.nodeContainer.addChildAt(container, 0) // add to bottom
+        }
       }
     }
 
@@ -220,8 +224,65 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           this.iconSprite.name = 'icon'
           this.iconSprite.position.set(0, 0)
           this.iconSprite.anchor.set(0.5)
-          this.nodeContainer.addChild(this.iconSprite)
+          this.iconSprite.scale.set(0.5)
+
+          if (this.badgeSpriteContainer === undefined) {
+            // no badges - add to top of nodeContainer
+            this.nodeContainer.addChild(this.iconSprite)
+          } else {
+            // badges - add below badges
+            this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
+          }
         })
+      }
+    }
+
+
+    /**
+     * Badges
+     */
+    if (!equals(node.style?.badge, this.badge)) {
+      this.badge = node.style?.badge
+      this.badgeSpriteContainer?.destroy()
+      this.badgeSpriteContainer = undefined
+      this.badgeSprites = []
+
+      if (this.badge !== undefined) {
+        this.badgeSpriteContainer = new PIXI.Container()
+
+        for (const badge of this.badge) {
+          const badgeRadius = badge.radius ?? DEFAULT_BADGE_RADIUS
+          const badgeStrokeRadius = badgeRadius + (badge.strokeWidth ?? DEFAULT_BADGE_STROKE_WIDTH)
+          const badgeFillSprite = this.renderer.circle.create()
+          badgeFillSprite.tint = colorToNumber(badge.color ?? DEFAULT_NODE_FILL)
+          badgeFillSprite.scale.set(badgeRadius / 1000)
+
+          const badgeStrokeSprite = this.renderer.circle.create()
+          badgeStrokeSprite.tint = colorToNumber(badge.stroke ?? DEFAULT_NODE_STROKE)
+          badgeStrokeSprite.scale.set(badgeStrokeRadius / 1000)
+
+          let badgeIconSprite: PIXI.Sprite | undefined
+
+          if (badge.icon?.type === 'textIcon') {
+            badgeIconSprite = new PIXI.Text(badge.icon.text, {
+              fontFamily: badge.icon.family,
+              fontSize: badge.icon.size * 2,
+              fontWeight: 'bold',
+              fill: badge.icon.color,
+            })
+            badgeIconSprite.position.set(0, 0)
+            badgeIconSprite.anchor.set(0.5)
+            badgeIconSprite.scale.set(0.5)
+          }
+          // } else if (badge.icon?.type === 'imageIcon') // TODO
+
+          this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+
+          this.badgeSpriteContainer.addChild(badgeStrokeSprite)
+          this.badgeSpriteContainer.addChild(badgeFillSprite)
+          badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
+          this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
+        }
       }
     }
 
@@ -285,6 +346,15 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       for (const { sprite, width } of this.strokeSprites) {
         strokeWidths += width
         sprite.scale.set(strokeWidths / 1000)
+      }
+    }
+
+    if (this.badge !== undefined) {
+      for (const { fill, stroke, icon, angle } of this.badgeSprites) {
+        const [x, y] = movePoint(0, 0, angle, this.radius + this.strokeWidth)
+        fill.position.set(x, y)
+        stroke.position.set(x, y)
+        icon !== undefined && icon.position.set(x, y)
       }
     }
 

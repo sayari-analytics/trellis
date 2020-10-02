@@ -24,3 +24,27 @@ export const parentInFront = <N extends Node, E extends Edge>(renderer: Renderer
 
   return false
 }
+
+
+export const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
+
+
+export const midPoint = (x0: number, y0: number, x1: number, y1: number): [number, number] => [(x0 + x1) / 2, (y0 + y1) / 2]
+
+
+export const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
+
+
+export const angle = (x0: number, y0: number, x1: number, y1: number) => Math.atan2(y0 - y1, x0 - x1)
+
+
+export const HALF_PI = Math.PI / 2
+
+
+export const TWO_PI = Math.PI * 2
+
+
+export const THREE_HALF_PI = HALF_PI * 3
+
+
+export const RADIANS_PER_DEGREE = Math.PI / 180

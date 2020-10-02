@@ -19,12 +19,12 @@ type Node = Graph.Node & { type: string }
 const COMPANY_STYLE: Partial<NodeStyle> = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 32 * 0.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 32 }
 }
 const PERSON_STYLE: Partial<NodeStyle> = {
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 }
 }
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
@@ -44,7 +44,7 @@ const data = {
       style: {
         color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
         stroke: [{ color: type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }],
-        icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+        icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 },
       }
     })),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
