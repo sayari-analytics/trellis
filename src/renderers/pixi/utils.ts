@@ -1,7 +1,7 @@
 import { color } from 'd3-color'
 import { PIXIRenderer as Renderer } from '.'
 import { NodeRenderer } from './node'
-import { Node, Edge } from '../../types'
+import { Node, Edge } from '../../'
 
 
 export const colorToNumber = (colorString: string): number => {

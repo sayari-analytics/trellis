@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
-import { Node, Edge } from '../../types'
+import { Node, Edge } from '../../'
 import { animationFrameLoop, noop } from '../../utils'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'

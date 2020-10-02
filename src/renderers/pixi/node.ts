@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js'
 import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { PIXIRenderer as Renderer, TextIcon, ImageIcon, NodeStyle } from '.'
 import { colorToNumber, parentInFront } from './utils'
-import { Node, Edge } from '../../types'
+import { Node, Edge } from '../../'
 import { equals } from '../../utils'
 import { CancellablePromise, FontLoader } from './FontLoader'
 

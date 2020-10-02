@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
-import * as Graph from '../../src/types'
+import * as Graph from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -35,7 +35,7 @@ const data = {
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
-    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
+    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .map<Node>(({ id, label, type }) => ({
       id,
       label,

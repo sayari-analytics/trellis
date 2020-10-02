@@ -1,7 +1,7 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
-import { Node, Edge } from '../../src/types'
+import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 

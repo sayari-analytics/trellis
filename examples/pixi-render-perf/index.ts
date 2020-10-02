@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
-import * as Graph from '../../src/types'
+import * as Graph from '../../src'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 import { throttleAnimationFrame } from '../../src/utils'
@@ -132,28 +132,28 @@ const renderOptions: Partial<RendererOptions> = {
     nodesById[id].y = y
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerEnter: (_, { id }) => {
-    nodesById[id].radius = 100
-    nodesById[id].style.stroke = [{ color: '#CCC', width: 4 }]
-    render({ nodes, edges, options: renderOptions })
-  },
-  onNodePointerLeave: (_, { id }) => {
-    nodesById[id].radius = 32
-    nodesById[id].style.stroke = nodesById[id].type === 'company' ?
-      [{ color: '#F7CA4D', width: 4 }] :
-      [{ color: '#90D7FB', width: 4 }]
-    render({ nodes, edges, options: renderOptions })
-  },
-  onEdgePointerEnter: (_, { id }) => {
-    if (edgesById[id].style === undefined) edgesById[id].style = {}
-    edgesById[id].style.width = 3
-    render({ nodes, edges, options: renderOptions })
-  },
-  onEdgePointerLeave: (_, { id }) => {
-    if (edgesById[id].style === undefined) edgesById[id].style = {}
-    edgesById[id].style.width = 1
-    render({ nodes, edges, options: renderOptions })
-  },
+  // onNodePointerEnter: throttleAnimationFrame((_, { id }) => {
+  //   nodesById[id].radius = 100
+  //   nodesById[id].style.stroke = [{ color: '#CCC', width: 4 }]
+  //   render({ nodes, edges, options: renderOptions })
+  // }),
+  // onNodePointerLeave: throttleAnimationFrame((_, { id }) => {
+  //   nodesById[id].radius = 32
+  //   nodesById[id].style.stroke = nodesById[id].type === 'company' ?
+  //     [{ color: '#F7CA4D', width: 4 }] :
+  //     [{ color: '#90D7FB', width: 4 }]
+  //   render({ nodes, edges, options: renderOptions })
+  // }),
+  // onEdgePointerEnter: throttleAnimationFrame((_, { id }) => {
+  //   if (edgesById[id].style === undefined) edgesById[id].style = {}
+  //   edgesById[id].style.width = 3
+  //   render({ nodes, edges, options: renderOptions })
+  // }),
+  // onEdgePointerLeave: throttleAnimationFrame((_, { id }) => {
+  //   if (edgesById[id].style === undefined) edgesById[id].style = {}
+  //   edgesById[id].style.width = 1
+  //   render({ nodes, edges, options: renderOptions })
+  // }),
 }
 
 
@@ -162,12 +162,10 @@ const renderOptions: Partial<RendererOptions> = {
  */
 const layout = Layout()
 
-const _render = Renderer({
+const render = throttleAnimationFrame(Renderer({
   container,
   debug: { stats, logPerformance: true }
-})
-
-const render = throttleAnimationFrame(_render)
+}))
 
 
 /**

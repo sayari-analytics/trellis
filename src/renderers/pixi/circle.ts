@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { PIXIRenderer as Renderer } from '.'
-import { Node, Edge } from '../../types'
+import { Node, Edge } from '../../'
 
 
 export class CircleRenderer<N extends Node, E extends Edge>{

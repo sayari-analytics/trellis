@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js'
-import { EdgeStyle, PIXIRenderer as Renderer } from '.'
+import { EdgeStyle, PIXIRenderer as Renderer } from './'
 import { colorToNumber } from './utils'
-import { Node, Edge } from '../../types'
+import { Node, Edge } from '../../'
 import { ArrowRenderer } from './edgeArrow'
 
 

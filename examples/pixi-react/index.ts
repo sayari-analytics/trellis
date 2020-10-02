@@ -1,7 +1,7 @@
 import { createElement, SFC, useState, useCallback, useEffect, useRef } from 'react'
 import { render } from 'react-dom'
 import Stats from 'stats.js'
-import * as Graph from '../../src/types'
+import * as Graph from '../../src'
 import { Renderer } from '../../src/renderers/pixi/bindings/react'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
@@ -65,7 +65,7 @@ const App: SFC = () => {
 
   const ref = useRef<HTMLElement>()
 
-  const [graph, setGraph] = useState({ nodes: [], edges: [] })
+  const [graph, setGraph] = useState<{ nodes: Graph.Node[], edges: Graph.Edge[] }>({ nodes: [], edges: [] })
 
   useEffect(() => {
     force({ nodes, edges }).then((graph) => setGraph(graph))
@@ -78,7 +78,13 @@ const App: SFC = () => {
     setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, x, y } : node)), edges }))
   }, [])
   const onNodePointerEnter = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
-    setGraph(({ nodes, edges }) => ({ nodes: nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: '#CCC' } } : node)), edges }))
+    setGraph(({ nodes, edges }) => ({
+      nodes: nodes.map((node) => (node.id === id ?
+        { ...node, style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] } } :
+        node
+      )),
+      edges
+    }))
   }, [])
   const onNodePointerLeave = useCallback((_: PIXI.InteractionEvent, { id }: Node) => {
     setGraph(({ nodes, edges }) => ({
@@ -87,7 +93,7 @@ const App: SFC = () => {
           ...node,
           style: {
             ...node.style,
-            stroke: id === 'a' ? '#F7CA4D' : '#90D7FB'
+            stroke: id === 'a' ? [{ color: '#F7CA4D', width: 4 }] : [{ color: '#90D7FB', width: 4 }]
           }
         } :
         node
