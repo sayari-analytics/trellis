@@ -24,19 +24,19 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private renderer: Renderer<N, E>
   private edgesLayer: PIXI.Container
   private label?: string
-  private labelFamily?: string
-  private labelColor?: string
-  private labelSize?: number
+  private labelFamily = DEFAULT_LABEL_FAMILY
+  private labelColor = DEFAULT_LABEL_COLOR
+  private labelSize = DEFAULT_LABEL_SIZE
   private width: number = 0
   private stroke: number = 0
   private strokeOpacity: number = 0
-  private line = new PIXI.Container()
-  private arrowContainer = new PIXI.Container()
+  private line = new PIXI.ParticleContainer()
+  private arrowContainer = new PIXI.ParticleContainer()
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
   private reverseArrow?: PIXI.Sprite
   private hoveredEdge = false
-  private labelContainer = new PIXI.Container()
+  private labelContainer = new PIXI.Container() // TODO - can't use ParticleContainer.  lazily add label sprite directly to edgesLayer
   private labelSprite?: PIXI.Text
   private x0: number = 0
   private y0: number = 0

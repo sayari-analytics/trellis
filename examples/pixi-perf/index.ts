@@ -17,14 +17,10 @@ type Node = Graph.Node & { type: string }
  * Initialize Data
  */
 const COMPANY_STYLE: Partial<NodeStyle> = {
-  color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 32 }
 }
 const PERSON_STYLE: Partial<NodeStyle> = {
-  color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 }
 }
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
@@ -45,6 +41,20 @@ const data = {
         color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
         stroke: [{ color: type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }],
         icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 },
+        badge: type === 'company' ?
+          [{
+            position: 45,
+            color: '#FFAF1D',
+            stroke: '#FFF',
+            radius: 14,
+            icon: {
+              type: 'textIcon',
+              family: 'Helvetica',
+              size: 16,
+              color: '#FFF',
+              text: '8',
+            }
+          }] : undefined,
       }
     })),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)

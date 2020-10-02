@@ -127,11 +127,11 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodeDrag: (_, { id }, x, y) => {
+  onNodeDrag: throttleAnimationFrame((_, { id }, x, y) => {
     nodesById[id].x = x
     nodesById[id].y = y
     render({ nodes, edges, options: renderOptions })
-  },
+  }),
   // onNodePointerEnter: throttleAnimationFrame((_, { id }) => {
   //   nodesById[id].radius = 100
   //   nodesById[id].style.stroke = [{ color: '#CCC', width: 4 }]
