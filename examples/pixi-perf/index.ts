@@ -77,6 +77,7 @@ const data = {
       source,
       target,
       label: field.replace(/_/g, ' '),
+      style: { arrow: 'forward' }
     }))
 }
 

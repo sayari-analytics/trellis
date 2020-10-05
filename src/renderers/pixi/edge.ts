@@ -31,7 +31,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private stroke: number = 0
   private strokeOpacity: number = 0
   private line = new PIXI.ParticleContainer()
-  private arrowContainer = new PIXI.ParticleContainer()
+  private arrowContainer = new PIXI.Container() // why can't this be a ParticleContainer
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
   private reverseArrow?: PIXI.Sprite
