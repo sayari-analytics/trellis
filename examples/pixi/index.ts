@@ -82,6 +82,7 @@ let nodes = [
   .map<Node>(({ id, label }) => ({
     id,
     label,
+    radius: 48,
     style: id === 'a' ? createCompanyStyle(48) : createPersonStyle(48)
   }))
 

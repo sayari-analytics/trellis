@@ -3,7 +3,7 @@ import { NodeStyle, EdgeStyle } from './renderers/pixi'
 
 export type Node<E extends Edge = Edge, Style = Partial<NodeStyle>> = {
   id: string
-  radius?: number
+  radius: number
   x?: number | undefined // TODO - add prop for fixed position
   y?: number | undefined
   label?: string | undefined

@@ -1,6 +1,6 @@
 /* eslint-disable no-useless-escape */
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge } from '../../types'
+import { Node, Edge } from '../../'
 
 
 export type LayoutOptions = {
