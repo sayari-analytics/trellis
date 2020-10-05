@@ -6,6 +6,8 @@ export type LayoutOptions = {
   x: number
   y: number
   nodeSize: [number, number]
+  size: [number, number]
+  separation: (a: HierarchyPointNode<Hierarchy>, b: HierarchyPointNode<Hierarchy>) => number
   bfs: boolean
 }
 
@@ -95,8 +97,16 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
+    let layout = graph.options?.size !== undefined ?
+      tree<Hierarchy>().size(graph.options.size) :
+      tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
+
+    if (graph.options?.separation !== undefined) {
+      layout.separation(graph.options.separation)
+    }
+
     const positionedDataById = hierarchyToGraph(
-      tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)(
+      layout(
         hierarchy(
           graph.options?.bfs !== false ?
             graphToBFSHierarchy(edgeIndex, root) :
