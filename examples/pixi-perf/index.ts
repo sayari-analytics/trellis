@@ -31,7 +31,7 @@ const data = {
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
-    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .map<Node>(({ id, label, type }) => ({
       id,
       label,
@@ -146,7 +146,7 @@ const render = Renderer<Node, Graph.Edge>({
 /**
  * Layout and Render Graph
  */
-const NODES_PER_TICK = 40
+const NODES_PER_TICK = 30
 const INTERVAL = 1400
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0

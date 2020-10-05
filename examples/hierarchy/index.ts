@@ -70,6 +70,8 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
 
 let nodes = Object.values(graphData.nodes)
   .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
   .map<Node>(({ id, label, type }) => ({
     id,
     label,
@@ -81,20 +83,55 @@ let nodes = Object.values(graphData.nodes)
   }))
 
 let edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
+  .concat([
+    ['connect_2', { field: 'related_to', source: Object.values(graphData.nodes)[77].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
+    ['connect_3', { field: 'related_to', source: `${Object.values(graphData.nodes)[50].id}_2`, target: `${Object.values(graphData.nodes)[0].id}_3` }],
+  ])
   .map<Graph.Edge>(([id, { field, source, target }]) => ({
     id,
     source,
     target,
     label: field.replace(/_/g, ' '),
+    style: { arrow: 'forward' }
   }))
+
+// let nodes = [
+//   { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' }, { id: 'f', label: 'F' }, { id: 'g', label: 'G' },
+//   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
+//   { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
+// ]
+//   .map<Node>(({ id, label }) => ({
+//     id,
+//     label,
+//     radius: 48,
+//     type: id === 'a' ? 'company' : 'person',
+//     style: id === 'a' ? createCompanyStyle(48) : createPersonStyle(48)
+//   }))
+
+// let edges: Graph.Edge[] = [
+//   { id: 'ba', source: 'a', target: 'b', label: 'None' }, { id: 'ca', source: 'a', target: 'c', label: 'None' }, { id: 'da', source: 'a', target: 'd', label: 'None' },
+//   { id: 'ea', source: 'a', target: 'e', label: 'A to E', style: { arrow: 'forward' } }, { id: 'fa', source: 'a', target: 'f', label: 'A to F', style: { arrow: 'forward' } },
+//   { id: 'ga', source: 'a', target: 'g', label: 'A to G', style: { arrow: 'forward' } }, { id: 'ha', source: 'a', target: 'h', label: 'A to H', style: { arrow: 'forward' } },
+//   { id: 'ia', source: 'a', target: 'i', label: 'A to I', style: { arrow: 'forward' } }, { id: 'ja', source: 'b', target: 'j', label: 'B to J', style: { arrow: 'forward' } },
+//   { id: 'ka', source: 'b', target: 'k', label: 'K to B', style: { arrow: 'reverse' } }, { id: 'la', source: 'b', target: 'l', label: 'L to B', style: { arrow: 'reverse' } },
+//   { id: 'ma', source: 'l', target: 'm', label: 'M to L', style: { arrow: 'reverse' } }, { id: 'na', source: 'c', target: 'n', label: 'N to C', style: { arrow: 'reverse' } },
+//   { id: 'oa', source: 'c', target: 'o', label: 'Both', style: { arrow: 'both' } }, { id: 'pa', source: 'c', target: 'p', label: 'Both', style: { arrow: 'both' } },
+//   { id: 'qa', source: 'c', target: 'q', label: 'Both', style: { arrow: 'both' } },
+// ]
 
 
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Partial<Hierarchy.LayoutOptions> = {}
-
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+
+const layoutOptions: Partial<Hierarchy.LayoutOptions> = {
+  y: container.offsetHeight / 2,
+  x: 600
+}
+
 const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -144,7 +181,7 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
 const hierarchy = Hierarchy.Layout()
 const renderer = Renderer<Node, Graph.Edge>({
   container,
-  debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: false }
 })
 
 
