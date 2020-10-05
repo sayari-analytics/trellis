@@ -3,6 +3,10 @@ import { Node, Edge } from '../../'
 
 
 export type LayoutOptions = {
+  x: number
+  y: number
+  nodeSize: [number, number]
+  bfs: boolean
 }
 
 type Hierarchy = {
@@ -11,19 +15,52 @@ type Hierarchy = {
 }
 
 
+const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
 
-const graphToHierarchy = (edgeIndex: Record<string, string[]>, visited: Set<string>, id: string): Hierarchy => {
+
+/**
+ * utils
+ */
+const _graphToDFSHierarchy = (edgeIndex: Record<string, string[]>, visited: Set<string>, id: string): Hierarchy => {
   visited.add(id)
 
   const children: Hierarchy[] = []
 
   for (const child of edgeIndex[id]) {
     if (!visited.has(child)) {
-      children.push(graphToHierarchy(edgeIndex, visited, child))
+      children.push(_graphToDFSHierarchy(edgeIndex, visited, child))
     }
   }
 
   return { id, children }
+}
+
+const graphToDFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): Hierarchy => _graphToDFSHierarchy(edgeIndex, new Set(), id)
+
+const graphToBFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): Hierarchy => {
+  const children: Hierarchy['children'] = []
+
+  const queue: (readonly [string, Hierarchy['children']])[] = [[id, children]]
+
+  const visited = new Set<string>(id)
+
+  while (queue.length > 0) {
+    const [id, children] = queue.shift()!
+    visited.add(id)
+
+    for (const child of edgeIndex[id]) {
+      if (!visited.has(child)) {
+        const grandChildren: Hierarchy['children'] = []
+        children.push({ id: child, children: grandChildren })
+        queue.push([child, grandChildren] as const)
+      }
+    }
+  }
+
+  return {
+    id,
+    children
+  }
 }
 
 const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: Record<string, HierarchyPointNode<Hierarchy> | undefined>) => {
@@ -39,6 +76,7 @@ const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: R
 }
 
 
+// TODO - handle disconnected components
 export const Layout = () => {
   return <N extends Node<E>, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
@@ -55,23 +93,19 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
-    const layout = tree<Hierarchy>() // .size([1000, 1000])
+    const data = graph.options?.bfs !== false ?
+      graphToBFSHierarchy(edgeIndex, root) :
+      graphToDFSHierarchy(edgeIndex, root)
 
-    const data = graphToHierarchy(edgeIndex, new Set(), root)
+    const positionedDataById = hierarchyToGraph(tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)(hierarchy(data)), {})
 
-    const hierarchicalData = hierarchy(data)
-
-    const positionedData = layout.nodeSize([120, 240])(hierarchicalData)
-
-    const positionedDataById = hierarchyToGraph(positionedData, {})
-
-    // const data2 = hierarchyToGraph(tree<Hierarchy>()(hierarchy(graphToHierarchy(edgeIndex, new Set(), root))), {})
-
-    // const data3 = compose(
-    //   graphToHierarchy,
-    //   tree<Hierarchy>(),
+    // const positionedDataById = compose(
+    //   hierarchyToGraph,
+    //   tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE),
     //   hierarchy,
-    //   graphToHierarchy(edgeIndex, new Set(), root)
+    //   graph.options?.bfs !== false ?
+    //     graphToBFSHierarchy(edgeIndex, root) :
+    //     graphToDFSHierarchy(edgeIndex, root)
     // )
 
     return {
@@ -79,11 +113,13 @@ export const Layout = () => {
       nodes: graph.nodes.map((node) => {
         const positionedNode = positionedDataById[node.id]
 
-        return {
-          ...node,
-          x: (positionedNode?.x ?? 0),
-          y: (positionedNode?.y ?? 0) - (window.innerHeight / 2),
-        }
+        return positionedNode === undefined ?
+          node :
+          {
+            ...node,
+            x: positionedNode.x + (graph.options?.x ?? 0),
+            y: positionedNode.y + (graph.options?.y ?? 0),
+          }
       })
     }
   }

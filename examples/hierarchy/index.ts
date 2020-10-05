@@ -22,12 +22,7 @@ const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
-  stroke: [{
-    color: '#FFF',
-    width: 8,
-  }, {
-    color: '#F7CA4D',
-  }],
+  stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 },
   badge: [{
     position: 45,
@@ -56,10 +51,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
 
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#7CBBF3',
-  stroke: [{
-    color: '#90D7FB',
-    width: 6,
-  }],
+  stroke: [{ color: '#90D7FB' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.25 },
   badge: [{
     position: 45,
@@ -115,16 +107,20 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ?
-      { ...node, radius: node.radius * 4, style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] } } :
-      node
-    ))
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      style: {
+        ...node.style,
+        stroke: node.type === 'company' ?
+          [{ color: '#FFF' }, { color: '#CCC' }] :
+          [{ color: '#CCC' }]
+      }
+    } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
-      radius: 32,
       style: node.type === 'company' ?
         createCompanyStyle(32) :
         createPersonStyle(32)
