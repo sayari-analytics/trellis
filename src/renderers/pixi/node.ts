@@ -184,7 +184,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.strokeWidth = 0
 
       if (this.stroke) {
-        this.strokeWidth = this.stroke.reduce((sum, { width = 0 }) => sum + width, 0)
+        this.strokeWidth = this.stroke.reduce((sum, { width = DEFAULT_NODE_STROKE_WIDTH }) => sum + width, 0)
 
         for (const stroke of this.stroke) {
           const strokeSprite = this.renderer.circle.create()
