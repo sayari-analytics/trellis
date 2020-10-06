@@ -1,5 +1,6 @@
 import Stats from 'stats.js'
 import * as Hierarchy from '../../src/layout/hierarchy'
+import * as Force from '../../src/layout/force'
 import * as Graph from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
@@ -128,7 +129,7 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
 const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 
 const layoutOptions: Partial<Hierarchy.LayoutOptions> = {
-  y: container.offsetHeight / 2,
+  y: container.offsetHeight,
   x: 600
 }
 
@@ -172,13 +173,33 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
+  onContainerPointerDown: () => {
+    if (layout === 'hierarchy') {
+      force({ nodes, edges }).then((graph) => {
+        nodes = graph.nodes
+        edges = graph.edges
+        layout = 'force'
+
+        renderer({ nodes, edges, options: renderOptions })
+      })
+    } else {
+      const graph = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
+      nodes = graph.nodes
+      edges = graph.edges
+      layout = 'hierarchy'
+
+      renderer({ nodes, edges, options: renderOptions })
+    }
+  }
 }
 
 
 /**
  * Initialize Layout and Renderer
  */
+let layout = 'hierarchy'
 const hierarchy = Hierarchy.Layout()
+const force = Force.Layout()
 const renderer = Renderer<Node, Graph.Edge>({
   container,
   debug: { stats, logPerformance: false }
@@ -188,7 +209,7 @@ const renderer = Renderer<Node, Graph.Edge>({
 /**
  * Layout and Render Graph
  */
-const positionedGraph = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
-nodes = positionedGraph.nodes
-edges = positionedGraph.edges
+const graph = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
+nodes = graph.nodes
+edges = graph.edges
 renderer({ nodes, edges, options: renderOptions })
