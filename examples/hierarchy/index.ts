@@ -98,6 +98,12 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
     style: { arrow: 'forward' }
   }))
 
+let hierarchyNodes: Node[] = []
+let hierarchyEdges: Graph.Edge[] = []
+
+let forceNodes: Node[] = []
+let forceEdges: Graph.Edge[] = []
+
 // let nodes = [
 //   { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' }, { id: 'f', label: 'F' }, { id: 'g', label: 'G' },
 //   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
@@ -130,7 +136,7 @@ const container: HTMLCanvasElement = document.querySelector('canvas#graph')
 
 const layoutOptions: Partial<Hierarchy.LayoutOptions> = {
   y: container.offsetHeight,
-  x: 600
+  x: 600,
 }
 
 const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
@@ -175,18 +181,14 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   },
   onContainerPointerDown: () => {
     if (layout === 'hierarchy') {
-      force({ nodes, edges }).then((graph) => {
-        nodes = graph.nodes
-        edges = graph.edges
-        layout = 'force'
-
-        renderer({ nodes, edges, options: renderOptions })
-      })
+      layout = 'force'
+      nodes = forceNodes
+      edges = forceEdges
+      renderer({ nodes, edges, options: renderOptions })
     } else {
-      const graph = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
-      nodes = graph.nodes
-      edges = graph.edges
       layout = 'hierarchy'
+      nodes = hierarchyNodes
+      edges = hierarchyEdges
 
       renderer({ nodes, edges, options: renderOptions })
     }
@@ -197,7 +199,6 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
 /**
  * Initialize Layout and Renderer
  */
-let layout = 'hierarchy'
 const hierarchy = Hierarchy.Layout()
 const force = Force.Layout()
 const renderer = Renderer<Node, Graph.Edge>({
@@ -209,7 +210,13 @@ const renderer = Renderer<Node, Graph.Edge>({
 /**
  * Layout and Render Graph
  */
-const graph = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
-nodes = graph.nodes
-edges = graph.edges
-renderer({ nodes, edges, options: renderOptions })
+let layout = 'hierarchy'
+const hierarchyData = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
+nodes = hierarchyNodes = hierarchyData.nodes
+edges = hierarchyEdges = hierarchyData.edges
+force({ nodes, edges }).then((forceData) => {
+  forceNodes = forceData.nodes
+  forceEdges = forceData.edges
+
+  renderer({ nodes, edges, options: renderOptions })
+})
