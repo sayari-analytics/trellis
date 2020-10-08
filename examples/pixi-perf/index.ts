@@ -1,7 +1,7 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
 import * as Graph from '../../src/'
-import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
+import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
 
@@ -16,12 +16,6 @@ type Node = Graph.Node & { type: string }
 /**
  * Initialize Data
  */
-const COMPANY_STYLE: Partial<NodeStyle> = {
-  stroke: [{ color: '#F7CA4D', width: 4 }],
-}
-const PERSON_STYLE: Partial<NodeStyle> = {
-  stroke: [{ color: '#90D7FB', width: 4 }],
-}
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
@@ -116,7 +110,7 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
       radius: 32,
       style: {
         ...node.style,
-        stroke: node.type === 'person' ? PERSON_STYLE.stroke : COMPANY_STYLE.stroke
+        stroke: [{ color: node.type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }]
       }
     } : node))
     render({ nodes, edges, options: renderOptions })

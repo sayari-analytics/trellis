@@ -19,7 +19,7 @@ const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer<N extends Node, E extends Edge>{
 
-  edge: E | undefined
+  edge: E
 
   private renderer: Renderer<N, E>
   private edgesLayer: PIXI.Container
@@ -47,7 +47,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private curveControlPointB?: [number, number]
   private curve: number = 0
 
-  constructor(renderer: Renderer<N, E>, edgesLayer: PIXI.Container) {
+  constructor(renderer: Renderer<N, E>, edge: E, edgesLayer: PIXI.Container) {
     this.renderer = renderer
     this.edgesLayer = edgesLayer
     this.line.interactive = true
@@ -65,6 +65,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      */
     this.edgesLayer.addChild(this.arrowContainer)
     this.edgesLayer.addChild(this.labelContainer)
+    this.edge = edge
+    this.update(edge)
   }
 
   update(edge: E) {
@@ -156,22 +158,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      * Curve
      * TODO - expose edge curve in style spec
      */
-    // const edgeGroup = new Set([
-    //   ...this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target],
-    //   ...this.renderer.forwardEdgeIndex[this.edge.target]?.[this.edge.source] ?? [],
-    //   // ...this.renderer.reverseEdgeIndex[this.edge.source]?.[this.edge.target] ?? [],
-    //   // ...this.renderer.reverseEdgeIndex[this.edge.target]?.[this.edge.source] ?? []
-    // ])
-    // this.curve = edgeGroup.size - 2 * 0.5
-    // for (const edgeId of edgeGroup) {
-    //   if (edgeId === this.edge.id) {
-    //     break
-    //   }
-    //   this.curve--
-    // }
+    const parallelEdges = this.renderer.edgeIndex[this.edge.source][this.edge.target]
 
-    this.curve = (this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target].size - 1)
-    for (const edgeId of this.renderer.forwardEdgeIndex[this.edge.source][this.edge.target]) {
+    this.curve = parallelEdges.size - 1
+    for (const edgeId of parallelEdges) {
       if (edgeId === this.edge.id) {
         break
       }
@@ -185,8 +175,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
    * TODO - perf boost: render cheap version of things while still animating position or dragging
    */
   render() {
-    const sourceContainer = this.renderer.nodesById[this.edge!.source],
-      targetContainer = this.renderer.nodesById[this.edge!.target],
+    const sourceContainer = this.renderer.nodesById[this.edge.source],
+      targetContainer = this.renderer.nodesById[this.edge.target],
       sourceRadius = sourceContainer.radius + sourceContainer.strokeWidth,
       targetRadius = targetContainer.radius + targetContainer.strokeWidth,
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
@@ -250,7 +240,14 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.line.hitArea = new PIXI.Polygon(hitAreaVerticies)
       // this.renderer.edgesGraphic.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
     } else {
-      this.curvePeak = movePoint(center[0], center[1], theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI, this.curve * 10)
+      this.curvePeak = movePoint(
+        center[0],
+        center[1],
+        theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI,
+        this.edge.source > this.edge.target ?
+          this.curve * 10 :
+          this.curve * -10
+      )
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
       const curveStart = this.reverseArrow ?
@@ -351,13 +348,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   delete() {
-    // this.line.destroy()
     this.forwardArrow?.destroy()
     this.reverseArrow?.destroy()
     this.labelContainer.destroy()
-    delete this.renderer.edgesById[this.edge!.id]
-    this.renderer.forwardEdgeIndex[this.edge!.source][this.edge!.target].delete(this.edge!.id)
-    this.renderer.reverseEdgeIndex[this.edge!.target][this.edge!.source].delete(this.edge!.id)
+    delete this.renderer.edgesById[this.edge.id]
+    this.renderer.edgeIndex[this.edge.source][this.edge.target].delete(this.edge.id)
+    this.renderer.edgeIndex[this.edge.target][this.edge.source].delete(this.edge.id)
   }
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
@@ -365,7 +361,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.hoveredEdge = true
       this.renderer.dirty = true
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onEdgePointerEnter(event, this.edge!, x, y)
+      this.renderer.onEdgePointerEnter(event, this.edge, x, y)
     }
   }
 
@@ -375,17 +371,17 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.renderer.dirty = true
 
       const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-      this.renderer.onEdgePointerLeave(event, this.edge!, x, y)
+      this.renderer.onEdgePointerLeave(event, this.edge, x, y)
     }
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onEdgePointerDown(event, this.edge!, x, y)
+    this.renderer.onEdgePointerDown(event, this.edge, x, y)
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.renderer.viewport.toWorld(event.data.global)
-    this.renderer.onEdgePointerUp(event, this.edge!, x, y)
+    this.renderer.onEdgePointerUp(event, this.edge, x, y)
   }
 }

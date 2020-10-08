@@ -103,8 +103,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   edgesGraphic = new PIXI.Graphics()
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
-  forwardEdgeIndex: { [source: string]: { [target: string]: Set<string> } } = {}
-  reverseEdgeIndex: { [target: string]: { [source: string]: Set<string> } } = {}
+  edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
   arrow: ArrowRenderer<N, E>
   circle: CircleRenderer<N, E>
 
@@ -220,25 +219,21 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
      * Build edge indices
      */
     for (const edge of edges) {
-      const id = edge.id,
-        source = edge.source,
-        target = edge.target
+      if (this.edgeIndex[edge.source] === undefined) {
+        this.edgeIndex[edge.source] = {}
+      }
+      if (this.edgeIndex[edge.target] === undefined) {
+        this.edgeIndex[edge.target] = {}
+      }
+      if (this.edgeIndex[edge.source][edge.target] === undefined) {
+        this.edgeIndex[edge.source][edge.target] = new Set()
+      }
+      if (this.edgeIndex[edge.target][edge.source] === undefined) {
+        this.edgeIndex[edge.target][edge.source] = new Set()
+      }
 
-      if (this.forwardEdgeIndex[source] === undefined) {
-        this.forwardEdgeIndex[source] = {}
-      }
-      if (this.forwardEdgeIndex[source][target] === undefined) {
-        this.forwardEdgeIndex[source][target] = new Set()
-      }
-      this.forwardEdgeIndex[source][target].add(id)
-
-      if (this.reverseEdgeIndex[target] === undefined) {
-        this.reverseEdgeIndex[target] = {}
-      }
-      if (this.reverseEdgeIndex[target][source] === undefined) {
-        this.reverseEdgeIndex[target][source] = new Set()
-      }
-      this.reverseEdgeIndex[target][source].add(id)
+      this.edgeIndex[edge.source][edge.target].add(edge.id)
+      this.edgeIndex[edge.target][edge.source].add(edge.id)
     }
 
 
@@ -248,21 +243,20 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     for (const node of nodes) {
       if (this.nodesById[node.id] === undefined) {
         // node enter
-        let adjacentNode: NodeRenderer<N, E> | undefined
+        let adjacentNode: string | undefined
 
-        if (this.reverseEdgeIndex[node.id]) {
-          // nodes w edges from existing nodes enter from one of those nodes
-          adjacentNode = this.nodesById[Object.keys(this.reverseEdgeIndex[node.id])[0]]
-        } else if (this.forwardEdgeIndex[node.id]) {
-          // nodes w edges to existing nodes enter from one of those nodes
-          adjacentNode = this.nodesById[Object.keys(this.forwardEdgeIndex[node.id])[0]]
+        if (this.edgeIndex[node.id]) {
+          // nodes w edges from existing positioned nodes enter from one of those nodes
+          adjacentNode = Object.keys(this.edgeIndex[node.id]).find((adjacentNodeId) => (
+            this.nodesById[adjacentNodeId]?.node.x !== undefined && this.nodesById[adjacentNodeId]?.node.y !== undefined
+          ))
         }
 
-        nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? 0, adjacentNode?.y ?? 0, node.radius)
+        nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? 0, this.nodesById[adjacentNode ?? '']?.y ?? 0, node.radius)
         /**
-         * alternatively, don't animate graph on load
+         * alternatively, don't animate entering nodes
          */
-        // nodesById[node.id] = new NodeRenderer(this, node, adjacentNode?.x ?? node.x ?? 0, adjacentNode?.y ?? node.y ?? 0, node.radius)
+        // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode]?.x ?? node.x ?? 0, this.nodesById[adjacentNode]?.y ?? node.y ?? 0, node.radius)
       } else {
         nodesById[node.id] = this.nodesById[node.id].update(node)
       }
@@ -283,7 +277,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       const id = edge.id
       if (this.edgesById[id] === undefined) {
         // edge enter
-        edgesById[id] = new EdgeRenderer(this, this.edgesLayer).update(edge)
+        edgesById[id] = new EdgeRenderer(this, edge, this.edgesLayer)
       } else {
         // edge update
         edgesById[id] = this.edgesById[id].update(edge)
