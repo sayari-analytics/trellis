@@ -57,7 +57,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private labelSprite?: PIXI.Text
   private iconSprite?: PIXI.Text
   private fontIconLoader?: CancellablePromise<string>
-  private doubleClickTimeout: NodeJS.Timeout | undefined
+  private doubleClickTimeout: number | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0

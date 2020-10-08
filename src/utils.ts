@@ -1,6 +1,3 @@
-import raf from 'raf'
-
-
 export const noop = () => {}
 
 
@@ -45,12 +42,12 @@ export const animationFrameLoop = (cb: () => void) => {
 
   const tick = () => {
     cb()
-    frame = raf(tick)
+    frame = requestAnimationFrame(tick)
   }
 
-  frame = raf(tick)
+  frame = requestAnimationFrame(tick)
 
-  return () => raf.cancel(frame)
+  return () => cancelAnimationFrame(frame)
 }
 
 
@@ -63,7 +60,7 @@ export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => 
       clear = false
       cb(...args)
 
-      raf(() => {
+      requestAnimationFrame(() => {
         if (tailArgs) {
           cb(...tailArgs)
         }
@@ -109,7 +106,7 @@ export const interpolateDuration = (duration: number) => {
 
   return (cb: (n: number) => void) => {
     if (frame !== undefined) {
-      raf.cancel(frame)
+      cancelAnimationFrame(frame)
     }
 
     start = Date.now()
@@ -118,17 +115,17 @@ export const interpolateDuration = (duration: number) => {
     const rafCallback = () => {
       const now = Date.now()
       if (now > end!) {
-        raf.cancel(frame!)
+        cancelAnimationFrame(frame!)
         frame = undefined
         cb(1)
         return
       }
 
       cb((now - start!) / (end! - start!))
-      frame = raf(rafCallback)
+      frame = requestAnimationFrame(rafCallback)
     }
 
-    frame = raf(rafCallback)
+    frame = requestAnimationFrame(rafCallback)
   }
 }
 
