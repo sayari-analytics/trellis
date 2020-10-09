@@ -201,7 +201,7 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
     }
 
     fisheyeExpand = (nodes: SimulationNode[], subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
-      let subGraphsById = Object.entries(subGraphs),
+      let subGraphsById = Object.values(subGraphs),
         id: string,
         x: number,
         y: number,
@@ -212,27 +212,20 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         yOffset: number
 
       for (let i = 0; i < subGraphsById.length; i++) {
-        id = subGraphsById[i][0]
-        x = subGraphsById[i][1].node.x!
-        y = subGraphsById[i][1].node.y!
+        id = subGraphsById[i].node.id
+        x = subGraphsById[i].node.x!
+        y = subGraphsById[i].node.y!
+        radius = subGraphsById[i].node.radius
 
-        // const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
-        const r = subGraphsById[i][1].node.subGraph?.nodes.reduce((radius, node) => {
-          const newRadius = Math.max(radius, Math.hypot(node.x ?? 0 - x, node.y ?? 0 - y)) + node.radius
-          // const newRadius = Math.max(radius, Math.hypot(node.x ?? 0 - 0, node.y ?? 0 - 0)) + node.radius
-          // console.log('potential radius', radius, newRadius)
-          return Math.max(radius, newRadius)
-        }, 0) ?? 0
-        // console.log('final radius', r + 10)
-        const padding = (subGraphsById[i][1].node.subGraph?.options as LayoutOptions | undefined)?.nodePadding ?? DEFAULT_OPTIONS.nodePadding
-        radius = r + padding
+        for (let j = 0; j < (subGraphsById[i].node.subGraph?.nodes.length ?? 0); j++) {
+          const node = subGraphsById[i].node.subGraph!.nodes[j]
+          const newRadius = Math.hypot(node.x ?? 0, node.y ?? 0) + node.radius + (subGraphsById[i].simulation.nodePadding * 4)
+          radius = Math.max(radius, newRadius)
+        }
 
-        for (let i = 0; i < nodes.length; i++) {
-          node = nodes[i]
+        for (let k = 0; k < nodes.length; k++) {
+          node = nodes[k]
           if (node.id === id) {
-            /**
-             * TODO - properly compute node w/ subGraph radius
-             */
             node.radius = radius
           } else if (node.x != undefined && node.y != undefined) {
             theta = Math.atan2(node.y - y, node.x - x)

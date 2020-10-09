@@ -179,7 +179,7 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node, idx) => (node.subGraph ? {
       ...node,
       radius: 48,
-      style: node.id === 'a' ? createCompanyStyle(48) : createPersonStyle((20 - idx) * 4),
+      style: node.id === 'a' ? createCompanyStyle(48) : createPersonStyle(48),
       subGraph: undefined,
     } : node))
 
