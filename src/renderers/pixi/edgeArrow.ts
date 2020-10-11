@@ -5,8 +5,8 @@ import { Node, Edge } from '../../'
 
 export class ArrowRenderer<N extends Node, E extends Edge>{
 
-  static ARROW_HEIGHT = 16
-  static ARROW_WIDTH = 8
+  static ARROW_HEIGHT = 12
+  static ARROW_WIDTH = 6
 
   texture: PIXI.RenderTexture
 

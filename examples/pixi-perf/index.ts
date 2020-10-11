@@ -29,26 +29,24 @@ const data = {
     .map<Node>(({ id, label, type }) => ({
       id,
       label,
-      radius: 32,
+      radius: 18,
       type,
       style: {
         color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
         stroke: [{ color: type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }],
-        icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 },
-        badge: type === 'company' ?
-          [{
-            position: 45,
-            color: '#FFAF1D',
-            stroke: '#FFF',
-            radius: 14,
-            icon: {
-              type: 'textIcon',
-              family: 'Helvetica',
-              size: 16,
-              color: '#FFF',
-              text: '8',
-            }
-          }] : undefined,
+        icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 20 },
+        badge: type === 'company' ? [{
+          position: 45,
+          color: '#FFAF1D',
+          stroke: '#FFF',
+          icon: {
+            type: 'textIcon',
+            family: 'Helvetica',
+            size: 10,
+            color: '#FFF',
+            text: '8',
+          }
+        }] : undefined,
       }
     })),
   edges: Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
@@ -85,7 +83,7 @@ const layoutOptions: Partial<LayoutOptions> = {
   nodeStrength: -600,
 }
 
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -107,7 +105,7 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
-      radius: 32,
+      radius: 18,
       style: {
         ...node.style,
         stroke: [{ color: node.type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }]

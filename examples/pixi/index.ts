@@ -1,6 +1,7 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
+import * as Zoom from '../../src/controls/zoom'
 import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
@@ -17,11 +18,11 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{
     color: '#FFF',
-    width: 8,
+    width: 4,
   }, {
     color: '#F7CA4D',
   }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 },
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 },
   badge: [{
     position: 45,
     color: '#FFAF1D',
@@ -29,7 +30,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
     icon: {
       type: 'textIcon',
       family: 'Helvetica',
-      size: 18,
+      size: 10,
       color: '#FFF',
       text: '15',
     }
@@ -40,7 +41,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
     icon: {
       type: 'textIcon',
       family: 'Helvetica',
-      size: 18,
+      size: 10,
       color: '#FFF',
       text: '!',
     }
@@ -51,9 +52,9 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#7CBBF3',
   stroke: [{
     color: '#90D7FB',
-    width: 6,
+    width: 2,
   }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.25 },
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.2 },
   badge: [{
     position: 45,
     color: '#7CBBF3',
@@ -61,7 +62,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
     icon: {
       type: 'textIcon',
       family: 'Helvetica',
-      size: 18,
+      size: 10,
       color: '#FFF',
       text: '8',
     }
@@ -71,7 +72,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
 const createSubgraphStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 }
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 }
 })
 
 let nodes = [
@@ -82,8 +83,8 @@ let nodes = [
   .map<Node>(({ id, label }) => ({
     id,
     label,
-    radius: 48,
-    style: id === 'a' ? createCompanyStyle(48) : createPersonStyle(48)
+    radius: 18,
+    style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18)
   }))
 
 let edges: Edge[] = [
@@ -105,10 +106,11 @@ const layoutOptions: Partial<Force.LayoutOptions> = {
   nodeStrength: -500,
 }
 
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
+  zoom: 1,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
@@ -176,9 +178,9 @@ const renderOptions: Partial<RendererOptions> = {
     })
   },
   onContainerPointerUp: () => {
-    nodes = nodes.map((node, idx) => (node.subGraph ? {
+    nodes = nodes.map((node) => (node.subGraph ? {
       ...node,
-      radius: 48,
+      radius: 24,
       style: node.id === 'a' ? createCompanyStyle(48) : createPersonStyle(48),
       subGraph: undefined,
     } : node))
@@ -188,23 +190,42 @@ const renderOptions: Partial<RendererOptions> = {
       renderer({ nodes, edges, options: renderOptions })
     })
   },
+  onWheel: (_, __, scale) => {
+    renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, scale)
+    // renderer({ nodes, edges, options: renderOptions })
+  }
 }
 
 
 /**
- * Initialize Layout and Renderer
+ * Initialize Layout and Renderer and Controls
  */
 const force = Force.Layout()
 const subGraph = SubGraph.Layout()
+const zoomControl = Zoom.Control({ container })
 const renderer = Renderer({
   container,
   // debug: { stats, logPerformance: true }
 })
 
+const zoomOptions: Partial<Zoom.Options> = {
+  top: 80,
+  onZoomIn: () => {
+    renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom / 0.6)
+    renderer({ nodes, edges, options: renderOptions })
+  },
+  onZoomOut: () => {
+    renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom * 0.6)
+    renderer({ nodes, edges, options: renderOptions })
+  },
+}
+
 
 /**
  * Layout and Render Graph
  */
+zoomControl(zoomOptions)
+
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
   renderer({ nodes, edges, options: renderOptions })

@@ -56,6 +56,7 @@ export type EdgeStyle = {
 export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   width: number
   height: number
+  zoom: number
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void
   onNodePointerDown: (event: Event, node: N, x: number, y: number) => void
   onNodeDrag: (event: Event, node: N, x: number, y: number) => void
@@ -71,14 +72,16 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   onContainerPointerMove: (event: PointerEvent) => void
   onContainerPointerUp: (event: PointerEvent) => void
   onContainerPointerLeave: (event: PointerEvent) => void
+  onWheel: (x: number, y: number, scale: number) => void
 }
 
 
 export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
-  width: 800, height: 600,
+  width: 800, height: 600, zoom: 1,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
   onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop,
+  onWheel: noop
 }
 
 const POSITION_ANIMATION_DURATION = 800
@@ -117,19 +120,25 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void = noop
+  onWheel: (x: number, y: number, scale: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
+  zoom?: number
   app: PIXI.Application
   viewport: Viewport
   debug?: { logPerformance?: boolean, stats?: Stats }
 
-  constructor({ container, debug }: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
-    if (!(container instanceof HTMLCanvasElement)) {
-      throw new Error('container must be an instance of HTMLCanvasElement')
+  constructor({ container, debug }: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
+    if (!(container instanceof HTMLDivElement)) {
+      throw new Error('container must be an instance of HTMLDivElement')
     }
 
+    const view = document.createElement('canvas')
+    container.appendChild(view)
+    container.style.position = 'relative'
+
     this.app = new PIXI.Application({
-      view: container,
+      view,
       width: this.width,
       height: this.height,
       resolution: 2, // window.devicePixelRatio,
@@ -148,10 +157,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     })
       .drag()
       .pinch()
-      .wheel()
+      .wheel() // TODO - make zoom/position stateless
+      .clampZoom({ minScale: 0.2, maxScale: 2.5 }) // TODO - expose min/max configuration
       .decelerate()
-      .clampZoom({ minScale: 0.02, maxScale: 2.5 })
-      .setZoom(0.6, true)
       .on('drag-start', () => container.style.cursor = 'move')
       .on('drag-end', () => container.style.cursor = 'auto')
     this.viewport.center = new PIXI.Point(0, 0)
@@ -166,7 +174,10 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
 
-    this.app.view.addEventListener('wheel', (event) => { event.preventDefault() })
+    this.app.view.addEventListener('wheel', (event) => event.preventDefault())
+    this.viewport.on('wheel', () => {
+      this.onWheel(this.viewport.x, this.viewport.y, this.viewport.scaled)
+    })
 
     this.debug = debug
     if (this.debug) {
@@ -182,10 +193,11 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     nodes,
     edges,
     options: {
-      width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height,
+      width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, zoom = RENDERER_OPTIONS.zoom,
       onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
       onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
       onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop,
+      onWheel = noop,
     } = RENDERER_OPTIONS
   }: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
     if (width !== this.width || height !== this.height) {
@@ -193,6 +205,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       this.height = height
       this.app.renderer.resize(width, height)
     }
+
+    this.viewport.setZoom(zoom) // TODO - interpolate zoom
 
     // TODO - these shouldn't fire on edge hover or click either
     this.app.view.onpointerenter = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerEnter(e)
@@ -210,6 +224,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.onEdgePointerDown = onEdgePointerDown
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
+    this.onWheel = onWheel
 
     const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
     const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
@@ -415,14 +430,14 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   }
 
   delete = () => {
-    this.app.destroy(false, { children: true, texture: true, baseTexture: true })
+    this.app.destroy(true, { children: true, texture: true, baseTexture: true })
     this.circle.delete()
     this.arrow.delete()
   }
 }
 
 
-export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLCanvasElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new PIXIRenderer<N, E>(options)
 
   const render = (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {

@@ -12,8 +12,8 @@ const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = '#ccc'
 const DEFAULT_EDGE_OPACITY = 1
 const DEFAULT_LABEL_FAMILY = 'Helvetica'
-const DEFAULT_LABEL_COLOR = '#222'
-const DEFAULT_LABEL_SIZE = 14
+const DEFAULT_LABEL_COLOR = '#444'
+const DEFAULT_LABEL_SIZE = 11
 const DEFAULT_ARROW = 'none'
 
 
@@ -143,7 +143,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
           fontSize: this.labelSize * 2.5,
           fill: this.labelColor,
           lineJoin: 'round',
-          stroke: '#fafafaee',
+          stroke: '#fafafa',
           strokeThickness: 2 * 2.5,
         })
         this.labelSprite.name = 'text'

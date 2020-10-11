@@ -7,16 +7,16 @@ import { equals } from '../../utils'
 import { CancellablePromise, FontLoader } from './FontLoader'
 
 
-const LABEL_Y_PADDING = 4
+const LABEL_Y_PADDING = 2
 const DEFAULT_NODE_FILL = '#666'
 const DEFAULT_NODE_STROKE = '#aaa'
-const DEFAULT_NODE_STROKE_WIDTH = 6
+const DEFAULT_NODE_STROKE_WIDTH = 2
 const DEFAULT_LABEL_FAMILY = 'Helvetica'
-const DEFAULT_LABEL_COLOR = '#222'
-const DEFAULT_LABEL_SIZE = 14
-const DEFAULT_RADIUS = 48
-const DEFAULT_BADGE_RADIUS = 16
-const DEFAULT_BADGE_STROKE_WIDTH = 4
+const DEFAULT_LABEL_COLOR = '#444'
+const DEFAULT_LABEL_SIZE = 11
+const DEFAULT_RADIUS = 18
+const DEFAULT_BADGE_RADIUS = 8
+const DEFAULT_BADGE_STROKE_WIDTH = 2
 
 
 export class NodeRenderer<N extends Node, E extends Edge>{
@@ -158,8 +158,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           fontSize: this.labelSize * 2.5,
           fill: this.labelColor,
           lineJoin: 'round',
-          stroke: '#fafafaee',
-          strokeThickness: 2 * 2,
+          stroke: '#fafafa',
+          strokeThickness: 2 * 2.5,
           align: 'center',
         })
         this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
