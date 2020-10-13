@@ -183,6 +183,11 @@ const renderOptions: Partial<RendererOptions> = {
       renderer({ nodes, edges, options: renderOptions })
     })
   },
+  onContainerDrag: (_, x, y) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    renderer({ nodes, edges, options: renderOptions })
+  },
   onContainerPointerUp: () => {
     nodes = nodes.map((node) => (node.subGraph ? {
       ...node,
@@ -207,16 +212,12 @@ const renderOptions: Partial<RendererOptions> = {
 const zoomOptions: Partial<Zoom.Options> = {
   top: 80,
   onZoomIn: () => {
-    if (renderOptions.zoom < 2.5) {
-      renderOptions.zoom = Zoom.clampZoom(0.1, 2.5, renderOptions.zoom / 0.6)
-      renderer({ nodes, edges, options: renderOptions })
-    }
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    renderer({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    if (renderOptions.zoom > 0.1) {
-      renderOptions.zoom = Zoom.clampZoom(0.1, 2.5, renderOptions.zoom * 0.6)
-      renderer({ nodes, edges, options: renderOptions })
-    }
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    renderer({ nodes, edges, options: renderOptions })
   },
 }
 

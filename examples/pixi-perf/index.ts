@@ -91,6 +91,10 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   x: 0,
   y: 0,
   zoom: 1,
+  minZoom: 0.1,
+  maxZoom: 2.5,
+  nodesEqual: (prev, current) => prev === current,
+  edgesEqual: (prev, current) => prev === current,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
@@ -125,6 +129,11 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
+  onContainerDrag: (_, x, y) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    render({ nodes, edges, options: renderOptions })
+  },
   onWheel: (x, y, zoom) => {
     renderOptions.x = x
     renderOptions.y = y
@@ -136,16 +145,12 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
 const zoomOptions: Partial<Zoom.Options> = {
   top: 80,
   onZoomIn: () => {
-    if (renderOptions.zoom < 2.5) {
-      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom / 0.6)
-      render({ nodes, edges, options: renderOptions })
-    }
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    if (renderOptions.zoom > 0.2) {
-      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom * 0.6)
-      render({ nodes, edges, options: renderOptions })
-    }
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    render({ nodes, edges, options: renderOptions })
   },
 }
 

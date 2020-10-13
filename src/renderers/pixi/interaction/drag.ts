@@ -1,17 +1,21 @@
 import * as PIXI from 'pixi.js'
 
 
+/**
+ * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
+ */
 export class Drag {
 
   private container: HTMLDivElement
   private parent: PIXI.Container
-  private onContainerDrag: (x: number, y: number) => void
+  private onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void
   private paused = false
   private last?: { x: number, y: number }
   private current?: number
   private moved = false
 
-  constructor(container: HTMLDivElement, parent: PIXI.Container, onContainerDrag: (x: number, y: number) => void) {
+  constructor(container: HTMLDivElement, parent: PIXI.Container, onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void) {
     this.container = container
     this.parent = parent
     this.onContainerDrag = onContainerDrag
@@ -44,7 +48,7 @@ export class Drag {
         this.last = { x, y }
         this.moved = true
 
-        this.onContainerDrag(centerX, centerY) // TODO - expose this as a more generic function
+        this.onContainerDrag(event, centerX, centerY) // TODO - expose this as a more generic function
       }
     }
   }
