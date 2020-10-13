@@ -81,7 +81,7 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   onContainerDrag: (event: Event | undefined, x: number, y: number) => void
   onContainerPointerUp: (event: PointerEvent) => void
   onContainerPointerLeave: (event: PointerEvent) => void
-  onWheel: (x: number, y: number, scale: number) => void
+  onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void
 }
 
 
@@ -142,7 +142,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void = noop
-  onWheel: (x: number, y: number, scale: number) => void = noop
+  onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   zoom = RENDERER_OPTIONS.zoom
@@ -189,9 +189,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
 
-    this.zoomInteraction = new Zoom(this.app, this.root, (x, y, zoom) => {
-      this.onWheel(x, y, zoom)
-    })
+    this.zoomInteraction = new Zoom(this.app, this.root, (e, x, y, zoom) => this.onWheel(e, x, y, zoom))
     this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 
     this.dragInteraction = new Drag(container, this.root, (e, x, y) => this.onContainerDrag(e, x, y))

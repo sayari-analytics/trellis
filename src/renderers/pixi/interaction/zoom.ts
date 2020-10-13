@@ -10,13 +10,13 @@ export class Zoom {
 
   private app: PIXI.Application
   private parent: PIXI.Container
-  private onContainerWheel: (x: number, y: number, zoom: number) => void
+  private onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void
   private paused = false
 
   minZoom = RENDERER_OPTIONS.minZoom
   maxZoom = RENDERER_OPTIONS.maxZoom
 
-  constructor(app: PIXI.Application, parent: PIXI.Container, onContainerWheel: (x: number, y: number, zoom: number) => void) {
+  constructor(app: PIXI.Application, parent: PIXI.Container, onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void) {
     this.app = app
     this.parent = parent
     this.onContainerWheel = onContainerWheel
@@ -52,6 +52,7 @@ export class Zoom {
     this.parent.scale.set(scale)
 
     this.onContainerWheel(
+      e,
       this.parent.x + point.x - newPoint.x,
       this.parent.y + point.y - newPoint.y,
       newScale

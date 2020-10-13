@@ -1,5 +1,5 @@
 import Stats from 'stats.js'
-import { Layout, LayoutOptions } from '../../src/layout/force'
+import { Layout } from '../../src/layout/force'
 import * as Graph from '../../src/'
 import * as Zoom from '../../src/controls/zoom'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
@@ -80,10 +80,6 @@ let edges: Graph.Edge[] = []
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Partial<LayoutOptions> = {
-  nodeStrength: -600,
-}
-
 const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   width: container.offsetWidth,
@@ -134,7 +130,7 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
     renderOptions.y = y
     render({ nodes, edges, options: renderOptions })
   },
-  onWheel: (x, y, zoom) => {
+  onWheel: (_, x, y, zoom) => {
     renderOptions.x = x
     renderOptions.y = y
     renderOptions.zoom = zoom
@@ -190,11 +186,7 @@ const update = () => {
   const nodeIds = newNodes.reduce<Set<string>>((ids, { id }) => ids.add(id), new Set())
   const newEdges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
 
-  layout({
-    nodes: newNodes,
-    edges: newEdges,
-    options: layoutOptions
-  }).then((graph) => {
+  layout({ nodes: newNodes, edges: newEdges }).then((graph) => {
     nodes = graph.nodes
     edges = graph.edges
     render({ nodes, edges, options: renderOptions })

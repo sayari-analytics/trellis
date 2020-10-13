@@ -201,7 +201,7 @@ const renderOptions: Partial<RendererOptions> = {
       renderer({ nodes, edges, options: renderOptions })
     })
   },
-  onWheel: (x, y, zoom) => {
+  onWheel: (_, x, y, zoom) => {
     renderOptions.x = x
     renderOptions.y = y
     renderOptions.zoom = zoom

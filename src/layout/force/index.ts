@@ -47,7 +47,7 @@ type LayoutResultEvent<N extends Node<E>, E extends Edge> = {
 
 
 export const LAYOUT_OPTIONS: LayoutOptions = {
-  nodeStrength: -280,
+  nodeStrength: -500,
   linkDistance: 180,
   linkStrength: undefined,
   centerStrength: 0.02,

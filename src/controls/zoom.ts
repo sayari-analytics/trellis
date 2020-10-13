@@ -6,8 +6,8 @@ export type Options = {
   left: number
   right: number
   bottom: number
-  onZoomIn: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null
-  onZoomOut: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null
+  onZoomIn: (event: MouseEvent) => any
+  onZoomOut: (event: MouseEvent) => any
 }
 
 export type ViewportChangeOptions = {
