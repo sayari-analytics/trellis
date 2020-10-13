@@ -402,7 +402,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     this.renderer.dirty = true
-    const position = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.root.toLocal
+    const position = this.renderer.root.toLocal(event.data.global)
     this.renderer.onNodePointerEnter(event, this.node, position.x, position.y)
   }
 
@@ -426,7 +427,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     this.renderer.dirty = true
-    const position = this.renderer.viewport.toWorld(event.data.global)
+    const position = this.renderer.root.toLocal(event.data.global)
     this.renderer.onNodePointerLeave(event, this.node, position.x, position.y)
   }
 
@@ -439,8 +440,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     this.renderer.clickedNode = this
     this.renderer.app.renderer.plugins.interaction.on('pointermove', this.nodeMove)
-    this.renderer.viewport.pause = true
-    const position = this.renderer.viewport.toWorld(event.data.global)
+    this.renderer.pauseInteraction = true
+    const position = this.renderer.root.toLocal(event.data.global)
     this.nodeMoveXOffset = position.x - this.x
     this.nodeMoveYOffset = position.y - this.y
     this.renderer.onNodePointerDown(event, this.node, this.x, this.y)
@@ -451,7 +452,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     this.renderer.clickedNode = undefined
     this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
-    this.renderer.viewport.pause = false
+    this.renderer.pauseInteraction = false
     this.nodeMoveXOffset = 0
     this.nodeMoveYOffset = 0
     this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
@@ -465,7 +466,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private nodeMove = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) return
 
-    const position = this.renderer.viewport.toWorld(event.data.global)
+    const position = this.renderer.root.toLocal(event.data.global)
     this.renderer.onNodeDrag(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
   }
 

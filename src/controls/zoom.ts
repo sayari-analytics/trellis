@@ -6,8 +6,6 @@ export type Options = {
   left: number
   right: number
   bottom: number
-  // min: number
-  // max: number
   onZoomIn: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null
   onZoomOut: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null
 }
@@ -19,8 +17,6 @@ export type ViewportChangeOptions = {
 
 const DEFAULT_TOP = '20px'
 const DEFAULT_LEFT = '20px'
-// const DEFAULT_MIN = 0.2
-// const DEFAULT_MAX = 2.5
 
 
 const styleButton = (button: HTMLButtonElement) => {

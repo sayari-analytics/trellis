@@ -110,6 +110,8 @@ const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
+  x: 0,
+  y: 0,
   zoom: 1,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
@@ -190,10 +192,28 @@ const renderOptions: Partial<RendererOptions> = {
       renderer({ nodes, edges, options: renderOptions })
     })
   },
-  onWheel: (_, __, scale) => {
-    renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, scale)
-    // renderer({ nodes, edges, options: renderOptions })
+  onWheel: (x, y, zoom) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    renderOptions.zoom = zoom
+    renderer({ nodes, edges, options: renderOptions })
   }
+}
+
+const zoomOptions: Partial<Zoom.Options> = {
+  top: 80,
+  onZoomIn: () => {
+    if (renderOptions.zoom < 2.5) {
+      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom / 0.6)
+      renderer({ nodes, edges, options: renderOptions })
+    }
+  },
+  onZoomOut: () => {
+    if (renderOptions.zoom > 0.2) {
+      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom * 0.6)
+      renderer({ nodes, edges, options: renderOptions })
+    }
+  },
 }
 
 
@@ -205,20 +225,8 @@ const subGraph = SubGraph.Layout()
 const zoomControl = Zoom.Control({ container })
 const renderer = Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: true }
 })
-
-const zoomOptions: Partial<Zoom.Options> = {
-  top: 80,
-  onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom / 0.6)
-    renderer({ nodes, edges, options: renderOptions })
-  },
-  onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom * 0.6)
-    renderer({ nodes, edges, options: renderOptions })
-  },
-}
 
 
 /**

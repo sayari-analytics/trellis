@@ -1,5 +1,4 @@
 import * as PIXI from 'pixi.js'
-import { Viewport } from 'pixi-viewport'
 import { Node, Edge } from '../../'
 import { animationFrameLoop, noop } from '../../utils'
 import { NodeRenderer } from './node'
@@ -56,7 +55,11 @@ export type EdgeStyle = {
 export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   width: number
   height: number
+  x: number
+  y: number
   zoom: number
+  minZoom: number
+  maxZoom: number
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void
   onNodePointerDown: (event: Event, node: N, x: number, y: number) => void
   onNodeDrag: (event: Event, node: N, x: number, y: number) => void
@@ -77,7 +80,7 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
 
 
 export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
-  width: 800, height: 600, zoom: 1,
+  width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.2, maxZoom: 2.5,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
   onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop,
@@ -123,9 +126,14 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   onWheel: (x: number, y: number, scale: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
-  zoom?: number
+  zoom = RENDERER_OPTIONS.zoom
+  minZoom = RENDERER_OPTIONS.minZoom
+  maxZoom = RENDERER_OPTIONS.maxZoom
+  x = RENDERER_OPTIONS.x
+  y = RENDERER_OPTIONS.y
   app: PIXI.Application
-  viewport: Viewport
+  root = new PIXI.Container()
+  pauseInteraction = false
   debug?: { logPerformance?: boolean, stats?: Stats }
 
   constructor({ container, debug }: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
@@ -152,32 +160,18 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.labelsLayer.interactiveChildren = false
     this.nodesLayer.sortableChildren = true // TODO - perf test
 
-    this.viewport = new Viewport({
-      interaction: this.app.renderer.plugins.interaction
-    })
-      .drag()
-      .pinch()
-      .wheel() // TODO - make zoom/position stateless
-      .clampZoom({ minScale: 0.2, maxScale: 2.5 }) // TODO - expose min/max configuration
-      .decelerate()
-      .on('drag-start', () => container.style.cursor = 'move')
-      .on('drag-end', () => container.style.cursor = 'auto')
-    this.viewport.center = new PIXI.Point(0, 0)
-    this.viewport.addChild(this.edgesGraphic)
-    this.viewport.addChild(this.edgesLayer)
-    this.viewport.addChild(this.nodesLayer)
-    this.viewport.addChild(this.labelsLayer)
-    this.viewport.addChild(this.frontNodeLayer)
-    this.viewport.addChild(this.frontLabelLayer)
-    this.app.stage.addChild(this.viewport)
+    this.app.stage.addChild(this.root)
+    this.root.addChild(this.edgesGraphic)
+    this.root.addChild(this.edgesLayer)
+    this.root.addChild(this.nodesLayer)
+    this.root.addChild(this.labelsLayer)
+    this.root.addChild(this.frontNodeLayer)
+    this.root.addChild(this.frontLabelLayer)
 
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
 
-    this.app.view.addEventListener('wheel', (event) => event.preventDefault())
-    this.viewport.on('wheel', () => {
-      this.onWheel(this.viewport.x, this.viewport.y, this.viewport.scaled)
-    })
+    this.app.view.addEventListener('wheel', this.wheel)
 
     this.debug = debug
     if (this.debug) {
@@ -193,21 +187,14 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     nodes,
     edges,
     options: {
-      width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, zoom = RENDERER_OPTIONS.zoom,
+      width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
+      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
       onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
       onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
       onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop,
       onWheel = noop,
     } = RENDERER_OPTIONS
   }: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
-    if (width !== this.width || height !== this.height) {
-      this.width = width
-      this.height = height
-      this.app.renderer.resize(width, height)
-    }
-
-    this.viewport.setZoom(zoom) // TODO - interpolate zoom
-
     // TODO - these shouldn't fire on edge hover or click either
     this.app.view.onpointerenter = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerEnter(e)
     this.app.view.onpointerdown = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && onContainerPointerDown(e)
@@ -225,6 +212,30 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
     this.onWheel = onWheel
+    this.minZoom = minZoom
+    this.maxZoom = maxZoom
+
+    if (width !== this.width || height !== this.height) {
+      this.width = width
+      this.height = height
+      this.root.position.set((this.width / 2 - this.x) * this.root.scale.x, (this.height / 2 - this.y) * this.root.scale.y)
+      this.app.renderer.resize(width, height)
+    }
+
+    if (x !== this.x) {
+      this.x = x
+      this.root.x = x
+    }
+
+    if (y !== this.y) {
+      this.y = y
+      this.root.y = y
+    }
+
+    if (zoom !== this.zoom) {
+      this.zoom = zoom
+      this.root.scale.set(zoom) // TODO - interpolate zoom
+    }
 
     const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
     const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
@@ -338,12 +349,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       }
 
       this.dirty = this.animationPercent < 1
-      this.viewport.dirty = false
-      this.app.render()
-    } else if (this.viewport.dirty) {
-      this.viewport.dirty = false
       this.app.render()
     }
+    // TODO - add lightweight zoom/position dirty render case
   }
 
   private _debugFirstRender = true
@@ -378,13 +386,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       performance.mark('draw')
       this.app.render()
       performance.measure('draw', 'draw')
-    } else if (this.viewport.dirty) {
-      performance.mark('draw')
-      this.app.render()
-      performance.measure('draw', 'draw')
     }
 
-    if (this.debug?.logPerformance && (this.dirty || this.viewport.dirty)) {
+    if (this.debug?.logPerformance && this.dirty) {
       let external = 0
       let update = 0
       let render = 0
@@ -422,11 +426,45 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       )
     }
 
-    this.viewport.dirty = false
-
     performance.clearMarks()
     performance.clearMeasures()
     performance.mark('external')
+  }
+
+  private wheel = (e: WheelEvent) => {
+    e.preventDefault()
+
+    if (this.pauseInteraction) {
+      return
+    }
+
+    let point = new PIXI.Point()
+    this.app.renderer.plugins.interaction.mapPositionToPoint(point, e.clientX, e.clientY)
+
+    // TODO - move to zoom control?
+    const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
+    const change = Math.pow(2, 1.1 * step)
+    const scale = this.root.scale.x
+
+    if (step > 0 && scale >= this.maxZoom) {
+      return
+    } else if (step < 0 && scale <= this.minZoom) {
+      return
+    }
+
+    const newScale = Math.max(this.minZoom, Math.min(this.maxZoom, this.root.scale.x * change))
+
+    let oldPoint = this.root.toLocal(point)
+
+    this.root.scale.set(newScale)
+    const newPoint = this.root.toGlobal(oldPoint)
+    this.root.scale.set(scale)
+
+    this.onWheel(
+      this.root.x + point.x - newPoint.x,
+      this.root.y + point.y - newPoint.y,
+      newScale
+    )
   }
 
   delete = () => {

@@ -1,6 +1,7 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
 import * as Graph from '../../src/'
+import * as Zoom from '../../src/controls/zoom'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
 
@@ -87,6 +88,9 @@ const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
+  x: 0,
+  y: 0,
+  zoom: 1,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
@@ -121,6 +125,28 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
+  onWheel: (x, y, zoom) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    renderOptions.zoom = zoom
+    render({ nodes, edges, options: renderOptions })
+  }
+}
+
+const zoomOptions: Partial<Zoom.Options> = {
+  top: 80,
+  onZoomIn: () => {
+    if (renderOptions.zoom < 2.5) {
+      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom / 0.6)
+      render({ nodes, edges, options: renderOptions })
+    }
+  },
+  onZoomOut: () => {
+    if (renderOptions.zoom > 0.2) {
+      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom * 0.6)
+      render({ nodes, edges, options: renderOptions })
+    }
+  },
 }
 
 
@@ -128,6 +154,8 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
  * Initialize Layout and Renderer
  */
 const layout = Layout()
+
+const zoomControl = Zoom.Control({ container })
 
 const render = Renderer<Node, Graph.Edge>({
   container,
@@ -138,6 +166,8 @@ const render = Renderer<Node, Graph.Edge>({
 /**
  * Layout and Render Graph
  */
+zoomControl(zoomOptions)
+
 const NODES_PER_TICK = 30
 const INTERVAL = 1400
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)

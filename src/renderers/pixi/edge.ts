@@ -360,7 +360,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     if (!this.hoveredEdge) {
       this.hoveredEdge = true
       this.renderer.dirty = true
-      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      const { x, y } = this.renderer.root.toLocal(event.data.global)
       this.renderer.onEdgePointerEnter(event, this.edge, x, y)
     }
   }
@@ -370,18 +370,18 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.hoveredEdge = false
       this.renderer.dirty = true
 
-      const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+      const { x, y } = this.renderer.root.toLocal(event.data.global)
       this.renderer.onEdgePointerLeave(event, this.edge, x, y)
     }
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
-    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
     this.renderer.onEdgePointerDown(event, this.edge, x, y)
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
-    const { x, y } = this.renderer.viewport.toWorld(event.data.global)
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
     this.renderer.onEdgePointerUp(event, this.edge, x, y)
   }
 }
