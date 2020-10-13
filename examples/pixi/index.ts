@@ -71,7 +71,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
 
 const createSubgraphStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
-  stroke: [{ color: '#F7CA4D', width: 6 }],
+  stroke: [{ color: '#F7CA4D', width: 2 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 }
 })
 
@@ -113,6 +113,10 @@ const renderOptions: Partial<RendererOptions> = {
   x: 0,
   y: 0,
   zoom: 1,
+  minZoom: 0.1,
+  maxZoom: 2.5,
+  nodesEqual: (prev, current) => prev === current,
+  edgesEqual: (prev, current) => prev === current,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
@@ -165,9 +169,9 @@ const renderOptions: Partial<RendererOptions> = {
       style: { ...node.style, color: '#EFEFEF', icon: undefined },
       subGraph: {
         nodes: (node.subGraph?.nodes ?? []).concat([
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(21) },
+          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
+          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
+          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
         ])
           .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
@@ -182,8 +186,8 @@ const renderOptions: Partial<RendererOptions> = {
   onContainerPointerUp: () => {
     nodes = nodes.map((node) => (node.subGraph ? {
       ...node,
-      radius: 24,
-      style: node.id === 'a' ? createCompanyStyle(48) : createPersonStyle(48),
+      radius: 18,
+      style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
       subGraph: undefined,
     } : node))
 

@@ -63,6 +63,8 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   zoom: number
   minZoom: number
   maxZoom: number
+  nodesEqual: (previous: N[], current: N[]) => boolean
+  edgesEqual: (previous: E[], current: E[]) => boolean
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void
   onNodePointerDown: (event: Event, node: N, x: number, y: number) => void
   onNodeDrag: (event: Event, node: N, x: number, y: number) => void
@@ -83,7 +85,8 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
 
 
 export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
-  width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.2, maxZoom: 2.5,
+  width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
+  nodesEqual: () => false, edgesEqual: () => false,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
   onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop,
@@ -101,6 +104,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
   dirty = false
+  viewportDirty = false
   previousRenderTime = Date.now()
   animationDuration = 0
   animationPercent = 0
@@ -110,6 +114,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   frontNodeLayer = new PIXI.Container()
   frontLabelLayer = new PIXI.Container()
   edgesGraphic = new PIXI.Graphics()
+  nodes: N[] = []
+  edges: E[] = []
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
   edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
@@ -184,7 +190,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.dragInteraction = new Drag(container, this.root, (x, y) => {
       this.root.x = x
       this.root.y = y
-      this.dirty = true
+      this.viewportDirty = true
     })
     this.app.renderer.plugins.interaction.on('pointerdown', this.dragInteraction.down)
     this.app.renderer.plugins.interaction.on('pointermove', this.dragInteraction.move)
@@ -196,7 +202,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.decelerateInteraction = new Decelerate(this.root, (x, y) => {
       this.root.x = x
       this.root.y = y
-      this.dirty = true
+      this.viewportDirty = true
     })
     this.app.renderer.plugins.interaction.on('pointerdown', this.decelerateInteraction.down)
     this.app.renderer.plugins.interaction.on('pointermove', this.decelerateInteraction.move)
@@ -221,6 +227,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
+      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
       onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
       onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
       onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop,
@@ -252,107 +259,128 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       this.height = height
       this.root.position.set((this.width / 2 - this.x) * this.root.scale.x, (this.height / 2 - this.y) * this.root.scale.y)
       this.app.renderer.resize(width, height)
+      this.viewportDirty = true
     }
 
     if (x !== this.x) {
       this.x = x
       this.root.x = x
+      this.viewportDirty = true
     }
 
     if (y !== this.y) {
       this.y = y
       this.root.y = y
+      this.viewportDirty = true
     }
 
     if (zoom !== this.zoom) {
       this.zoom = zoom
       this.root.scale.set(zoom) // TODO - interpolate zoom
+      this.viewportDirty = true
     }
 
-    const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
-    const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
+    const edgesAreEqual = edgesEqual(this.edges, edges)
+    const nodesAreEqual = nodesEqual(this.nodes, nodes)
 
 
     /**
      * Build edge indices
      */
-    for (const edge of edges) {
-      if (this.edgeIndex[edge.source] === undefined) {
-        this.edgeIndex[edge.source] = {}
-      }
-      if (this.edgeIndex[edge.target] === undefined) {
-        this.edgeIndex[edge.target] = {}
-      }
-      if (this.edgeIndex[edge.source][edge.target] === undefined) {
-        this.edgeIndex[edge.source][edge.target] = new Set()
-      }
-      if (this.edgeIndex[edge.target][edge.source] === undefined) {
-        this.edgeIndex[edge.target][edge.source] = new Set()
-      }
+    if (!edgesAreEqual) {
+      for (const edge of edges) {
+        if (this.edgeIndex[edge.source] === undefined) {
+          this.edgeIndex[edge.source] = {}
+        }
+        if (this.edgeIndex[edge.target] === undefined) {
+          this.edgeIndex[edge.target] = {}
+        }
+        if (this.edgeIndex[edge.source][edge.target] === undefined) {
+          this.edgeIndex[edge.source][edge.target] = new Set()
+        }
+        if (this.edgeIndex[edge.target][edge.source] === undefined) {
+          this.edgeIndex[edge.target][edge.source] = new Set()
+        }
 
-      this.edgeIndex[edge.source][edge.target].add(edge.id)
-      this.edgeIndex[edge.target][edge.source].add(edge.id)
+        this.edgeIndex[edge.source][edge.target].add(edge.id)
+        this.edgeIndex[edge.target][edge.source].add(edge.id)
+      }
     }
 
 
     /**
      * Ndge enter/update/exit
      */
-    for (const node of nodes) {
-      if (this.nodesById[node.id] === undefined) {
-        // node enter
-        let adjacentNode: string | undefined
+    if (!nodesAreEqual) {
+      this.nodes = nodes
 
-        if (this.edgeIndex[node.id]) {
-          // nodes w edges from existing positioned nodes enter from one of those nodes
-          adjacentNode = Object.keys(this.edgeIndex[node.id]).find((adjacentNodeId) => (
-            this.nodesById[adjacentNodeId]?.node.x !== undefined && this.nodesById[adjacentNodeId]?.node.y !== undefined
-          ))
+      const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
+
+      for (const node of nodes) {
+        if (this.nodesById[node.id] === undefined) {
+          // node enter
+          let adjacentNode: string | undefined
+
+          if (this.edgeIndex[node.id]) {
+            // nodes w edges from existing positioned nodes enter from one of those nodes
+            adjacentNode = Object.keys(this.edgeIndex[node.id]).find((adjacentNodeId) => (
+              this.nodesById[adjacentNodeId]?.node.x !== undefined && this.nodesById[adjacentNodeId]?.node.y !== undefined
+            ))
+          }
+
+          nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? 0, this.nodesById[adjacentNode ?? '']?.y ?? 0, node.radius)
+          /**
+           * alternatively, don't animate entering nodes
+           */
+          // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode]?.x ?? node.x ?? 0, this.nodesById[adjacentNode]?.y ?? node.y ?? 0, node.radius)
+        } else {
+          nodesById[node.id] = this.nodesById[node.id].update(node)
         }
-
-        nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? 0, this.nodesById[adjacentNode ?? '']?.y ?? 0, node.radius)
-        /**
-         * alternatively, don't animate entering nodes
-         */
-        // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode]?.x ?? node.x ?? 0, this.nodesById[adjacentNode]?.y ?? node.y ?? 0, node.radius)
-      } else {
-        nodesById[node.id] = this.nodesById[node.id].update(node)
       }
-    }
 
-    for (const nodeId in this.nodesById) {
-      if (nodesById[nodeId] === undefined) {
-        // node exit
-        this.nodesById[nodeId].delete()
+      for (const nodeId in this.nodesById) {
+        if (nodesById[nodeId] === undefined) {
+          // node exit
+          this.nodesById[nodeId].delete()
+        }
       }
+
+      this.animationDuration = 0
+      this.nodesById = nodesById
+      this.dirty = true
     }
 
 
     /**
      * Edge enter/update/exit
      */
-    for (const edge of edges) {
-      const id = edge.id
-      if (this.edgesById[id] === undefined) {
-        // edge enter
-        edgesById[id] = new EdgeRenderer(this, edge, this.edgesLayer)
-      } else {
-        // edge update
-        edgesById[id] = this.edgesById[id].update(edge)
+    if (!edgesAreEqual) {
+      this.edges = edges
+
+      const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
+
+      for (const edge of edges) {
+        const id = edge.id
+        if (this.edgesById[id] === undefined) {
+          // edge enter
+          edgesById[id] = new EdgeRenderer(this, edge, this.edgesLayer)
+        } else {
+          // edge update
+          edgesById[id] = this.edgesById[id].update(edge)
+        }
       }
+
+      for (const edgeId in this.edgesById) {
+        if (edgesById[edgeId] === undefined) {
+          // edge exit
+          this.edgesById[edgeId].delete()
+        }
+      }
+
+      this.edgesById = edgesById
+      this.dirty = true
     }
 
-    for (const edgeId in this.edgesById) {
-      if (edgesById[edgeId] === undefined) {
-        // edge exit
-        this.edgesById[edgeId].delete()
-      }
-    }
-
-    this.dirty = true
-    this.nodesById = nodesById
-    this.edgesById = edgesById
-    this.animationDuration = 0
 
     return this
   }
@@ -385,8 +413,10 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
       this.dirty = this.animationPercent < 1
       this.app.render()
+    } else if (this.viewportDirty) {
+      this.app.render()
+      this.viewportDirty = false
     }
-    // TODO - add lightweight zoom/position dirty render case
   }
 
   private _debugFirstRender = true
@@ -424,9 +454,13 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       performance.mark('draw')
       this.app.render()
       performance.measure('draw', 'draw')
+    } else if (this.viewportDirty) {
+      performance.mark('draw')
+      this.app.render()
+      performance.measure('draw', 'draw')
     }
 
-    if (this.debug?.logPerformance && this.dirty) {
+    if (this.debug?.logPerformance && (this.dirty || this.viewportDirty)) {
       let external = 0
       let update = 0
       let render = 0
@@ -463,6 +497,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         'color: #666',
       )
     }
+
+    this.viewportDirty = false
 
     performance.clearMarks()
     performance.clearMeasures()
