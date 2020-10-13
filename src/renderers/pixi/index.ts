@@ -204,7 +204,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.app.renderer.plugins.interaction.on('pointerupoutside', this.decelerateInteraction.up)
     this.app.renderer.plugins.interaction.on('pointercancel', this.decelerateInteraction.up)
     this.app.renderer.plugins.interaction.on('pointerout', this.decelerateInteraction.up)
-    PIXI.Ticker.shared.add(() => this.decelerateInteraction.update(PIXI.Ticker.shared.elapsedMS)) // TODO - incorporate into existing ticker/render function
 
     this.debug = debug
     if (this.debug) {
@@ -245,8 +244,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
     this.onWheel = onWheel
-    this.minZoom = minZoom
-    this.maxZoom = maxZoom
+    this.zoomInteraction.minZoom = minZoom
+    this.zoomInteraction.maxZoom = maxZoom
 
     if (width !== this.width || height !== this.height) {
       this.width = width
@@ -366,10 +365,13 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
   private render = () => {
     const currentRenderTime = Date.now()
-    this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime)) // clamp to 0 <= x <= 16 to smooth animations
-    // this.animationDuration += currentRenderTime - this.previousRenderTime
+    const elapsedRenderTime = currentRenderTime - this.previousRenderTime
+    this.animationDuration += Math.min(16, Math.max(0, elapsedRenderTime)) // clamp to 0 <= x <= 16 to smooth animations
+    // this.animationDuration += elapsedRenderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.previousRenderTime = currentRenderTime
+
+    this.decelerateInteraction.update(elapsedRenderTime)
 
     if (this.dirty) {
       for (const nodeId in this.nodesById) {
@@ -390,10 +392,13 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   private _debugFirstRender = true
   private debugRender = () => {
     const currentRenderTime = Date.now()
-    this.animationDuration += Math.min(16, Math.max(0, currentRenderTime - this.previousRenderTime))
-    // this.animationDuration += currentRenderTime - this.previousRenderTime
+    const elapsedRenderTime = currentRenderTime - this.previousRenderTime
+    this.animationDuration += Math.min(16, Math.max(0, elapsedRenderTime))
+    // this.animationDuration += elapsedRenderTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
     this.previousRenderTime = currentRenderTime
+
+    this.decelerateInteraction.update(elapsedRenderTime)
 
     this.debug?.stats?.update()
     if (!this._debugFirstRender) {
