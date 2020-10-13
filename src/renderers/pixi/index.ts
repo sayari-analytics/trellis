@@ -5,6 +5,8 @@ import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import { ArrowRenderer } from './edgeArrow'
 import { CircleRenderer } from './circle'
+import { Drag } from './Drag'
+import { Decelerate } from './decelerate'
 
 
 export type Event = PIXI.InteractionEvent
@@ -133,7 +135,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   y = RENDERER_OPTIONS.y
   app: PIXI.Application
   root = new PIXI.Container()
-  pauseInteraction = false
+  pauseInteraction = false // TODO - delete
   debug?: { logPerformance?: boolean, stats?: Stats }
 
   constructor({ container, debug }: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
@@ -171,7 +173,32 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
 
-    this.app.view.addEventListener('wheel', this.wheel)
+    this.app.view.addEventListener('wheel', this.wheel) // TODO - replace with new Zoom(this.root)
+
+    const drag = new Drag(container, this.root, (x, y) => {
+      this.root.x = x
+      this.root.y = y
+      this.dirty = true
+    }) // TODO - pause on pauseInteraction
+    this.app.renderer.plugins.interaction.on('pointerdown', drag.down)
+    this.app.renderer.plugins.interaction.on('pointermove', drag.move)
+    this.app.renderer.plugins.interaction.on('pointerup', drag.up)
+    this.app.renderer.plugins.interaction.on('pointerupoutside', drag.up)
+    this.app.renderer.plugins.interaction.on('pointercancel', drag.up)
+    this.app.renderer.plugins.interaction.on('pointerout', drag.up)
+
+    const decelerate = new Decelerate(this.root, (x, y) => {
+      this.root.x = x
+      this.root.y = y
+      this.dirty = true
+    })
+    this.app.renderer.plugins.interaction.on('pointerdown', decelerate.down)
+    this.app.renderer.plugins.interaction.on('pointermove', decelerate.move)
+    this.app.renderer.plugins.interaction.on('pointerup', decelerate.up)
+    this.app.renderer.plugins.interaction.on('pointerupoutside', decelerate.up)
+    this.app.renderer.plugins.interaction.on('pointercancel', decelerate.up)
+    this.app.renderer.plugins.interaction.on('pointerout', decelerate.up)
+    PIXI.Ticker.shared.add(() => decelerate.update(PIXI.Ticker.shared.elapsedMS)) // TODO - incorporate into existing ticker/render function
 
     this.debug = debug
     if (this.debug) {

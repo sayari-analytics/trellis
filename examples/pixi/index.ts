@@ -204,13 +204,13 @@ const zoomOptions: Partial<Zoom.Options> = {
   top: 80,
   onZoomIn: () => {
     if (renderOptions.zoom < 2.5) {
-      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom / 0.6)
+      renderOptions.zoom = Zoom.clampZoom(0.1, 2.5, renderOptions.zoom / 0.6)
       renderer({ nodes, edges, options: renderOptions })
     }
   },
   onZoomOut: () => {
-    if (renderOptions.zoom > 0.2) {
-      renderOptions.zoom = Zoom.clampZoom(0.2, 2.5, renderOptions.zoom * 0.6)
+    if (renderOptions.zoom > 0.1) {
+      renderOptions.zoom = Zoom.clampZoom(0.1, 2.5, renderOptions.zoom * 0.6)
       renderer({ nodes, edges, options: renderOptions })
     }
   },
