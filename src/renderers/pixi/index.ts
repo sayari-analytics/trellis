@@ -7,6 +7,7 @@ import { ArrowRenderer } from './edgeArrow'
 import { CircleRenderer } from './circle'
 import { Drag } from './Drag'
 import { Decelerate } from './decelerate'
+import { Zoom } from './zoom'
 
 
 export type Event = PIXI.InteractionEvent
@@ -114,6 +115,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
   arrow: ArrowRenderer<N, E>
   circle: CircleRenderer<N, E>
+  zoomInteraction: Zoom
+  dragInteraction: Drag
+  decelerateInteraction: Decelerate
 
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void = noop
   onNodePointerDown: (event: Event, node: N, x: number, y: number) => void = noop
@@ -135,7 +139,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   y = RENDERER_OPTIONS.y
   app: PIXI.Application
   root = new PIXI.Container()
-  pauseInteraction = false // TODO - delete
   debug?: { logPerformance?: boolean, stats?: Stats }
 
   constructor({ container, debug }: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
@@ -173,32 +176,35 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
 
-    this.app.view.addEventListener('wheel', this.wheel) // TODO - replace with new Zoom(this.root)
+    this.zoomInteraction = new Zoom(this.app, this.root, (x, y, zoom) => {
+      this.onWheel(x, y, zoom)
+    })
+    this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 
-    const drag = new Drag(container, this.root, (x, y) => {
-      this.root.x = x
-      this.root.y = y
-      this.dirty = true
-    }) // TODO - pause on pauseInteraction
-    this.app.renderer.plugins.interaction.on('pointerdown', drag.down)
-    this.app.renderer.plugins.interaction.on('pointermove', drag.move)
-    this.app.renderer.plugins.interaction.on('pointerup', drag.up)
-    this.app.renderer.plugins.interaction.on('pointerupoutside', drag.up)
-    this.app.renderer.plugins.interaction.on('pointercancel', drag.up)
-    this.app.renderer.plugins.interaction.on('pointerout', drag.up)
-
-    const decelerate = new Decelerate(this.root, (x, y) => {
+    this.dragInteraction = new Drag(container, this.root, (x, y) => {
       this.root.x = x
       this.root.y = y
       this.dirty = true
     })
-    this.app.renderer.plugins.interaction.on('pointerdown', decelerate.down)
-    this.app.renderer.plugins.interaction.on('pointermove', decelerate.move)
-    this.app.renderer.plugins.interaction.on('pointerup', decelerate.up)
-    this.app.renderer.plugins.interaction.on('pointerupoutside', decelerate.up)
-    this.app.renderer.plugins.interaction.on('pointercancel', decelerate.up)
-    this.app.renderer.plugins.interaction.on('pointerout', decelerate.up)
-    PIXI.Ticker.shared.add(() => decelerate.update(PIXI.Ticker.shared.elapsedMS)) // TODO - incorporate into existing ticker/render function
+    this.app.renderer.plugins.interaction.on('pointerdown', this.dragInteraction.down)
+    this.app.renderer.plugins.interaction.on('pointermove', this.dragInteraction.move)
+    this.app.renderer.plugins.interaction.on('pointerup', this.dragInteraction.up)
+    this.app.renderer.plugins.interaction.on('pointerupoutside', this.dragInteraction.up)
+    this.app.renderer.plugins.interaction.on('pointercancel', this.dragInteraction.up)
+    this.app.renderer.plugins.interaction.on('pointerout', this.dragInteraction.up)
+
+    this.decelerateInteraction = new Decelerate(this.root, (x, y) => {
+      this.root.x = x
+      this.root.y = y
+      this.dirty = true
+    })
+    this.app.renderer.plugins.interaction.on('pointerdown', this.decelerateInteraction.down)
+    this.app.renderer.plugins.interaction.on('pointermove', this.decelerateInteraction.move)
+    this.app.renderer.plugins.interaction.on('pointerup', this.decelerateInteraction.up)
+    this.app.renderer.plugins.interaction.on('pointerupoutside', this.decelerateInteraction.up)
+    this.app.renderer.plugins.interaction.on('pointercancel', this.decelerateInteraction.up)
+    this.app.renderer.plugins.interaction.on('pointerout', this.decelerateInteraction.up)
+    PIXI.Ticker.shared.add(() => this.decelerateInteraction.update(PIXI.Ticker.shared.elapsedMS)) // TODO - incorporate into existing ticker/render function
 
     this.debug = debug
     if (this.debug) {
@@ -456,42 +462,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     performance.clearMarks()
     performance.clearMeasures()
     performance.mark('external')
-  }
-
-  private wheel = (e: WheelEvent) => {
-    e.preventDefault()
-
-    if (this.pauseInteraction) {
-      return
-    }
-
-    let point = new PIXI.Point()
-    this.app.renderer.plugins.interaction.mapPositionToPoint(point, e.clientX, e.clientY)
-
-    // TODO - move to zoom control?
-    const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
-    const change = Math.pow(2, 1.1 * step)
-    const scale = this.root.scale.x
-
-    if (step > 0 && scale >= this.maxZoom) {
-      return
-    } else if (step < 0 && scale <= this.minZoom) {
-      return
-    }
-
-    const newScale = Math.max(this.minZoom, Math.min(this.maxZoom, this.root.scale.x * change))
-
-    let oldPoint = this.root.toLocal(point)
-
-    this.root.scale.set(newScale)
-    const newPoint = this.root.toGlobal(oldPoint)
-    this.root.scale.set(scale)
-
-    this.onWheel(
-      this.root.x + point.x - newPoint.x,
-      this.root.y + point.y - newPoint.y,
-      newScale
-    )
   }
 
   delete = () => {

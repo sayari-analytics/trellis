@@ -440,7 +440,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     this.renderer.clickedNode = this
     this.renderer.app.renderer.plugins.interaction.on('pointermove', this.nodeMove)
-    this.renderer.pauseInteraction = true
+    this.renderer.zoomInteraction.pause()
+    this.renderer.dragInteraction.pause()
+    this.renderer.decelerateInteraction.pause()
     const position = this.renderer.root.toLocal(event.data.global)
     this.nodeMoveXOffset = position.x - this.x
     this.nodeMoveYOffset = position.y - this.y
@@ -452,7 +454,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     this.renderer.clickedNode = undefined
     this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
-    this.renderer.pauseInteraction = false
+    this.renderer.zoomInteraction.resume()
+    this.renderer.dragInteraction.resume()
+    this.renderer.decelerateInteraction.resume()
     this.nodeMoveXOffset = 0
     this.nodeMoveYOffset = 0
     this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
