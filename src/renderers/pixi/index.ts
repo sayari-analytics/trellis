@@ -178,6 +178,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.labelsLayer.interactiveChildren = false
     this.nodesLayer.sortableChildren = true // TODO - perf test
 
+    this.root.pivot.x = this.width / -2
+    this.root.pivot.y = this.height / -2
     this.app.stage.addChild(this.root)
     this.root.addChild(this.edgesGraphic)
     this.root.addChild(this.edgesLayer)
@@ -260,20 +262,19 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
-      this.root.position.set((this.width / 2 - this.x) * this.root.scale.x, (this.height / 2 - this.y) * this.root.scale.y)
-      this.app.renderer.resize(width, height)
+      this.root.pivot.x = this.width / -2
+      this.root.pivot.y = this.height / -2
+      this.app.renderer.resize(this.width, this.height)
       this.viewportDirty = true
     }
 
     if (x !== this.x) {
-      this.x = x
-      this.root.x = x
+      this.x = this.root.x = x
       this.viewportDirty = true
     }
 
     if (y !== this.y) {
-      this.y = y
-      this.root.y = y
+      this.y = this.root.y = y
       this.viewportDirty = true
     }
 

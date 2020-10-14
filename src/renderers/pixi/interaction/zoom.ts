@@ -32,30 +32,29 @@ export class Zoom {
     let point = new PIXI.Point()
     this.app.renderer.plugins.interaction.mapPositionToPoint(point, e.clientX, e.clientY)
 
-    // TODO - move to zoom control?
     const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
-    const scale = this.parent.scale.x
+    const zoom = this.parent.scale.x
 
-    if (step > 0 && scale >= this.maxZoom) {
+    if (step > 0 && zoom >= this.maxZoom) {
       return
-    } else if (step < 0 && scale <= this.minZoom) {
+    } else if (step < 0 && zoom <= this.minZoom) {
       return
     }
 
-    const newScale = Math.max(this.minZoom, Math.min(this.maxZoom, this.parent.scale.x * change))
+    const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom * change))
 
     let oldPoint = this.parent.toLocal(point)
 
-    this.parent.scale.set(newScale)
+    this.parent.scale.set(newZoom)
     const newPoint = this.parent.toGlobal(oldPoint)
-    this.parent.scale.set(scale)
+    this.parent.scale.set(zoom)
 
     this.onContainerWheel(
       e,
       this.parent.x + point.x - newPoint.x,
       this.parent.y + point.y - newPoint.y,
-      newScale
+      newZoom
     )
   }
 
