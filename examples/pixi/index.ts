@@ -126,33 +126,27 @@ const renderOptions: Partial<RendererOptions> = {
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ?
-      {
-        ...node,
-        style: {
-          ...node.style,
-          stroke: node.id === 'a' ?
-            node.style.stroke.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 0 ? '#FFF' : '#CCC' })) :
-            node.style.stroke.map((stroke) => ({ ...stroke, color: '#CCC' }))
-        }
-      } :
-      node
-    ))
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      style: {
+        ...node.style,
+        stroke: node.id === 'a' ?
+          node.style.stroke.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 0 ? '#FFF' : '#CCC' })) :
+          node.style.stroke.map((stroke) => ({ ...stroke, color: '#CCC' }))
+      }
+    } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ?
-      {
-        ...node,
-        style: {
-          ...node.style,
-          stroke: node.id === 'a' ?
-            createCompanyStyle(48).stroke :
-            createPersonStyle(48).stroke
-        }
-      } :
-      node
-    ))
+    nodes = nodes.map((node) => (node.id === id ? {
+      ...node,
+      style: {
+        ...node.style,
+        stroke: node.id === 'a' ?
+          createCompanyStyle(48).stroke :
+          createPersonStyle(48).stroke
+      }
+    } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {

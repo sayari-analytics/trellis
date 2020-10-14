@@ -1,5 +1,6 @@
 import Stats from 'stats.js'
 import { Layout, LayoutOptions } from '../../src/layout/force'
+import * as Zoom from '../../src/controls/zoom'
 import * as Graph from '../../src'
 import { Renderer, RendererOptions } from '../../src/renderers/pixi'
 import graphData from '../../tmp-data'
@@ -63,13 +64,13 @@ let nodes = Object.values(graphData.nodes)
   .map<Node>(({ id, label, type }) => ({
     id,
     // label,
-    radius: 32,
+    radius: 16,
     type,
     style: {
       color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
       stroke: type === 'company' ?
-        [{ color: '#F7CA4D', width: 4 }] :
-        [{ color: '#90D7FB', width: 4 }],
+        [{ color: '#F7CA4D', width: 2 }] :
+        [{ color: '#90D7FB', width: 2 }],
       // icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
     }
   }))
@@ -123,37 +124,39 @@ const layoutOptions: Partial<LayoutOptions> = {
   tick: 50,
 }
 
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
+  x: 0,
+  y: 0,
+  zoom: 1,
+  minZoom: 0.1,
+  maxZoom: 2.5,
+  nodesEqual: () => false,
+  edgesEqual: () => false,
   onNodeDrag: throttleAnimationFrame((_, { id }, x, y) => {
     nodesById[id].x = x
     nodesById[id].y = y
+    renderOptions.nodesEqual = () => false
+    renderOptions.edgesEqual = () => false
     render({ nodes, edges, options: renderOptions })
   }),
-  // onNodePointerEnter: throttleAnimationFrame((_, { id }) => {
-  //   nodesById[id].radius = 100
-  //   nodesById[id].style.stroke = [{ color: '#CCC', width: 4 }]
-  //   render({ nodes, edges, options: renderOptions })
-  // }),
-  // onNodePointerLeave: throttleAnimationFrame((_, { id }) => {
-  //   nodesById[id].radius = 32
-  //   nodesById[id].style.stroke = nodesById[id].type === 'company' ?
-  //     [{ color: '#F7CA4D', width: 4 }] :
-  //     [{ color: '#90D7FB', width: 4 }]
-  //   render({ nodes, edges, options: renderOptions })
-  // }),
-  // onEdgePointerEnter: throttleAnimationFrame((_, { id }) => {
-  //   if (edgesById[id].style === undefined) edgesById[id].style = {}
-  //   edgesById[id].style.width = 3
-  //   render({ nodes, edges, options: renderOptions })
-  // }),
-  // onEdgePointerLeave: throttleAnimationFrame((_, { id }) => {
-  //   if (edgesById[id].style === undefined) edgesById[id].style = {}
-  //   edgesById[id].style.width = 1
-  //   render({ nodes, edges, options: renderOptions })
-  // }),
+  onContainerDrag: (_, x, y) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    renderOptions.nodesEqual = () => true
+    renderOptions.edgesEqual = () => true
+    render({ nodes, edges, options: renderOptions })
+  },
+  onWheel: (_, x, y, zoom) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    renderOptions.zoom = zoom
+    renderOptions.nodesEqual = () => true
+    renderOptions.edgesEqual = () => true
+    render({ nodes, edges, options: renderOptions })
+  }
 }
 
 
@@ -161,7 +164,7 @@ const renderOptions: Partial<RendererOptions> = {
  * Initialize Layout and Renderer
  */
 const layout = Layout()
-
+const zoomControl = Zoom.Control({ container })
 const render = throttleAnimationFrame(Renderer({
   container,
   debug: { stats, logPerformance: true }
@@ -172,7 +175,17 @@ const render = throttleAnimationFrame(Renderer({
  * Layout and Render Graph
  */
 console.log(`node count: ${nodes.length} \nedge count ${edges.length}`)
-
+zoomControl({
+  top: 80,
+  onZoomIn: () => {
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    render({ nodes, edges, options: renderOptions })
+  },
+  onZoomOut: () => {
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    render({ nodes, edges, options: renderOptions })
+  },
+})
 
 layout({
   nodes,
