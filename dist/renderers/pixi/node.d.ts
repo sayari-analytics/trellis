@@ -1,18 +1,15 @@
-import { PIXIRenderer as Renderer, NodeDatum, EdgeDatum } from '.';
-export declare class Node<N extends NodeDatum, E extends EdgeDatum> {
+import { PIXIRenderer as Renderer } from '.';
+import { Node, Edge } from '../../';
+export declare class NodeRenderer<N extends Node, E extends Edge> {
     node: N;
     x: number;
     y: number;
     radius: number;
     strokeWidth: number;
-    stroke: number;
-    strokeOpacity: number;
-    fill: number;
-    fillOpacity: number;
     subGraphNodes: {
-        [id: string]: Node<N, E>;
+        [id: string]: NodeRenderer<N, E>;
     };
-    parent?: Node<N, E>;
+    parent?: NodeRenderer<N, E>;
     private renderer;
     private depth;
     private startX;
@@ -25,20 +22,28 @@ export declare class Node<N extends NodeDatum, E extends EdgeDatum> {
     private interpolateY;
     private interpolateRadius;
     private label?;
+    private labelFamily?;
+    private labelColor?;
+    private labelSize?;
+    private stroke?;
     private icon?;
+    private badge?;
     private nodeContainer;
+    private fillSprite;
+    private strokeSpriteContainer;
+    private strokeSprites;
+    private badgeSpriteContainer?;
+    private badgeSprites;
     private labelContainer;
-    private nodeGfx;
     private labelSprite?;
+    private iconSprite?;
+    private fontIconLoader?;
     private doubleClickTimeout;
     private doubleClick;
     private nodeMoveXOffset;
     private nodeMoveYOffset;
-    constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, parent?: Node<N, E>);
-    set(node: N): this;
-    /**
-     * TODO - perf boost: render cheap version of things while still animating position
-     */
+    constructor(renderer: Renderer<N, E>, node: N, x: number, y: number, radius?: number, parent?: NodeRenderer<N, E>);
+    update(node: N): this;
     render(): this;
     delete(): void;
     private nodePointerEnter;

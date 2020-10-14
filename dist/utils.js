@@ -19,11 +19,8 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var raf_1 = __importDefault(require("raf"));
+exports.equals = exports.interpolateDuration = exports.interpolateInterval = exports.identity = exports.throttleAnimationFrame = exports.animationFrameLoop = exports.batch = exports.throttle = exports.noop = void 0;
 exports.noop = function () { };
 exports.throttle = function (cb, duration) {
     var clear = true;
@@ -60,10 +57,10 @@ exports.animationFrameLoop = function (cb) {
     var frame;
     var tick = function () {
         cb();
-        frame = raf_1.default(tick);
+        frame = requestAnimationFrame(tick);
     };
-    frame = raf_1.default(tick);
-    return function () { return raf_1.default.cancel(frame); };
+    frame = requestAnimationFrame(tick);
+    return function () { return cancelAnimationFrame(frame); };
 };
 exports.throttleAnimationFrame = function (cb) {
     var tailArgs;
@@ -76,7 +73,7 @@ exports.throttleAnimationFrame = function (cb) {
         if (clear) {
             clear = false;
             cb.apply(void 0, __spread(args));
-            raf_1.default(function () {
+            requestAnimationFrame(function () {
                 if (tailArgs) {
                     cb.apply(void 0, __spread(tailArgs));
                 }
@@ -113,22 +110,50 @@ exports.interpolateDuration = function (duration) {
     var frame;
     return function (cb) {
         if (frame !== undefined) {
-            raf_1.default.cancel(frame);
+            cancelAnimationFrame(frame);
         }
         start = Date.now();
         end = start + duration;
         var rafCallback = function () {
             var now = Date.now();
             if (now > end) {
-                raf_1.default.cancel(frame);
+                cancelAnimationFrame(frame);
                 frame = undefined;
                 cb(1);
                 return;
             }
             cb((now - start) / (end - start));
-            frame = raf_1.default(rafCallback);
+            frame = requestAnimationFrame(rafCallback);
         };
-        frame = raf_1.default(rafCallback);
+        frame = requestAnimationFrame(rafCallback);
     };
+};
+exports.equals = function (a, b) {
+    if (a === b) {
+        return true;
+    }
+    else if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) {
+            return false;
+        }
+        for (var i = 0; i < a.length; i++) {
+            if (!exports.equals(a[i], b[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    else if (typeof a === 'object' && typeof b === 'object') {
+        if (Object.keys(a).length !== Object.keys(b).length) {
+            return false;
+        }
+        for (var key in a) {
+            if (!exports.equals(a[key], b[key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 };
 //# sourceMappingURL=utils.js.map

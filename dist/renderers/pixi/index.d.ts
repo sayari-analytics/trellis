@@ -1,32 +1,63 @@
 /// <reference types="stats" />
 import * as PIXI from 'pixi.js';
-import { Viewport } from 'pixi-viewport';
-import { PositionedNode, Edge as PositionedEdge } from '../../types';
-import { Node } from './node';
-import { Edge } from './edge';
-export declare type Event = PIXI.interaction.InteractionEvent;
+import { Node, Edge } from '../../';
+import { NodeRenderer } from './node';
+import { EdgeRenderer } from './edge';
+import { ArrowRenderer } from './edgeArrow';
+import { CircleRenderer } from './circle';
+import { Drag } from './interaction/drag';
+import { Decelerate } from './interaction/decelerate';
+import { Zoom } from './interaction/zoom';
+export declare type Event = PIXI.InteractionEvent;
+export declare type TextIcon = {
+    type: 'textIcon';
+    family: string;
+    text: string;
+    color: string;
+    size: number;
+};
+export declare type ImageIcon = {
+    type: 'imageIcon';
+    image: string;
+};
 export declare type NodeStyle = {
-    strokeWidth: number;
-    fill: string;
-    stroke: string;
-    fillOpacity: number;
-    strokeOpacity: number;
-    icon?: string;
+    color: string;
+    stroke: Partial<{
+        color: string;
+        width: number;
+    }>[];
+    badge: {
+        position: number;
+        radius?: number;
+        color?: string;
+        stroke?: string;
+        strokeWidth?: number;
+        icon?: TextIcon | ImageIcon;
+    }[];
+    icon: TextIcon | ImageIcon;
+    labelFamily: string;
+    labelColor: string;
+    labelSize: number;
 };
 export declare type EdgeStyle = {
     width: number;
     stroke: string;
     strokeOpacity: number;
+    labelFamily: string;
+    labelColor: string;
+    labelSize: number;
+    arrow: 'forward' | 'reverse' | 'both' | 'none';
 };
-export declare type NodeDatum = Exclude<PositionedNode<EdgeDatum>, 'style'> & {
-    style?: Partial<NodeStyle>;
-};
-export declare type EdgeDatum = Exclude<PositionedEdge, 'style'> & {
-    style?: Partial<EdgeStyle>;
-};
-export declare type RendererOptions<N extends NodeDatum = NodeDatum, E extends EdgeDatum = EdgeDatum> = {
+export declare type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
     width: number;
     height: number;
+    x: number;
+    y: number;
+    zoom: number;
+    minZoom: number;
+    maxZoom: number;
+    nodesEqual: (previous: N[], current: N[]) => boolean;
+    edgesEqual: (previous: E[], current: E[]) => boolean;
     onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void;
     onNodePointerDown: (event: Event, node: N, x: number, y: number) => void;
     onNodeDrag: (event: Event, node: N, x: number, y: number) => void;
@@ -40,41 +71,55 @@ export declare type RendererOptions<N extends NodeDatum = NodeDatum, E extends E
     onContainerPointerEnter: (event: PointerEvent) => void;
     onContainerPointerDown: (event: PointerEvent) => void;
     onContainerPointerMove: (event: PointerEvent) => void;
+    onContainerDrag: (event: Event | undefined, x: number, y: number) => void;
     onContainerPointerUp: (event: PointerEvent) => void;
     onContainerPointerLeave: (event: PointerEvent) => void;
+    onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void;
 };
-export declare const RENDERER_OPTIONS: RendererOptions<NodeDatum, EdgeDatum>;
-export declare class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum> {
-    hoveredNode?: Node<N, E>;
-    clickedNode?: Node<N, E>;
+export declare const RENDERER_OPTIONS: RendererOptions<Node, Edge>;
+export declare class PIXIRenderer<N extends Node, E extends Edge> {
+    update: (graph: {
+        nodes: N[];
+        edges: E[];
+        options?: Partial<RendererOptions<N, E>>;
+    }) => void;
+    hoveredNode?: NodeRenderer<N, E>;
+    clickedNode?: NodeRenderer<N, E>;
     dirty: boolean;
-    renderTime: number;
+    viewportDirty: boolean;
+    previousRenderTime: number;
     animationDuration: number;
     animationPercent: number;
-    restartAnimation: boolean;
     edgesLayer: PIXI.Container;
     nodesLayer: PIXI.Container;
     labelsLayer: PIXI.Container;
     frontNodeLayer: PIXI.Container;
     frontLabelLayer: PIXI.Container;
-    nodes: N[] | undefined;
-    edges: E[] | undefined;
+    edgesGraphic: PIXI.Graphics;
+    nodes: N[];
+    edges: E[];
     nodesById: {
-        [id: string]: Node<N, E>;
+        [id: string]: NodeRenderer<N, E>;
     };
     edgesById: {
-        [id: string]: Edge<N, E>;
+        [id: string]: EdgeRenderer<N, E>;
     };
-    forwardEdgeIndex: {
-        [source: string]: {
-            [target: string]: Set<string>;
+    edgeIndex: {
+        [edgeA: string]: {
+            [edgeB: string]: Set<string>;
         };
     };
-    reverseEdgeIndex: {
-        [target: string]: {
-            [source: string]: Set<string>;
-        };
-    };
+    arrow: ArrowRenderer<N, E>;
+    circle: CircleRenderer<N, E>;
+    zoomInteraction: Zoom<N, E>;
+    dragInteraction: Drag<N, E>;
+    decelerateInteraction: Decelerate<N, E>;
+    onContainerPointerEnter: (event: PointerEvent) => void;
+    onContainerPointerDown: (event: PointerEvent) => void;
+    onContainerDrag: (event: Event | undefined, x: number, y: number) => void;
+    onContainerPointerMove: (event: PointerEvent) => void;
+    onContainerPointerUp: (event: PointerEvent) => void;
+    onContainerPointerLeave: (event: PointerEvent) => void;
     onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void;
     onNodePointerDown: (event: Event, node: N, x: number, y: number) => void;
     onNodeDrag: (event: Event, node: N, x: number, y: number) => void;
@@ -85,48 +130,45 @@ export declare class PIXIRenderer<N extends NodeDatum, E extends EdgeDatum> {
     onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void;
+    onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void;
     width: number;
     height: number;
+    zoom: number;
+    minZoom: number;
+    maxZoom: number;
+    x: number;
+    y: number;
     app: PIXI.Application;
-    viewport: Viewport;
-    debug: {
+    root: PIXI.Container;
+    debug?: {
         logPerformance?: boolean;
         stats?: Stats;
     };
     constructor({ container, debug }: {
-        container: HTMLCanvasElement;
+        container: HTMLDivElement;
         debug?: {
             logPerformance?: boolean;
             stats?: Stats;
         };
     });
-    /**
-     * TODO
-     * - handle case where apply is called while previous apply is still being interpolated
-     * current approach essentially cancels previous apply and runs a new one
-     * maybe instead stage new one, overwriting stagged apply if new applys are called, and don't run until previous interpolation is done
-     * - do a better job diffing against existing nodes/edges/options
-     */
-    apply: ({ nodes, edges, options: { width, height, onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave, onContainerPointerEnter, onContainerPointerDown, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, } }: {
-        nodes: N[];
-        edges: E[];
-        options?: Partial<RendererOptions<N, E>> | undefined;
-    }) => this;
+    private _update;
+    private _debugUpdate;
     private render;
+    private _debugFirstRender;
     private debugRender;
+    delete: () => void;
 }
-export declare const Renderer: <N extends NodeDatum, E extends EdgeDatum>(options: {
-    container: HTMLCanvasElement;
+export declare const Renderer: <N extends Node<Edge<Partial<EdgeStyle>>, Partial<NodeStyle>>, E extends Edge<Partial<EdgeStyle>>>(options: {
+    container: HTMLDivElement;
     debug?: {
-        logPerformance?: boolean | undefined;
-        stats?: Stats | undefined;
-    } | undefined;
+        logPerformance?: boolean;
+        stats?: Stats;
+    };
 }) => {
     (graph: {
         nodes: N[];
         edges: E[];
         options?: Partial<RendererOptions<N, E>> | undefined;
-    }): PIXIRenderer<N, E>;
-    nodes(): N[] | undefined;
-    edges(): E[] | undefined;
+    }): void;
+    delete: () => void;
 };
