@@ -122,9 +122,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
   arrow: ArrowRenderer<N, E>
   circle: CircleRenderer<N, E>
-  zoomInteraction: Zoom
-  dragInteraction: Drag
-  decelerateInteraction: Decelerate
+  zoomInteraction: Zoom<N, E>
+  dragInteraction: Drag<N, E>
+  decelerateInteraction: Decelerate<N, E>
 
   onContainerPointerEnter: (event: PointerEvent) => void = noop
   onContainerPointerDown: (event: PointerEvent) => void = noop
@@ -178,8 +178,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.labelsLayer.interactiveChildren = false
     this.nodesLayer.sortableChildren = true // TODO - perf test
 
-    this.root.pivot.x = this.width / -2
-    this.root.pivot.y = this.height / -2
+    this.root.pivot.x = this.width / this.zoom / -2
+    this.root.pivot.y = this.height / this.zoom / -2
     this.app.stage.addChild(this.root)
     this.root.addChild(this.edgesGraphic)
     this.root.addChild(this.edgesLayer)
@@ -191,10 +191,10 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.arrow = new ArrowRenderer<N, E>(this)
     this.circle = new CircleRenderer<N, E>(this)
 
-    this.zoomInteraction = new Zoom(this.app, this.root, (e, x, y, zoom) => this.onWheel(e, x, y, zoom))
+    this.zoomInteraction = new Zoom(this, (e, x, y, zoom) => this.onWheel(e, x, y, zoom))
     this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 
-    this.dragInteraction = new Drag(container, this.root, (e, x, y) => this.onContainerDrag(e, x, y))
+    this.dragInteraction = new Drag(this, (e, x, y) => this.onContainerDrag(e, x, y))
     this.app.renderer.plugins.interaction.on('pointerdown', this.dragInteraction.down)
     this.app.renderer.plugins.interaction.on('pointermove', this.dragInteraction.move)
     this.app.renderer.plugins.interaction.on('pointerup', this.dragInteraction.up)
@@ -202,7 +202,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.app.renderer.plugins.interaction.on('pointercancel', this.dragInteraction.up)
     this.app.renderer.plugins.interaction.on('pointerout', this.dragInteraction.up)
 
-    this.decelerateInteraction = new Decelerate(this.root, (x, y) => this.onContainerDrag(undefined, x, y))
+    this.decelerateInteraction = new Decelerate(this, (x, y) => this.onContainerDrag(undefined, x, y))
     this.app.renderer.plugins.interaction.on('pointerdown', this.decelerateInteraction.down)
     this.app.renderer.plugins.interaction.on('pointermove', this.decelerateInteraction.move)
     this.app.renderer.plugins.interaction.on('pointerup', this.decelerateInteraction.up)
@@ -262,8 +262,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
-      this.root.pivot.x = this.width / -2
-      this.root.pivot.y = this.height / -2
+      this.root.pivot.x = this.width / zoom / -2
+      this.root.pivot.y = this.height / zoom / -2
       this.app.renderer.resize(this.width, this.height)
       this.viewportDirty = true
     }
@@ -280,6 +280,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
     if (zoom !== this.zoom) {
       this.zoom = zoom
+      this.root.pivot.x = (this.width / zoom) / -2
+      this.root.pivot.y = (this.height / zoom) / -2
       this.root.scale.set(zoom) // TODO - interpolate zoom
       this.viewportDirty = true
     }

@@ -1,23 +1,23 @@
 import * as PIXI from 'pixi.js'
+import { PIXIRenderer } from '..'
+import { Node, Edge } from '../../../'
 
 
 /**
  * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
-export class Drag {
+export class Drag <N extends Node, E extends Edge>{
 
-  private container: HTMLDivElement
-  private parent: PIXI.Container
+  private renderer: PIXIRenderer<N, E>
   private onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void
   private paused = false
   private last?: { x: number, y: number }
   private current?: number
   private moved = false
 
-  constructor(container: HTMLDivElement, parent: PIXI.Container, onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void) {
-    this.container = container
-    this.parent = parent
+  constructor(renderer: PIXIRenderer<N, E>, onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void) {
+    this.renderer = renderer
     this.onContainerDrag = onContainerDrag
   }
 
@@ -26,7 +26,7 @@ export class Drag {
       return
     }
 
-    this.container.style.cursor = 'move'
+    this.renderer.app.view.style.cursor = 'move'
     this.last = { x: event.data.global.x, y: event.data.global.y }
     this.current = event.data.pointerId
   }
@@ -43,8 +43,8 @@ export class Drag {
       const distX = x - this.last.x
       const distY = y - this.last.y
       if (this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-        const centerX = this.parent.x + (x - this.last.x)
-        const centerY = this.parent.y + (y - this.last.y)
+        const centerX = this.renderer.x + (x - this.last.x)
+        const centerY = this.renderer.y + (y - this.last.y)
         this.last = { x, y }
         this.moved = true
 
@@ -58,7 +58,7 @@ export class Drag {
       return
     }
 
-    this.container.style.cursor = 'auto'
+    this.renderer.app.view.style.cursor = 'auto'
 
     this.last = undefined
     this.moved = false
