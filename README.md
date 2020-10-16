@@ -20,6 +20,8 @@ npm run dev
 ### Deployment
 ```bash
 npm run build
+git commit [filepaths]
+
 # tag major/minor/patch release
 npm version [major|minor|patch]
 # OR tag release candidate
