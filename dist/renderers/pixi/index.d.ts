@@ -87,6 +87,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     clickedNode?: NodeRenderer<N, E>;
     hoveredEdge?: EdgeRenderer<N, E>;
     clickedEdge?: EdgeRenderer<N, E>;
+    cancelAnimationLoop: () => void;
     dirty: boolean;
     viewportDirty: boolean;
     previousRenderTime: number;

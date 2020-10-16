@@ -370,6 +370,7 @@ var PIXIRenderer = /** @class */ (function () {
             performance.mark('external');
         };
         this.delete = function () {
+            _this.cancelAnimationLoop();
             _this.app.destroy(true, { children: true, texture: true, baseTexture: true });
             _this.circle.delete();
             _this.arrow.delete();
@@ -427,11 +428,11 @@ var PIXIRenderer = /** @class */ (function () {
         this.app.view.onpointerleave = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerLeave(e); };
         this.debug = debug;
         if (this.debug) {
-            utils_1.animationFrameLoop(this.debugRender);
+            this.cancelAnimationLoop = utils_1.animationFrameLoop(this.debugRender);
             this.update = this._debugUpdate;
         }
         else {
-            utils_1.animationFrameLoop(this.render);
+            this.cancelAnimationLoop = utils_1.animationFrameLoop(this.render);
             this.update = this._update;
         }
     }

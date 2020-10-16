@@ -102,10 +102,12 @@ PIXI.utils.skipHello()
 export class PIXIRenderer<N extends Node, E extends Edge>{
 
   update: (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => void
+
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
   hoveredEdge?: EdgeRenderer<N, E>
   clickedEdge?: EdgeRenderer<N, E>
+  cancelAnimationLoop: () => void
   dirty = false
   viewportDirty = false
   previousRenderTime = Date.now()
@@ -221,10 +223,10 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
 
     this.debug = debug
     if (this.debug) {
-      animationFrameLoop(this.debugRender)
+      this.cancelAnimationLoop = animationFrameLoop(this.debugRender)
       this.update = this._debugUpdate
     } else {
-      animationFrameLoop(this.render)
+      this.cancelAnimationLoop = animationFrameLoop(this.render)
       this.update = this._update
     }
   }
@@ -514,6 +516,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   }
 
   delete = () => {
+    this.cancelAnimationLoop()
     this.app.destroy(true, { children: true, texture: true, baseTexture: true })
     this.circle.delete()
     this.arrow.delete()
