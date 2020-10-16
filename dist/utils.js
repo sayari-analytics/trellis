@@ -55,8 +55,8 @@ exports.batch = function (cb, duration) {
 };
 exports.animationFrameLoop = function (cb) {
     var frame;
-    var tick = function () {
-        cb();
+    var tick = function (time) {
+        cb(time);
         frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -112,10 +112,10 @@ exports.interpolateDuration = function (duration) {
         if (frame !== undefined) {
             cancelAnimationFrame(frame);
         }
-        start = Date.now();
+        start = performance.now();
         end = start + duration;
         var rafCallback = function () {
-            var now = Date.now();
+            var now = performance.now();
             if (now > end) {
                 cancelAnimationFrame(frame);
                 frame = undefined;

@@ -37,11 +37,11 @@ export const batch = <T extends unknown>(cb: (args: T[]) => void, duration: numb
 }
 
 
-export const animationFrameLoop = (cb: () => void) => {
+export const animationFrameLoop = (cb: (time: number) => void) => {
   let frame: number
 
-  const tick = () => {
-    cb()
+  const tick = (time: number) => {
+    cb(time)
     frame = requestAnimationFrame(tick)
   }
 
@@ -109,11 +109,11 @@ export const interpolateDuration = (duration: number) => {
       cancelAnimationFrame(frame)
     }
 
-    start = Date.now()
+    start = performance.now()
     end = start + duration
 
     const rafCallback = () => {
-      const now = Date.now()
+      const now = performance.now()
       if (now > end!) {
         cancelAnimationFrame(frame!)
         frame = undefined

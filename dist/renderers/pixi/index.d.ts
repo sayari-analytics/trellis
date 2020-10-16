@@ -90,7 +90,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     cancelAnimationLoop: () => void;
     dirty: boolean;
     viewportDirty: boolean;
-    previousRenderTime: number;
+    previousTime: number;
     animationDuration: number;
     animationPercent: number;
     edgesLayer: PIXI.Container;

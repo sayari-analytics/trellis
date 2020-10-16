@@ -110,7 +110,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   cancelAnimationLoop: () => void
   dirty = false
   viewportDirty = false
-  previousRenderTime = Date.now()
+  previousTime = performance.now()
   animationDuration = 0
   animationPercent = 0
   edgesLayer = new PIXI.Container()
@@ -402,15 +402,14 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     performance.measure('update', 'update')
   }
 
-  private render = () => {
-    const currentRenderTime = Date.now()
-    const elapsedRenderTime = currentRenderTime - this.previousRenderTime
-    this.animationDuration += Math.min(16, Math.max(0, elapsedRenderTime)) // clamp to 0 <= x <= 16 to smooth animations
-    // this.animationDuration += elapsedRenderTime
+  private render = (time: number) => {
+    const elapsedTime = time - this.previousTime
+    this.animationDuration += Math.min(20, Math.max(0, elapsedTime)) // clamp to 0 <= x <= 20 to smooth animations
+    // this.animationDuration += elapsedTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
-    this.previousRenderTime = currentRenderTime
+    this.previousTime = time
 
-    this.decelerateInteraction.update(elapsedRenderTime)
+    this.decelerateInteraction.update(elapsedTime)
 
     if (this.dirty) {
       for (const nodeId in this.nodesById) {
@@ -431,15 +430,14 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   }
 
   private _debugFirstRender = true
-  private debugRender = () => {
-    const currentRenderTime = Date.now()
-    const elapsedRenderTime = currentRenderTime - this.previousRenderTime
-    this.animationDuration += Math.min(16, Math.max(0, elapsedRenderTime))
-    // this.animationDuration += elapsedRenderTime
+  private debugRender = (time: number) => {
+    const elapsedTime = time - this.previousTime
+    this.animationDuration += Math.min(20, Math.max(0, elapsedTime))
+    // this.animationDuration += elapsedTime
     this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
-    this.previousRenderTime = currentRenderTime
+    this.previousTime = time
 
-    this.decelerateInteraction.update(elapsedRenderTime)
+    this.decelerateInteraction.update(elapsedTime)
 
     this.debug?.stats?.update()
     if (!this._debugFirstRender) {

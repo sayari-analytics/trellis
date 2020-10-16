@@ -56,7 +56,7 @@ var PIXIRenderer = /** @class */ (function () {
         var container = _a.container, debug = _a.debug;
         this.dirty = false;
         this.viewportDirty = false;
-        this.previousRenderTime = Date.now();
+        this.previousTime = performance.now();
         this.animationDuration = 0;
         this.animationPercent = 0;
         this.edgesLayer = new PIXI.Container();
@@ -265,14 +265,13 @@ var PIXIRenderer = /** @class */ (function () {
             _this._update(graph);
             performance.measure('update', 'update');
         };
-        this.render = function () {
-            var currentRenderTime = Date.now();
-            var elapsedRenderTime = currentRenderTime - _this.previousRenderTime;
-            _this.animationDuration += Math.min(16, Math.max(0, elapsedRenderTime)); // clamp to 0 <= x <= 16 to smooth animations
-            // this.animationDuration += elapsedRenderTime
+        this.render = function (time) {
+            var elapsedTime = time - _this.previousTime;
+            _this.animationDuration += Math.min(20, Math.max(0, elapsedTime)); // clamp to 0 <= x <= 20 to smooth animations
+            // this.animationDuration += elapsedTime
             _this.animationPercent = Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1);
-            _this.previousRenderTime = currentRenderTime;
-            _this.decelerateInteraction.update(elapsedRenderTime);
+            _this.previousTime = time;
+            _this.decelerateInteraction.update(elapsedTime);
             if (_this.dirty) {
                 for (var nodeId in _this.nodesById) {
                     _this.nodesById[nodeId].render();
@@ -290,16 +289,15 @@ var PIXIRenderer = /** @class */ (function () {
             }
         };
         this._debugFirstRender = true;
-        this.debugRender = function () {
+        this.debugRender = function (time) {
             var e_4, _a;
             var _b, _c, _d;
-            var currentRenderTime = Date.now();
-            var elapsedRenderTime = currentRenderTime - _this.previousRenderTime;
-            _this.animationDuration += Math.min(16, Math.max(0, elapsedRenderTime));
-            // this.animationDuration += elapsedRenderTime
+            var elapsedTime = time - _this.previousTime;
+            _this.animationDuration += Math.min(20, Math.max(0, elapsedTime));
+            // this.animationDuration += elapsedTime
             _this.animationPercent = Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1);
-            _this.previousRenderTime = currentRenderTime;
-            _this.decelerateInteraction.update(elapsedRenderTime);
+            _this.previousTime = time;
+            _this.decelerateInteraction.update(elapsedTime);
             (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
             if (!_this._debugFirstRender) {
                 performance.measure('external', 'external');
