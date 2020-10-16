@@ -104,6 +104,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   update: (graph: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => void
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
+  hoveredEdge?: EdgeRenderer<N, E>
+  clickedEdge?: EdgeRenderer<N, E>
   dirty = false
   viewportDirty = false
   previousRenderTime = Date.now()
@@ -142,6 +144,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void = noop
+  onEdgeDoubleClick: (event: Event, edge: E, x: number, y: number) => void = noop
   onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
@@ -210,11 +213,11 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.app.renderer.plugins.interaction.on('pointercancel', this.decelerateInteraction.up)
     this.app.renderer.plugins.interaction.on('pointerout', this.decelerateInteraction.up)
 
-    this.app.view.onpointerenter = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.onContainerPointerEnter(e)
-    this.app.view.onpointerdown = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.onContainerPointerDown(e)
-    this.app.view.onpointermove = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.onContainerPointerMove(e)
-    this.app.view.onpointerup = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.onContainerPointerUp(e)
-    this.app.view.onpointerleave = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.onContainerPointerLeave(e)
+    this.app.view.onpointerenter = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerEnter(e)
+    this.app.view.onpointerdown = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerDown(e)
+    this.app.view.onpointermove = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerMove(e)
+    this.app.view.onpointerup = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerUp(e)
+    this.app.view.onpointerleave = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerLeave(e)
 
     this.debug = debug
     if (this.debug) {

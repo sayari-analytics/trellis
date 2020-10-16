@@ -35,7 +35,6 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
   private reverseArrow?: PIXI.Sprite
-  private hoveredEdge = false
   private labelContainer = new PIXI.Container() // TODO - can't use ParticleContainer.  lazily add label sprite directly to edgesLayer
   private labelSprite?: PIXI.Text
   private x0: number = 0
@@ -46,6 +45,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private curveControlPointA?: [number, number]
   private curveControlPointB?: [number, number]
   private curve: number = 0
+  private doubleClickTimeout: number | undefined
+  private doubleClick = false
 
   constructor(renderer: Renderer<N, E>, edge: E, edgesLayer: PIXI.Container) {
     this.renderer = renderer
@@ -356,32 +357,61 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.edgeIndex[this.edge.target][this.edge.source].delete(this.edge.id)
   }
 
+
   private pointerEnter = (event: PIXI.InteractionEvent) => {
-    if (!this.hoveredEdge) {
-      this.hoveredEdge = true
-      this.renderer.dirty = true
-      const { x, y } = this.renderer.root.toLocal(event.data.global)
-      this.renderer.onEdgePointerEnter(event, this.edge, x, y)
-    }
+    if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== undefined) return
+
+    this.renderer.hoveredEdge = this
+    this.renderer.dirty = true
+
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    this.renderer.onEdgePointerEnter(event, this.edge, x, y)
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
-    if (this.hoveredEdge) {
-      this.hoveredEdge = false
-      this.renderer.dirty = true
+    if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== this) return
 
-      const { x, y } = this.renderer.root.toLocal(event.data.global)
-      this.renderer.onEdgePointerLeave(event, this.edge, x, y)
-    }
+    this.renderer.hoveredEdge = undefined
+    this.renderer.dirty = true
+
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    this.renderer.onEdgePointerLeave(event, this.edge, x, y)
+  }
+
+  private clearDoubleClick = () => {
+    this.doubleClickTimeout = undefined
+    this.doubleClick = false
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
+    if (this.doubleClickTimeout === undefined) {
+      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+    } else {
+      this.doubleClick = true
+    }
+
+    this.renderer.clickedEdge = this
+    this.renderer.zoomInteraction.pause()
+    this.renderer.dragInteraction.pause()
+    this.renderer.decelerateInteraction.pause()
+
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     this.renderer.onEdgePointerDown(event, this.edge, x, y)
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
+
+    this.renderer.clickedEdge = undefined
+    this.renderer.zoomInteraction.resume()
+    this.renderer.dragInteraction.resume()
+    this.renderer.decelerateInteraction.resume()
+
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     this.renderer.onEdgePointerUp(event, this.edge, x, y)
+
+    if (this.doubleClick) {
+      this.doubleClick = false
+      this.renderer.onEdgeDoubleClick(event, this.edge, x, y)
+    }
   }
 }
