@@ -399,6 +399,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
+    if (this.renderer.clickedEdge === undefined) return
 
     this.renderer.clickedEdge = undefined
     this.renderer.zoomInteraction.resume()

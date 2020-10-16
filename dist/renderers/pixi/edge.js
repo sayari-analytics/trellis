@@ -110,6 +110,8 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.onEdgePointerDown(event, _this.edge, x, y);
         };
         this.pointerUp = function (event) {
+            if (_this.renderer.clickedEdge === undefined)
+                return;
             _this.renderer.clickedEdge = undefined;
             _this.renderer.zoomInteraction.resume();
             _this.renderer.dragInteraction.resume();
