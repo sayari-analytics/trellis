@@ -132,8 +132,7 @@ var EdgeRenderer = /** @class */ (function () {
             .on('pointerdown', this.pointerDown)
             .on('pointerup', this.pointerUp)
             .on('pointerupoutside', this.pointerUp)
-            .on('pointercancel', this.pointerUp)
-            .on('pointerout', this.pointerUp);
+            .on('pointercancel', this.pointerUp);
         this.renderer.edgesLayer.addChild(this.line);
         /**
          * TODO - perf test adding label/arrow directly to edgesLayer container, vs. creating label/arrow containers

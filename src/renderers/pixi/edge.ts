@@ -59,7 +59,6 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       .on('pointerup', this.pointerUp)
       .on('pointerupoutside', this.pointerUp)
       .on('pointercancel', this.pointerUp)
-      .on('pointerout', this.pointerUp)
 
     this.renderer.edgesLayer.addChild(this.line)
     /**

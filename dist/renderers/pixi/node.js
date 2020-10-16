@@ -173,7 +173,6 @@ var NodeRenderer = /** @class */ (function () {
             .on('pointerup', this.pointerUp)
             .on('pointerupoutside', this.pointerUp)
             .on('pointercancel', this.pointerUp)
-            .on('pointerout', this.pointerUp)
             .addChild(this.fillSprite);
         /**
          * if any ancestor is in front layer, add to front

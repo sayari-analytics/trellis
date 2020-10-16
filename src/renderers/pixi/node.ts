@@ -80,7 +80,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       .on('pointerup', this.pointerUp)
       .on('pointerupoutside', this.pointerUp)
       .on('pointercancel', this.pointerUp)
-      .on('pointerout', this.pointerUp)
       .addChild(this.fillSprite)
 
     /**
