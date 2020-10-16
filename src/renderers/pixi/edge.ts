@@ -22,7 +22,6 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   edge: E
 
   private renderer: Renderer<N, E>
-  private edgesLayer: PIXI.Container
   private label?: string
   private labelFamily = DEFAULT_LABEL_FAMILY
   private labelColor = DEFAULT_LABEL_COLOR
@@ -48,9 +47,9 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private doubleClickTimeout: number | undefined
   private doubleClick = false
 
-  constructor(renderer: Renderer<N, E>, edge: E, edgesLayer: PIXI.Container) {
+  constructor(renderer: Renderer<N, E>, edge: E) {
     this.renderer = renderer
-    this.edgesLayer = edgesLayer
+
     this.line.interactive = true
     this.line.buttonMode = true
     this.line
@@ -59,13 +58,15 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       .on('pointerdown', this.pointerDown)
       .on('pointerup', this.pointerUp)
       .on('pointerupoutside', this.pointerUp)
+      .on('pointercancel', this.pointerUp)
+      .on('pointerout', this.pointerUp)
 
-    this.edgesLayer.addChild(this.line)
+    this.renderer.edgesLayer.addChild(this.line)
     /**
      * TODO - perf test adding label/arrow directly to edgesLayer container, vs. creating label/arrow containers
      */
-    this.edgesLayer.addChild(this.arrowContainer)
-    this.edgesLayer.addChild(this.labelContainer)
+    this.renderer.edgesLayer.addChild(this.arrowContainer)
+    this.renderer.edgesLayer.addChild(this.labelContainer)
     this.edge = edge
     this.update(edge)
   }
@@ -362,7 +363,6 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== undefined) return
 
     this.renderer.hoveredEdge = this
-    this.renderer.dirty = true
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     this.renderer.onEdgePointerEnter(event, this.edge, x, y)
@@ -372,7 +372,6 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== this) return
 
     this.renderer.hoveredEdge = undefined
-    this.renderer.dirty = true
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     this.renderer.onEdgePointerLeave(event, this.edge, x, y)

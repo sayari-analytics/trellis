@@ -68,20 +68,20 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.parent = parent
     this.depth = parent ? parent.depth + 1 : 0
 
-    this.nodeContainer.interactive = true
-    this.nodeContainer.buttonMode = true
-
     this.fillSprite = this.renderer.circle.create()
 
-    this.nodeContainer
-      .on('pointerover', this.nodePointerEnter)
-      .on('pointerout', this.nodePointerLeave)
-      .on('pointerdown', this.nodePointerDown)
-      .on('pointerup', this.nodePointerUp)
-      .on('pointerupoutside', this.nodePointerUp)
-      .addChild(this.fillSprite)
-
+    this.nodeContainer.interactive = true
+    this.nodeContainer.buttonMode = true
     this.nodeContainer.zIndex = this.depth
+    this.nodeContainer
+      .on('pointerover', this.pointerEnter)
+      .on('pointerout', this.pointerLeave)
+      .on('pointerdown', this.pointerDown)
+      .on('pointerup', this.pointerUp)
+      .on('pointerupoutside', this.pointerUp)
+      .on('pointercancel', this.pointerUp)
+      .on('pointerout', this.pointerUp)
+      .addChild(this.fillSprite)
 
     /**
      * if any ancestor is in front layer, add to front
@@ -382,7 +382,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
 
-  private nodePointerEnter = (event: PIXI.InteractionEvent) => {
+  private pointerEnter = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined) return
 
     this.renderer.hoveredNode = this
@@ -401,13 +401,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
     }
 
-    this.renderer.dirty = true
-    this.renderer.root.toLocal
     const position = this.renderer.root.toLocal(event.data.global)
     this.renderer.onNodePointerEnter(event, this.node, position.x, position.y)
   }
 
-  private nodePointerLeave = (event: PIXI.InteractionEvent) => {
+  private pointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) return
 
     this.renderer.hoveredNode = undefined
@@ -426,12 +424,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
     }
 
-    this.renderer.dirty = true
     const position = this.renderer.root.toLocal(event.data.global)
     this.renderer.onNodePointerLeave(event, this.node, position.x, position.y)
   }
 
-  private nodePointerDown = (event: PIXI.InteractionEvent) => {
+  private pointerDown = (event: PIXI.InteractionEvent) => {
     if (this.doubleClickTimeout === undefined) {
       this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
     } else {
@@ -449,7 +446,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.onNodePointerDown(event, this.node, this.x, this.y)
   }
 
-  private nodePointerUp = (event: PIXI.InteractionEvent) => {
+  private pointerUp = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) return
 
     this.renderer.clickedNode = undefined

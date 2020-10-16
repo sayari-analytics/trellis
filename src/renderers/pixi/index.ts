@@ -372,7 +372,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         const id = edge.id
         if (this.edgesById[id] === undefined) {
           // edge enter
-          edgesById[id] = new EdgeRenderer(this, edge, this.edgesLayer)
+          edgesById[id] = new EdgeRenderer(this, edge)
         } else {
           // edge update
           edgesById[id] = this.edgesById[id].update(edge)
@@ -420,8 +420,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         this.edgesById[edgeId].render()
       }
 
-      this.dirty = this.animationPercent < 1
       this.app.render()
+      this.dirty = this.animationPercent < 1
     } else if (this.viewportDirty) {
       this.app.render()
       this.viewportDirty = false
@@ -457,8 +457,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
         this.edgesById[edgeId].render()
       }
       performance.measure('render', 'render')
-
-      this.dirty = this.animationPercent < 1
 
       performance.mark('draw')
       this.app.render()
@@ -507,6 +505,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       )
     }
 
+    this.dirty = this.animationPercent < 1
     this.viewportDirty = false
 
     performance.clearMarks()
