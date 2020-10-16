@@ -86,6 +86,7 @@ var PIXIRenderer = /** @class */ (function () {
         this.onEdgePointerDown = utils_1.noop;
         this.onEdgePointerUp = utils_1.noop;
         this.onEdgePointerLeave = utils_1.noop;
+        this.onEdgeDoubleClick = utils_1.noop;
         this.onWheel = utils_1.noop;
         this.width = exports.RENDERER_OPTIONS.width;
         this.height = exports.RENDERER_OPTIONS.height;
@@ -233,7 +234,7 @@ var PIXIRenderer = /** @class */ (function () {
                         var id = edge.id;
                         if (_this.edgesById[id] === undefined) {
                             // edge enter
-                            edgesById[id] = new edge_1.EdgeRenderer(_this, edge, _this.edgesLayer);
+                            edgesById[id] = new edge_1.EdgeRenderer(_this, edge);
                         }
                         else {
                             // edge update
@@ -280,8 +281,8 @@ var PIXIRenderer = /** @class */ (function () {
                 for (var edgeId in _this.edgesById) {
                     _this.edgesById[edgeId].render();
                 }
-                _this.dirty = _this.animationPercent < 1;
                 _this.app.render();
+                _this.dirty = _this.animationPercent < 1;
             }
             else if (_this.viewportDirty) {
                 _this.app.render();
@@ -316,7 +317,6 @@ var PIXIRenderer = /** @class */ (function () {
                     _this.edgesById[edgeId].render();
                 }
                 performance.measure('render', 'render');
-                _this.dirty = _this.animationPercent < 1;
                 performance.mark('draw');
                 _this.app.render();
                 performance.measure('draw', 'draw');
@@ -363,6 +363,7 @@ var PIXIRenderer = /** @class */ (function () {
                 // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
                 console.log("%c" + total.toFixed(1) + "ms%c (update: %c" + update.toFixed(1) + "%c, render: %c" + render.toFixed(1) + "%c, draw: %c" + draw.toFixed(1) + "%c, external: %c" + external_1.toFixed(1) + "%c)", "color: " + (total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'), 'color: #666', "color: " + (update <= 5 ? '#6c6' : update <= 10 ? '#f88' : update <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (render <= 5 ? '#6c6' : render <= 10 ? '#f88' : render <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (draw <= 5 ? '#6c6' : draw <= 10 ? '#f88' : draw <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (external_1 <= 5 ? '#6c6' : external_1 <= 10 ? '#f88' : external_1 <= 20 ? '#e22' : '#a00'), 'color: #666');
             }
+            _this.dirty = _this.animationPercent < 1;
             _this.viewportDirty = false;
             performance.clearMarks();
             performance.clearMeasures();
@@ -419,11 +420,11 @@ var PIXIRenderer = /** @class */ (function () {
         this.app.renderer.plugins.interaction.on('pointerupoutside', this.decelerateInteraction.up);
         this.app.renderer.plugins.interaction.on('pointercancel', this.decelerateInteraction.up);
         this.app.renderer.plugins.interaction.on('pointerout', this.decelerateInteraction.up);
-        this.app.view.onpointerenter = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.onContainerPointerEnter(e); };
-        this.app.view.onpointerdown = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.onContainerPointerDown(e); };
-        this.app.view.onpointermove = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.onContainerPointerMove(e); };
-        this.app.view.onpointerup = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.onContainerPointerUp(e); };
-        this.app.view.onpointerleave = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.onContainerPointerLeave(e); };
+        this.app.view.onpointerenter = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerEnter(e); };
+        this.app.view.onpointerdown = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerDown(e); };
+        this.app.view.onpointermove = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerMove(e); };
+        this.app.view.onpointerup = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerUp(e); };
+        this.app.view.onpointerleave = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerLeave(e); };
         this.debug = debug;
         if (this.debug) {
             utils_1.animationFrameLoop(this.debugRender);

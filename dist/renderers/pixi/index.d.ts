@@ -85,6 +85,8 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     }) => void;
     hoveredNode?: NodeRenderer<N, E>;
     clickedNode?: NodeRenderer<N, E>;
+    hoveredEdge?: EdgeRenderer<N, E>;
+    clickedEdge?: EdgeRenderer<N, E>;
     dirty: boolean;
     viewportDirty: boolean;
     previousRenderTime: number;
@@ -130,6 +132,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void;
+    onEdgeDoubleClick: (event: Event, edge: E, x: number, y: number) => void;
     onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void;
     width: number;
     height: number;

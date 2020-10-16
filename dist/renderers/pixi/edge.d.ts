@@ -1,10 +1,8 @@
-import * as PIXI from 'pixi.js';
 import { PIXIRenderer as Renderer } from './';
 import { Node, Edge } from '../../';
 export declare class EdgeRenderer<N extends Node, E extends Edge> {
     edge: E;
     private renderer;
-    private edgesLayer;
     private label?;
     private labelFamily;
     private labelColor;
@@ -17,7 +15,6 @@ export declare class EdgeRenderer<N extends Node, E extends Edge> {
     private arrow;
     private forwardArrow?;
     private reverseArrow?;
-    private hoveredEdge;
     private labelContainer;
     private labelSprite?;
     private x0;
@@ -28,7 +25,9 @@ export declare class EdgeRenderer<N extends Node, E extends Edge> {
     private curveControlPointA?;
     private curveControlPointB?;
     private curve;
-    constructor(renderer: Renderer<N, E>, edge: E, edgesLayer: PIXI.Container);
+    private doubleClickTimeout;
+    private doubleClick;
+    constructor(renderer: Renderer<N, E>, edge: E);
     update(edge: E): this;
     /**
      * TODO - perf boost: render cheap version of things while still animating position or dragging
@@ -37,6 +36,7 @@ export declare class EdgeRenderer<N extends Node, E extends Edge> {
     delete(): void;
     private pointerEnter;
     private pointerLeave;
+    private clearDoubleClick;
     private pointerDown;
     private pointerUp;
 }

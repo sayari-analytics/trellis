@@ -78,7 +78,7 @@ var NodeRenderer = /** @class */ (function () {
         this.doubleClick = false;
         this.nodeMoveXOffset = 0;
         this.nodeMoveYOffset = 0;
-        this.nodePointerEnter = function (event) {
+        this.pointerEnter = function (event) {
             if (_this.renderer.clickedNode !== undefined)
                 return;
             _this.renderer.hoveredNode = _this;
@@ -94,12 +94,10 @@ var NodeRenderer = /** @class */ (function () {
                     _this.renderer.frontLabelLayer.addChild(_this.subGraphNodes[subGraphNodeId].labelContainer);
                 }
             }
-            _this.renderer.dirty = true;
-            _this.renderer.root.toLocal;
             var position = _this.renderer.root.toLocal(event.data.global);
             _this.renderer.onNodePointerEnter(event, _this.node, position.x, position.y);
         };
-        this.nodePointerLeave = function (event) {
+        this.pointerLeave = function (event) {
             if (_this.renderer.clickedNode !== undefined || _this.renderer.hoveredNode !== _this)
                 return;
             _this.renderer.hoveredNode = undefined;
@@ -115,11 +113,10 @@ var NodeRenderer = /** @class */ (function () {
                     _this.renderer.labelsLayer.addChild(_this.subGraphNodes[subGraphNodeId].labelContainer);
                 }
             }
-            _this.renderer.dirty = true;
             var position = _this.renderer.root.toLocal(event.data.global);
             _this.renderer.onNodePointerLeave(event, _this.node, position.x, position.y);
         };
-        this.nodePointerDown = function (event) {
+        this.pointerDown = function (event) {
             if (_this.doubleClickTimeout === undefined) {
                 _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
             }
@@ -136,7 +133,7 @@ var NodeRenderer = /** @class */ (function () {
             _this.nodeMoveYOffset = position.y - _this.y;
             _this.renderer.onNodePointerDown(event, _this.node, _this.x, _this.y);
         };
-        this.nodePointerUp = function (event) {
+        this.pointerUp = function (event) {
             if (_this.renderer.clickedNode === undefined)
                 return;
             _this.renderer.clickedNode = undefined;
@@ -165,17 +162,19 @@ var NodeRenderer = /** @class */ (function () {
         this.renderer = renderer;
         this.parent = parent;
         this.depth = parent ? parent.depth + 1 : 0;
+        this.fillSprite = this.renderer.circle.create();
         this.nodeContainer.interactive = true;
         this.nodeContainer.buttonMode = true;
-        this.fillSprite = this.renderer.circle.create();
-        this.nodeContainer
-            .on('pointerover', this.nodePointerEnter)
-            .on('pointerout', this.nodePointerLeave)
-            .on('pointerdown', this.nodePointerDown)
-            .on('pointerup', this.nodePointerUp)
-            .on('pointerupoutside', this.nodePointerUp)
-            .addChild(this.fillSprite);
         this.nodeContainer.zIndex = this.depth;
+        this.nodeContainer
+            .on('pointerover', this.pointerEnter)
+            .on('pointerout', this.pointerLeave)
+            .on('pointerdown', this.pointerDown)
+            .on('pointerup', this.pointerUp)
+            .on('pointerupoutside', this.pointerUp)
+            .on('pointercancel', this.pointerUp)
+            .on('pointerout', this.pointerUp)
+            .addChild(this.fillSprite);
         /**
          * if any ancestor is in front layer, add to front
          * otherwise, add to regular layers

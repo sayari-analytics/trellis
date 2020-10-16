@@ -59,7 +59,7 @@ var DEFAULT_LABEL_COLOR = '#444';
 var DEFAULT_LABEL_SIZE = 11;
 var DEFAULT_ARROW = 'none';
 var EdgeRenderer = /** @class */ (function () {
-    function EdgeRenderer(renderer, edge, edgesLayer) {
+    function EdgeRenderer(renderer, edge) {
         var _this = this;
         this.labelFamily = DEFAULT_LABEL_FAMILY;
         this.labelColor = DEFAULT_LABEL_COLOR;
@@ -70,39 +70,58 @@ var EdgeRenderer = /** @class */ (function () {
         this.line = new PIXI.ParticleContainer();
         this.arrowContainer = new PIXI.Container(); // why can't this be a ParticleContainer
         this.arrow = DEFAULT_ARROW;
-        this.hoveredEdge = false;
         this.labelContainer = new PIXI.Container(); // TODO - can't use ParticleContainer.  lazily add label sprite directly to edgesLayer
         this.x0 = 0;
         this.y0 = 0;
         this.x1 = 0;
         this.y1 = 0;
         this.curve = 0;
+        this.doubleClick = false;
         this.pointerEnter = function (event) {
-            if (!_this.hoveredEdge) {
-                _this.hoveredEdge = true;
-                _this.renderer.dirty = true;
-                var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
-                _this.renderer.onEdgePointerEnter(event, _this.edge, x, y);
-            }
+            if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== undefined)
+                return;
+            _this.renderer.hoveredEdge = _this;
+            var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
+            _this.renderer.onEdgePointerEnter(event, _this.edge, x, y);
         };
         this.pointerLeave = function (event) {
-            if (_this.hoveredEdge) {
-                _this.hoveredEdge = false;
-                _this.renderer.dirty = true;
-                var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
-                _this.renderer.onEdgePointerLeave(event, _this.edge, x, y);
-            }
+            if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== _this)
+                return;
+            _this.renderer.hoveredEdge = undefined;
+            var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
+            _this.renderer.onEdgePointerLeave(event, _this.edge, x, y);
+        };
+        this.clearDoubleClick = function () {
+            _this.doubleClickTimeout = undefined;
+            _this.doubleClick = false;
         };
         this.pointerDown = function (event) {
+            if (_this.doubleClickTimeout === undefined) {
+                _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
+            }
+            else {
+                _this.doubleClick = true;
+            }
+            _this.renderer.clickedEdge = _this;
+            _this.renderer.zoomInteraction.pause();
+            _this.renderer.dragInteraction.pause();
+            _this.renderer.decelerateInteraction.pause();
             var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
             _this.renderer.onEdgePointerDown(event, _this.edge, x, y);
         };
         this.pointerUp = function (event) {
+            _this.renderer.clickedEdge = undefined;
+            _this.renderer.zoomInteraction.resume();
+            _this.renderer.dragInteraction.resume();
+            _this.renderer.decelerateInteraction.resume();
             var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
             _this.renderer.onEdgePointerUp(event, _this.edge, x, y);
+            if (_this.doubleClick) {
+                _this.doubleClick = false;
+                _this.renderer.onEdgeDoubleClick(event, _this.edge, x, y);
+            }
         };
         this.renderer = renderer;
-        this.edgesLayer = edgesLayer;
         this.line.interactive = true;
         this.line.buttonMode = true;
         this.line
@@ -110,13 +129,15 @@ var EdgeRenderer = /** @class */ (function () {
             .on('pointerout', this.pointerLeave)
             .on('pointerdown', this.pointerDown)
             .on('pointerup', this.pointerUp)
-            .on('pointerupoutside', this.pointerUp);
-        this.edgesLayer.addChild(this.line);
+            .on('pointerupoutside', this.pointerUp)
+            .on('pointercancel', this.pointerUp)
+            .on('pointerout', this.pointerUp);
+        this.renderer.edgesLayer.addChild(this.line);
         /**
          * TODO - perf test adding label/arrow directly to edgesLayer container, vs. creating label/arrow containers
          */
-        this.edgesLayer.addChild(this.arrowContainer);
-        this.edgesLayer.addChild(this.labelContainer);
+        this.renderer.edgesLayer.addChild(this.arrowContainer);
+        this.renderer.edgesLayer.addChild(this.labelContainer);
         this.edge = edge;
         this.update(edge);
     }

@@ -46,10 +46,10 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     update(node: N): this;
     render(): this;
     delete(): void;
-    private nodePointerEnter;
-    private nodePointerLeave;
-    private nodePointerDown;
-    private nodePointerUp;
+    private pointerEnter;
+    private pointerLeave;
+    private pointerDown;
+    private pointerUp;
     private nodeMove;
     private clearDoubleClick;
 }
