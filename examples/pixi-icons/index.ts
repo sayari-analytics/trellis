@@ -17,7 +17,7 @@ document.body.appendChild(stats.dom)
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
-  icon: { type: 'imageIcon', image: company, scale: .1 }
+  icon: { type: 'imageIcon', url: company }
 })
 
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
@@ -25,7 +25,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   stroke: [{ color: '#90D7FB', width: 6 }],
   icon: radius > 60 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius } :
-    { type: 'imageIcon' as const, image: person, scale: .05 }
+    { type: 'imageIcon' as const, url: person }
 })
 
 let nodes = [

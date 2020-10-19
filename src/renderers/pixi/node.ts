@@ -5,6 +5,7 @@ import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } 
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
 import { CancellablePromise, FontLoader } from './FontLoader'
+import { ImageLoader } from './ImageLoader'
 
 
 const LABEL_Y_PADDING = 2
@@ -56,7 +57,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private badgeSprites: { fill: PIXI.Sprite, stroke: PIXI.Sprite, icon?: PIXI.Sprite, angle: number }[] = []
   private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
-  private iconSprite?: PIXI.Text | PIXI.Sprite
+  private iconSprite?: PIXI.Sprite
   private fontIconLoader?: CancellablePromise<string>
   private doubleClickTimeout: number | undefined
   private doubleClick = false
@@ -236,13 +237,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           }
         })
       } else if (this.icon?.type === 'imageIcon') {
-        const texture = PIXI.Texture.from(this.icon.image)
-        this.iconSprite = new PIXI.Sprite(texture)
+        this.iconSprite = ImageLoader(this.icon.url)
 
         this.iconSprite.name = 'icon'
-        this.iconSprite.position.set(0, 0)
+        this.iconSprite.position.set(this.icon.offset?.x ?? 0, this.icon.offset?.y ?? 0)
         this.iconSprite.anchor.set(0.5)
-        this.iconSprite.scale.set(this.icon.scale ?? DEFAULT_IMAGE_ICON_SCALE)
+        this.iconSprite.scale.set(this.icon.scale ?? 1)
 
         if (this.badgeSpriteContainer === undefined) {
           // no badges - add to top of nodeContainer
