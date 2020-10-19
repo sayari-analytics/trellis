@@ -22,7 +22,9 @@ export type TextIcon = {
 
 export type ImageIcon = {
   type: 'imageIcon'
-  image: string
+  url: string
+  scale?: number;
+  offset?: { x?: number, y?: number }
 }
 
 export type NodeStyle = {

@@ -18,7 +18,12 @@ export declare type TextIcon = {
 };
 export declare type ImageIcon = {
     type: 'imageIcon';
-    image: string;
+    url: string;
+    scale?: number;
+    offset?: {
+        x?: number;
+        y?: number;
+    };
 };
 export declare type NodeStyle = {
     color: string;
