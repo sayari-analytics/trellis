@@ -23,6 +23,7 @@ export type TextIcon = {
 export type ImageIcon = {
   type: 'imageIcon'
   image: string
+  scale?: number;
 }
 
 export type NodeStyle = {

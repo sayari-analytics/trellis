@@ -17,6 +17,7 @@ const DEFAULT_LABEL_SIZE = 11
 const DEFAULT_RADIUS = 18
 const DEFAULT_BADGE_RADIUS = 8
 const DEFAULT_BADGE_STROKE_WIDTH = 2
+const DEFAULT_IMAGE_ICON_SCALE = 1
 
 
 export class NodeRenderer<N extends Node, E extends Edge>{
@@ -55,7 +56,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private badgeSprites: { fill: PIXI.Sprite, stroke: PIXI.Sprite, icon?: PIXI.Sprite, angle: number }[] = []
   private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
-  private iconSprite?: PIXI.Text
+  private iconSprite?: PIXI.Text | PIXI.Sprite
   private fontIconLoader?: CancellablePromise<string>
   private doubleClickTimeout: number | undefined
   private doubleClick = false
@@ -205,6 +206,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (!equals(node.style?.icon, this.icon)) {
       this.icon = node.style?.icon
       this.iconSprite?.destroy()
+
       this.iconSprite = undefined
       this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
 
@@ -233,6 +235,22 @@ export class NodeRenderer<N extends Node, E extends Edge>{
             this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
           }
         })
+      } else if (this.icon?.type === 'imageIcon') {
+        const texture = PIXI.Texture.from(this.icon.image)
+        this.iconSprite = new PIXI.Sprite(texture)
+
+        this.iconSprite.name = 'icon'
+        this.iconSprite.position.set(0, 0)
+        this.iconSprite.anchor.set(0.5)
+        this.iconSprite.scale.set(this.icon.scale ?? DEFAULT_IMAGE_ICON_SCALE)
+
+        if (this.badgeSpriteContainer === undefined) {
+          // no badges - add to top of nodeContainer
+          this.nodeContainer.addChild(this.iconSprite)
+        } else {
+          // badges - add below badges
+          this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
+        }
       }
     }
 

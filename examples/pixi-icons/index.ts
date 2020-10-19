@@ -3,6 +3,7 @@ import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
 import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
+import { company, person } from '../assets/icons'
 
 
 export const stats = new Stats()
@@ -16,7 +17,7 @@ document.body.appendChild(stats.dom)
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 }
+  icon: { type: 'imageIcon', image: company, scale: .1 }
 })
 
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
@@ -24,7 +25,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   stroke: [{ color: '#90D7FB', width: 6 }],
   icon: radius > 60 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius } :
-    { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.25 }
+    { type: 'imageIcon' as const, image: person, scale: .05 }
 })
 
 let nodes = [
@@ -54,7 +55,7 @@ const layoutOptions: Partial<Force.LayoutOptions> = {
   nodeStrength: -500,
 }
 
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const container: HTMLDivElement = document.querySelector('div#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
