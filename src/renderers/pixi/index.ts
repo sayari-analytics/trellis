@@ -77,13 +77,13 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void
   onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void
   onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void
-  onContainerPointerEnter: (event: PointerEvent) => void
-  onContainerPointerDown: (event: PointerEvent) => void
-  onContainerPointerMove: (event: PointerEvent) => void
-  onContainerDrag: (event: Event | undefined, x: number, y: number) => void
-  onContainerPointerUp: (event: PointerEvent) => void
-  onContainerPointerLeave: (event: PointerEvent) => void
-  onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void
+  onContainerPointerEnter?: (event: Event, x: number, y: number) => void
+  onContainerPointerDown?: (event: Event, x: number, y: number) => void
+  onContainerPointerMove?: (event: Event, x: number, y: number) => void
+  onContainerDrag?: (event: Event | undefined, x: number, y: number) => void
+  onContainerPointerUp?: (event: Event, x: number, y: number) => void
+  onContainerPointerLeave?: (event: Event, x: number, y: number) => void
+  onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void
 }
 
 
@@ -92,8 +92,6 @@ export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
   nodesEqual: () => false, edgesEqual: () => false,
   onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
   onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
-  onContainerPointerEnter: noop, onContainerPointerDown: noop, onContainerDrag: noop,
-  onContainerPointerMove: noop, onContainerPointerUp: noop, onContainerPointerLeave: noop, onWheel: noop
 }
 
 const POSITION_ANIMATION_DURATION = 800
@@ -109,6 +107,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   clickedNode?: NodeRenderer<N, E>
   hoveredEdge?: EdgeRenderer<N, E>
   clickedEdge?: EdgeRenderer<N, E>
+  clickedContainer = false
   cancelAnimationLoop: () => void
   dirty = false
   viewportDirty = false
@@ -132,12 +131,13 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   dragInteraction: Drag<N, E>
   decelerateInteraction: Decelerate<N, E>
 
-  onContainerPointerEnter: (event: PointerEvent) => void = noop
-  onContainerPointerDown: (event: PointerEvent) => void = noop
-  onContainerDrag: (event: Event | undefined, x: number, y: number) => void = noop
-  onContainerPointerMove: (event: PointerEvent) => void = noop
-  onContainerPointerUp: (event: PointerEvent) => void = noop
-  onContainerPointerLeave: (event: PointerEvent) => void = noop
+  onContainerPointerEnter?: (event: Event, x: number, y: number) => void
+  onContainerPointerDown?: (event: Event, x: number, y: number) => void
+  onContainerDrag?: (event: Event | undefined, x: number, y: number) => void
+  onContainerPointerMove?: (event: Event, x: number, y: number) => void
+  onContainerPointerUp?: (event: Event, x: number, y: number) => void
+  onContainerPointerLeave?: (event: Event, x: number, y: number) => void
+  onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void
   onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void = noop
   onNodePointerDown: (event: Event, node: N, x: number, y: number) => void = noop
   onNodeDrag: (event: Event, node: N, x: number, y: number) => void = noop
@@ -149,7 +149,6 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void = noop
   onEdgeDoubleClick: (event: Event, edge: E, x: number, y: number) => void = noop
-  onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void = noop
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   zoom = RENDERER_OPTIONS.zoom
@@ -195,33 +194,58 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.root.addChild(this.frontNodeLayer)
     this.root.addChild(this.frontLabelLayer)
 
-    this.arrow = new ArrowRenderer<N, E>(this)
-    this.circle = new CircleRenderer<N, E>(this)
+    this.zoomInteraction = new Zoom(this, (e, x, y, zoom) => this.onWheel?.(e, x, y, zoom))
+    this.dragInteraction = new Drag(this, (e, x, y) => this.onContainerDrag?.(e, x, y))
+    this.decelerateInteraction = new Decelerate(this, (x, y) => this.onContainerDrag?.(undefined, x, y))
 
-    this.zoomInteraction = new Zoom(this, (e, x, y, zoom) => this.onWheel(e, x, y, zoom))
+    const pointerEnter = (event: Event) => {
+      const { x, y } = this.root.toLocal(event.data.global)
+      this.onContainerPointerEnter?.(event, x, y)
+    }
+    const pointerDown = (event: Event) => {
+      this.dragInteraction.down(event)
+      this.decelerateInteraction.down()
+
+      if (this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined) {
+        this.clickedContainer = true
+        const { x, y } = this.root.toLocal(event.data.global)
+        this.onContainerPointerDown?.(event, x, y)
+      }
+    }
+    const pointerMove = (event: Event) => {
+      this.dragInteraction.move(event)
+      this.decelerateInteraction.move()
+      if (this.clickedContainer) {
+        const { x, y } = this.root.toLocal(event.data.global)
+        this.onContainerPointerMove?.(event, x, y)
+      }
+    }
+    const pointerUp = (event: Event) => {
+      this.dragInteraction.up()
+      this.decelerateInteraction.up()
+      if (this.clickedContainer) {
+        this.clickedContainer = false
+        const { x, y } = this.root.toLocal(event.data.global)
+        this.onContainerPointerUp?.(event, x, y)
+      }
+    }
+    const pointerLeave = (event: Event) => {
+      const { x, y } = this.root.toLocal(event.data.global)
+      this.onContainerPointerLeave?.(event, x, y)
+    }
+
+    this.app.renderer.plugins.interaction.on('pointerenter', pointerEnter)
+    this.app.renderer.plugins.interaction.on('pointerdown', pointerDown)
+    this.app.renderer.plugins.interaction.on('pointermove', pointerMove)
+    this.app.renderer.plugins.interaction.on('pointerup', pointerUp)
+    this.app.renderer.plugins.interaction.on('pointerupoutside', pointerUp)
+    this.app.renderer.plugins.interaction.on('pointercancel', pointerUp)
+    this.app.renderer.plugins.interaction.on('pointerout', pointerUp)
+    this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave)
     this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 
-    this.dragInteraction = new Drag(this, (e, x, y) => this.onContainerDrag(e, x, y))
-    this.app.renderer.plugins.interaction.on('pointerdown', this.dragInteraction.down)
-    this.app.renderer.plugins.interaction.on('pointermove', this.dragInteraction.move)
-    this.app.renderer.plugins.interaction.on('pointerup', this.dragInteraction.up)
-    this.app.renderer.plugins.interaction.on('pointerupoutside', this.dragInteraction.up)
-    this.app.renderer.plugins.interaction.on('pointercancel', this.dragInteraction.up)
-    this.app.renderer.plugins.interaction.on('pointerout', this.dragInteraction.up)
-
-    this.decelerateInteraction = new Decelerate(this, (x, y) => this.onContainerDrag(undefined, x, y))
-    this.app.renderer.plugins.interaction.on('pointerdown', this.decelerateInteraction.down)
-    this.app.renderer.plugins.interaction.on('pointermove', this.decelerateInteraction.move)
-    this.app.renderer.plugins.interaction.on('pointerup', this.decelerateInteraction.up)
-    this.app.renderer.plugins.interaction.on('pointerupoutside', this.decelerateInteraction.up)
-    this.app.renderer.plugins.interaction.on('pointercancel', this.decelerateInteraction.up)
-    this.app.renderer.plugins.interaction.on('pointerout', this.decelerateInteraction.up)
-
-    this.app.view.onpointerenter = (e) => this.hoveredNode === undefined && this.clickedNode === undefined && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerEnter(e)
-    this.app.view.onpointerdown = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerDown(e)
-    this.app.view.onpointermove = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerMove(e)
-    this.app.view.onpointerup = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerUp(e)
-    this.app.view.onpointerleave = (e) => this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined && this.onContainerPointerLeave(e)
+    this.arrow = new ArrowRenderer<N, E>(this)
+    this.circle = new CircleRenderer<N, E>(this)
 
     this.debug = debug
     if (this.debug) {
@@ -242,8 +266,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
       onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
       onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
-      onContainerPointerEnter = noop, onContainerPointerDown = noop, onContainerDrag = noop,
-      onContainerPointerMove = noop, onContainerPointerUp = noop, onContainerPointerLeave = noop, onWheel = noop,
+      onContainerPointerEnter, onContainerPointerDown, onContainerDrag, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, onWheel,
     } = RENDERER_OPTIONS
   }: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {
     this.onContainerPointerEnter = onContainerPointerEnter

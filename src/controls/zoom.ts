@@ -2,12 +2,13 @@ import { Node } from '../'
 
 
 export type Options = {
-  top: number,
+  className: string
+  top: number
   left: number
   right: number
   bottom: number
-  onZoomIn: (event: MouseEvent) => any
-  onZoomOut: (event: MouseEvent) => any
+  onZoomIn: (event: PointerEvent) => any
+  onZoomOut: (event: PointerEvent) => any
 }
 
 export type ViewportChangeOptions = {
@@ -69,20 +70,39 @@ export const fit = (zoom: number, position: [number, number], nodes: Node[], opt
 export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
 
 
-export const Control = (options: { container: HTMLDivElement }) => {
-  options.container.style.position = 'relative'
+/**
+ * TODO
+ * - disable on min/max zoom
+ * - tooltips
+ */
+export const Control = ({ container }: { container: HTMLDivElement }) => {
   const controlContainer = document.createElement('div')
-  const zoomIn = styleButton(document.createElement('button'))
-  const zoomOut = styleButton(document.createElement('button'))
-  controlContainer.className = 'zoom-container'
   controlContainer.style.position = 'absolute'
   controlContainer.style.display = 'none'
+
+  const zoomIn = styleButton(document.createElement('button'))
+  zoomIn.setAttribute('aria-label', 'Zoom in')
+  zoomIn.setAttribute('title', 'Zoom in')
+  zoomIn.textContent = '＋'
+  zoomIn.style.borderTopLeftRadius = '4px'
+  zoomIn.style.borderTopRightRadius = '4px'
   controlContainer.appendChild(zoomIn)
+
+  const zoomOut = styleButton(document.createElement('button'))
+  zoomOut.setAttribute('aria-label', 'Zoom out')
+  zoomOut.setAttribute('title', 'Zoom out')
+  zoomOut.style.borderTop = 'none'
+  zoomOut.style.borderBottomLeftRadius = '4px'
+  zoomOut.style.borderBottomRightRadius = '4px'
+  zoomOut.textContent = '－'
   controlContainer.appendChild(zoomOut)
-  options.container.appendChild(controlContainer)
+
+  container.style.position = 'relative'
+  container.appendChild(controlContainer)
 
   return (options: Partial<Options>) => {
     controlContainer.style.display = 'block'
+    controlContainer.className = options.className ?? 'zoom-container'
 
     if (options.top !== undefined) {
       controlContainer.style.top = `${options.top}px`
@@ -100,16 +120,8 @@ export const Control = (options: { container: HTMLDivElement }) => {
       controlContainer.style.left = DEFAULT_LEFT
     }
 
-    zoomIn.setAttribute('aria-label', 'Zoom in')
-    zoomIn.textContent = '＋'
-    zoomIn.style.borderTopLeftRadius = '4px'
-    zoomIn.style.borderTopRightRadius = '4px'
-    zoomIn.onclick = options.onZoomIn ?? null
-    zoomOut.setAttribute('aria-label', 'Zoom out')
-    zoomOut.style.borderTop = 'none'
-    zoomOut.style.borderBottomLeftRadius = '4px'
-    zoomOut.style.borderBottomRightRadius = '4px'
-    zoomOut.textContent = '－'
-    zoomOut.onclick = options.onZoomOut ?? null
+
+    zoomIn.onpointerdown = options.onZoomIn ?? null
+    zoomOut.onpointerdown = options.onZoomOut ?? null
   }
 }

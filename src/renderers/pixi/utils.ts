@@ -1,5 +1,5 @@
 import { color } from 'd3-color'
-import { PIXIRenderer as Renderer } from '.'
+import { PIXIRenderer, PIXIRenderer as Renderer } from '.'
 import { NodeRenderer } from './node'
 import { Node, Edge } from '../../'
 

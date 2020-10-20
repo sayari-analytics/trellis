@@ -2,6 +2,7 @@ import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as SubGraph from '../../src/layout/subGraph'
 import * as Zoom from '../../src/controls/zoom'
+import * as Selection from '../../src/controls/selection'
 import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
@@ -14,6 +15,8 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
+const container: HTMLDivElement = document.querySelector('#graph')
+
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{
@@ -100,13 +103,71 @@ let edges: Edge[] = [
 
 
 /**
- * Initialize Layout and Renderer Options
+ * Create Handlers
  */
+// TODO
+
+/**
+ * Create Zoom Controls
+ */
+const zoomControl = Zoom.Control({ container })
+zoomControl({
+  top: 80,
+  onZoomIn: () => {
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    renderer({ nodes, edges, options: renderOptions })
+  },
+  onZoomOut: () => {
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    renderer({ nodes, edges, options: renderOptions })
+  },
+})
+
+
+/**
+ * Create Selection Controls
+ */
+const selectionControl = Selection.Control({ container })
+const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = selectionControl({
+  top: 160,
+  onContainerPointerUp: () => {
+    nodes = nodes.map((node) => (node.subGraph ? {
+      ...node,
+      radius: 18,
+      style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
+      subGraph: undefined,
+    } : node))
+
+    subGraph({ nodes, edges }).then((graph) => {
+      nodes = graph.nodes
+      renderer({ nodes, edges, options: renderOptions })
+    })
+  },
+  onContainerDrag: (_, x, y) => {
+    renderOptions.x = x
+    renderOptions.y = y
+    renderer({ nodes, edges, options: renderOptions })
+  },
+})
+
+
+/**
+ * Create Layouts
+ */
+const force = Force.Layout()
+const subGraph = SubGraph.Layout()
 const layoutOptions: Partial<Force.LayoutOptions> = {
   nodeStrength: -500,
 }
 
-const container: HTMLDivElement = document.querySelector('#graph')
+
+/**
+ * Create Renderer
+ */
+const renderer = Renderer({
+  container,
+  // debug: { stats, logPerformance: true }
+})
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -177,24 +238,9 @@ const renderOptions: Partial<RendererOptions> = {
       renderer({ nodes, edges, options: renderOptions })
     })
   },
-  onContainerDrag: (_, x, y) => {
-    renderOptions.x = x
-    renderOptions.y = y
-    renderer({ nodes, edges, options: renderOptions })
-  },
-  onContainerPointerUp: () => {
-    nodes = nodes.map((node) => (node.subGraph ? {
-      ...node,
-      radius: 18,
-      style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-      subGraph: undefined,
-    } : node))
-
-    subGraph({ nodes, edges }).then((graph) => {
-      nodes = graph.nodes
-      renderer({ nodes, edges, options: renderOptions })
-    })
-  },
+  onContainerPointerDown,
+  onContainerDrag,
+  onContainerPointerUp,
   onWheel: (_, x, y, zoom) => {
     renderOptions.x = x
     renderOptions.y = y
@@ -203,36 +249,10 @@ const renderOptions: Partial<RendererOptions> = {
   }
 }
 
-const zoomOptions: Partial<Zoom.Options> = {
-  top: 80,
-  onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
-    renderer({ nodes, edges, options: renderOptions })
-  },
-  onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
-    renderer({ nodes, edges, options: renderOptions })
-  },
-}
-
-
-/**
- * Initialize Layout and Renderer and Controls
- */
-const force = Force.Layout()
-const subGraph = SubGraph.Layout()
-const zoomControl = Zoom.Control({ container })
-const renderer = Renderer({
-  container,
-  debug: { stats, logPerformance: true }
-})
-
 
 /**
  * Layout and Render Graph
  */
-zoomControl(zoomOptions)
-
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
   renderer({ nodes, edges, options: renderOptions })

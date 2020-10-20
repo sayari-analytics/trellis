@@ -73,13 +73,13 @@ export declare type RendererOptions<N extends Node = Node, E extends Edge = Edge
     onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void;
-    onContainerPointerEnter: (event: PointerEvent) => void;
-    onContainerPointerDown: (event: PointerEvent) => void;
-    onContainerPointerMove: (event: PointerEvent) => void;
-    onContainerDrag: (event: Event | undefined, x: number, y: number) => void;
-    onContainerPointerUp: (event: PointerEvent) => void;
-    onContainerPointerLeave: (event: PointerEvent) => void;
-    onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void;
+    onContainerPointerEnter?: (event: Event, x: number, y: number) => void;
+    onContainerPointerDown?: (event: Event, x: number, y: number) => void;
+    onContainerPointerMove?: (event: Event, x: number, y: number) => void;
+    onContainerDrag?: (event: Event | undefined, x: number, y: number) => void;
+    onContainerPointerUp?: (event: Event, x: number, y: number) => void;
+    onContainerPointerLeave?: (event: Event, x: number, y: number) => void;
+    onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void;
 };
 export declare const RENDERER_OPTIONS: RendererOptions<Node, Edge>;
 export declare class PIXIRenderer<N extends Node, E extends Edge> {
@@ -92,6 +92,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     clickedNode?: NodeRenderer<N, E>;
     hoveredEdge?: EdgeRenderer<N, E>;
     clickedEdge?: EdgeRenderer<N, E>;
+    clickedContainer: boolean;
     cancelAnimationLoop: () => void;
     dirty: boolean;
     viewportDirty: boolean;
@@ -122,12 +123,13 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;
-    onContainerPointerEnter: (event: PointerEvent) => void;
-    onContainerPointerDown: (event: PointerEvent) => void;
-    onContainerDrag: (event: Event | undefined, x: number, y: number) => void;
-    onContainerPointerMove: (event: PointerEvent) => void;
-    onContainerPointerUp: (event: PointerEvent) => void;
-    onContainerPointerLeave: (event: PointerEvent) => void;
+    onContainerPointerEnter?: (event: Event, x: number, y: number) => void;
+    onContainerPointerDown?: (event: Event, x: number, y: number) => void;
+    onContainerDrag?: (event: Event | undefined, x: number, y: number) => void;
+    onContainerPointerMove?: (event: Event, x: number, y: number) => void;
+    onContainerPointerUp?: (event: Event, x: number, y: number) => void;
+    onContainerPointerLeave?: (event: Event, x: number, y: number) => void;
+    onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void;
     onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void;
     onNodePointerDown: (event: Event, node: N, x: number, y: number) => void;
     onNodeDrag: (event: Event, node: N, x: number, y: number) => void;
@@ -139,7 +141,6 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void;
     onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void;
     onEdgeDoubleClick: (event: Event, edge: E, x: number, y: number) => void;
-    onWheel: (e: WheelEvent, x: number, y: number, scale: number) => void;
     width: number;
     height: number;
     zoom: number;

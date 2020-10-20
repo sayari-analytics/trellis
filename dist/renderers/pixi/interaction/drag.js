@@ -14,7 +14,7 @@ var Drag = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
-            _this.renderer.app.view.style.cursor = 'move';
+            // this.renderer.app.view.style.cursor = 'move'
             _this.last = { x: event.data.global.x, y: event.data.global.y };
             _this.current = event.data.pointerId;
         };
@@ -32,7 +32,7 @@ var Drag = /** @class */ (function () {
                     var centerY = _this.renderer.y + (y - _this.last.y);
                     _this.last = { x: x, y: y };
                     _this.moved = true;
-                    _this.onContainerDrag(event, centerX, centerY); // TODO - expose this as a more generic function
+                    _this.onContainerDrag(event, centerX, centerY);
                 }
             }
         };
@@ -40,7 +40,7 @@ var Drag = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
-            _this.renderer.app.view.style.cursor = 'auto';
+            // this.renderer.app.view.style.cursor = 'auto'
             _this.last = undefined;
             _this.moved = false;
         };

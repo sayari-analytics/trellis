@@ -1,11 +1,12 @@
 import { Node } from '../';
 export declare type Options = {
+    className: string;
     top: number;
     left: number;
     right: number;
     bottom: number;
-    onZoomIn: (event: MouseEvent) => any;
-    onZoomOut: (event: MouseEvent) => any;
+    onZoomIn: (event: PointerEvent) => any;
+    onZoomOut: (event: PointerEvent) => any;
 };
 export declare type ViewportChangeOptions = {
     padding: number;
@@ -19,6 +20,11 @@ export declare const fit: (zoom: number, position: [number, number], nodes: Node
     position: number[];
 };
 export declare const clampZoom: (min: number, max: number, zoom: number) => number;
-export declare const Control: (options: {
+/**
+ * TODO
+ * - disable on min/max zoom
+ * - tooltips
+ */
+export declare const Control: ({ container }: {
     container: HTMLDivElement;
 }) => (options: Partial<Options>) => void;

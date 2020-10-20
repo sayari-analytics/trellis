@@ -45,8 +45,6 @@ exports.RENDERER_OPTIONS = {
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
     onNodePointerEnter: utils_1.noop, onNodePointerDown: utils_1.noop, onNodeDrag: utils_1.noop, onNodePointerUp: utils_1.noop, onNodePointerLeave: utils_1.noop, onNodeDoubleClick: utils_1.noop,
     onEdgePointerEnter: utils_1.noop, onEdgePointerDown: utils_1.noop, onEdgePointerUp: utils_1.noop, onEdgePointerLeave: utils_1.noop,
-    onContainerPointerEnter: utils_1.noop, onContainerPointerDown: utils_1.noop, onContainerDrag: utils_1.noop,
-    onContainerPointerMove: utils_1.noop, onContainerPointerUp: utils_1.noop, onContainerPointerLeave: utils_1.noop, onWheel: utils_1.noop
 };
 var POSITION_ANIMATION_DURATION = 800;
 PIXI.utils.skipHello();
@@ -54,6 +52,7 @@ var PIXIRenderer = /** @class */ (function () {
     function PIXIRenderer(_a) {
         var _this = this;
         var container = _a.container, debug = _a.debug;
+        this.clickedContainer = false;
         this.dirty = false;
         this.viewportDirty = false;
         this.previousTime = performance.now();
@@ -70,12 +69,6 @@ var PIXIRenderer = /** @class */ (function () {
         this.nodesById = {};
         this.edgesById = {};
         this.edgeIndex = {};
-        this.onContainerPointerEnter = utils_1.noop;
-        this.onContainerPointerDown = utils_1.noop;
-        this.onContainerDrag = utils_1.noop;
-        this.onContainerPointerMove = utils_1.noop;
-        this.onContainerPointerUp = utils_1.noop;
-        this.onContainerPointerLeave = utils_1.noop;
         this.onNodePointerEnter = utils_1.noop;
         this.onNodePointerDown = utils_1.noop;
         this.onNodeDrag = utils_1.noop;
@@ -87,7 +80,6 @@ var PIXIRenderer = /** @class */ (function () {
         this.onEdgePointerUp = utils_1.noop;
         this.onEdgePointerLeave = utils_1.noop;
         this.onEdgeDoubleClick = utils_1.noop;
-        this.onWheel = utils_1.noop;
         this.width = exports.RENDERER_OPTIONS.width;
         this.height = exports.RENDERER_OPTIONS.height;
         this.zoom = exports.RENDERER_OPTIONS.zoom;
@@ -99,7 +91,7 @@ var PIXIRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.nodesEqual, nodesEqual = _t === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _t, _u = _k.edgesEqual, edgesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _u, _v = _k.onNodePointerEnter, onNodePointerEnter = _v === void 0 ? utils_1.noop : _v, _w = _k.onNodePointerDown, onNodePointerDown = _w === void 0 ? utils_1.noop : _w, _x = _k.onNodeDrag, onNodeDrag = _x === void 0 ? utils_1.noop : _x, _y = _k.onNodePointerUp, onNodePointerUp = _y === void 0 ? utils_1.noop : _y, _z = _k.onNodePointerLeave, onNodePointerLeave = _z === void 0 ? utils_1.noop : _z, _0 = _k.onNodeDoubleClick, onNodeDoubleClick = _0 === void 0 ? utils_1.noop : _0, _1 = _k.onEdgePointerEnter, onEdgePointerEnter = _1 === void 0 ? utils_1.noop : _1, _2 = _k.onEdgePointerDown, onEdgePointerDown = _2 === void 0 ? utils_1.noop : _2, _3 = _k.onEdgePointerUp, onEdgePointerUp = _3 === void 0 ? utils_1.noop : _3, _4 = _k.onEdgePointerLeave, onEdgePointerLeave = _4 === void 0 ? utils_1.noop : _4, _5 = _k.onContainerPointerEnter, onContainerPointerEnter = _5 === void 0 ? utils_1.noop : _5, _6 = _k.onContainerPointerDown, onContainerPointerDown = _6 === void 0 ? utils_1.noop : _6, _7 = _k.onContainerDrag, onContainerDrag = _7 === void 0 ? utils_1.noop : _7, _8 = _k.onContainerPointerMove, onContainerPointerMove = _8 === void 0 ? utils_1.noop : _8, _9 = _k.onContainerPointerUp, onContainerPointerUp = _9 === void 0 ? utils_1.noop : _9, _10 = _k.onContainerPointerLeave, onContainerPointerLeave = _10 === void 0 ? utils_1.noop : _10, _11 = _k.onWheel, onWheel = _11 === void 0 ? utils_1.noop : _11;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.nodesEqual, nodesEqual = _t === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _t, _u = _k.edgesEqual, edgesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _u, _v = _k.onNodePointerEnter, onNodePointerEnter = _v === void 0 ? utils_1.noop : _v, _w = _k.onNodePointerDown, onNodePointerDown = _w === void 0 ? utils_1.noop : _w, _x = _k.onNodeDrag, onNodeDrag = _x === void 0 ? utils_1.noop : _x, _y = _k.onNodePointerUp, onNodePointerUp = _y === void 0 ? utils_1.noop : _y, _z = _k.onNodePointerLeave, onNodePointerLeave = _z === void 0 ? utils_1.noop : _z, _0 = _k.onNodeDoubleClick, onNodeDoubleClick = _0 === void 0 ? utils_1.noop : _0, _1 = _k.onEdgePointerEnter, onEdgePointerEnter = _1 === void 0 ? utils_1.noop : _1, _2 = _k.onEdgePointerDown, onEdgePointerDown = _2 === void 0 ? utils_1.noop : _2, _3 = _k.onEdgePointerUp, onEdgePointerUp = _3 === void 0 ? utils_1.noop : _3, _4 = _k.onEdgePointerLeave, onEdgePointerLeave = _4 === void 0 ? utils_1.noop : _4, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -401,29 +393,59 @@ var PIXIRenderer = /** @class */ (function () {
         this.root.addChild(this.labelsLayer);
         this.root.addChild(this.frontNodeLayer);
         this.root.addChild(this.frontLabelLayer);
+        this.zoomInteraction = new zoom_1.Zoom(this, function (e, x, y, zoom) { var _a; return (_a = _this.onWheel) === null || _a === void 0 ? void 0 : _a.call(_this, e, x, y, zoom); });
+        this.dragInteraction = new drag_1.Drag(this, function (e, x, y) { var _a; return (_a = _this.onContainerDrag) === null || _a === void 0 ? void 0 : _a.call(_this, e, x, y); });
+        this.decelerateInteraction = new decelerate_1.Decelerate(this, function (x, y) { var _a; return (_a = _this.onContainerDrag) === null || _a === void 0 ? void 0 : _a.call(_this, undefined, x, y); });
+        var pointerEnter = function (event) {
+            var _a;
+            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+            (_a = _this.onContainerPointerEnter) === null || _a === void 0 ? void 0 : _a.call(_this, event, x, y);
+        };
+        var pointerDown = function (event) {
+            var _a;
+            _this.dragInteraction.down(event);
+            _this.decelerateInteraction.down();
+            if (_this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined) {
+                _this.clickedContainer = true;
+                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+                (_a = _this.onContainerPointerDown) === null || _a === void 0 ? void 0 : _a.call(_this, event, x, y);
+            }
+        };
+        var pointerMove = function (event) {
+            var _a;
+            _this.dragInteraction.move(event);
+            _this.decelerateInteraction.move();
+            if (_this.clickedContainer) {
+                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+                (_a = _this.onContainerPointerMove) === null || _a === void 0 ? void 0 : _a.call(_this, event, x, y);
+            }
+        };
+        var pointerUp = function (event) {
+            var _a;
+            _this.dragInteraction.up();
+            _this.decelerateInteraction.up();
+            if (_this.clickedContainer) {
+                _this.clickedContainer = false;
+                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+                (_a = _this.onContainerPointerUp) === null || _a === void 0 ? void 0 : _a.call(_this, event, x, y);
+            }
+        };
+        var pointerLeave = function (event) {
+            var _a;
+            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+            (_a = _this.onContainerPointerLeave) === null || _a === void 0 ? void 0 : _a.call(_this, event, x, y);
+        };
+        this.app.renderer.plugins.interaction.on('pointerenter', pointerEnter);
+        this.app.renderer.plugins.interaction.on('pointerdown', pointerDown);
+        this.app.renderer.plugins.interaction.on('pointermove', pointerMove);
+        this.app.renderer.plugins.interaction.on('pointerup', pointerUp);
+        this.app.renderer.plugins.interaction.on('pointerupoutside', pointerUp);
+        this.app.renderer.plugins.interaction.on('pointercancel', pointerUp);
+        this.app.renderer.plugins.interaction.on('pointerout', pointerUp);
+        this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave);
+        this.app.view.addEventListener('wheel', this.zoomInteraction.wheel);
         this.arrow = new edgeArrow_1.ArrowRenderer(this);
         this.circle = new circle_1.CircleRenderer(this);
-        this.zoomInteraction = new zoom_1.Zoom(this, function (e, x, y, zoom) { return _this.onWheel(e, x, y, zoom); });
-        this.app.view.addEventListener('wheel', this.zoomInteraction.wheel);
-        this.dragInteraction = new drag_1.Drag(this, function (e, x, y) { return _this.onContainerDrag(e, x, y); });
-        this.app.renderer.plugins.interaction.on('pointerdown', this.dragInteraction.down);
-        this.app.renderer.plugins.interaction.on('pointermove', this.dragInteraction.move);
-        this.app.renderer.plugins.interaction.on('pointerup', this.dragInteraction.up);
-        this.app.renderer.plugins.interaction.on('pointerupoutside', this.dragInteraction.up);
-        this.app.renderer.plugins.interaction.on('pointercancel', this.dragInteraction.up);
-        this.app.renderer.plugins.interaction.on('pointerout', this.dragInteraction.up);
-        this.decelerateInteraction = new decelerate_1.Decelerate(this, function (x, y) { return _this.onContainerDrag(undefined, x, y); });
-        this.app.renderer.plugins.interaction.on('pointerdown', this.decelerateInteraction.down);
-        this.app.renderer.plugins.interaction.on('pointermove', this.decelerateInteraction.move);
-        this.app.renderer.plugins.interaction.on('pointerup', this.decelerateInteraction.up);
-        this.app.renderer.plugins.interaction.on('pointerupoutside', this.decelerateInteraction.up);
-        this.app.renderer.plugins.interaction.on('pointercancel', this.decelerateInteraction.up);
-        this.app.renderer.plugins.interaction.on('pointerout', this.decelerateInteraction.up);
-        this.app.view.onpointerenter = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerEnter(e); };
-        this.app.view.onpointerdown = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerDown(e); };
-        this.app.view.onpointermove = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerMove(e); };
-        this.app.view.onpointerup = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerUp(e); };
-        this.app.view.onpointerleave = function (e) { return _this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined && _this.onContainerPointerLeave(e); };
         this.debug = debug;
         if (this.debug) {
             this.cancelAnimationLoop = utils_1.animationFrameLoop(this.debugRender);

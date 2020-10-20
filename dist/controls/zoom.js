@@ -73,20 +73,37 @@ exports.fit = function (zoom, position, nodes, options) {
     return result;
 };
 exports.clampZoom = function (min, max, zoom) { return Math.max(min, Math.min(max, zoom)); };
-exports.Control = function (options) {
-    options.container.style.position = 'relative';
+/**
+ * TODO
+ * - disable on min/max zoom
+ * - tooltips
+ */
+exports.Control = function (_a) {
+    var container = _a.container;
     var controlContainer = document.createElement('div');
-    var zoomIn = styleButton(document.createElement('button'));
-    var zoomOut = styleButton(document.createElement('button'));
-    controlContainer.className = 'zoom-container';
     controlContainer.style.position = 'absolute';
     controlContainer.style.display = 'none';
+    var zoomIn = styleButton(document.createElement('button'));
+    zoomIn.setAttribute('aria-label', 'Zoom in');
+    zoomIn.setAttribute('title', 'Zoom in');
+    zoomIn.textContent = '＋';
+    zoomIn.style.borderTopLeftRadius = '4px';
+    zoomIn.style.borderTopRightRadius = '4px';
     controlContainer.appendChild(zoomIn);
+    var zoomOut = styleButton(document.createElement('button'));
+    zoomOut.setAttribute('aria-label', 'Zoom out');
+    zoomOut.setAttribute('title', 'Zoom out');
+    zoomOut.style.borderTop = 'none';
+    zoomOut.style.borderBottomLeftRadius = '4px';
+    zoomOut.style.borderBottomRightRadius = '4px';
+    zoomOut.textContent = '－';
     controlContainer.appendChild(zoomOut);
-    options.container.appendChild(controlContainer);
+    container.style.position = 'relative';
+    container.appendChild(controlContainer);
     return function (options) {
-        var _a, _b;
+        var _a, _b, _c;
         controlContainer.style.display = 'block';
+        controlContainer.className = (_a = options.className) !== null && _a !== void 0 ? _a : 'zoom-container';
         if (options.top !== undefined) {
             controlContainer.style.top = options.top + "px";
         }
@@ -105,17 +122,8 @@ exports.Control = function (options) {
         else {
             controlContainer.style.left = DEFAULT_LEFT;
         }
-        zoomIn.setAttribute('aria-label', 'Zoom in');
-        zoomIn.textContent = '＋';
-        zoomIn.style.borderTopLeftRadius = '4px';
-        zoomIn.style.borderTopRightRadius = '4px';
-        zoomIn.onclick = (_a = options.onZoomIn) !== null && _a !== void 0 ? _a : null;
-        zoomOut.setAttribute('aria-label', 'Zoom out');
-        zoomOut.style.borderTop = 'none';
-        zoomOut.style.borderBottomLeftRadius = '4px';
-        zoomOut.style.borderBottomRightRadius = '4px';
-        zoomOut.textContent = '－';
-        zoomOut.onclick = (_b = options.onZoomOut) !== null && _b !== void 0 ? _b : null;
+        zoomIn.onpointerdown = (_b = options.onZoomIn) !== null && _b !== void 0 ? _b : null;
+        zoomOut.onpointerdown = (_c = options.onZoomOut) !== null && _c !== void 0 ? _c : null;
     };
 };
 //# sourceMappingURL=zoom.js.map
