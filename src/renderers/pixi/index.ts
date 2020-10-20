@@ -67,16 +67,16 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   maxZoom: number
   nodesEqual: (previous: N[], current: N[]) => boolean
   edgesEqual: (previous: E[], current: E[]) => boolean
-  onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void
-  onNodePointerDown: (event: Event, node: N, x: number, y: number) => void
-  onNodeDrag: (event: Event, node: N, x: number, y: number) => void
-  onNodePointerUp: (event: Event, node: N, x: number, y: number) => void
-  onNodePointerLeave: (event: Event, node: N, x: number, y: number) => void
-  onNodeDoubleClick: (event: Event, node: N, x: number, y: number) => void
-  onEdgePointerEnter: (event: Event, edge: E, x: number, y: number) => void
-  onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void
-  onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void
-  onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void
+  onNodePointerEnter?: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerDown?: (event: Event, node: N, x: number, y: number) => void
+  onNodeDrag?: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerUp?: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerLeave?: (event: Event, node: N, x: number, y: number) => void
+  onNodeDoubleClick?: (event: Event, node: N, x: number, y: number) => void
+  onEdgePointerEnter?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerDown?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerUp?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerLeave?: (event: Event, edge: E, x: number, y: number) => void
   onContainerPointerEnter?: (event: Event, x: number, y: number) => void
   onContainerPointerDown?: (event: Event, x: number, y: number) => void
   onContainerPointerMove?: (event: Event, x: number, y: number) => void
@@ -90,8 +90,6 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
 export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
   nodesEqual: () => false, edgesEqual: () => false,
-  onNodePointerEnter: noop, onNodePointerDown: noop, onNodeDrag: noop, onNodePointerUp: noop, onNodePointerLeave: noop, onNodeDoubleClick: noop,
-  onEdgePointerEnter: noop, onEdgePointerDown: noop, onEdgePointerUp: noop, onEdgePointerLeave: noop,
 }
 
 const POSITION_ANIMATION_DURATION = 800
@@ -138,17 +136,17 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   onContainerPointerUp?: (event: Event, x: number, y: number) => void
   onContainerPointerLeave?: (event: Event, x: number, y: number) => void
   onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void
-  onNodePointerEnter: (event: Event, node: N, x: number, y: number) => void = noop
-  onNodePointerDown: (event: Event, node: N, x: number, y: number) => void = noop
-  onNodeDrag: (event: Event, node: N, x: number, y: number) => void = noop
-  onNodePointerUp: (event: Event, node: N, x: number, y: number) => void = noop
-  onNodePointerLeave: (event: Event, node: N, x: number, y: number) => void = noop
-  onNodeDoubleClick: (event: Event, node: N, x: number, y: number) => void = noop
-  onEdgePointerEnter: (event: Event, edge: E, x: number, y: number) => void = noop
-  onEdgePointerDown: (event: Event, edge: E, x: number, y: number) => void = noop
-  onEdgePointerUp: (event: Event, edge: E, x: number, y: number) => void = noop
-  onEdgePointerLeave: (event: Event, edge: E, x: number, y: number) => void = noop
-  onEdgeDoubleClick: (event: Event, edge: E, x: number, y: number) => void = noop
+  onNodePointerEnter?: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerDown?: (event: Event, node: N, x: number, y: number) => void
+  onNodeDrag?: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerUp?: (event: Event, node: N, x: number, y: number) => void
+  onNodePointerLeave?: (event: Event, node: N, x: number, y: number) => void
+  onNodeDoubleClick?: (event: Event, node: N, x: number, y: number) => void
+  onEdgePointerEnter?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerDown?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerUp?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgePointerLeave?: (event: Event, edge: E, x: number, y: number) => void
+  onEdgeDoubleClick?: (event: Event, edge: E, x: number, y: number) => void
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   zoom = RENDERER_OPTIONS.zoom
@@ -215,14 +213,16 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     const pointerMove = (event: Event) => {
       this.dragInteraction.move(event)
       this.decelerateInteraction.move()
-      if (this.clickedContainer) {
+
+      if (this.onContainerPointerMove) {
         const { x, y } = this.root.toLocal(event.data.global)
-        this.onContainerPointerMove?.(event, x, y)
+        this.onContainerPointerMove(event, x, y)
       }
     }
     const pointerUp = (event: Event) => {
       this.dragInteraction.up()
       this.decelerateInteraction.up()
+
       if (this.clickedContainer) {
         this.clickedContainer = false
         const { x, y } = this.root.toLocal(event.data.global)
@@ -264,8 +264,8 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
-      onNodePointerEnter = noop, onNodePointerDown = noop, onNodeDrag = noop, onNodePointerUp = noop, onNodePointerLeave = noop, onNodeDoubleClick = noop,
-      onEdgePointerEnter = noop, onEdgePointerDown = noop, onEdgePointerUp = noop, onEdgePointerLeave = noop,
+      onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick,
+      onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
       onContainerPointerEnter, onContainerPointerDown, onContainerDrag, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, onWheel,
     } = RENDERER_OPTIONS
   }: { nodes: N[], edges: E[], options?: Partial<RendererOptions<N, E>> }) => {

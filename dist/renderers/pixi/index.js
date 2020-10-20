@@ -43,8 +43,6 @@ var zoom_1 = require("./interaction/zoom");
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
-    onNodePointerEnter: utils_1.noop, onNodePointerDown: utils_1.noop, onNodeDrag: utils_1.noop, onNodePointerUp: utils_1.noop, onNodePointerLeave: utils_1.noop, onNodeDoubleClick: utils_1.noop,
-    onEdgePointerEnter: utils_1.noop, onEdgePointerDown: utils_1.noop, onEdgePointerUp: utils_1.noop, onEdgePointerLeave: utils_1.noop,
 };
 var POSITION_ANIMATION_DURATION = 800;
 PIXI.utils.skipHello();
@@ -69,17 +67,6 @@ var PIXIRenderer = /** @class */ (function () {
         this.nodesById = {};
         this.edgesById = {};
         this.edgeIndex = {};
-        this.onNodePointerEnter = utils_1.noop;
-        this.onNodePointerDown = utils_1.noop;
-        this.onNodeDrag = utils_1.noop;
-        this.onNodePointerUp = utils_1.noop;
-        this.onNodePointerLeave = utils_1.noop;
-        this.onNodeDoubleClick = utils_1.noop;
-        this.onEdgePointerEnter = utils_1.noop;
-        this.onEdgePointerDown = utils_1.noop;
-        this.onEdgePointerUp = utils_1.noop;
-        this.onEdgePointerLeave = utils_1.noop;
-        this.onEdgeDoubleClick = utils_1.noop;
         this.width = exports.RENDERER_OPTIONS.width;
         this.height = exports.RENDERER_OPTIONS.height;
         this.zoom = exports.RENDERER_OPTIONS.zoom;
@@ -91,7 +78,7 @@ var PIXIRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.nodesEqual, nodesEqual = _t === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _t, _u = _k.edgesEqual, edgesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _u, _v = _k.onNodePointerEnter, onNodePointerEnter = _v === void 0 ? utils_1.noop : _v, _w = _k.onNodePointerDown, onNodePointerDown = _w === void 0 ? utils_1.noop : _w, _x = _k.onNodeDrag, onNodeDrag = _x === void 0 ? utils_1.noop : _x, _y = _k.onNodePointerUp, onNodePointerUp = _y === void 0 ? utils_1.noop : _y, _z = _k.onNodePointerLeave, onNodePointerLeave = _z === void 0 ? utils_1.noop : _z, _0 = _k.onNodeDoubleClick, onNodeDoubleClick = _0 === void 0 ? utils_1.noop : _0, _1 = _k.onEdgePointerEnter, onEdgePointerEnter = _1 === void 0 ? utils_1.noop : _1, _2 = _k.onEdgePointerDown, onEdgePointerDown = _2 === void 0 ? utils_1.noop : _2, _3 = _k.onEdgePointerUp, onEdgePointerUp = _3 === void 0 ? utils_1.noop : _3, _4 = _k.onEdgePointerLeave, onEdgePointerLeave = _4 === void 0 ? utils_1.noop : _4, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.nodesEqual, nodesEqual = _t === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _t, _u = _k.edgesEqual, edgesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _u, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -412,12 +399,11 @@ var PIXIRenderer = /** @class */ (function () {
             }
         };
         var pointerMove = function (event) {
-            var _a;
             _this.dragInteraction.move(event);
             _this.decelerateInteraction.move();
-            if (_this.clickedContainer) {
-                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
-                (_a = _this.onContainerPointerMove) === null || _a === void 0 ? void 0 : _a.call(_this, event, x, y);
+            if (_this.onContainerPointerMove) {
+                var _a = _this.root.toLocal(event.data.global), x = _a.x, y = _a.y;
+                _this.onContainerPointerMove(event, x, y);
             }
         };
         var pointerUp = function (event) {

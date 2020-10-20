@@ -63,7 +63,6 @@ var DEFAULT_LABEL_SIZE = 11;
 var DEFAULT_RADIUS = 18;
 var DEFAULT_BADGE_RADIUS = 8;
 var DEFAULT_BADGE_STROKE_WIDTH = 2;
-var DEFAULT_IMAGE_ICON_SCALE = 1;
 var NodeRenderer = /** @class */ (function () {
     function NodeRenderer(renderer, node, x, y, radius, parent) {
         var _this = this;
@@ -81,6 +80,7 @@ var NodeRenderer = /** @class */ (function () {
         this.nodeMoveXOffset = 0;
         this.nodeMoveYOffset = 0;
         this.pointerEnter = function (event) {
+            var _a, _b;
             if (_this.renderer.clickedNode !== undefined)
                 return;
             _this.renderer.hoveredNode = _this;
@@ -97,9 +97,10 @@ var NodeRenderer = /** @class */ (function () {
                 }
             }
             var position = _this.renderer.root.toLocal(event.data.global);
-            _this.renderer.onNodePointerEnter(event, _this.node, position.x, position.y);
+            (_b = (_a = _this.renderer).onNodePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x, position.y);
         };
         this.pointerLeave = function (event) {
+            var _a, _b;
             if (_this.renderer.clickedNode !== undefined || _this.renderer.hoveredNode !== _this)
                 return;
             _this.renderer.hoveredNode = undefined;
@@ -116,9 +117,10 @@ var NodeRenderer = /** @class */ (function () {
                 }
             }
             var position = _this.renderer.root.toLocal(event.data.global);
-            _this.renderer.onNodePointerLeave(event, _this.node, position.x, position.y);
+            (_b = (_a = _this.renderer).onNodePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x, position.y);
         };
         this.pointerDown = function (event) {
+            var _a, _b;
             if (_this.doubleClickTimeout === undefined) {
                 _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
             }
@@ -133,9 +135,10 @@ var NodeRenderer = /** @class */ (function () {
             var position = _this.renderer.root.toLocal(event.data.global);
             _this.nodeMoveXOffset = position.x - _this.x;
             _this.nodeMoveYOffset = position.y - _this.y;
-            _this.renderer.onNodePointerDown(event, _this.node, _this.x, _this.y);
+            (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
         };
         this.pointerUp = function (event) {
+            var _a, _b, _c, _d;
             if (_this.renderer.clickedNode === undefined)
                 return;
             _this.renderer.clickedNode = undefined;
@@ -145,17 +148,18 @@ var NodeRenderer = /** @class */ (function () {
             _this.renderer.decelerateInteraction.resume();
             _this.nodeMoveXOffset = 0;
             _this.nodeMoveYOffset = 0;
-            _this.renderer.onNodePointerUp(event, _this.node, _this.x, _this.y);
+            (_b = (_a = _this.renderer).onNodePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
             if (_this.doubleClick) {
                 _this.doubleClick = false;
-                _this.renderer.onNodeDoubleClick(event, _this.node, _this.x, _this.y);
+                (_d = (_c = _this.renderer).onNodeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, _this.x, _this.y);
             }
         };
         this.nodeMove = function (event) {
+            var _a, _b;
             if (_this.renderer.clickedNode === undefined)
                 return;
             var position = _this.renderer.root.toLocal(event.data.global);
-            _this.renderer.onNodeDrag(event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+            (_b = (_a = _this.renderer).onNodeDrag) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;

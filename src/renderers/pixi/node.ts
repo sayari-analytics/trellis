@@ -18,7 +18,6 @@ const DEFAULT_LABEL_SIZE = 11
 const DEFAULT_RADIUS = 18
 const DEFAULT_BADGE_RADIUS = 8
 const DEFAULT_BADGE_STROKE_WIDTH = 2
-const DEFAULT_IMAGE_ICON_SCALE = 1
 
 
 export class NodeRenderer<N extends Node, E extends Edge>{
@@ -419,7 +418,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     const position = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onNodePointerEnter(event, this.node, position.x, position.y)
+    this.renderer.onNodePointerEnter?.(event, this.node, position.x, position.y)
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
@@ -442,7 +441,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     const position = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onNodePointerLeave(event, this.node, position.x, position.y)
+    this.renderer.onNodePointerLeave?.(event, this.node, position.x, position.y)
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
@@ -460,7 +459,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     const position = this.renderer.root.toLocal(event.data.global)
     this.nodeMoveXOffset = position.x - this.x
     this.nodeMoveYOffset = position.y - this.y
-    this.renderer.onNodePointerDown(event, this.node, this.x, this.y)
+    this.renderer.onNodePointerDown?.(event, this.node, this.x, this.y)
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -473,11 +472,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.decelerateInteraction.resume()
     this.nodeMoveXOffset = 0
     this.nodeMoveYOffset = 0
-    this.renderer.onNodePointerUp(event, this.node, this.x, this.y)
+    this.renderer.onNodePointerUp?.(event, this.node, this.x, this.y)
 
     if (this.doubleClick) {
       this.doubleClick = false
-      this.renderer.onNodeDoubleClick(event, this.node, this.x, this.y)
+      this.renderer.onNodeDoubleClick?.(event, this.node, this.x, this.y)
     }
   }
 
@@ -485,7 +484,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.clickedNode === undefined) return
 
     const position = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onNodeDrag(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
+    this.renderer.onNodeDrag?.(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
   }
 
 

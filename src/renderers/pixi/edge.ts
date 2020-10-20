@@ -364,7 +364,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredEdge = this
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerEnter(event, this.edge, x, y)
+    this.renderer.onEdgePointerEnter?.(event, this.edge, x, y)
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
@@ -373,7 +373,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredEdge = undefined
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerLeave(event, this.edge, x, y)
+    this.renderer.onEdgePointerLeave?.(event, this.edge, x, y)
   }
 
   private clearDoubleClick = () => {
@@ -394,7 +394,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.decelerateInteraction.pause()
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerDown(event, this.edge, x, y)
+    this.renderer.onEdgePointerDown?.(event, this.edge, x, y)
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -406,11 +406,11 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.decelerateInteraction.resume()
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerUp(event, this.edge, x, y)
+    this.renderer.onEdgePointerUp?.(event, this.edge, x, y)
 
     if (this.doubleClick) {
       this.doubleClick = false
-      this.renderer.onEdgeDoubleClick(event, this.edge, x, y)
+      this.renderer.onEdgeDoubleClick?.(event, this.edge, x, y)
     }
   }
 }

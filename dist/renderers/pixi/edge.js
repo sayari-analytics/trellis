@@ -78,24 +78,27 @@ var EdgeRenderer = /** @class */ (function () {
         this.curve = 0;
         this.doubleClick = false;
         this.pointerEnter = function (event) {
+            var _a, _b;
             if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== undefined)
                 return;
             _this.renderer.hoveredEdge = _this;
-            var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
-            _this.renderer.onEdgePointerEnter(event, _this.edge, x, y);
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            (_b = (_a = _this.renderer).onEdgePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
         };
         this.pointerLeave = function (event) {
+            var _a, _b;
             if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== _this)
                 return;
             _this.renderer.hoveredEdge = undefined;
-            var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
-            _this.renderer.onEdgePointerLeave(event, _this.edge, x, y);
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            (_b = (_a = _this.renderer).onEdgePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
             _this.doubleClick = false;
         };
         this.pointerDown = function (event) {
+            var _a, _b;
             if (_this.doubleClickTimeout === undefined) {
                 _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
             }
@@ -106,21 +109,22 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.zoomInteraction.pause();
             _this.renderer.dragInteraction.pause();
             _this.renderer.decelerateInteraction.pause();
-            var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
-            _this.renderer.onEdgePointerDown(event, _this.edge, x, y);
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            (_b = (_a = _this.renderer).onEdgePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
         };
         this.pointerUp = function (event) {
+            var _a, _b, _c, _d;
             if (_this.renderer.clickedEdge === undefined)
                 return;
             _this.renderer.clickedEdge = undefined;
             _this.renderer.zoomInteraction.resume();
             _this.renderer.dragInteraction.resume();
             _this.renderer.decelerateInteraction.resume();
-            var _a = _this.renderer.root.toLocal(event.data.global), x = _a.x, y = _a.y;
-            _this.renderer.onEdgePointerUp(event, _this.edge, x, y);
+            var _e = _this.renderer.root.toLocal(event.data.global), x = _e.x, y = _e.y;
+            (_b = (_a = _this.renderer).onEdgePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
             if (_this.doubleClick) {
                 _this.doubleClick = false;
-                _this.renderer.onEdgeDoubleClick(event, _this.edge, x, y);
+                (_d = (_c = _this.renderer).onEdgeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.edge, x, y);
             }
         };
         this.renderer = renderer;
