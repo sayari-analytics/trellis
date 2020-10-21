@@ -32,6 +32,7 @@ var __values = (this && this.__values) || function(o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = exports.PIXIRenderer = exports.RENDERER_OPTIONS = void 0;
 var PIXI = __importStar(require("pixi.js"));
+var unsafe_eval_1 = require("@pixi/unsafe-eval");
 var utils_1 = require("../../utils");
 var node_1 = require("./node");
 var edge_1 = require("./edge");
@@ -41,6 +42,7 @@ var zoom_1 = require("./interaction/zoom");
 var arrowSprite_1 = require("./sprites/arrowSprite");
 var circleSprite_1 = require("./sprites/circleSprite");
 var ImageSprite_1 = require("./sprites/ImageSprite");
+unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },

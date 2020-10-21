@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js'
+import { install } from '@pixi/unsafe-eval'
 import { Node, Edge } from '../../'
 import { animationFrameLoop } from '../../utils'
 import { NodeRenderer } from './node'
@@ -10,6 +11,8 @@ import { ArrowSprite } from './sprites/arrowSprite'
 import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
 
+
+install(PIXI)
 
 export type Event = PIXI.InteractionEvent
 
