@@ -35,11 +35,12 @@ var PIXI = __importStar(require("pixi.js"));
 var utils_1 = require("../../utils");
 var node_1 = require("./node");
 var edge_1 = require("./edge");
-var edgeArrow_1 = require("./edgeArrow");
-var circle_1 = require("./circle");
 var drag_1 = require("./interaction/drag");
 var decelerate_1 = require("./interaction/decelerate");
 var zoom_1 = require("./interaction/zoom");
+var arrowSprite_1 = require("./sprites/arrowSprite");
+var circleSprite_1 = require("./sprites/circleSprite");
+var ImageSprite_1 = require("./sprites/ImageSprite");
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
@@ -351,6 +352,7 @@ var PIXIRenderer = /** @class */ (function () {
             _this.app.destroy(true, { children: true, texture: true, baseTexture: true });
             _this.circle.delete();
             _this.arrow.delete();
+            _this.image.delete();
         };
         if (!(container instanceof HTMLDivElement)) {
             throw new Error('container must be an instance of HTMLDivElement');
@@ -430,8 +432,9 @@ var PIXIRenderer = /** @class */ (function () {
         this.app.renderer.plugins.interaction.on('pointerout', pointerUp);
         this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave);
         this.app.view.addEventListener('wheel', this.zoomInteraction.wheel);
-        this.arrow = new edgeArrow_1.ArrowRenderer(this);
-        this.circle = new circle_1.CircleRenderer(this);
+        this.arrow = new arrowSprite_1.ArrowSprite(this);
+        this.circle = new circleSprite_1.CircleSprite(this);
+        this.image = new ImageSprite_1.ImageSprite();
         this.debug = debug;
         if (this.debug) {
             this.cancelAnimationLoop = utils_1.animationFrameLoop(this.debugRender);

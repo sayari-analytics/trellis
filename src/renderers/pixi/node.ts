@@ -5,7 +5,6 @@ import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } 
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
 import { CancellablePromise, FontLoader } from './FontLoader'
-import { ImageLoader } from './ImageLoader'
 
 
 const LABEL_Y_PADDING = 2
@@ -211,12 +210,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
 
       if (this.icon?.type === 'textIcon') {
-        // TOOD - reuse icon sprites
-
         this.fontIconLoader?.cancel()
         this.fontIconLoader = FontLoader(this.icon.family)
         this.fontIconLoader.then((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
+          // TOOD - reuse icon textures
           this.iconSprite = new PIXI.Text(this.icon.text, {
             fontFamily: this.icon.family,
             fontSize: this.icon.size * 2,
@@ -236,7 +234,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           }
         })
       } else if (this.icon?.type === 'imageIcon') {
-        this.iconSprite = ImageLoader(this.icon.url)
+        this.iconSprite = this.renderer.image.createSprite(this.icon.url)
 
         this.iconSprite.name = 'icon'
         this.iconSprite.position.set(this.icon.offset?.x ?? 0, this.icon.offset?.y ?? 0)

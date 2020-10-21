@@ -130,7 +130,7 @@ const force = Force.Layout()
 const subGraph = SubGraph.Layout()
 const renderer = Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: true }
 })
 
 

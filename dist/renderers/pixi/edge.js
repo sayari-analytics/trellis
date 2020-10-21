@@ -49,7 +49,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EdgeRenderer = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var utils_1 = require("./utils");
-var edgeArrow_1 = require("./edgeArrow");
+var arrowSprite_1 = require("./sprites/arrowSprite");
 var LINE_HOVER_RADIUS = 4;
 var DEFAULT_EDGE_WIDTH = 1;
 var DEFAULT_EDGE_COLOR = '#ccc';
@@ -67,7 +67,7 @@ var EdgeRenderer = /** @class */ (function () {
         this.width = 0;
         this.stroke = 0;
         this.strokeOpacity = 0;
-        this.line = new PIXI.ParticleContainer();
+        this.line = new PIXI.ParticleContainer(); // can this be a DisplayObject
         this.arrowContainer = new PIXI.Container(); // why can't this be a ParticleContainer
         this.arrow = DEFAULT_ARROW;
         this.labelContainer = new PIXI.Container(); // TODO - can't use ParticleContainer.  lazily add label sprite directly to edgesLayer
@@ -128,6 +128,7 @@ var EdgeRenderer = /** @class */ (function () {
             }
         };
         this.renderer = renderer;
+        this.line.visible = false;
         this.line.interactive = true;
         this.line.buttonMode = true;
         this.line
@@ -253,9 +254,9 @@ var EdgeRenderer = /** @class */ (function () {
         var sourceContainer = this.renderer.nodesById[this.edge.source], targetContainer = this.renderer.nodesById[this.edge.target], sourceRadius = sourceContainer.radius + sourceContainer.strokeWidth, targetRadius = targetContainer.radius + targetContainer.strokeWidth, theta = utils_1.angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y), start = utils_1.movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius), end = utils_1.movePoint(targetContainer.x, targetContainer.y, theta, targetRadius), center = utils_1.midPoint(start[0], start[1], end[0], end[1]);
         if (this.curve === 0) {
             var startArrowOffset = this.reverseArrow ?
-                utils_1.movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - edgeArrow_1.ArrowRenderer.ARROW_HEIGHT) :
+                utils_1.movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - arrowSprite_1.ArrowSprite.ARROW_HEIGHT) :
                 start, endArrowOffset = this.forwardArrow ?
-                utils_1.movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + edgeArrow_1.ArrowRenderer.ARROW_HEIGHT) :
+                utils_1.movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + arrowSprite_1.ArrowSprite.ARROW_HEIGHT) :
                 end;
             /**
              * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
@@ -308,10 +309,10 @@ var EdgeRenderer = /** @class */ (function () {
             var thetaCurveStart = utils_1.angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1]);
             var thetaCurveEnd = utils_1.angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y);
             var curveStart = this.reverseArrow ?
-                utils_1.movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius - edgeArrow_1.ArrowRenderer.ARROW_HEIGHT) :
+                utils_1.movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius - arrowSprite_1.ArrowSprite.ARROW_HEIGHT) :
                 utils_1.movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius);
             var curveEnd = this.forwardArrow ?
-                utils_1.movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + edgeArrow_1.ArrowRenderer.ARROW_HEIGHT) :
+                utils_1.movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + arrowSprite_1.ArrowSprite.ARROW_HEIGHT) :
                 utils_1.movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius);
             this.x0 = curveStart[0];
             this.y0 = curveStart[1];

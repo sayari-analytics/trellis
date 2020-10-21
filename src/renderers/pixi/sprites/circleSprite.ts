@@ -1,9 +1,9 @@
 import * as PIXI from 'pixi.js'
-import { PIXIRenderer as Renderer } from '.'
-import { Node, Edge } from '../../'
+import { PIXIRenderer as Renderer } from '../'
+import { Node, Edge } from '../../../'
 
 
-export class CircleRenderer<N extends Node, E extends Edge>{
+export class CircleSprite<N extends Node, E extends Edge> {
 
   texture: PIXI.RenderTexture
 

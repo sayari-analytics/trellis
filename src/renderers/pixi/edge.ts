@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js'
 import { EdgeStyle, PIXIRenderer as Renderer } from './'
 import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI } from './utils'
 import { Node, Edge } from '../../'
-import { ArrowRenderer } from './edgeArrow'
+import { ArrowSprite } from './sprites/arrowSprite'
 
 
 
@@ -29,7 +29,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private width: number = 0
   private stroke: number = 0
   private strokeOpacity: number = 0
-  private line = new PIXI.ParticleContainer()
+  private line = new PIXI.ParticleContainer() // can this be a DisplayObject
   private arrowContainer = new PIXI.Container() // why can't this be a ParticleContainer
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
@@ -50,6 +50,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   constructor(renderer: Renderer<N, E>, edge: E) {
     this.renderer = renderer
 
+    this.line.visible = false
     this.line.interactive = true
     this.line.buttonMode = true
     this.line
@@ -187,10 +188,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
     if (this.curve === 0) {
       const startArrowOffset = this.reverseArrow ?
-        movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - ArrowRenderer.ARROW_HEIGHT) :
+        movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - ArrowSprite.ARROW_HEIGHT) :
         start,
       endArrowOffset = this.forwardArrow ?
-        movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowRenderer.ARROW_HEIGHT) :
+        movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowSprite.ARROW_HEIGHT) :
         end
       /**
        * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
@@ -252,10 +253,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       const thetaCurveStart = angle(sourceContainer.x, sourceContainer.y, this.curvePeak[0], this.curvePeak[1])
       const thetaCurveEnd = angle(this.curvePeak[0], this.curvePeak[1], targetContainer.x, targetContainer.y)
       const curveStart = this.reverseArrow ?
-        movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius - ArrowRenderer.ARROW_HEIGHT) :
+        movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius - ArrowSprite.ARROW_HEIGHT) :
         movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius)
       const curveEnd = this.forwardArrow ?
-        movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + ArrowRenderer.ARROW_HEIGHT) :
+        movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius + ArrowSprite.ARROW_HEIGHT) :
         movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
       this.x0 = curveStart[0]
       this.y0 = curveStart[1]

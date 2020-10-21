@@ -19,27 +19,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ArrowRenderer = void 0;
+exports.CircleSprite = void 0;
 var PIXI = __importStar(require("pixi.js"));
-var ArrowRenderer = /** @class */ (function () {
-    function ArrowRenderer(renderer) {
+var CircleSprite = /** @class */ (function () {
+    function CircleSprite(renderer) {
         this.texture = renderer.app.renderer.generateTexture(new PIXI.Graphics()
             .beginFill(0xffffff)
-            .lineTo(ArrowRenderer.ARROW_HEIGHT * 2, ArrowRenderer.ARROW_WIDTH)
-            .lineTo(ArrowRenderer.ARROW_HEIGHT * 2, -ArrowRenderer.ARROW_WIDTH), PIXI.SCALE_MODES.LINEAR, 2);
+            .drawCircle(0, 0, 1000), PIXI.SCALE_MODES.LINEAR, 2);
     }
-    ArrowRenderer.prototype.createSprite = function () {
+    CircleSprite.prototype.create = function () {
         var sprite = new PIXI.Sprite(this.texture);
-        sprite.anchor.set(0, 0.5);
-        sprite.scale.set(0.5);
+        sprite.anchor.set(0.5);
         return sprite;
     };
-    ArrowRenderer.prototype.delete = function () {
+    CircleSprite.prototype.delete = function () {
         this.texture.destroy();
     };
-    ArrowRenderer.ARROW_HEIGHT = 12;
-    ArrowRenderer.ARROW_WIDTH = 6;
-    return ArrowRenderer;
+    return CircleSprite;
 }());
-exports.ArrowRenderer = ArrowRenderer;
-//# sourceMappingURL=edgeArrow.js.map
+exports.CircleSprite = CircleSprite;
+//# sourceMappingURL=circleSprite.js.map

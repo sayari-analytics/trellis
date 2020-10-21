@@ -19,13 +19,27 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ImageLoader = void 0;
+exports.ArrowSprite = void 0;
 var PIXI = __importStar(require("pixi.js"));
-var cache = {};
-exports.ImageLoader = function (url) {
-    if (cache[url] === undefined) {
-        cache[url] = PIXI.Texture.from(url);
+var ArrowSprite = /** @class */ (function () {
+    function ArrowSprite(renderer) {
+        this.texture = renderer.app.renderer.generateTexture(new PIXI.Graphics()
+            .beginFill(0xffffff)
+            .lineTo(ArrowSprite.ARROW_HEIGHT * 2, ArrowSprite.ARROW_WIDTH)
+            .lineTo(ArrowSprite.ARROW_HEIGHT * 2, -ArrowSprite.ARROW_WIDTH), PIXI.SCALE_MODES.LINEAR, 2);
     }
-    return new PIXI.Sprite(cache[url]);
-};
-//# sourceMappingURL=ImageLoader.js.map
+    ArrowSprite.prototype.createSprite = function () {
+        var sprite = new PIXI.Sprite(this.texture);
+        sprite.anchor.set(0, 0.5);
+        sprite.scale.set(0.5);
+        return sprite;
+    };
+    ArrowSprite.prototype.delete = function () {
+        this.texture.destroy();
+    };
+    ArrowSprite.ARROW_HEIGHT = 12;
+    ArrowSprite.ARROW_WIDTH = 6;
+    return ArrowSprite;
+}());
+exports.ArrowSprite = ArrowSprite;
+//# sourceMappingURL=arrowSprite.js.map

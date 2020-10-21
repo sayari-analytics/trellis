@@ -1,13 +1,14 @@
 import * as PIXI from 'pixi.js'
 import { Node, Edge } from '../../'
-import { animationFrameLoop, noop } from '../../utils'
+import { animationFrameLoop } from '../../utils'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
-import { ArrowRenderer } from './edgeArrow'
-import { CircleRenderer } from './circle'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Zoom } from './interaction/zoom'
+import { ArrowSprite } from './sprites/arrowSprite'
+import { CircleSprite } from './sprites/circleSprite'
+import { ImageSprite } from './sprites/ImageSprite'
 
 
 export type Event = PIXI.InteractionEvent
@@ -123,8 +124,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
   edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
-  arrow: ArrowRenderer<N, E>
-  circle: CircleRenderer<N, E>
+  arrow: ArrowSprite<N, E>
+  circle: CircleSprite<N, E>
+  image: ImageSprite
   zoomInteraction: Zoom<N, E>
   dragInteraction: Drag<N, E>
   decelerateInteraction: Decelerate<N, E>
@@ -244,8 +246,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave)
     this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 
-    this.arrow = new ArrowRenderer<N, E>(this)
-    this.circle = new CircleRenderer<N, E>(this)
+    this.arrow = new ArrowSprite<N, E>(this)
+    this.circle = new CircleSprite<N, E>(this)
+    this.image = new ImageSprite()
 
     this.debug = debug
     if (this.debug) {
@@ -543,6 +546,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.app.destroy(true, { children: true, texture: true, baseTexture: true })
     this.circle.delete()
     this.arrow.delete()
+    this.image.delete()
   }
 }
 

@@ -3,11 +3,12 @@ import * as PIXI from 'pixi.js';
 import { Node, Edge } from '../../';
 import { NodeRenderer } from './node';
 import { EdgeRenderer } from './edge';
-import { ArrowRenderer } from './edgeArrow';
-import { CircleRenderer } from './circle';
 import { Drag } from './interaction/drag';
 import { Decelerate } from './interaction/decelerate';
 import { Zoom } from './interaction/zoom';
+import { ArrowSprite } from './sprites/arrowSprite';
+import { CircleSprite } from './sprites/circleSprite';
+import { ImageSprite } from './sprites/ImageSprite';
 export declare type Event = PIXI.InteractionEvent;
 export declare type TextIcon = {
     type: 'textIcon';
@@ -118,8 +119,9 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
             [edgeB: string]: Set<string>;
         };
     };
-    arrow: ArrowRenderer<N, E>;
-    circle: CircleRenderer<N, E>;
+    arrow: ArrowSprite<N, E>;
+    circle: CircleSprite<N, E>;
+    image: ImageSprite;
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;

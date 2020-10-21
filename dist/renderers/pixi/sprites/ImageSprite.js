@@ -19,23 +19,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CircleRenderer = void 0;
+exports.ImageSprite = void 0;
 var PIXI = __importStar(require("pixi.js"));
-var CircleRenderer = /** @class */ (function () {
-    function CircleRenderer(renderer) {
-        this.texture = renderer.app.renderer.generateTexture(new PIXI.Graphics()
-            .beginFill(0xffffff)
-            .drawCircle(0, 0, 1000), PIXI.SCALE_MODES.LINEAR, 2);
+var ImageSprite = /** @class */ (function () {
+    function ImageSprite() {
+        this.cache = {};
     }
-    CircleRenderer.prototype.create = function () {
-        var sprite = new PIXI.Sprite(this.texture);
-        sprite.anchor.set(0.5);
-        return sprite;
+    ImageSprite.prototype.createSprite = function (url) {
+        if (this.cache[url] === undefined) {
+            this.cache[url] = PIXI.Texture.from(url);
+        }
+        return new PIXI.Sprite(this.cache[url]);
     };
-    CircleRenderer.prototype.delete = function () {
-        this.texture.destroy();
+    ImageSprite.prototype.delete = function () {
+        this.cache = {};
     };
-    return CircleRenderer;
+    return ImageSprite;
 }());
-exports.CircleRenderer = CircleRenderer;
-//# sourceMappingURL=circle.js.map
+exports.ImageSprite = ImageSprite;
+//# sourceMappingURL=ImageSprite.js.map
