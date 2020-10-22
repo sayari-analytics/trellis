@@ -52,21 +52,18 @@ var utils_1 = require("./utils");
 var arrowSprite_1 = require("./sprites/arrowSprite");
 var LINE_HOVER_RADIUS = 4;
 var DEFAULT_EDGE_WIDTH = 1;
-var DEFAULT_EDGE_COLOR = '#ccc';
+var DEFAULT_EDGE_COLOR = utils_1.colorToNumber('#ccc');
 var DEFAULT_EDGE_OPACITY = 1;
 var DEFAULT_LABEL_FAMILY = 'Helvetica';
-var DEFAULT_LABEL_COLOR = '#444';
+var DEFAULT_LABEL_COLOR = utils_1.colorToNumber('#444');
 var DEFAULT_LABEL_SIZE = 11;
 var DEFAULT_ARROW = 'none';
 var EdgeRenderer = /** @class */ (function () {
     function EdgeRenderer(renderer, edge) {
         var _this = this;
-        this.labelFamily = DEFAULT_LABEL_FAMILY;
-        this.labelColor = DEFAULT_LABEL_COLOR;
-        this.labelSize = DEFAULT_LABEL_SIZE;
-        this.width = 0;
-        this.stroke = 0;
-        this.strokeOpacity = 0;
+        this.width = DEFAULT_EDGE_WIDTH;
+        this.stroke = DEFAULT_EDGE_COLOR;
+        this.strokeOpacity = DEFAULT_EDGE_OPACITY;
         this.line = new PIXI.ParticleContainer(); // can this be a DisplayObject
         this.arrowContainer = new PIXI.Container(); // why can't this be a ParticleContainer
         this.arrow = DEFAULT_ARROW;
@@ -149,13 +146,13 @@ var EdgeRenderer = /** @class */ (function () {
     }
     EdgeRenderer.prototype.update = function (edge) {
         var e_1, _a;
-        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
         this.edge = edge;
         /**
          * Style
          */
         this.width = (_c = (_b = this.edge.style) === null || _b === void 0 ? void 0 : _b.width) !== null && _c !== void 0 ? _c : DEFAULT_EDGE_WIDTH;
-        this.stroke = utils_1.colorToNumber((_e = (_d = edge.style) === null || _d === void 0 ? void 0 : _d.stroke) !== null && _e !== void 0 ? _e : DEFAULT_EDGE_COLOR);
+        this.stroke = ((_d = edge.style) === null || _d === void 0 ? void 0 : _d.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_e = edge.style) === null || _e === void 0 ? void 0 : _e.stroke);
         this.strokeOpacity = (_g = (_f = edge.style) === null || _f === void 0 ? void 0 : _f.strokeOpacity) !== null && _g !== void 0 ? _g : DEFAULT_EDGE_OPACITY;
         /**
          * Arrow
@@ -195,18 +192,21 @@ var EdgeRenderer = /** @class */ (function () {
          * Label
          */
         var labelFamily = (_o = (_m = edge.style) === null || _m === void 0 ? void 0 : _m.labelFamily) !== null && _o !== void 0 ? _o : DEFAULT_LABEL_FAMILY;
-        var labelColor = (_q = (_p = edge.style) === null || _p === void 0 ? void 0 : _p.labelColor) !== null && _q !== void 0 ? _q : DEFAULT_LABEL_COLOR;
+        var labelColor = ((_p = edge.style) === null || _p === void 0 ? void 0 : _p.labelColor) === undefined ? DEFAULT_LABEL_COLOR : utils_1.colorToNumber((_q = edge.style) === null || _q === void 0 ? void 0 : _q.labelColor);
         var labelSize = (_s = (_r = edge.style) === null || _r === void 0 ? void 0 : _r.labelSize) !== null && _s !== void 0 ? _s : DEFAULT_LABEL_SIZE;
+        var labelWordWrap = (_t = edge.style) === null || _t === void 0 ? void 0 : _t.labelWordWrap;
         if (edge.label !== this.label ||
             labelFamily !== this.labelFamily ||
             labelColor !== this.labelColor ||
-            labelSize !== this.labelSize) {
+            labelSize !== this.labelSize ||
+            labelWordWrap !== this.labelWordWrap) {
             this.label = edge.label;
             this.labelFamily = labelFamily;
             this.labelColor = labelColor;
             this.labelSize = labelSize;
+            this.labelWordWrap = labelWordWrap;
             this.labelContainer.removeChildren();
-            (_t = this.labelSprite) === null || _t === void 0 ? void 0 : _t.destroy();
+            (_u = this.labelSprite) === null || _u === void 0 ? void 0 : _u.destroy();
             this.labelSprite = undefined;
             if (this.label) {
                 this.labelSprite = new PIXI.Text(this.label, {
@@ -215,7 +215,10 @@ var EdgeRenderer = /** @class */ (function () {
                     fill: this.labelColor,
                     lineJoin: 'round',
                     stroke: '#fafafa',
-                    strokeThickness: 2 * 2.5,
+                    strokeThickness: 2.5 * 2.5,
+                    align: 'center',
+                    wordWrap: labelWordWrap !== undefined,
+                    wordWrapWidth: labelWordWrap,
                 });
                 this.labelSprite.name = 'text';
                 this.labelSprite.scale.set(0.4);

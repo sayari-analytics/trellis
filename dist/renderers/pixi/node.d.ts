@@ -25,6 +25,7 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     private labelFamily?;
     private labelColor?;
     private labelSize?;
+    private labelWordWrap?;
     private stroke?;
     private icon?;
     private badge?;

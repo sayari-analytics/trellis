@@ -4,9 +4,10 @@ export declare class EdgeRenderer<N extends Node, E extends Edge> {
     edge: E;
     private renderer;
     private label?;
-    private labelFamily;
-    private labelColor;
-    private labelSize;
+    private labelFamily?;
+    private labelColor?;
+    private labelSize?;
+    private labelWordWrap?;
     private width;
     private stroke;
     private strokeOpacity;

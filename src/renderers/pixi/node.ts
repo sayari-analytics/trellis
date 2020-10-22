@@ -8,11 +8,11 @@ import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 const LABEL_Y_PADDING = 2
-const DEFAULT_NODE_FILL = '#666'
-const DEFAULT_NODE_STROKE = '#aaa'
+const DEFAULT_NODE_FILL = colorToNumber('#666')
+const DEFAULT_NODE_STROKE = colorToNumber('#aaa')
 const DEFAULT_NODE_STROKE_WIDTH = 2
 const DEFAULT_LABEL_FAMILY = 'Helvetica'
-const DEFAULT_LABEL_COLOR = '#444'
+const DEFAULT_LABEL_COLOR = colorToNumber('#444')
 const DEFAULT_LABEL_SIZE = 11
 const DEFAULT_RADIUS = 18
 const DEFAULT_BADGE_RADIUS = 8
@@ -42,8 +42,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private interpolateRadius: (percent: number) => number = () => this.endRadius
   private label?: string
   private labelFamily?: string
-  private labelColor?: string
+  private labelColor?: number
   private labelSize?: number
+  private labelWordWrap?: number
   private stroke?: NodeStyle['stroke']
   private icon?: NodeStyle['icon']
   private badge?: NodeStyle['badge']
@@ -126,7 +127,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     /**
      * Styles
      */
-    this.fillSprite.tint = colorToNumber(this.node.style?.color ?? DEFAULT_NODE_FILL)
+    this.fillSprite.tint = this.node.style?.color === undefined ? DEFAULT_NODE_FILL : colorToNumber(this.node.style?.color)
     // this.fillOpacity = this.fillSprite.alpha = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
 
 
@@ -134,14 +135,16 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      * Label
      */
     const labelFamily = node.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
-    const labelColor = node.style?.labelColor ?? DEFAULT_LABEL_COLOR
+    const labelColor = node.style?.labelColor === undefined ? DEFAULT_LABEL_COLOR : colorToNumber(node.style?.labelColor)
     const labelSize = node.style?.labelSize ?? DEFAULT_LABEL_SIZE
+    const labelWordWrap = node.style?.labelWordWrap
 
     if (
       node.label !== this.label ||
       labelFamily !== this.labelFamily ||
       labelColor !== this.labelColor ||
-      labelSize !== this.labelSize
+      labelSize !== this.labelSize ||
+      labelWordWrap !== this.labelWordWrap
     ) {
       this.label = node.label
       this.labelFamily = labelFamily
@@ -150,6 +153,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
+      this.labelWordWrap = labelWordWrap
 
       if (this.label) {
         this.labelSprite = new PIXI.Text(this.label, {
@@ -157,9 +161,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           fontSize: this.labelSize * 2.5,
           fill: this.labelColor,
           lineJoin: 'round',
-          stroke: '#fafafa',
-          strokeThickness: 2 * 2.5,
+          stroke: '#fff',
+          strokeThickness: 2.5 * 2.5,
           align: 'center',
+          wordWrap: labelWordWrap !== undefined,
+          wordWrapWidth: labelWordWrap,
         })
         this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
         this.labelSprite.anchor.set(0.5, 0)
@@ -187,7 +193,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
         for (const stroke of this.stroke) {
           const strokeSprite = this.renderer.circle.create()
-          strokeSprite.tint = colorToNumber(stroke.color ?? DEFAULT_NODE_STROKE)
+          strokeSprite.tint = stroke.color === undefined ? DEFAULT_NODE_STROKE : colorToNumber(stroke.color)
           this.strokeSprites.push({ sprite: strokeSprite, width: stroke.width ?? DEFAULT_NODE_STROKE_WIDTH })
 
           const container = new PIXI.Container()
@@ -268,11 +274,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           const badgeRadius = badge.radius ?? DEFAULT_BADGE_RADIUS
           const badgeStrokeRadius = badgeRadius + (badge.strokeWidth ?? DEFAULT_BADGE_STROKE_WIDTH)
           const badgeFillSprite = this.renderer.circle.create()
-          badgeFillSprite.tint = colorToNumber(badge.color ?? DEFAULT_NODE_FILL)
+          badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : colorToNumber(badge.color)
           badgeFillSprite.scale.set(badgeRadius / 1000)
 
           const badgeStrokeSprite = this.renderer.circle.create()
-          badgeStrokeSprite.tint = colorToNumber(badge.stroke ?? DEFAULT_NODE_STROKE)
+          badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : colorToNumber(badge.stroke)
           badgeStrokeSprite.scale.set(badgeStrokeRadius / 1000)
 
           let badgeIconSprite: PIXI.Sprite | undefined

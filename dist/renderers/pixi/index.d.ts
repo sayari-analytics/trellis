@@ -44,6 +44,7 @@ export declare type NodeStyle = {
     labelFamily: string;
     labelColor: string;
     labelSize: number;
+    labelWordWrap: number;
 };
 export declare type EdgeStyle = {
     width: number;
@@ -52,6 +53,7 @@ export declare type EdgeStyle = {
     labelFamily: string;
     labelColor: string;
     labelSize: number;
+    labelWordWrap: number;
     arrow: 'forward' | 'reverse' | 'both' | 'none';
 };
 export declare type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {

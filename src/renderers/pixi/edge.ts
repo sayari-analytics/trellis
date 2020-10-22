@@ -9,10 +9,10 @@ import { ArrowSprite } from './sprites/arrowSprite'
 const LINE_HOVER_RADIUS = 4
 
 const DEFAULT_EDGE_WIDTH = 1
-const DEFAULT_EDGE_COLOR = '#ccc'
+const DEFAULT_EDGE_COLOR = colorToNumber('#ccc')
 const DEFAULT_EDGE_OPACITY = 1
 const DEFAULT_LABEL_FAMILY = 'Helvetica'
-const DEFAULT_LABEL_COLOR = '#444'
+const DEFAULT_LABEL_COLOR = colorToNumber('#444')
 const DEFAULT_LABEL_SIZE = 11
 const DEFAULT_ARROW = 'none'
 
@@ -23,12 +23,13 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
   private renderer: Renderer<N, E>
   private label?: string
-  private labelFamily = DEFAULT_LABEL_FAMILY
-  private labelColor = DEFAULT_LABEL_COLOR
-  private labelSize = DEFAULT_LABEL_SIZE
-  private width: number = 0
-  private stroke: number = 0
-  private strokeOpacity: number = 0
+  private labelFamily?: string
+  private labelColor?: number
+  private labelSize?: number
+  private labelWordWrap?: number
+  private width = DEFAULT_EDGE_WIDTH
+  private stroke = DEFAULT_EDGE_COLOR
+  private strokeOpacity = DEFAULT_EDGE_OPACITY
   private line = new PIXI.ParticleContainer() // can this be a DisplayObject
   private arrowContainer = new PIXI.Container() // why can't this be a ParticleContainer
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
@@ -79,7 +80,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      * Style
      */
     this.width = this.edge.style?.width ?? DEFAULT_EDGE_WIDTH
-    this.stroke = colorToNumber(edge.style?.stroke ?? DEFAULT_EDGE_COLOR)
+    this.stroke = edge.style?.stroke === undefined ? DEFAULT_EDGE_COLOR : colorToNumber(edge.style?.stroke)
     this.strokeOpacity = edge.style?.strokeOpacity ?? DEFAULT_EDGE_OPACITY
 
 
@@ -122,19 +123,22 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      * Label
      */
     const labelFamily = edge.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
-    const labelColor = edge.style?.labelColor ?? DEFAULT_LABEL_COLOR
+    const labelColor = edge.style?.labelColor === undefined ? DEFAULT_LABEL_COLOR : colorToNumber(edge.style?.labelColor)
     const labelSize = edge.style?.labelSize ?? DEFAULT_LABEL_SIZE
+    const labelWordWrap = edge.style?.labelWordWrap
 
     if (
       edge.label !== this.label ||
       labelFamily !== this.labelFamily ||
       labelColor !== this.labelColor ||
-      labelSize !== this.labelSize
+      labelSize !== this.labelSize ||
+      labelWordWrap !== this.labelWordWrap
     ) {
       this.label = edge.label
       this.labelFamily = labelFamily
       this.labelColor = labelColor
       this.labelSize = labelSize
+      this.labelWordWrap = labelWordWrap
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
@@ -146,7 +150,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
           fill: this.labelColor,
           lineJoin: 'round',
           stroke: '#fafafa',
-          strokeThickness: 2 * 2.5,
+          strokeThickness: 2.5 * 2.5,
+          align: 'center',
+          wordWrap: labelWordWrap !== undefined,
+          wordWrapWidth: labelWordWrap,
         })
         this.labelSprite.name = 'text'
         this.labelSprite.scale.set(0.4)

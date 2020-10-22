@@ -49,6 +49,7 @@ export type NodeStyle = {
   labelFamily: string
   labelColor: string
   labelSize: number
+  labelWordWrap: number
 }
 
 export type EdgeStyle = {
@@ -58,6 +59,7 @@ export type EdgeStyle = {
   labelFamily: string
   labelColor: string
   labelSize: number
+  labelWordWrap: number
   arrow: 'forward' | 'reverse' | 'both' | 'none'
 }
 
