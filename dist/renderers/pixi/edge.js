@@ -125,7 +125,7 @@ var EdgeRenderer = /** @class */ (function () {
             }
         };
         this.renderer = renderer;
-        this.line.visible = false;
+        // this.line.visible = false
         this.line.interactive = true;
         this.line.buttonMode = true;
         this.line

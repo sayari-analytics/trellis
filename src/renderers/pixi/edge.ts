@@ -51,7 +51,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   constructor(renderer: Renderer<N, E>, edge: E) {
     this.renderer = renderer
 
-    this.line.visible = false
+    // this.line.visible = false
     this.line.interactive = true
     this.line.buttonMode = true
     this.line
