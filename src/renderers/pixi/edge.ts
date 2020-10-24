@@ -357,8 +357,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   delete() {
-    this.forwardArrow?.destroy()
-    this.reverseArrow?.destroy()
+    this.line.destroy()
+    this.arrowContainer.destroy()
     this.labelContainer.destroy()
     delete this.renderer.edgesById[this.edge.id]
     this.renderer.edgeIndex[this.edge.source][this.edge.target].delete(this.edge.id)

@@ -400,9 +400,8 @@ var EdgeRenderer = /** @class */ (function () {
         }
     };
     EdgeRenderer.prototype.delete = function () {
-        var _a, _b;
-        (_a = this.forwardArrow) === null || _a === void 0 ? void 0 : _a.destroy();
-        (_b = this.reverseArrow) === null || _b === void 0 ? void 0 : _b.destroy();
+        this.line.destroy();
+        this.arrowContainer.destroy();
         this.labelContainer.destroy();
         delete this.renderer.edgesById[this.edge.id];
         this.renderer.edgeIndex[this.edge.source][this.edge.target].delete(this.edge.id);
