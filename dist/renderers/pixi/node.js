@@ -85,6 +85,7 @@ var NodeRenderer = /** @class */ (function () {
                 return;
             _this.renderer.hoveredNode = _this;
             if (_this.parent === undefined) {
+                _this.renderer.dirty = true;
                 _this.renderer.nodesLayer.removeChild(_this.nodeContainer);
                 _this.renderer.labelsLayer.removeChild(_this.labelContainer);
                 _this.renderer.frontNodeLayer.addChild(_this.nodeContainer);
@@ -105,6 +106,7 @@ var NodeRenderer = /** @class */ (function () {
                 return;
             _this.renderer.hoveredNode = undefined;
             if (_this.parent === undefined) {
+                _this.renderer.dirty = true;
                 _this.renderer.frontNodeLayer.removeChild(_this.nodeContainer);
                 _this.renderer.frontLabelLayer.removeChild(_this.labelContainer);
                 _this.renderer.nodesLayer.addChild(_this.nodeContainer);

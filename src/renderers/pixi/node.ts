@@ -409,6 +409,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredNode = this
 
     if (this.parent === undefined) {
+      this.renderer.dirty = true
       this.renderer.nodesLayer.removeChild(this.nodeContainer)
       this.renderer.labelsLayer.removeChild(this.labelContainer)
       this.renderer.frontNodeLayer.addChild(this.nodeContainer)
@@ -432,6 +433,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredNode = undefined
 
     if (this.parent === undefined) {
+      this.renderer.dirty = true
       this.renderer.frontNodeLayer.removeChild(this.nodeContainer)
       this.renderer.frontLabelLayer.removeChild(this.labelContainer)
       this.renderer.nodesLayer.addChild(this.nodeContainer)
