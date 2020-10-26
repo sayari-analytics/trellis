@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
-import * as SubGraph from '../../src/layout/subGraph'
+import * as Subgraph from '../../src/layout/subgraph'
 import * as Zoom from '../../src/controls/zoom'
 import * as Selection from '../../src/controls/selection'
 import { Node, Edge } from '../../src/'
@@ -53,6 +53,8 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
 
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#7CBBF3',
+  labelSize: 10,
+  labelWordWrap: 260,
   stroke: [{
     color: '#90D7FB',
     width: 2,
@@ -131,14 +133,14 @@ const selectionControl = Selection.Control({ container })
 const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = selectionControl({
   top: 160,
   onContainerPointerUp: () => {
-    nodes = nodes.map((node) => (node.subGraph ? {
+    nodes = nodes.map((node) => (node.subgraph ? {
       ...node,
       radius: 18,
       style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-      subGraph: undefined,
+      subgraph: undefined,
     } : node))
 
-    subGraph({ nodes, edges }).then((graph) => {
+    subgraph({ nodes, edges }).then((graph) => {
       nodes = graph.nodes
       renderer({ nodes, edges, options: renderOptions })
     })
@@ -155,7 +157,7 @@ const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = select
  * Create Layouts
  */
 const force = Force.Layout()
-const subGraph = SubGraph.Layout()
+const subgraph = Subgraph.Layout()
 const layoutOptions: Partial<Force.LayoutOptions> = {
   nodeStrength: -500,
 }
@@ -222,18 +224,18 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       style: { ...node.style, color: '#EFEFEF', icon: undefined },
-      subGraph: {
-        nodes: (node.subGraph?.nodes ?? []).concat([
-          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
-          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
-          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
+      subgraph: {
+        nodes: (node.subgraph?.nodes ?? []).concat([
+          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
+          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
+          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
         ])
           .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
       },
     } : node))
 
-    subGraph({ nodes, edges }).then((graph) => {
+    subgraph({ nodes, edges }).then((graph) => {
       nodes = graph.nodes
       renderer({ nodes, edges, options: renderOptions })
     })

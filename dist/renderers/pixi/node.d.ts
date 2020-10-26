@@ -6,7 +6,7 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     y: number;
     radius: number;
     strokeWidth: number;
-    subGraphNodes: {
+    subgraphNodes: {
         [id: string]: NodeRenderer<N, E>;
     };
     parent?: NodeRenderer<N, E>;

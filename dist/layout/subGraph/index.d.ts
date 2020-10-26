@@ -1,4 +1,4 @@
-import { Node, Edge } from '../../';
+import { Node, Edge } from '../..';
 export declare type LayoutOptions = {
     nodeStrength: number;
     linkDistance: number;

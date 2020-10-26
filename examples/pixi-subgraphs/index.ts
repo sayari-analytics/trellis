@@ -1,5 +1,5 @@
 import Stats from 'stats.js'
-import * as SubGraph from '../../src/layout/subGraph'
+import * as Subgraph from '../../src/layout/subgraph'
 import * as Graph from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
@@ -45,7 +45,7 @@ let edges: Graph.Edge[] = []
 /**
  * Initialize Layout and Renderer Options
  */
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -79,40 +79,40 @@ const renderOptions: Partial<RendererOptions> = {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       style: { ...node.style, color: '#efefef', icon: undefined },
-      subGraph: {
-        nodes: (node.subGraph?.nodes ?? []).concat([
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: STYLE },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: STYLE },
+      subgraph: {
+        nodes: (node.subgraph?.nodes ?? []).concat([
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: STYLE },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: STYLE },
         ])
           .map<Graph.Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
       },
     } : node))
 
-    subGraph({ nodes, edges }).then((graph) => {
+    subgraph({ nodes, edges }).then((graph) => {
       nodes = graph.nodes
       render({ nodes, edges, options: renderOptions })
     })
   },
   onContainerPointerUp: () => {
-    nodes = nodes.map((node) => (node.subGraph ? {
+    nodes = nodes.map((node) => (node.subgraph ? {
       ...node,
       radius: 40,
       style: STYLE,
-      subGraph: undefined,
+      subgraph: undefined,
     } : node))
 
-    subGraph({ nodes, edges }).then((graph) => {
+    subgraph({ nodes, edges }).then((graph) => {
       nodes = graph.nodes
       render({ nodes, edges, options: renderOptions })
     })
@@ -123,7 +123,7 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const subGraph = SubGraph.Layout()
+const subgraph = Subgraph.Layout()
 const render = Renderer({
   container,
   debug: { stats, logPerformance: false }

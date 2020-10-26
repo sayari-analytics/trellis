@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
-import * as SubGraph from '../../src/layout/subGraph'
+import * as Subgraph from '../../src/layout/subgraph'
 import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 import { company, person } from '../assets/icons'
@@ -91,31 +91,31 @@ const renderOptions: Partial<RendererOptions> = {
       ...node,
       radius: 160,
       style: { ...node.style, color: '#efefef', icon: undefined },
-      subGraph: {
-        nodes: (node.subGraph?.nodes ?? []).concat([
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subGraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle(21) },
+      subgraph: {
+        nodes: (node.subgraph?.nodes ?? []).concat([
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle(21) },
+          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle(21) },
         ])
           .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
         edges: []
       },
     } : node))
 
-    subGraph({ nodes, edges }).then((graph) => {
+    subgraph({ nodes, edges }).then((graph) => {
       nodes = graph.nodes
       renderer({ nodes, edges, options: renderOptions })
     })
   },
   onContainerPointerUp: () => {
-    nodes = nodes.map((node, idx) => (node.subGraph ? {
+    nodes = nodes.map((node, idx) => (node.subgraph ? {
       ...node,
       radius: node.id === 'a' ? 62 : (20 - idx) * 4,
       style: node.id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
-      subGraph: undefined,
+      subgraph: undefined,
     } : node))
 
-    subGraph({ nodes, edges }).then((graph) => {
+    subgraph({ nodes, edges }).then((graph) => {
       nodes = graph.nodes
       renderer({ nodes, edges, options: renderOptions })
     })
@@ -127,7 +127,7 @@ const renderOptions: Partial<RendererOptions> = {
  * Initialize Layout and Renderer
  */
 const force = Force.Layout()
-const subGraph = SubGraph.Layout()
+const subgraph = Subgraph.Layout()
 const renderer = Renderer({
   container,
   debug: { stats, logPerformance: true }

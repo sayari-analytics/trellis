@@ -66,7 +66,7 @@ var NodeRenderer = /** @class */ (function () {
     function NodeRenderer(renderer, node, x, y, radius, parent) {
         var _this = this;
         this.strokeWidth = 0;
-        this.subGraphNodes = {};
+        this.subgraphNodes = {};
         this.interpolateX = function () { return _this.endX; };
         this.interpolateY = function () { return _this.endY; };
         this.interpolateRadius = function () { return _this.endRadius; };
@@ -88,11 +88,11 @@ var NodeRenderer = /** @class */ (function () {
                 _this.renderer.labelsLayer.removeChild(_this.labelContainer);
                 _this.renderer.frontNodeLayer.addChild(_this.nodeContainer);
                 _this.renderer.frontLabelLayer.addChild(_this.labelContainer);
-                for (var subGraphNodeId in _this.subGraphNodes) {
-                    _this.renderer.nodesLayer.removeChild(_this.subGraphNodes[subGraphNodeId].nodeContainer);
-                    _this.renderer.labelsLayer.removeChild(_this.subGraphNodes[subGraphNodeId].labelContainer);
-                    _this.renderer.frontNodeLayer.addChild(_this.subGraphNodes[subGraphNodeId].nodeContainer);
-                    _this.renderer.frontLabelLayer.addChild(_this.subGraphNodes[subGraphNodeId].labelContainer);
+                for (var subgraphNodeId in _this.subgraphNodes) {
+                    _this.renderer.nodesLayer.removeChild(_this.subgraphNodes[subgraphNodeId].nodeContainer);
+                    _this.renderer.labelsLayer.removeChild(_this.subgraphNodes[subgraphNodeId].labelContainer);
+                    _this.renderer.frontNodeLayer.addChild(_this.subgraphNodes[subgraphNodeId].nodeContainer);
+                    _this.renderer.frontLabelLayer.addChild(_this.subgraphNodes[subgraphNodeId].labelContainer);
                 }
             }
             var position = _this.renderer.root.toLocal(event.data.global);
@@ -108,11 +108,11 @@ var NodeRenderer = /** @class */ (function () {
                 _this.renderer.frontLabelLayer.removeChild(_this.labelContainer);
                 _this.renderer.nodesLayer.addChild(_this.nodeContainer);
                 _this.renderer.labelsLayer.addChild(_this.labelContainer);
-                for (var subGraphNodeId in _this.subGraphNodes) {
-                    _this.renderer.frontNodeLayer.removeChild(_this.subGraphNodes[subGraphNodeId].nodeContainer);
-                    _this.renderer.frontLabelLayer.removeChild(_this.subGraphNodes[subGraphNodeId].labelContainer);
-                    _this.renderer.nodesLayer.addChild(_this.subGraphNodes[subGraphNodeId].nodeContainer);
-                    _this.renderer.labelsLayer.addChild(_this.subGraphNodes[subGraphNodeId].labelContainer);
+                for (var subgraphNodeId in _this.subgraphNodes) {
+                    _this.renderer.frontNodeLayer.removeChild(_this.subgraphNodes[subgraphNodeId].nodeContainer);
+                    _this.renderer.frontLabelLayer.removeChild(_this.subgraphNodes[subgraphNodeId].labelContainer);
+                    _this.renderer.nodesLayer.addChild(_this.subgraphNodes[subgraphNodeId].nodeContainer);
+                    _this.renderer.labelsLayer.addChild(_this.subgraphNodes[subgraphNodeId].labelContainer);
                 }
             }
             var position = _this.renderer.root.toLocal(event.data.global);
@@ -407,20 +407,20 @@ var NodeRenderer = /** @class */ (function () {
             }
         }
         /**
-         * SubGraph Node
+         * Subgraph Node
          */
-        var subGraphNodes = {};
-        if ((_13 = node.subGraph) === null || _13 === void 0 ? void 0 : _13.nodes) {
+        var subgraphNodes = {};
+        if ((_13 = node.subgraph) === null || _13 === void 0 ? void 0 : _13.nodes) {
             try {
-                for (var _20 = __values(node.subGraph.nodes), _21 = _20.next(); !_21.done; _21 = _20.next()) {
-                    var subGraphNode = _21.value;
-                    if (this.subGraphNodes[subGraphNode.id] === undefined) {
-                        // enter subGraph node
-                        subGraphNodes[subGraphNode.id] = new NodeRenderer(this.renderer, subGraphNode, 0, 0, subGraphNode.radius, this);
+                for (var _20 = __values(node.subgraph.nodes), _21 = _20.next(); !_21.done; _21 = _20.next()) {
+                    var subgraphNode = _21.value;
+                    if (this.subgraphNodes[subgraphNode.id] === undefined) {
+                        // enter subgraph node
+                        subgraphNodes[subgraphNode.id] = new NodeRenderer(this.renderer, subgraphNode, 0, 0, subgraphNode.radius, this);
                     }
                     else {
-                        // update subGraph node
-                        subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].update(subGraphNode);
+                        // update subgraph node
+                        subgraphNodes[subgraphNode.id] = this.subgraphNodes[subgraphNode.id].update(subgraphNode);
                     }
                 }
             }
@@ -432,13 +432,13 @@ var NodeRenderer = /** @class */ (function () {
                 finally { if (e_4) throw e_4.error; }
             }
         }
-        for (var subGraphNodeId in this.subGraphNodes) {
-            if (subGraphNodes[subGraphNodeId] === undefined) {
-                // exit subGraph node
-                this.subGraphNodes[subGraphNodeId].delete();
+        for (var subgraphNodeId in this.subgraphNodes) {
+            if (subgraphNodes[subgraphNodeId] === undefined) {
+                // exit subgraph node
+                this.subgraphNodes[subgraphNodeId].delete();
             }
         }
-        this.subGraphNodes = subGraphNodes;
+        this.subgraphNodes = subgraphNodes;
         return this;
     };
     NodeRenderer.prototype.render = function () {
@@ -506,15 +506,15 @@ var NodeRenderer = /** @class */ (function () {
         if (this.labelSprite) {
             this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING;
         }
-        for (var subGraphNodeId in this.subGraphNodes) {
-            this.subGraphNodes[subGraphNodeId].render();
+        for (var subgraphNodeId in this.subgraphNodes) {
+            this.subgraphNodes[subgraphNodeId].render();
         }
         return this;
     };
     NodeRenderer.prototype.delete = function () {
-        for (var subGraphNodeId in this.subGraphNodes) {
-            // exit subGraph node
-            this.subGraphNodes[subGraphNodeId].delete();
+        for (var subgraphNodeId in this.subgraphNodes) {
+            // exit subgraph node
+            this.subgraphNodes[subgraphNodeId].delete();
         }
         this.nodeContainer.destroy();
         this.labelContainer.destroy();

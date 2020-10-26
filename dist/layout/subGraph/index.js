@@ -14,7 +14,7 @@ var workerScript = function (DEFAULT_OPTIONS) {
     var Simulation = /** @class */ (function () {
         function Simulation(progenetorGraph) {
             var _this = this;
-            this.subGraphs = {};
+            this.subgraphs = {};
             this.nodePadding = DEFAULT_OPTIONS.nodePadding;
             this.tick = DEFAULT_OPTIONS.tick;
             this.forceManyBody = d3.forceManyBody().distanceMax(4000).theta(0.5);
@@ -30,13 +30,13 @@ var workerScript = function (DEFAULT_OPTIONS) {
                 .force('y', this.forceY)
                 .force('center', d3.forceCenter())
                 .stop();
-            this.fisheyeCollapse = function (nodes, subGraphs) {
-                var subGraphsById = Object.entries(subGraphs), id, x, y, radius, node, theta, xOffset, yOffset;
-                for (var i = subGraphsById.length - 1; i >= 0; i--) {
-                    id = subGraphsById[i][0];
-                    x = subGraphsById[i][1].node.x;
-                    y = subGraphsById[i][1].node.y;
-                    radius = subGraphsById[i][1].node.radius;
+            this.fisheyeCollapse = function (nodes, subgraphs) {
+                var subgraphsById = Object.entries(subgraphs), id, x, y, radius, node, theta, xOffset, yOffset;
+                for (var i = subgraphsById.length - 1; i >= 0; i--) {
+                    id = subgraphsById[i][0];
+                    x = subgraphsById[i][1].node.x;
+                    y = subgraphsById[i][1].node.y;
+                    radius = subgraphsById[i][1].node.radius;
                     for (var i_1 = 0; i_1 < nodes.length; i_1++) {
                         node = nodes[i_1];
                         if (node.id !== id && node.x != undefined && node.y != undefined) {
@@ -53,17 +53,17 @@ var workerScript = function (DEFAULT_OPTIONS) {
                     }
                 }
             };
-            this.fisheyeExpand = function (nodes, subGraphs) {
+            this.fisheyeExpand = function (nodes, subgraphs) {
                 var _a, _b, _c, _d;
-                var subGraphsById = Object.values(subGraphs), id, x, y, radius, node, theta, xOffset, yOffset;
-                for (var i = 0; i < subGraphsById.length; i++) {
-                    id = subGraphsById[i].node.id;
-                    x = subGraphsById[i].node.x;
-                    y = subGraphsById[i].node.y;
-                    radius = subGraphsById[i].node.radius;
-                    for (var j = 0; j < ((_b = (_a = subGraphsById[i].node.subGraph) === null || _a === void 0 ? void 0 : _a.nodes.length) !== null && _b !== void 0 ? _b : 0); j++) {
-                        var node_1 = subGraphsById[i].node.subGraph.nodes[j];
-                        var newRadius = Math.hypot((_c = node_1.x) !== null && _c !== void 0 ? _c : 0, (_d = node_1.y) !== null && _d !== void 0 ? _d : 0) + node_1.radius + (subGraphsById[i].simulation.nodePadding * 4);
+                var subgraphsById = Object.values(subgraphs), id, x, y, radius, node, theta, xOffset, yOffset;
+                for (var i = 0; i < subgraphsById.length; i++) {
+                    id = subgraphsById[i].node.id;
+                    x = subgraphsById[i].node.x;
+                    y = subgraphsById[i].node.y;
+                    radius = subgraphsById[i].node.radius;
+                    for (var j = 0; j < ((_b = (_a = subgraphsById[i].node.subgraph) === null || _a === void 0 ? void 0 : _a.nodes.length) !== null && _b !== void 0 ? _b : 0); j++) {
+                        var node_1 = subgraphsById[i].node.subgraph.nodes[j];
+                        var newRadius = Math.hypot((_c = node_1.x) !== null && _c !== void 0 ? _c : 0, (_d = node_1.y) !== null && _d !== void 0 ? _d : 0) + node_1.radius + (subgraphsById[i].simulation.nodePadding * 4);
                         radius = Math.max(radius, newRadius);
                     }
                     for (var k = 0; k < nodes.length; k++) {
@@ -90,38 +90,38 @@ var workerScript = function (DEFAULT_OPTIONS) {
         Simulation.prototype.layout = function (_a) {
             var _b, _c;
             var nodes = _a.nodes, edges = _a.edges, _d = _a.options, _e = _d === void 0 ? DEFAULT_OPTIONS : _d, _f = _e.nodeStrength, nodeStrength = _f === void 0 ? DEFAULT_OPTIONS.nodeStrength : _f, _g = _e.linkDistance, linkDistance = _g === void 0 ? DEFAULT_OPTIONS.linkDistance : _g, _h = _e.linkStrength, linkStrength = _h === void 0 ? DEFAULT_OPTIONS.linkStrength : _h, _j = _e.centerStrength, centerStrength = _j === void 0 ? DEFAULT_OPTIONS.centerStrength : _j, _k = _e.nodePadding, nodePadding = _k === void 0 ? DEFAULT_OPTIONS.nodePadding : _k, _l = _e.tick, tick = _l === void 0 ? DEFAULT_OPTIONS.tick : _l;
-            var subGraphs = {};
+            var subgraphs = {};
             for (var i = 0; i < nodes.length; i++) {
                 var node = nodes[i];
-                if (node.subGraph) {
-                    if (this.subGraphs[node.id] === undefined) {
+                if (node.subgraph) {
+                    if (this.subgraphs[node.id] === undefined) {
                         // enter subgraph
-                        subGraphs[node.id] = {
+                        subgraphs[node.id] = {
                             node: node,
                             simulation: new Simulation(false).layout({
-                                nodes: node.subGraph.nodes,
-                                edges: node.subGraph.edges,
-                                options: Object.assign({}, DEFAULT_OPTIONS, (_b = node.subGraph.options) !== null && _b !== void 0 ? _b : {}),
+                                nodes: node.subgraph.nodes,
+                                edges: node.subgraph.edges,
+                                options: Object.assign({}, DEFAULT_OPTIONS, (_b = node.subgraph.options) !== null && _b !== void 0 ? _b : {}),
                             })
                         };
                     }
                     else {
                         // update subgraph
                         /**
-                         * need to update node.subGraph for the radius calculation in expand
+                         * need to update node.subgraph for the radius calculation in expand
                          * but x/y/radius needs to track the unexpanded node to collapse?
                          */
-                        subGraphs[node.id] = this.subGraphs[node.id];
-                        subGraphs[node.id].node = node; // this won't work...
-                        subGraphs[node.id].simulation.layout({
-                            nodes: node.subGraph.nodes,
-                            edges: node.subGraph.edges,
-                            options: Object.assign({}, DEFAULT_OPTIONS, (_c = node.subGraph.options) !== null && _c !== void 0 ? _c : {}),
+                        subgraphs[node.id] = this.subgraphs[node.id];
+                        subgraphs[node.id].node = node; // this won't work...
+                        subgraphs[node.id].simulation.layout({
+                            nodes: node.subgraph.nodes,
+                            edges: node.subgraph.edges,
+                            options: Object.assign({}, DEFAULT_OPTIONS, (_c = node.subgraph.options) !== null && _c !== void 0 ? _c : {}),
                         });
                     }
                 }
             }
-            this.fisheyeCollapse(nodes, this.subGraphs);
+            this.fisheyeCollapse(nodes, this.subgraphs);
             if (!this.progenetorGraph) {
                 this.forceManyBody.strength(nodeStrength);
                 this.forceLink.distance(linkDistance);
@@ -134,8 +134,8 @@ var workerScript = function (DEFAULT_OPTIONS) {
                 this.forceLink.links(edges);
                 this.simulation.alpha(1).stop().tick(this.tick);
             }
-            this.fisheyeExpand(nodes, subGraphs);
-            this.subGraphs = subGraphs;
+            this.fisheyeExpand(nodes, subgraphs);
+            this.subgraphs = subgraphs;
             return this;
         };
         return Simulation;

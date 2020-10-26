@@ -6,7 +6,7 @@ export declare type Node<E extends Edge = Edge, Style = Partial<NodeStyle>> = {
     y?: number | undefined;
     label?: string | undefined;
     style?: Style;
-    subGraph?: {
+    subgraph?: {
         nodes: Node<E>[];
         edges: E[];
         options?: {};

@@ -6,7 +6,7 @@ import * as Graph from '../../src'
 import { Zoom, clampZoom } from '../../src/renderers/pixi/bindings/react/zoom'
 import { Renderer } from '../../src/renderers/pixi/bindings/react/renderer'
 import * as Force from '../../src/layout/force'
-import * as SubGraph from '../../src/layout/subGraph'
+import * as Subgraph from '../../src/layout/subgraph'
 import { NodeStyle } from '../../src/renderers/pixi'
 
 
@@ -42,7 +42,7 @@ const data = {
       radius: 18,
       type: id === 'a' ? 'company' : 'person',
       style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-      subGraph: undefined,
+      subgraph: undefined,
     })),
   edges: [
     { id: 'ba', source: 'a', target: 'b', label: 'Related To' }, { id: 'ca', source: 'a', target: 'c', label: 'Related To' },
@@ -58,7 +58,7 @@ const data = {
 
 
 const force = Force.Layout()
-const subGraph = SubGraph.Layout()
+const subgraph = Subgraph.Layout()
 
 
 /**
@@ -144,11 +144,11 @@ const App: SFC = () => {
     }))
   }, [])
   const onNodeDoubleClick = useCallback((_, { id }) => {
-    subGraph({
+    subgraph({
       nodes: graph.nodes.map((node) => (node.id === id ? {
         ...node,
         style: { ...node.style, color: '#efefef', icon: undefined },
-        subGraph: {
+        subgraph: {
           nodes: [
             { id: `${node.id}a`, radius: 10, label: `${node.id.toUpperCase()}A`, style: createCompanyStyle(10) },
             { id: `${node.id}b`, radius: 10, label: `${node.id.toUpperCase()}B`, style: createCompanyStyle(10) },
@@ -161,12 +161,12 @@ const App: SFC = () => {
     }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))
   }, [graph])
   const onContainerPointerUp = useCallback(() => {
-    subGraph({
-      nodes: graph.nodes.map((node) => (node.subGraph ? {
+    subgraph({
+      nodes: graph.nodes.map((node) => (node.subgraph ? {
         ...node,
         radius: 18,
         style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-        subGraph: undefined,
+        subgraph: undefined,
       } : node)),
       edges: graph.edges
     }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))

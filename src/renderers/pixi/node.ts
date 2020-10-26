@@ -26,7 +26,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   y: number
   radius: number
   strokeWidth = 0
-  subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
+  subgraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
   parent?: NodeRenderer<N, E>
 
   private renderer: Renderer<N, E>
@@ -308,29 +308,29 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
 
     /**
-     * SubGraph Node
+     * Subgraph Node
      */
-    const subGraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
-    if (node.subGraph?.nodes) {
-      for (const subGraphNode of node.subGraph.nodes as N[]) {
-        if (this.subGraphNodes[subGraphNode.id] === undefined) {
-          // enter subGraph node
-          subGraphNodes[subGraphNode.id] = new NodeRenderer<N, E>(this.renderer, subGraphNode, 0, 0, subGraphNode.radius, this)
+    const subgraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
+    if (node.subgraph?.nodes) {
+      for (const subgraphNode of node.subgraph.nodes as N[]) {
+        if (this.subgraphNodes[subgraphNode.id] === undefined) {
+          // enter subgraph node
+          subgraphNodes[subgraphNode.id] = new NodeRenderer<N, E>(this.renderer, subgraphNode, 0, 0, subgraphNode.radius, this)
         } else {
-          // update subGraph node
-          subGraphNodes[subGraphNode.id] = this.subGraphNodes[subGraphNode.id].update(subGraphNode)
+          // update subgraph node
+          subgraphNodes[subgraphNode.id] = this.subgraphNodes[subgraphNode.id].update(subgraphNode)
         }
       }
     }
 
-    for (const subGraphNodeId in this.subGraphNodes) {
-      if (subGraphNodes[subGraphNodeId] === undefined) {
-        // exit subGraph node
-        this.subGraphNodes[subGraphNodeId].delete()
+    for (const subgraphNodeId in this.subgraphNodes) {
+      if (subgraphNodes[subgraphNodeId] === undefined) {
+        // exit subgraph node
+        this.subgraphNodes[subgraphNodeId].delete()
       }
     }
 
-    this.subGraphNodes = subGraphNodes
+    this.subgraphNodes = subgraphNodes
 
 
     return this
@@ -384,17 +384,17 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
     }
 
-    for (const subGraphNodeId in this.subGraphNodes) {
-      this.subGraphNodes[subGraphNodeId].render()
+    for (const subgraphNodeId in this.subgraphNodes) {
+      this.subgraphNodes[subgraphNodeId].render()
     }
 
     return this
   }
 
   delete() {
-    for (const subGraphNodeId in this.subGraphNodes) {
-      // exit subGraph node
-      this.subGraphNodes[subGraphNodeId].delete()
+    for (const subgraphNodeId in this.subgraphNodes) {
+      // exit subgraph node
+      this.subgraphNodes[subgraphNodeId].delete()
     }
     this.nodeContainer.destroy()
     this.labelContainer.destroy()
@@ -413,11 +413,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.renderer.frontNodeLayer.addChild(this.nodeContainer)
       this.renderer.frontLabelLayer.addChild(this.labelContainer)
 
-      for (const subGraphNodeId in this.subGraphNodes) {
-        this.renderer.nodesLayer.removeChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
-        this.renderer.labelsLayer.removeChild(this.subGraphNodes[subGraphNodeId].labelContainer)
-        this.renderer.frontNodeLayer.addChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
-        this.renderer.frontLabelLayer.addChild(this.subGraphNodes[subGraphNodeId].labelContainer)
+      for (const subgraphNodeId in this.subgraphNodes) {
+        this.renderer.nodesLayer.removeChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+        this.renderer.labelsLayer.removeChild(this.subgraphNodes[subgraphNodeId].labelContainer)
+        this.renderer.frontNodeLayer.addChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+        this.renderer.frontLabelLayer.addChild(this.subgraphNodes[subgraphNodeId].labelContainer)
       }
     }
 
@@ -436,11 +436,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.renderer.nodesLayer.addChild(this.nodeContainer)
       this.renderer.labelsLayer.addChild(this.labelContainer)
 
-      for (const subGraphNodeId in this.subGraphNodes) {
-        this.renderer.frontNodeLayer.removeChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
-        this.renderer.frontLabelLayer.removeChild(this.subGraphNodes[subGraphNodeId].labelContainer)
-        this.renderer.nodesLayer.addChild(this.subGraphNodes[subGraphNodeId].nodeContainer)
-        this.renderer.labelsLayer.addChild(this.subGraphNodes[subGraphNodeId].labelContainer)
+      for (const subgraphNodeId in this.subgraphNodes) {
+        this.renderer.frontNodeLayer.removeChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+        this.renderer.frontLabelLayer.removeChild(this.subgraphNodes[subgraphNodeId].labelContainer)
+        this.renderer.nodesLayer.addChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+        this.renderer.labelsLayer.addChild(this.subgraphNodes[subgraphNodeId].labelContainer)
       }
     }
 

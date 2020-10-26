@@ -1,6 +1,6 @@
 /* eslint-disable no-useless-escape */
 import { forceSimulation, forceManyBody, forceCenter, forceLink, forceCollide, forceRadial, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge } from '../../'
+import { Node, Edge } from '../..'
 
 
 export type LayoutOptions = {
@@ -70,7 +70,7 @@ const d3ForceScript = `
 const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
   class Simulation {
 
-    private subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
+    private subgraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
 
     private progenetorGraph: boolean
     private nodePadding = DEFAULT_OPTIONS.nodePadding
@@ -111,41 +111,41 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
       edges: Edge[]
       options?: Partial<LayoutOptions>
     }) {
-      const subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
+      const subgraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } } = {}
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i]
 
-        if (node.subGraph) {
-          if (this.subGraphs[node.id] === undefined) {
+        if (node.subgraph) {
+          if (this.subgraphs[node.id] === undefined) {
             // enter subgraph
-            subGraphs[node.id] = {
+            subgraphs[node.id] = {
               node,
               simulation: new Simulation(false).layout({
-                nodes: node.subGraph.nodes,
-                edges: node.subGraph.edges,
-                options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {}),
+                nodes: node.subgraph.nodes,
+                edges: node.subgraph.edges,
+                options: Object.assign({}, DEFAULT_OPTIONS, node.subgraph.options ?? {}),
               })
             }
           } else {
             // update subgraph
             /**
-             * need to update node.subGraph for the radius calculation in expand
+             * need to update node.subgraph for the radius calculation in expand
              * but x/y/radius needs to track the unexpanded node to collapse?
              */
-            subGraphs[node.id] = this.subGraphs[node.id]
-            subGraphs[node.id].node = node // this won't work...
-            subGraphs[node.id].simulation.layout({
-              nodes: node.subGraph.nodes,
-              edges: node.subGraph.edges,
-              options: Object.assign({}, DEFAULT_OPTIONS, node.subGraph.options ?? {}),
+            subgraphs[node.id] = this.subgraphs[node.id]
+            subgraphs[node.id].node = node // this won't work...
+            subgraphs[node.id].simulation.layout({
+              nodes: node.subgraph.nodes,
+              edges: node.subgraph.edges,
+              options: Object.assign({}, DEFAULT_OPTIONS, node.subgraph.options ?? {}),
             })
           }
         }
       }
 
 
-      this.fisheyeCollapse(nodes as SimulationNode[], this.subGraphs)
+      this.fisheyeCollapse(nodes as SimulationNode[], this.subgraphs)
       if (!this.progenetorGraph) {
         this.forceManyBody.strength(nodeStrength)
         this.forceLink.distance(linkDistance)
@@ -160,16 +160,16 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
 
         this.simulation.alpha(1).stop().tick(this.tick)
       }
-      this.fisheyeExpand(nodes as SimulationNode[], subGraphs)
+      this.fisheyeExpand(nodes as SimulationNode[], subgraphs)
 
 
-      this.subGraphs = subGraphs
+      this.subgraphs = subgraphs
 
       return this
     }
 
-    fisheyeCollapse = (nodes: SimulationNode[], subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
-      let subGraphsById = Object.entries(subGraphs),
+    fisheyeCollapse = (nodes: SimulationNode[], subgraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
+      let subgraphsById = Object.entries(subgraphs),
         id: string,
         x: number,
         y: number,
@@ -179,11 +179,11 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         xOffset: number,
         yOffset: number
 
-      for (let i = subGraphsById.length - 1; i >= 0; i--) {
-        id = subGraphsById[i][0]
-        x = subGraphsById[i][1].node.x!
-        y = subGraphsById[i][1].node.y!
-        radius = subGraphsById[i][1].node.radius
+      for (let i = subgraphsById.length - 1; i >= 0; i--) {
+        id = subgraphsById[i][0]
+        x = subgraphsById[i][1].node.x!
+        y = subgraphsById[i][1].node.y!
+        radius = subgraphsById[i][1].node.radius
 
         for (let i = 0; i < nodes.length; i++) {
           node = nodes[i]
@@ -200,8 +200,8 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
       }
     }
 
-    fisheyeExpand = (nodes: SimulationNode[], subGraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
-      let subGraphsById = Object.values(subGraphs),
+    fisheyeExpand = (nodes: SimulationNode[], subgraphs: { [id: string]: { node: Node<Edge>, simulation: Simulation } }) => {
+      let subgraphsById = Object.values(subgraphs),
         id: string,
         x: number,
         y: number,
@@ -211,15 +211,15 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         xOffset: number,
         yOffset: number
 
-      for (let i = 0; i < subGraphsById.length; i++) {
-        id = subGraphsById[i].node.id
-        x = subGraphsById[i].node.x!
-        y = subGraphsById[i].node.y!
-        radius = subGraphsById[i].node.radius
+      for (let i = 0; i < subgraphsById.length; i++) {
+        id = subgraphsById[i].node.id
+        x = subgraphsById[i].node.x!
+        y = subgraphsById[i].node.y!
+        radius = subgraphsById[i].node.radius
 
-        for (let j = 0; j < (subGraphsById[i].node.subGraph?.nodes.length ?? 0); j++) {
-          const node = subGraphsById[i].node.subGraph!.nodes[j]
-          const newRadius = Math.hypot(node.x ?? 0, node.y ?? 0) + node.radius + (subGraphsById[i].simulation.nodePadding * 4)
+        for (let j = 0; j < (subgraphsById[i].node.subgraph?.nodes.length ?? 0); j++) {
+          const node = subgraphsById[i].node.subgraph!.nodes[j]
+          const newRadius = Math.hypot(node.x ?? 0, node.y ?? 0) + node.radius + (subgraphsById[i].simulation.nodePadding * 4)
           radius = Math.max(radius, newRadius)
         }
 
