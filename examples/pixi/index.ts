@@ -19,12 +19,7 @@ const container: HTMLDivElement = document.querySelector('#graph')
 
 const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#FFAF1D',
-  stroke: [{
-    color: '#FFF',
-    width: 4,
-  }, {
-    color: '#F7CA4D',
-  }],
+  stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 },
   badge: [{
     position: 45,
@@ -55,10 +50,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#7CBBF3',
   labelSize: 10,
   labelWordWrap: 260,
-  stroke: [{
-    color: '#90D7FB',
-    width: 2,
-  }],
+  stroke: [{ color: '#FFF', width: 2 }, { color: '#90D7FB', width: 1 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.2 },
   badge: [{
     position: 45,

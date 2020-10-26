@@ -5,6 +5,7 @@ import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } 
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
 import { CancellablePromise, FontLoader } from './FontLoader'
+import { CircleSprite } from './sprites/circleSprite'
 
 
 const LABEL_Y_PADDING = 2
@@ -275,11 +276,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           const badgeStrokeRadius = badgeRadius + (badge.strokeWidth ?? DEFAULT_BADGE_STROKE_WIDTH)
           const badgeFillSprite = this.renderer.circle.create()
           badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : colorToNumber(badge.color)
-          badgeFillSprite.scale.set(badgeRadius / 1000)
+          badgeFillSprite.scale.set(badgeRadius / CircleSprite.radius)
 
           const badgeStrokeSprite = this.renderer.circle.create()
           badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : colorToNumber(badge.stroke)
-          badgeStrokeSprite.scale.set(badgeStrokeRadius / 1000)
+          badgeStrokeSprite.scale.set(badgeStrokeRadius / CircleSprite.radius)
 
           let badgeIconSprite: PIXI.Sprite | undefined
 
@@ -358,14 +359,14 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.nodeContainer.y = this.labelContainer.y = this.y
     }
 
-    this.fillSprite.scale.set(this.radius / 1000)
+    this.fillSprite.scale.set(this.radius / CircleSprite.radius)
 
     let strokeWidths = this.radius
 
     if (this.stroke !== undefined) {
       for (const { sprite, width } of this.strokeSprites) {
         strokeWidths += width
-        sprite.scale.set(strokeWidths / 1000)
+        sprite.scale.set(strokeWidths / CircleSprite.radius)
       }
     }
 

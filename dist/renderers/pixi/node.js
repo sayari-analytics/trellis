@@ -52,6 +52,7 @@ var d3_interpolate_1 = require("d3-interpolate");
 var utils_1 = require("./utils");
 var utils_2 = require("../../utils");
 var FontLoader_1 = require("./FontLoader");
+var circleSprite_1 = require("./sprites/circleSprite");
 var LABEL_Y_PADDING = 2;
 var DEFAULT_NODE_FILL = utils_1.colorToNumber('#666');
 var DEFAULT_NODE_STROKE = utils_1.colorToNumber('#aaa');
@@ -373,10 +374,10 @@ var NodeRenderer = /** @class */ (function () {
                         var badgeStrokeRadius = badgeRadius + ((_11 = badge.strokeWidth) !== null && _11 !== void 0 ? _11 : DEFAULT_BADGE_STROKE_WIDTH);
                         var badgeFillSprite = this.renderer.circle.create();
                         badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : utils_1.colorToNumber(badge.color);
-                        badgeFillSprite.scale.set(badgeRadius / 1000);
+                        badgeFillSprite.scale.set(badgeRadius / circleSprite_1.CircleSprite.radius);
                         var badgeStrokeSprite = this.renderer.circle.create();
                         badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : utils_1.colorToNumber(badge.stroke);
-                        badgeStrokeSprite.scale.set(badgeStrokeRadius / 1000);
+                        badgeStrokeSprite.scale.set(badgeStrokeRadius / circleSprite_1.CircleSprite.radius);
                         var badgeIconSprite = void 0;
                         if (((_12 = badge.icon) === null || _12 === void 0 ? void 0 : _12.type) === 'textIcon') {
                             badgeIconSprite = new PIXI.Text(badge.icon.text, {
@@ -466,14 +467,14 @@ var NodeRenderer = /** @class */ (function () {
             this.nodeContainer.x = this.labelContainer.x = this.x;
             this.nodeContainer.y = this.labelContainer.y = this.y;
         }
-        this.fillSprite.scale.set(this.radius / 1000);
+        this.fillSprite.scale.set(this.radius / circleSprite_1.CircleSprite.radius);
         var strokeWidths = this.radius;
         if (this.stroke !== undefined) {
             try {
                 for (var _d = __values(this.strokeSprites), _e = _d.next(); !_e.done; _e = _d.next()) {
                     var _f = _e.value, sprite = _f.sprite, width = _f.width;
                     strokeWidths += width;
-                    sprite.scale.set(strokeWidths / 1000);
+                    sprite.scale.set(strokeWidths / circleSprite_1.CircleSprite.radius);
                 }
             }
             catch (e_5_1) { e_5 = { error: e_5_1 }; }

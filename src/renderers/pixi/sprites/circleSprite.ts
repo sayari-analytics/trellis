@@ -5,13 +5,15 @@ import { Node, Edge } from '../../../'
 
 export class CircleSprite<N extends Node, E extends Edge> {
 
-  texture: PIXI.RenderTexture
+  static radius = 500
+
+  private texture: PIXI.RenderTexture
 
   constructor(renderer: Renderer<N, E>) {
     this.texture = renderer.app.renderer.generateTexture(
       new PIXI.Graphics()
         .beginFill(0xffffff)
-        .drawCircle(0, 0, 1000),
+        .drawCircle(0, 0, CircleSprite.radius),
       PIXI.SCALE_MODES.LINEAR,
       2,
     )

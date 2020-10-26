@@ -25,7 +25,7 @@ var CircleSprite = /** @class */ (function () {
     function CircleSprite(renderer) {
         this.texture = renderer.app.renderer.generateTexture(new PIXI.Graphics()
             .beginFill(0xffffff)
-            .drawCircle(0, 0, 1000), PIXI.SCALE_MODES.LINEAR, 2);
+            .drawCircle(0, 0, CircleSprite.radius), PIXI.SCALE_MODES.LINEAR, 2);
     }
     CircleSprite.prototype.create = function () {
         var sprite = new PIXI.Sprite(this.texture);
@@ -35,6 +35,7 @@ var CircleSprite = /** @class */ (function () {
     CircleSprite.prototype.delete = function () {
         this.texture.destroy();
     };
+    CircleSprite.radius = 500;
     return CircleSprite;
 }());
 exports.CircleSprite = CircleSprite;
