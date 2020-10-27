@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Cluster from '../../src/layout/cluster'
-import * as Expand from '../../src/layout/expand'
+import * as Subgraph from '../../src/layout/subgraph'
 import * as Graph from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
@@ -50,32 +50,6 @@ const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  // onNodeDrag: (_, { id }, x, y) => {
-  //   nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-  //   render({ nodes, edges, options: renderOptions })
-  // },
-  // onNodePointerEnter: (_, { id }) => {
-  //   nodes = nodes.map((node) => (node.id === id ? {
-  //     ...node,
-  //     style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] }
-  //   } : node))
-  //   render({ nodes, edges, options: renderOptions })
-  // },
-  // onNodePointerLeave: (_, { id }) => {
-  //   nodes = nodes.map((node) => (node.id === id ? {
-  //     ...node,
-  //     style: { ...node.style, stroke: STYLE.stroke }
-  //   } : node))
-  //   render({ nodes, edges, options: renderOptions })
-  // },
-  // onEdgePointerEnter: (_, { id }) => {
-  //   edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-  //   render({ nodes, edges, options: renderOptions })
-  // },
-  // onEdgePointerLeave: (_, { id }) => {
-  //   edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-  //   render({ nodes, edges, options: renderOptions })
-  // },
   onNodeDoubleClick: (_, clickedNode) => {
     const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
       { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
@@ -85,56 +59,39 @@ const renderOptions: Partial<RendererOptions> = {
       { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: STYLE },
       { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: STYLE },
     ]))
-    const radius = Expand.subgraphRadius(clickedNode, subgraphNodes) + 20
+    const radius = Subgraph.subgraphRadius(clickedNode, subgraphNodes) + 20
 
-    nodes
-      .filter((node) => node.subgraph !== undefined)
-      .map((node) => node.id)
-      .reverse()
-      .forEach((collapseId) => {
-        nodes = collapse(nodes.find(({ id }) => id === collapseId), nodes)
-      })
-
-    nodes = nodes.map((node) => {
-      if (node.id === clickedNode.id) {
-        return {
-          ...node,
-          radius,
-          style: { ...node.style, color: '#efefef', icon: undefined },
-          subgraph: {
-            nodes: subgraphNodes,
-            edges: []
-          },
+    nodes = subgraph(
+      nodes,
+      nodes.map((node) => {
+        if (node.id === clickedNode.id) {
+          return {
+            ...node,
+            radius,
+            style: { ...node.style, color: '#efefef', icon: undefined },
+            subgraph: {
+              nodes: subgraphNodes,
+              edges: []
+            },
+          }
         }
-      }
 
-      return node
-    })
-
-    nodes
-      .filter((node) => node.subgraph !== undefined)
-      .map((node) => node.id)
-      .forEach((expandId) => {
-        nodes = expand(nodes.find(({ id }) => id === expandId), nodes)
+        return node
       })
+    )
 
     render({ nodes, edges, options: renderOptions })
   },
   onContainerPointerUp: () => {
-    nodes
-      .filter((node) => node.subgraph !== undefined)
-      .map((node) => node.id)
-      .reverse()
-      .forEach((collapseId) => {
-        nodes = collapse(nodes.find(({ id }) => id === collapseId), nodes)
-      })
-
-    nodes = nodes.map((node) => ({
-      ...node,
-      radius: 18,
-      style: STYLE,
-      subgraph: undefined,
-    }))
+    nodes = subgraph(
+      nodes,
+      nodes.map((node) => ({
+        ...node,
+        radius: 18,
+        style: STYLE,
+        subgraph: undefined,
+      }))
+    )
 
     render({ nodes, edges, options: renderOptions })
   },
@@ -144,7 +101,7 @@ const renderOptions: Partial<RendererOptions> = {
 /**
  * Initialize Layout and Renderer
  */
-const { expand, collapse } = Expand.Layout()
+const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
 const render = Renderer({
   container,

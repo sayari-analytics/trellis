@@ -39,4 +39,38 @@ var CircleSprite = /** @class */ (function () {
     return CircleSprite;
 }());
 exports.CircleSprite = CircleSprite;
+// export class CircleSprite extends PIXI.Sprite {
+//   maxRadius: number
+//   constructor(texture: PIXI.Texture, maxRadius: number) {
+//     super(texture)
+//     this.maxRadius = maxRadius
+//   }
+// }
+// export class CircleSpriteFactory<N extends Node, E extends Edge> {
+//   private textures: { [radius: number]: PIXI.Texture } = {}
+//   private renderer: Renderer<N, E>
+//   constructor(renderer: Renderer<N, E>) {
+//     this.renderer = renderer
+//   }
+//   create(radius: number, maxZoom: number) {
+//     const maxRadius = Math.ceil((radius * maxZoom) / 10) * 10
+//     if (this.textures[maxRadius] === undefined) {
+//       this.textures[maxRadius] = this.renderer.app.renderer.generateTexture(
+//         new PIXI.Graphics()
+//           .beginFill(0xffffff)
+//           .drawCircle(0, 0, maxRadius),
+//         PIXI.SCALE_MODES.LINEAR,
+//         2,
+//       )
+//     }
+//     const sprite = new CircleSprite(this.textures[maxRadius], maxRadius)
+//     sprite.anchor.set(0.5)
+//     return sprite
+//   }
+//   delete() {
+//     for (const texture of Object.values(this.textures)) {
+//       texture.destroy()
+//     }
+//   }
+// }
 //# sourceMappingURL=circleSprite.js.map

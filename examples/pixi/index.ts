@@ -3,6 +3,7 @@ import * as Force from '../../src/layout/force'
 import * as Subgraph from '../../src/layout/subgraph'
 import * as Zoom from '../../src/controls/zoom'
 import * as Selection from '../../src/controls/selection'
+import * as Cluster from '../../src/layout/cluster'
 import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
@@ -97,6 +98,17 @@ let edges: Edge[] = [
 
 
 /**
+ * Create Layouts
+ */
+const force = Force.Layout()
+const subgraph = Subgraph.Layout()
+const cluster = Cluster.Layout()
+const layoutOptions: Partial<Force.LayoutOptions> = {
+  nodeStrength: -500,
+}
+
+
+/**
  * Create Handlers
  */
 // TODO
@@ -125,17 +137,17 @@ const selectionControl = Selection.Control({ container })
 const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = selectionControl({
   top: 160,
   onContainerPointerUp: () => {
-    nodes = nodes.map((node) => (node.subgraph ? {
-      ...node,
-      radius: 18,
-      style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-      subgraph: undefined,
-    } : node))
+    nodes = subgraph(
+      nodes,
+      nodes.map((node) => (node.subgraph ? {
+        ...node,
+        radius: 18,
+        style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
+        subgraph: undefined,
+      } : node))
+    )
 
-    subgraph({ nodes, edges }).then((graph) => {
-      nodes = graph.nodes
-      renderer({ nodes, edges, options: renderOptions })
-    })
+    renderer({ nodes, edges, options: renderOptions })
   },
   onContainerDrag: (_, x, y) => {
     renderOptions.x = x
@@ -143,16 +155,6 @@ const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = select
     renderer({ nodes, edges, options: renderOptions })
   },
 })
-
-
-/**
- * Create Layouts
- */
-const force = Force.Layout()
-const subgraph = Subgraph.Layout()
-const layoutOptions: Partial<Force.LayoutOptions> = {
-  nodeStrength: -500,
-}
 
 
 /**
@@ -212,25 +214,29 @@ const renderOptions: Partial<RendererOptions> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodeDoubleClick: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ? {
-      ...node,
-      style: { ...node.style, color: '#EFEFEF', icon: undefined },
-      subgraph: {
-        nodes: (node.subgraph?.nodes ?? []).concat([
-          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
-          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
-          { id: '', radius: 10, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
-        ])
-          .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
-        edges: []
-      },
-    } : node))
+  onNodeDoubleClick: (_, clickedNode) => {
+    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: createSubgraphStyle(10) },
+    ]))
+    const radius = Subgraph.subgraphRadius(clickedNode, subgraphNodes) + 20
 
-    subgraph({ nodes, edges }).then((graph) => {
-      nodes = graph.nodes
-      renderer({ nodes, edges, options: renderOptions })
-    })
+    nodes = subgraph(
+      nodes,
+      nodes.map((node) => (node.id === clickedNode.id ? {
+        ...node,
+        radius,
+        style: { ...node.style, color: '#EFEFEF', icon: undefined },
+        subgraph: {
+          nodes: subgraphNodes,
+          edges: []
+        },
+      } : node))
+    )
+
+    renderer({ nodes, edges, options: renderOptions })
   },
   onContainerPointerDown,
   onContainerDrag,
