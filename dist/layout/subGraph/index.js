@@ -23,14 +23,14 @@ var __values = (this && this.__values) || function(o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Layout = exports.subgraphRadius = void 0;
-exports.subgraphRadius = function (node, nodes) {
+exports.subgraphRadius = function (radius, nodes) {
     var e_1, _a;
     var _b, _c;
-    var _radius = node.radius;
+    var _radius = radius;
     try {
         for (var nodes_1 = __values(nodes), nodes_1_1 = nodes_1.next(); !nodes_1_1.done; nodes_1_1 = nodes_1.next()) {
-            var node_1 = nodes_1_1.value;
-            var newRadius = Math.hypot((_b = node_1.x) !== null && _b !== void 0 ? _b : 0, (_c = node_1.y) !== null && _c !== void 0 ? _c : 0) + node_1.radius;
+            var node = nodes_1_1.value;
+            var newRadius = Math.hypot((_b = node.x) !== null && _b !== void 0 ? _b : 0, (_c = node.y) !== null && _c !== void 0 ? _c : 0) + node.radius;
             _radius = Math.max(_radius, newRadius);
         }
     }

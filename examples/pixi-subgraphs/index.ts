@@ -59,7 +59,7 @@ const renderOptions: Partial<RendererOptions> = {
       { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: STYLE },
       { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: STYLE },
     ]))
-    const radius = Subgraph.subgraphRadius(clickedNode, subgraphNodes) + 20
+    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
 
     nodes = subgraph(
       nodes,

@@ -1,8 +1,8 @@
 import { Node, Edge } from '../..'
 
 
-export const subgraphRadius = <E extends Edge>(node: Node<E>, nodes: Node<E>[]) => {
-  let _radius = node.radius
+export const subgraphRadius = <E extends Edge>(radius: number, nodes: Node<E>[]) => {
+  let _radius = radius
 
   for (const node of nodes) {
     const newRadius = Math.hypot(node.x ?? 0, node.y ?? 0) + node.radius
