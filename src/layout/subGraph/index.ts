@@ -185,8 +185,8 @@ const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
         y = subgraphsById[i][1].node.y!
         radius = subgraphsById[i][1].node.radius
 
-        for (let i = 0; i < nodes.length; i++) {
-          node = nodes[i]
+        for (let j = 0; j < nodes.length; j++) {
+          node = nodes[j]
           if (node.id !== id && node.x != undefined && node.y != undefined) {
             theta = Math.atan2(y - node.y, x - node.x)
             xOffset = Math.cos(theta) * radius
