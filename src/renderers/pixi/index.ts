@@ -10,7 +10,7 @@ import { Zoom } from './interaction/zoom'
 import { ArrowSprite } from './sprites/arrowSprite'
 import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
-import { FontIconSprite } from './FontLoader'
+import { FontIconSprite } from './sprites/fontIconSprite'
 
 
 install(PIXI)

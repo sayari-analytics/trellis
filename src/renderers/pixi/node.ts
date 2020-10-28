@@ -4,7 +4,7 @@ import { PIXIRenderer as Renderer, NodeStyle } from '.'
 import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
-import { CancellablePromise } from './FontLoader'
+import { CancellablePromise } from './sprites/fontIconSprite'
 import { CircleSprite } from './sprites/circleSprite'
 
 

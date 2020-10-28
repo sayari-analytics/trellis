@@ -66,4 +66,4 @@ var FontIconSprite = /** @class */ (function () {
     return FontIconSprite;
 }());
 exports.FontIconSprite = FontIconSprite;
-//# sourceMappingURL=FontLoader.js.map
+//# sourceMappingURL=fontIconSprite.js.map
