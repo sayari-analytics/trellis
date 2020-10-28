@@ -4,7 +4,7 @@ import { PIXIRenderer as Renderer, NodeStyle } from '.'
 import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
-import { CancellablePromise, FontLoader } from './FontLoader'
+import { CancellablePromise } from './FontLoader'
 import { CircleSprite } from './sprites/circleSprite'
 
 
@@ -218,7 +218,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
       if (this.icon?.type === 'textIcon') {
         this.fontIconLoader?.cancel()
-        this.fontIconLoader = FontLoader(this.icon.family)
+        this.fontIconLoader = this.renderer.fontIcon.create(this.icon.family)
         this.fontIconLoader.then((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
           // TOOD - reuse icon textures
@@ -241,7 +241,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           }
         })
       } else if (this.icon?.type === 'imageIcon') {
-        this.iconSprite = this.renderer.image.createSprite(this.icon.url)
+        this.iconSprite = this.renderer.image.create(this.icon.url)
 
         this.iconSprite.name = 'icon'
         this.iconSprite.position.set(this.icon.offset?.x ?? 0, this.icon.offset?.y ?? 0)

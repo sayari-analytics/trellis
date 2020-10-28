@@ -5,7 +5,7 @@ export class ImageSprite {
 
   cache: { [url: string]: PIXI.Texture } = {}
 
-  createSprite(url: string) {
+  create(url: string) {
     if (this.cache[url] === undefined) {
       this.cache[url] = PIXI.Texture.from(url)
     }

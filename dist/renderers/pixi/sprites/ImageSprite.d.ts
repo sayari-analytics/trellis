@@ -3,6 +3,6 @@ export declare class ImageSprite {
     cache: {
         [url: string]: PIXI.Texture;
     };
-    createSprite(url: string): PIXI.Sprite;
+    create(url: string): PIXI.Sprite;
     delete(): void;
 }

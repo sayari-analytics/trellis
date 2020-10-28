@@ -42,6 +42,7 @@ var zoom_1 = require("./interaction/zoom");
 var arrowSprite_1 = require("./sprites/arrowSprite");
 var circleSprite_1 = require("./sprites/circleSprite");
 var ImageSprite_1 = require("./sprites/ImageSprite");
+var FontLoader_1 = require("./FontLoader");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
@@ -355,6 +356,7 @@ var PIXIRenderer = /** @class */ (function () {
             _this.circle.delete();
             _this.arrow.delete();
             _this.image.delete();
+            _this.fontIcon.delete();
         };
         if (!(container instanceof HTMLDivElement)) {
             throw new Error('container must be an instance of HTMLDivElement');
@@ -437,6 +439,7 @@ var PIXIRenderer = /** @class */ (function () {
         this.arrow = new arrowSprite_1.ArrowSprite(this);
         this.circle = new circleSprite_1.CircleSprite(this);
         this.image = new ImageSprite_1.ImageSprite();
+        this.fontIcon = new FontLoader_1.FontIconSprite();
         this.debug = debug;
         if (this.debug) {
             this.cancelAnimationLoop = utils_1.animationFrameLoop(this.debugRender);

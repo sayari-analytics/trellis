@@ -51,7 +51,6 @@ var PIXI = __importStar(require("pixi.js"));
 var d3_interpolate_1 = require("d3-interpolate");
 var utils_1 = require("./utils");
 var utils_2 = require("../../utils");
-var FontLoader_1 = require("./FontLoader");
 var circleSprite_1 = require("./sprites/circleSprite");
 var LABEL_Y_PADDING = 2;
 var DEFAULT_NODE_FILL = utils_1.colorToNumber('#666');
@@ -318,7 +317,7 @@ var NodeRenderer = /** @class */ (function () {
             this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'));
             if (((_z = this.icon) === null || _z === void 0 ? void 0 : _z.type) === 'textIcon') {
                 (_0 = this.fontIconLoader) === null || _0 === void 0 ? void 0 : _0.cancel();
-                this.fontIconLoader = FontLoader_1.FontLoader(this.icon.family);
+                this.fontIconLoader = this.renderer.fontIcon.create(this.icon.family);
                 this.fontIconLoader.then(function (family) {
                     var _a;
                     if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || _this.icon.family !== family)
@@ -344,7 +343,7 @@ var NodeRenderer = /** @class */ (function () {
                 });
             }
             else if (((_1 = this.icon) === null || _1 === void 0 ? void 0 : _1.type) === 'imageIcon') {
-                this.iconSprite = this.renderer.image.createSprite(this.icon.url);
+                this.iconSprite = this.renderer.image.create(this.icon.url);
                 this.iconSprite.name = 'icon';
                 this.iconSprite.position.set((_3 = (_2 = this.icon.offset) === null || _2 === void 0 ? void 0 : _2.x) !== null && _3 !== void 0 ? _3 : 0, (_5 = (_4 = this.icon.offset) === null || _4 === void 0 ? void 0 : _4.y) !== null && _5 !== void 0 ? _5 : 0);
                 this.iconSprite.anchor.set(0.5);

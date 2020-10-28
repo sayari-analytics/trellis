@@ -6,4 +6,10 @@ export declare class CancellablePromise<T> {
     then(cb: (result: T) => void): void;
     cancel(): void;
 }
-export declare const FontLoader: (family: string) => CancellablePromise<string>;
+export declare class FontIconSprite {
+    cache: {
+        [family: string]: boolean;
+    };
+    create(family: string): CancellablePromise<string>;
+    delete(): void;
+}

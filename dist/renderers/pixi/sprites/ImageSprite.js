@@ -25,7 +25,7 @@ var ImageSprite = /** @class */ (function () {
     function ImageSprite() {
         this.cache = {};
     }
-    ImageSprite.prototype.createSprite = function (url) {
+    ImageSprite.prototype.create = function (url) {
         if (this.cache[url] === undefined) {
             this.cache[url] = PIXI.Texture.from(url);
         }

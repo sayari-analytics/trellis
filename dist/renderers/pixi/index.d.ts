@@ -9,6 +9,7 @@ import { Zoom } from './interaction/zoom';
 import { ArrowSprite } from './sprites/arrowSprite';
 import { CircleSprite } from './sprites/circleSprite';
 import { ImageSprite } from './sprites/ImageSprite';
+import { FontIconSprite } from './FontLoader';
 export declare type Event = PIXI.InteractionEvent;
 export declare type TextIcon = {
     type: 'textIcon';
@@ -124,6 +125,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     arrow: ArrowSprite<N, E>;
     circle: CircleSprite<N, E>;
     image: ImageSprite;
+    fontIcon: FontIconSprite;
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;

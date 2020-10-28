@@ -28,7 +28,7 @@ var ArrowSprite = /** @class */ (function () {
             .lineTo(ArrowSprite.ARROW_HEIGHT * 2, ArrowSprite.ARROW_WIDTH)
             .lineTo(ArrowSprite.ARROW_HEIGHT * 2, -ArrowSprite.ARROW_WIDTH), PIXI.SCALE_MODES.LINEAR, 2);
     }
-    ArrowSprite.prototype.createSprite = function () {
+    ArrowSprite.prototype.create = function () {
         var sprite = new PIXI.Sprite(this.texture);
         sprite.anchor.set(0, 0.5);
         sprite.scale.set(0.5);

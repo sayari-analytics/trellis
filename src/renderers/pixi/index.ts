@@ -10,6 +10,7 @@ import { Zoom } from './interaction/zoom'
 import { ArrowSprite } from './sprites/arrowSprite'
 import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
+import { FontIconSprite } from './FontLoader'
 
 
 install(PIXI)
@@ -132,6 +133,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   arrow: ArrowSprite<N, E>
   circle: CircleSprite<N, E>
   image: ImageSprite
+  fontIcon: FontIconSprite
   zoomInteraction: Zoom<N, E>
   dragInteraction: Drag<N, E>
   decelerateInteraction: Decelerate<N, E>
@@ -254,6 +256,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.arrow = new ArrowSprite<N, E>(this)
     this.circle = new CircleSprite<N, E>(this)
     this.image = new ImageSprite()
+    this.fontIcon = new FontIconSprite()
 
     this.debug = debug
     if (this.debug) {
@@ -552,6 +555,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.circle.delete()
     this.arrow.delete()
     this.image.delete()
+    this.fontIcon.delete()
   }
 }
 

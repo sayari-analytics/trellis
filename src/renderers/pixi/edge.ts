@@ -97,18 +97,18 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.reverseArrow = undefined
 
       if (this.arrow === 'forward') {
-        this.forwardArrow = this.renderer.arrow.createSprite()
+        this.forwardArrow = this.renderer.arrow.create()
         this.forwardArrow.tint = this.stroke
         this.forwardArrow.alpha = this.strokeOpacity
         this.arrowContainer.addChild(this.forwardArrow)
       } else if (this.arrow === 'reverse') {
-        this.reverseArrow = this.renderer.arrow.createSprite()
+        this.reverseArrow = this.renderer.arrow.create()
         this.reverseArrow.tint = this.stroke
         this.reverseArrow.alpha = this.strokeOpacity
         this.arrowContainer.addChild(this.reverseArrow)
       } else if (this.arrow === 'both') {
-        this.forwardArrow = this.renderer.arrow.createSprite()
-        this.reverseArrow = this.renderer.arrow.createSprite()
+        this.forwardArrow = this.renderer.arrow.create()
+        this.reverseArrow = this.renderer.arrow.create()
         this.forwardArrow.tint = this.stroke
         this.forwardArrow.alpha = this.strokeOpacity
         this.reverseArrow.tint = this.stroke
