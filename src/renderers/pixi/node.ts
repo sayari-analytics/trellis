@@ -60,6 +60,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private iconSprite?: PIXI.Sprite
   private fontLoader?: CancellablePromise<string>
   private fontIconLoader?: CancellablePromise<string>
+  private badgeIconLoader?: CancellablePromise<string>;
   private doubleClickTimeout: number | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
@@ -275,22 +276,27 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           let badgeIconSprite: PIXI.Sprite | undefined
 
           if (badge.icon?.type === 'textIcon') {
-            this.fontIconLoader?.cancel()
-            this.fontIconLoader = FontLoader(badge.icon.family)
-            this.fontIconLoader.then((family) => {
-              if (badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
+            this.badgeIconLoader?.cancel()
+            this.badgeIconLoader = FontLoader(badge.icon.family)
+            this.badgeIconLoader.then((family) => {
+              if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
               badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
+
+              this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+              this.badgeSpriteContainer.addChild(badgeStrokeSprite)
+              this.badgeSpriteContainer.addChild(badgeFillSprite)
+              badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
+              this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
             })
           } else if (badge.icon?.type === 'imageIcon') {
             badgeIconSprite = this.renderer.image.create(badge.icon.url)
+            this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+
+            this.badgeSpriteContainer.addChild(badgeStrokeSprite)
+            this.badgeSpriteContainer.addChild(badgeFillSprite)
+            badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
+            this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
           }
-
-          this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
-
-          this.badgeSpriteContainer.addChild(badgeStrokeSprite)
-          this.badgeSpriteContainer.addChild(badgeFillSprite)
-          badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
-          this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
         }
       }
     }
