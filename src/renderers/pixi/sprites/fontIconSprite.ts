@@ -1,60 +1,34 @@
-import FontFaceObserver from 'fontfaceobserver'
-
-export class CancellablePromise <T> {
-  private thenCallback?: (result: T) => void
-  private result?: T
-  private cancelled = false
-
-  constructor(resolver: (resolve: (result: T) => void) => void) {
-    resolver((result) => {
-      this.result = result
-      if (this.thenCallback && !this.cancelled) {
-        this.thenCallback(result)
-      }
-    })
-  }
-
-  then(cb: (result: T) => void) {
-    if (!this.cancelled) {
-      if (this.result) {
-        cb(this.result)
-      } else {
-        this.thenCallback = cb
-      }
-    }
-  }
-
-  cancel() {
-    this.cancelled = true
-    this.thenCallback = undefined
-  }
-}
+import * as PIXI from 'pixi.js'
 
 export class FontIconSprite {
 
-  cache: { [family: string]: boolean } = {}
+  cache: { [icon: string]: PIXI.Texture } = {}
 
-  create(family: string) {
-    if (this.cache[family]) {
-      return new CancellablePromise<string>((resolve) => resolve(family))
-    } else if ((document as any)?.fonts?.load) {
-      return new CancellablePromise<string>((resolve) => {
-        (document as any).fonts.load(`1em ${family}`).then(() => {
-          this.cache[family] = true
-          resolve(family)
-        })
-      })
-    } else {
-      return new CancellablePromise<string>((resolve) => {
-        new FontFaceObserver(family).load().then(() => {
-          this.cache[family] = true
-          resolve(family)
-        })
-      })
+  create(text: string, fontFamily: string, fontSize: number, fontWeight: string, fill: string) {
+    const icon = `${text}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
+    if (this.cache[icon] === undefined) {
+      const textSprite = new PIXI.Text(text, { fontFamily, fontSize: fontSize * 2, fontWeight, fill })
+      this.cache[icon] = textSprite.texture
+      textSprite.name = 'icon'
+      textSprite.position.set(0, 0)
+      textSprite.anchor.set(0.5)
+      textSprite.scale.set(0.5)
+
+      return textSprite
     }
+
+    const sprite = new PIXI.Sprite(this.cache[icon])
+    sprite.name = 'icon'
+    sprite.position.set(0, 0)
+    sprite.anchor.set(0.5)
+    sprite.scale.set(0.5)
+
+    return sprite
   }
 
   delete() {
+    Object.values(this.cache).forEach((texture) => texture.destroy())
     this.cache = {}
   }
 }
+

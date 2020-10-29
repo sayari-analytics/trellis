@@ -4,8 +4,8 @@ import { PIXIRenderer as Renderer, NodeStyle } from '.'
 import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
-import { CancellablePromise } from './sprites/fontIconSprite'
 import { CircleSprite } from './sprites/circleSprite'
+import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 const LABEL_Y_PADDING = 2
@@ -218,20 +218,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
       if (this.icon?.type === 'textIcon') {
         this.fontIconLoader?.cancel()
-        this.fontIconLoader = this.renderer.fontIcon.create(this.icon.family)
+        this.fontIconLoader = FontLoader(this.icon.family)
         this.fontIconLoader.then((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
-          // TOOD - reuse icon textures
-          this.iconSprite = new PIXI.Text(this.icon.text, {
-            fontFamily: this.icon.family,
-            fontSize: this.icon.size * 2,
-            fill: this.icon.color,
-          })
-          this.iconSprite.name = 'icon'
-          this.iconSprite.position.set(0, 0)
-          this.iconSprite.anchor.set(0.5)
-          this.iconSprite.scale.set(0.5)
-
+          this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
           if (this.badgeSpriteContainer === undefined) {
             // no badges - add to top of nodeContainer
             this.nodeContainer.addChild(this.iconSprite)
@@ -241,13 +231,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           }
         })
       } else if (this.icon?.type === 'imageIcon') {
-        this.iconSprite = this.renderer.image.create(this.icon.url)
-
-        this.iconSprite.name = 'icon'
-        this.iconSprite.position.set(this.icon.offset?.x ?? 0, this.icon.offset?.y ?? 0)
-        this.iconSprite.anchor.set(0.5)
-        this.iconSprite.scale.set(this.icon.scale ?? 1)
-
+        this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offset)
         if (this.badgeSpriteContainer === undefined) {
           // no badges - add to top of nodeContainer
           this.nodeContainer.addChild(this.iconSprite)
@@ -285,17 +269,15 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           let badgeIconSprite: PIXI.Sprite | undefined
 
           if (badge.icon?.type === 'textIcon') {
-            badgeIconSprite = new PIXI.Text(badge.icon.text, {
-              fontFamily: badge.icon.family,
-              fontSize: badge.icon.size * 2,
-              fontWeight: 'bold',
-              fill: badge.icon.color,
+            this.fontIconLoader?.cancel()
+            this.fontIconLoader = FontLoader(badge.icon.family)
+            this.fontIconLoader.then((family) => {
+              if (badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
+              badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
             })
-            badgeIconSprite.position.set(0, 0)
-            badgeIconSprite.anchor.set(0.5)
-            badgeIconSprite.scale.set(0.5)
+          } else if (badge.icon?.type === 'imageIcon') {
+            badgeIconSprite = this.renderer.image.create(badge.icon.url)
           }
-          // } else if (badge.icon?.type === 'imageIcon') // TODO
 
           this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
 

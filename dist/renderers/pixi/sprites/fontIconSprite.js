@@ -1,69 +1,53 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FontIconSprite = exports.CancellablePromise = void 0;
-var fontfaceobserver_1 = __importDefault(require("fontfaceobserver"));
-var CancellablePromise = /** @class */ (function () {
-    function CancellablePromise(resolver) {
-        var _this = this;
-        this.cancelled = false;
-        resolver(function (result) {
-            _this.result = result;
-            if (_this.thenCallback && !_this.cancelled) {
-                _this.thenCallback(result);
-            }
-        });
-    }
-    CancellablePromise.prototype.then = function (cb) {
-        if (!this.cancelled) {
-            if (this.result) {
-                cb(this.result);
-            }
-            else {
-                this.thenCallback = cb;
-            }
-        }
-    };
-    CancellablePromise.prototype.cancel = function () {
-        this.cancelled = true;
-        this.thenCallback = undefined;
-    };
-    return CancellablePromise;
-}());
-exports.CancellablePromise = CancellablePromise;
+exports.FontIconSprite = void 0;
+var PIXI = __importStar(require("pixi.js"));
 var FontIconSprite = /** @class */ (function () {
     function FontIconSprite() {
         this.cache = {};
     }
-    FontIconSprite.prototype.create = function (family) {
-        var _this = this;
-        var _a, _b;
-        if (this.cache[family]) {
-            return new CancellablePromise(function (resolve) { return resolve(family); });
+    FontIconSprite.prototype.create = function (text, fontFamily, fontSize, fontWeight, fill) {
+        var icon = text + "-" + fontFamily + "-" + fontSize + "-" + fontWeight + "-" + fill;
+        if (this.cache[icon] === undefined) {
+            var textSprite = new PIXI.Text(text, { fontFamily: fontFamily, fontSize: fontSize * 2, fontWeight: fontWeight, fill: fill });
+            this.cache[icon] = textSprite.texture;
+            textSprite.name = 'icon';
+            textSprite.position.set(0, 0);
+            textSprite.anchor.set(0.5);
+            textSprite.scale.set(0.5);
+            return textSprite;
         }
-        else if ((_b = (_a = document) === null || _a === void 0 ? void 0 : _a.fonts) === null || _b === void 0 ? void 0 : _b.load) {
-            return new CancellablePromise(function (resolve) {
-                document.fonts.load("1em " + family).then(function () {
-                    _this.cache[family] = true;
-                    resolve(family);
-                });
-            });
-        }
-        else {
-            return new CancellablePromise(function (resolve) {
-                new fontfaceobserver_1.default(family).load().then(function () {
-                    _this.cache[family] = true;
-                    resolve(family);
-                });
-            });
-        }
+        var sprite = new PIXI.Sprite(this.cache[icon]);
+        sprite.name = 'icon';
+        sprite.position.set(0, 0);
+        sprite.anchor.set(0.5);
+        sprite.scale.set(0.5);
+        return sprite;
     };
     FontIconSprite.prototype.delete = function () {
+        Object.values(this.cache).forEach(function (texture) { return texture.destroy(); });
         this.cache = {};
     };
     return FontIconSprite;
 }());
 exports.FontIconSprite = FontIconSprite;
-//# sourceMappingURL=fontIconSprite.js.map
+//# sourceMappingURL=FontIconSprite.js.map
