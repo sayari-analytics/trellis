@@ -3,6 +3,7 @@ import { EdgeStyle, PIXIRenderer as Renderer } from './'
 import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI } from './utils'
 import { Node, Edge } from '../../'
 import { ArrowSprite } from './sprites/arrowSprite'
+import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 
@@ -47,6 +48,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private curve: number = 0
   private doubleClickTimeout: number | undefined
   private doubleClick = false
+  private fontLoader?: CancellablePromise<string>
 
   constructor(renderer: Renderer<N, E>, edge: E) {
     this.renderer = renderer
@@ -144,21 +146,27 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelSprite = undefined
 
       if (this.label) {
-        this.labelSprite = new PIXI.Text(this.label, {
-          fontFamily: this.labelFamily,
-          fontSize: this.labelSize * 2.5,
-          fill: this.labelColor,
-          lineJoin: 'round',
-          stroke: '#fafafa',
-          strokeThickness: 2.5 * 2.5,
-          align: 'center',
-          wordWrap: labelWordWrap !== undefined,
-          wordWrapWidth: labelWordWrap,
+        this.fontLoader?.cancel()
+        this.fontLoader = FontLoader(this.labelFamily)
+        this.fontLoader.then((family) => {
+          if(this.label === undefined || this.labelFamily !== family) return
+          this.labelSprite = new PIXI.Text(this.label, {
+            fontFamily: this.labelFamily,
+            fontSize: (this.labelSize ?? labelSize) * 2.5, //TODO: is there a way to avoid this?
+            fill: this.labelColor,
+            lineJoin: 'round',
+            stroke: '#fafafa',
+            strokeThickness: 2.5 * 2.5,
+            align: 'center',
+            wordWrap: labelWordWrap !== undefined,
+            wordWrapWidth: labelWordWrap,
+          })
+
+          this.labelSprite.name = 'text'
+          this.labelSprite.scale.set(0.4)
+          this.labelSprite.anchor.set(0.5, 0.5)
+          this.labelContainer.addChild(this.labelSprite)
         })
-        this.labelSprite.name = 'text'
-        this.labelSprite.scale.set(0.4)
-        this.labelSprite.anchor.set(0.5, 0.5)
-        this.labelContainer.addChild(this.labelSprite)
       }
     }
 

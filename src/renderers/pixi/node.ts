@@ -58,6 +58,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
   private iconSprite?: PIXI.Sprite
+  private fontLoader?: CancellablePromise<string>
   private fontIconLoader?: CancellablePromise<string>
   private doubleClickTimeout: number | undefined
   private doubleClick = false
@@ -157,21 +158,26 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelWordWrap = labelWordWrap
 
       if (this.label) {
-        this.labelSprite = new PIXI.Text(this.label, {
-          fontFamily: this.labelFamily,
-          fontSize: this.labelSize * 2.5,
-          fill: this.labelColor,
-          lineJoin: 'round',
-          stroke: '#fff',
-          strokeThickness: 2.5 * 2.5,
-          align: 'center',
-          wordWrap: labelWordWrap !== undefined,
-          wordWrapWidth: labelWordWrap,
+        this.fontLoader?.cancel()
+        this.fontLoader = FontLoader(this.labelFamily)
+        this.fontLoader.then((family) => {
+          if(this.label === undefined || this.labelFamily !== family) return
+          this.labelSprite = new PIXI.Text(this.label, {
+            fontFamily: this.labelFamily,
+            fontSize: (this.labelSize ?? labelSize) * 2.5, //TODO: is there a way to avoid this?
+            fill: this.labelColor,
+            lineJoin: 'round',
+            stroke: '#fff',
+            strokeThickness: 2.5 * 2.5,
+            align: 'center',
+            wordWrap: labelWordWrap !== undefined,
+            wordWrapWidth: labelWordWrap,
+          })
+          this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
+          this.labelSprite.anchor.set(0.5, 0)
+          this.labelSprite.scale.set(0.4)
+          this.labelContainer.addChild(this.labelSprite)
         })
-        this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
-        this.labelSprite.anchor.set(0.5, 0)
-        this.labelSprite.scale.set(0.4)
-        this.labelContainer.addChild(this.labelSprite)
       }
     }
 
