@@ -171,6 +171,7 @@ var NodeRenderer = /** @class */ (function () {
         this.parent = parent;
         this.depth = parent ? parent.depth + 1 : 0;
         this.fillSprite = this.renderer.circle.create();
+        this.badgeFontLoaders = {};
         this.nodeContainer.interactive = true;
         this.nodeContainer.buttonMode = true;
         this.nodeContainer.zIndex = this.depth;
@@ -361,6 +362,7 @@ var NodeRenderer = /** @class */ (function () {
             (_5 = this.badgeSpriteContainer) === null || _5 === void 0 ? void 0 : _5.destroy();
             this.badgeSpriteContainer = undefined;
             this.badgeSprites = [];
+            Object.values(this.badgeFontLoaders).forEach(function (loader) { return loader.cancel(); });
             if (this.badge !== undefined) {
                 this.badgeSpriteContainer = new PIXI.Container();
                 var _loop_1 = function (badge) {
@@ -374,9 +376,10 @@ var NodeRenderer = /** @class */ (function () {
                     badgeStrokeSprite.scale.set(badgeStrokeRadius / circleSprite_1.CircleSprite.radius);
                     var badgeIconSprite;
                     if (((_8 = badge.icon) === null || _8 === void 0 ? void 0 : _8.type) === 'textIcon') {
-                        (_9 = this_1.badgeIconLoader) === null || _9 === void 0 ? void 0 : _9.cancel();
-                        this_1.badgeIconLoader = FontLoader_1.FontLoader(badge.icon.family);
-                        this_1.badgeIconLoader.then(function (family) {
+                        var id = badge.icon.text + "-" + badge.icon.family + "-" + badge.icon.size + "-" + badge.icon.color;
+                        (_9 = this_1.badgeFontLoaders[id]) === null || _9 === void 0 ? void 0 : _9.cancel();
+                        this_1.badgeFontLoaders[id] = FontLoader_1.FontLoader(badge.icon.family);
+                        this_1.badgeFontLoaders[id].then(function (family) {
                             var _a, _b;
                             if (_this.badgeSpriteContainer === undefined || ((_a = badge.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || ((_b = badge.icon) === null || _b === void 0 ? void 0 : _b.family) !== family)
                                 return;

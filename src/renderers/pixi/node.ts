@@ -60,7 +60,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private iconSprite?: PIXI.Sprite
   private fontLoader?: CancellablePromise<string>
   private fontIconLoader?: CancellablePromise<string>
-  private badgeIconLoader?: CancellablePromise<string>;
+  private badgeFontLoaders: { [id: string]: CancellablePromise<string> }
   private doubleClickTimeout: number | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
@@ -73,6 +73,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.depth = parent ? parent.depth + 1 : 0
 
     this.fillSprite = this.renderer.circle.create()
+    this.badgeFontLoaders = { }
 
     this.nodeContainer.interactive = true
     this.nodeContainer.buttonMode = true
@@ -254,10 +255,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      * Badges
      */
     if (!equals(node.style?.badge, this.badge)) {
+      
       this.badge = node.style?.badge
       this.badgeSpriteContainer?.destroy()
       this.badgeSpriteContainer = undefined
       this.badgeSprites = []
+      Object.values(this.badgeFontLoaders).forEach((loader) => loader.cancel())
 
       if (this.badge !== undefined) {
         this.badgeSpriteContainer = new PIXI.Container()
@@ -276,9 +279,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           let badgeIconSprite: PIXI.Sprite | undefined
 
           if (badge.icon?.type === 'textIcon') {
-            this.badgeIconLoader?.cancel()
-            this.badgeIconLoader = FontLoader(badge.icon.family)
-            this.badgeIconLoader.then((family) => {
+            const id = `${badge.icon.text}-${badge.icon.family}-${badge.icon.size}-${badge.icon.color}`
+            this.badgeFontLoaders[id]?.cancel()
+            this.badgeFontLoaders[id] = FontLoader(badge.icon.family)
+            this.badgeFontLoaders[id].then((family) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
               badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
 
