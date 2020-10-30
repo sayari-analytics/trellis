@@ -39,11 +39,17 @@ var CircleSprite = /** @class */ (function () {
     return CircleSprite;
 }());
 exports.CircleSprite = CircleSprite;
+/**
+ * TODO - generate circle sprites on the fly scaled to the max scale they can be rendered at
+ */
 // export class CircleSprite extends PIXI.Sprite {
-//   maxRadius: number
+//   private _maxRadius: number
 //   constructor(texture: PIXI.Texture, maxRadius: number) {
 //     super(texture)
-//     this.maxRadius = maxRadius
+//     this._maxRadius = maxRadius
+//   }
+//   scaleToRadius(radius: number) {
+//     this.scale.set(radius / this._maxRadius)
 //   }
 // }
 // export class CircleSpriteFactory<N extends Node, E extends Edge> {

@@ -50,6 +50,7 @@ exports.EdgeRenderer = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var utils_1 = require("./utils");
 var arrowSprite_1 = require("./sprites/arrowSprite");
+var FontLoader_1 = require("./FontLoader");
 var LINE_HOVER_RADIUS = 4;
 var DEFAULT_EDGE_WIDTH = 1;
 var DEFAULT_EDGE_COLOR = utils_1.colorToNumber('#ccc');
@@ -146,7 +147,8 @@ var EdgeRenderer = /** @class */ (function () {
     }
     EdgeRenderer.prototype.update = function (edge) {
         var e_1, _a;
-        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+        var _this = this;
+        var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
         this.edge = edge;
         /**
          * Style
@@ -166,20 +168,20 @@ var EdgeRenderer = /** @class */ (function () {
             this.forwardArrow = undefined;
             this.reverseArrow = undefined;
             if (this.arrow === 'forward') {
-                this.forwardArrow = this.renderer.arrow.createSprite();
+                this.forwardArrow = this.renderer.arrow.create();
                 this.forwardArrow.tint = this.stroke;
                 this.forwardArrow.alpha = this.strokeOpacity;
                 this.arrowContainer.addChild(this.forwardArrow);
             }
             else if (this.arrow === 'reverse') {
-                this.reverseArrow = this.renderer.arrow.createSprite();
+                this.reverseArrow = this.renderer.arrow.create();
                 this.reverseArrow.tint = this.stroke;
                 this.reverseArrow.alpha = this.strokeOpacity;
                 this.arrowContainer.addChild(this.reverseArrow);
             }
             else if (this.arrow === 'both') {
-                this.forwardArrow = this.renderer.arrow.createSprite();
-                this.reverseArrow = this.renderer.arrow.createSprite();
+                this.forwardArrow = this.renderer.arrow.create();
+                this.reverseArrow = this.renderer.arrow.create();
                 this.forwardArrow.tint = this.stroke;
                 this.forwardArrow.alpha = this.strokeOpacity;
                 this.reverseArrow.tint = this.stroke;
@@ -209,21 +211,28 @@ var EdgeRenderer = /** @class */ (function () {
             (_u = this.labelSprite) === null || _u === void 0 ? void 0 : _u.destroy();
             this.labelSprite = undefined;
             if (this.label) {
-                this.labelSprite = new PIXI.Text(this.label, {
-                    fontFamily: this.labelFamily,
-                    fontSize: this.labelSize * 2.5,
-                    fill: this.labelColor,
-                    lineJoin: 'round',
-                    stroke: '#fafafa',
-                    strokeThickness: 2.5 * 2.5,
-                    align: 'center',
-                    wordWrap: labelWordWrap !== undefined,
-                    wordWrapWidth: labelWordWrap,
+                (_v = this.fontLoader) === null || _v === void 0 ? void 0 : _v.cancel();
+                this.fontLoader = FontLoader_1.FontLoader(this.labelFamily);
+                this.fontLoader.then(function (family) {
+                    var _a;
+                    if (_this.label === undefined || _this.labelFamily !== family)
+                        return;
+                    _this.labelSprite = new PIXI.Text(_this.label, {
+                        fontFamily: _this.labelFamily,
+                        fontSize: ((_a = _this.labelSize) !== null && _a !== void 0 ? _a : labelSize) * 2.5,
+                        fill: _this.labelColor,
+                        lineJoin: 'round',
+                        stroke: '#fafafa',
+                        strokeThickness: 2.5 * 2.5,
+                        align: 'center',
+                        wordWrap: labelWordWrap !== undefined,
+                        wordWrapWidth: labelWordWrap,
+                    });
+                    _this.labelSprite.name = 'text';
+                    _this.labelSprite.scale.set(0.4);
+                    _this.labelSprite.anchor.set(0.5, 0.5);
+                    _this.labelContainer.addChild(_this.labelSprite);
                 });
-                this.labelSprite.name = 'text';
-                this.labelSprite.scale.set(0.4);
-                this.labelSprite.anchor.set(0.5, 0.5);
-                this.labelContainer.addChild(this.labelSprite);
             }
         }
         /**

@@ -6,6 +6,6 @@ export declare class ArrowSprite<N extends Node, E extends Edge> {
     static ARROW_WIDTH: number;
     texture: PIXI.RenderTexture;
     constructor(renderer: Renderer<N, E>);
-    createSprite(): PIXI.Sprite;
+    create(): PIXI.Sprite;
     delete(): void;
 }

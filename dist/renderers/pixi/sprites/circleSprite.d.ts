@@ -8,3 +8,6 @@ export declare class CircleSprite<N extends Node, E extends Edge> {
     create(): PIXI.Sprite;
     delete(): void;
 }
+/**
+ * TODO - generate circle sprites on the fly scaled to the max scale they can be rendered at
+ */

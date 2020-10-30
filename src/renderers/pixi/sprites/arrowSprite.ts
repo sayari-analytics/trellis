@@ -21,7 +21,7 @@ export class ArrowSprite<N extends Node, E extends Edge> {
     )
   }
 
-  createSprite() {
+  create() {
     const sprite = new PIXI.Sprite(this.texture)
     sprite.anchor.set(0, 0.5)
     sprite.scale.set(0.5)

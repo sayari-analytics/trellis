@@ -4,8 +4,8 @@ import { PIXIRenderer as Renderer, NodeStyle } from '.'
 import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
 import { Node, Edge } from '../../'
 import { equals } from '../../utils'
-import { CancellablePromise, FontLoader } from './FontLoader'
 import { CircleSprite } from './sprites/circleSprite'
+import { CancellablePromise, FontLoader } from './FontLoader'
 
 
 const LABEL_Y_PADDING = 2
@@ -58,7 +58,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
   private iconSprite?: PIXI.Sprite
+  private fontLoader?: CancellablePromise<string>
   private fontIconLoader?: CancellablePromise<string>
+  private badgeIconLoader?: CancellablePromise<string>;
   private doubleClickTimeout: number | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
@@ -157,21 +159,26 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelWordWrap = labelWordWrap
 
       if (this.label) {
-        this.labelSprite = new PIXI.Text(this.label, {
-          fontFamily: this.labelFamily,
-          fontSize: this.labelSize * 2.5,
-          fill: this.labelColor,
-          lineJoin: 'round',
-          stroke: '#fff',
-          strokeThickness: 2.5 * 2.5,
-          align: 'center',
-          wordWrap: labelWordWrap !== undefined,
-          wordWrapWidth: labelWordWrap,
+        this.fontLoader?.cancel()
+        this.fontLoader = FontLoader(this.labelFamily)
+        this.fontLoader.then((family) => {
+          if(this.label === undefined || this.labelFamily !== family) return
+          this.labelSprite = new PIXI.Text(this.label, {
+            fontFamily: this.labelFamily,
+            fontSize: (this.labelSize ?? labelSize) * 2.5, //TODO: is there a way to avoid this?
+            fill: this.labelColor,
+            lineJoin: 'round',
+            stroke: '#fff',
+            strokeThickness: 2.5 * 2.5,
+            align: 'center',
+            wordWrap: labelWordWrap !== undefined,
+            wordWrapWidth: labelWordWrap,
+          })
+          this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
+          this.labelSprite.anchor.set(0.5, 0)
+          this.labelSprite.scale.set(0.4)
+          this.labelContainer.addChild(this.labelSprite)
         })
-        this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
-        this.labelSprite.anchor.set(0.5, 0)
-        this.labelSprite.scale.set(0.4)
-        this.labelContainer.addChild(this.labelSprite)
       }
     }
 
@@ -221,17 +228,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.fontIconLoader = FontLoader(this.icon.family)
         this.fontIconLoader.then((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
-          // TOOD - reuse icon textures
-          this.iconSprite = new PIXI.Text(this.icon.text, {
-            fontFamily: this.icon.family,
-            fontSize: this.icon.size * 2,
-            fill: this.icon.color,
-          })
-          this.iconSprite.name = 'icon'
-          this.iconSprite.position.set(0, 0)
-          this.iconSprite.anchor.set(0.5)
-          this.iconSprite.scale.set(0.5)
-
+          this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
           if (this.badgeSpriteContainer === undefined) {
             // no badges - add to top of nodeContainer
             this.nodeContainer.addChild(this.iconSprite)
@@ -241,13 +238,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           }
         })
       } else if (this.icon?.type === 'imageIcon') {
-        this.iconSprite = this.renderer.image.createSprite(this.icon.url)
-
-        this.iconSprite.name = 'icon'
-        this.iconSprite.position.set(this.icon.offset?.x ?? 0, this.icon.offset?.y ?? 0)
-        this.iconSprite.anchor.set(0.5)
-        this.iconSprite.scale.set(this.icon.scale ?? 1)
-
+        this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offset)
         if (this.badgeSpriteContainer === undefined) {
           // no badges - add to top of nodeContainer
           this.nodeContainer.addChild(this.iconSprite)
@@ -285,24 +276,27 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           let badgeIconSprite: PIXI.Sprite | undefined
 
           if (badge.icon?.type === 'textIcon') {
-            badgeIconSprite = new PIXI.Text(badge.icon.text, {
-              fontFamily: badge.icon.family,
-              fontSize: badge.icon.size * 2,
-              fontWeight: 'bold',
-              fill: badge.icon.color,
+            this.badgeIconLoader?.cancel()
+            this.badgeIconLoader = FontLoader(badge.icon.family)
+            this.badgeIconLoader.then((family) => {
+              if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
+              badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
+
+              this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+              this.badgeSpriteContainer.addChild(badgeStrokeSprite)
+              this.badgeSpriteContainer.addChild(badgeFillSprite)
+              badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
+              this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
             })
-            badgeIconSprite.position.set(0, 0)
-            badgeIconSprite.anchor.set(0.5)
-            badgeIconSprite.scale.set(0.5)
+          } else if (badge.icon?.type === 'imageIcon') {
+            badgeIconSprite = this.renderer.image.create(badge.icon.url)
+            this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+
+            this.badgeSpriteContainer.addChild(badgeStrokeSprite)
+            this.badgeSpriteContainer.addChild(badgeFillSprite)
+            badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
+            this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
           }
-          // } else if (badge.icon?.type === 'imageIcon') // TODO
-
-          this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
-
-          this.badgeSpriteContainer.addChild(badgeStrokeSprite)
-          this.badgeSpriteContainer.addChild(badgeFillSprite)
-          badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
-          this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
         }
       }
     }
