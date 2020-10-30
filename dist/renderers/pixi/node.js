@@ -76,6 +76,7 @@ var NodeRenderer = /** @class */ (function () {
         this.strokeSprites = [];
         this.badgeSprites = [];
         this.labelContainer = new PIXI.Container(); // TODO - create lazily
+        this.badgeIconLoader = [];
         this.doubleClick = false;
         this.nodeMoveXOffset = 0;
         this.nodeMoveYOffset = 0;
@@ -238,12 +239,12 @@ var NodeRenderer = /** @class */ (function () {
             this.labelFamily = labelFamily;
             this.labelColor = labelColor;
             this.labelSize = labelSize;
+            this.labelWordWrap = labelWordWrap;
             this.labelContainer.removeChildren();
             (_s = this.labelSprite) === null || _s === void 0 ? void 0 : _s.destroy();
             this.labelSprite = undefined;
-            this.labelWordWrap = labelWordWrap;
+            (_t = this.fontLoader) === null || _t === void 0 ? void 0 : _t.cancel();
             if (this.label) {
-                (_t = this.fontLoader) === null || _t === void 0 ? void 0 : _t.cancel();
                 this.fontLoader = FontLoader_1.FontLoader(this.labelFamily);
                 this.fontLoader.then(function (family) {
                     var _a;
@@ -316,56 +317,19 @@ var NodeRenderer = /** @class */ (function () {
             }
         }
         /**
-         * Icon
-         */
-        if (!utils_2.equals((_x = node.style) === null || _x === void 0 ? void 0 : _x.icon, this.icon)) {
-            this.icon = (_y = node.style) === null || _y === void 0 ? void 0 : _y.icon;
-            (_z = this.iconSprite) === null || _z === void 0 ? void 0 : _z.destroy();
-            this.iconSprite = undefined;
-            this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'));
-            if (((_0 = this.icon) === null || _0 === void 0 ? void 0 : _0.type) === 'textIcon') {
-                (_1 = this.fontIconLoader) === null || _1 === void 0 ? void 0 : _1.cancel();
-                this.fontIconLoader = FontLoader_1.FontLoader(this.icon.family);
-                this.fontIconLoader.then(function (family) {
-                    var _a;
-                    if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || _this.icon.family !== family)
-                        return;
-                    _this.iconSprite = _this.renderer.fontIcon.create(_this.icon.text, _this.icon.family, _this.icon.size, 'normal', _this.icon.color);
-                    if (_this.badgeSpriteContainer === undefined) {
-                        // no badges - add to top of nodeContainer
-                        _this.nodeContainer.addChild(_this.iconSprite);
-                    }
-                    else {
-                        // badges - add below badges
-                        _this.nodeContainer.addChildAt(_this.iconSprite, _this.nodeContainer.children.length - 1);
-                    }
-                });
-            }
-            else if (((_2 = this.icon) === null || _2 === void 0 ? void 0 : _2.type) === 'imageIcon') {
-                this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offset);
-                if (this.badgeSpriteContainer === undefined) {
-                    // no badges - add to top of nodeContainer
-                    this.nodeContainer.addChild(this.iconSprite);
-                }
-                else {
-                    // badges - add below badges
-                    this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1);
-                }
-            }
-        }
-        /**
          * Badges
          */
-        if (!utils_2.equals((_3 = node.style) === null || _3 === void 0 ? void 0 : _3.badge, this.badge)) {
-            this.badge = (_4 = node.style) === null || _4 === void 0 ? void 0 : _4.badge;
-            (_5 = this.badgeSpriteContainer) === null || _5 === void 0 ? void 0 : _5.destroy();
+        if (!utils_2.equals((_x = node.style) === null || _x === void 0 ? void 0 : _x.badge, this.badge)) {
+            this.badge = (_y = node.style) === null || _y === void 0 ? void 0 : _y.badge;
+            (_z = this.badgeSpriteContainer) === null || _z === void 0 ? void 0 : _z.destroy();
             this.badgeSpriteContainer = undefined;
             this.badgeSprites = [];
+            (_0 = this.badgeIconLoader) === null || _0 === void 0 ? void 0 : _0.forEach(function (loader) { return loader.cancel(); });
             if (this.badge !== undefined) {
                 this.badgeSpriteContainer = new PIXI.Container();
                 var _loop_1 = function (badge) {
-                    var badgeRadius = (_6 = badge.radius) !== null && _6 !== void 0 ? _6 : DEFAULT_BADGE_RADIUS;
-                    var badgeStrokeRadius = badgeRadius + ((_7 = badge.strokeWidth) !== null && _7 !== void 0 ? _7 : DEFAULT_BADGE_STROKE_WIDTH);
+                    var badgeRadius = (_1 = badge.radius) !== null && _1 !== void 0 ? _1 : DEFAULT_BADGE_RADIUS;
+                    var badgeStrokeRadius = badgeRadius + ((_2 = badge.strokeWidth) !== null && _2 !== void 0 ? _2 : DEFAULT_BADGE_STROKE_WIDTH);
                     var badgeFillSprite = this_1.renderer.circle.create();
                     badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : utils_1.colorToNumber(badge.color);
                     badgeFillSprite.scale.set(badgeRadius / circleSprite_1.CircleSprite.radius);
@@ -373,10 +337,9 @@ var NodeRenderer = /** @class */ (function () {
                     badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : utils_1.colorToNumber(badge.stroke);
                     badgeStrokeSprite.scale.set(badgeStrokeRadius / circleSprite_1.CircleSprite.radius);
                     var badgeIconSprite;
-                    if (((_8 = badge.icon) === null || _8 === void 0 ? void 0 : _8.type) === 'textIcon') {
-                        (_9 = this_1.badgeIconLoader) === null || _9 === void 0 ? void 0 : _9.cancel();
-                        this_1.badgeIconLoader = FontLoader_1.FontLoader(badge.icon.family);
-                        this_1.badgeIconLoader.then(function (family) {
+                    if (((_3 = badge.icon) === null || _3 === void 0 ? void 0 : _3.type) === 'textIcon') {
+                        var badgeIconLoader = FontLoader_1.FontLoader(badge.icon.family);
+                        badgeIconLoader.then(function (family) {
                             var _a, _b;
                             if (_this.badgeSpriteContainer === undefined || ((_a = badge.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || ((_b = badge.icon) === null || _b === void 0 ? void 0 : _b.family) !== family)
                                 return;
@@ -387,8 +350,9 @@ var NodeRenderer = /** @class */ (function () {
                             badgeIconSprite !== undefined && _this.badgeSpriteContainer.addChild(badgeIconSprite);
                             _this.nodeContainer.addChild(_this.badgeSpriteContainer); // add to top
                         });
+                        (_4 = this_1.badgeIconLoader) === null || _4 === void 0 ? void 0 : _4.push(badgeIconLoader);
                     }
-                    else if (((_10 = badge.icon) === null || _10 === void 0 ? void 0 : _10.type) === 'imageIcon') {
+                    else if (((_5 = badge.icon) === null || _5 === void 0 ? void 0 : _5.type) === 'imageIcon') {
                         badgeIconSprite = this_1.renderer.image.create(badge.icon.url);
                         this_1.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * utils_1.RADIANS_PER_DEGREE) - utils_1.HALF_PI });
                         this_1.badgeSpriteContainer.addChild(badgeStrokeSprite);
@@ -410,6 +374,46 @@ var NodeRenderer = /** @class */ (function () {
                         if (_17 && !_17.done && (_c = _16.return)) _c.call(_16);
                     }
                     finally { if (e_3) throw e_3.error; }
+                }
+            }
+        }
+        /**
+         * Icon
+         */
+        if (!utils_2.equals((_6 = node.style) === null || _6 === void 0 ? void 0 : _6.icon, this.icon)) {
+            this.icon = (_7 = node.style) === null || _7 === void 0 ? void 0 : _7.icon;
+            if (this.iconSprite !== undefined) {
+                this.nodeContainer.removeChild(this.iconSprite);
+                this.iconSprite.destroy();
+                this.iconSprite = undefined;
+            }
+            (_8 = this.fontIconLoader) === null || _8 === void 0 ? void 0 : _8.cancel();
+            if (((_9 = this.icon) === null || _9 === void 0 ? void 0 : _9.type) === 'textIcon') {
+                this.fontIconLoader = FontLoader_1.FontLoader(this.icon.family);
+                this.fontIconLoader.then(function (family) {
+                    var _a;
+                    if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || _this.icon.family !== family)
+                        return;
+                    _this.iconSprite = _this.renderer.fontIcon.create(_this.icon.text, _this.icon.family, _this.icon.size, 'normal', _this.icon.color);
+                    if (_this.badgeSpriteContainer === undefined) {
+                        // no badges - add to top of nodeContainer
+                        _this.nodeContainer.addChild(_this.iconSprite);
+                    }
+                    else {
+                        // badges - add below badges
+                        _this.nodeContainer.addChildAt(_this.iconSprite, _this.nodeContainer.children.length - 1);
+                    }
+                });
+            }
+            else if (((_10 = this.icon) === null || _10 === void 0 ? void 0 : _10.type) === 'imageIcon') {
+                this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offsetX, this.icon.offsetY);
+                if (this.badgeSpriteContainer === undefined) {
+                    // no badges - add to top of nodeContainer
+                    this.nodeContainer.addChild(this.iconSprite);
+                }
+                else {
+                    // badges - add below badges
+                    this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1);
                 }
             }
         }

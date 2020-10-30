@@ -144,9 +144,9 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
+      this.fontLoader?.cancel()
 
       if (this.label) {
-        this.fontLoader?.cancel()
         this.fontLoader = FontLoader(this.labelFamily)
         this.fontLoader.then((family) => {
           if(this.label === undefined || this.labelFamily !== family) return

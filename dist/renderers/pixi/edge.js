@@ -210,8 +210,8 @@ var EdgeRenderer = /** @class */ (function () {
             this.labelContainer.removeChildren();
             (_u = this.labelSprite) === null || _u === void 0 ? void 0 : _u.destroy();
             this.labelSprite = undefined;
+            (_v = this.fontLoader) === null || _v === void 0 ? void 0 : _v.cancel();
             if (this.label) {
-                (_v = this.fontLoader) === null || _v === void 0 ? void 0 : _v.cancel();
                 this.fontLoader = FontLoader_1.FontLoader(this.labelFamily);
                 this.fontLoader.then(function (family) {
                     var _a;

@@ -60,7 +60,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private iconSprite?: PIXI.Sprite
   private fontLoader?: CancellablePromise<string>
   private fontIconLoader?: CancellablePromise<string>
-  private badgeIconLoader?: CancellablePromise<string>;
+  private badgeIconLoader?: CancellablePromise<string>[] = []
   private doubleClickTimeout: number | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
@@ -153,13 +153,13 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelFamily = labelFamily
       this.labelColor = labelColor
       this.labelSize = labelSize
+      this.labelWordWrap = labelWordWrap
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
-      this.labelWordWrap = labelWordWrap
+      this.fontLoader?.cancel()
 
       if (this.label) {
-        this.fontLoader?.cancel()
         this.fontLoader = FontLoader(this.labelFamily)
         this.fontLoader.then((family) => {
           if(this.label === undefined || this.labelFamily !== family) return
@@ -214,43 +214,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
 
     /**
-     * Icon
-     */
-    if (!equals(node.style?.icon, this.icon)) {
-      this.icon = node.style?.icon
-      this.iconSprite?.destroy()
-
-      this.iconSprite = undefined
-      this.nodeContainer.removeChild(this.nodeContainer.getChildByName('icon'))
-
-      if (this.icon?.type === 'textIcon') {
-        this.fontIconLoader?.cancel()
-        this.fontIconLoader = FontLoader(this.icon.family)
-        this.fontIconLoader.then((family) => {
-          if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
-          this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
-          if (this.badgeSpriteContainer === undefined) {
-            // no badges - add to top of nodeContainer
-            this.nodeContainer.addChild(this.iconSprite)
-          } else {
-            // badges - add below badges
-            this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
-          }
-        })
-      } else if (this.icon?.type === 'imageIcon') {
-        this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offset)
-        if (this.badgeSpriteContainer === undefined) {
-          // no badges - add to top of nodeContainer
-          this.nodeContainer.addChild(this.iconSprite)
-        } else {
-          // badges - add below badges
-          this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
-        }
-      }
-    }
-
-
-    /**
      * Badges
      */
     if (!equals(node.style?.badge, this.badge)) {
@@ -258,6 +221,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.badgeSpriteContainer?.destroy()
       this.badgeSpriteContainer = undefined
       this.badgeSprites = []
+      this.badgeIconLoader?.forEach((loader) => loader.cancel())
 
       if (this.badge !== undefined) {
         this.badgeSpriteContainer = new PIXI.Container()
@@ -276,9 +240,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           let badgeIconSprite: PIXI.Sprite | undefined
 
           if (badge.icon?.type === 'textIcon') {
-            this.badgeIconLoader?.cancel()
-            this.badgeIconLoader = FontLoader(badge.icon.family)
-            this.badgeIconLoader.then((family) => {
+            const badgeIconLoader = FontLoader(badge.icon.family)
+            badgeIconLoader.then((family) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
               badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
 
@@ -288,6 +251,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
               badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
               this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
             })
+            this.badgeIconLoader?.push(badgeIconLoader)
           } else if (badge.icon?.type === 'imageIcon') {
             badgeIconSprite = this.renderer.image.create(badge.icon.url)
             this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
@@ -297,6 +261,46 @@ export class NodeRenderer<N extends Node, E extends Edge>{
             badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
             this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
           }
+        }
+      }
+    }
+
+
+    /**
+     * Icon
+     */
+    if (!equals(node.style?.icon, this.icon)) {
+      this.icon = node.style?.icon
+      if (this.iconSprite !== undefined) {
+        this.nodeContainer.removeChild(this.iconSprite)
+        this.iconSprite.destroy()
+        this.iconSprite = undefined
+      }
+      this.fontIconLoader?.cancel()
+
+      if (this.icon?.type === 'textIcon') {
+        this.fontIconLoader = FontLoader(this.icon.family)
+        this.fontIconLoader.then((family) => {
+          if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
+          this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
+
+          if (this.badgeSpriteContainer === undefined) {
+            // no badges - add to top of nodeContainer
+            this.nodeContainer.addChild(this.iconSprite)
+          } else {
+            // badges - add below badges
+            this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
+          }
+        })
+      } else if (this.icon?.type === 'imageIcon') {
+        this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offsetX, this.icon.offsetY)
+
+        if (this.badgeSpriteContainer === undefined) {
+          // no badges - add to top of nodeContainer
+          this.nodeContainer.addChild(this.iconSprite)
+        } else {
+          // badges - add below badges
+          this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
         }
       }
     }

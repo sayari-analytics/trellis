@@ -21,6 +21,16 @@ type Node = Graph.Node & { type: string }
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
+const COMPANY = {
+  color: '#ffaf1d',
+  stroke: [{ color: '#F7CA4D', width: 2 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+}
+const PERSON = {
+  color: '#7CBBF3',
+  stroke: [{ color: '#90D7FB', width: 2 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+}
 let nodes = Object.values(graphData.nodes)
   .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
@@ -63,16 +73,10 @@ let nodes = Object.values(graphData.nodes)
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_39` })))
   .map<Node>(({ id, label, type }) => ({
     id,
-    // label,
+    label,
     radius: 16,
     type,
-    style: {
-      color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-      stroke: type === 'company' ?
-        [{ color: '#F7CA4D', width: 2 }] :
-        [{ color: '#90D7FB', width: 2 }],
-      // icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
-    }
+    style: type === 'person' ? PERSON : COMPANY
   }))
 
 let edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
@@ -109,7 +113,7 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
     id,
     source,
     target,
-    // label: field.replace(/_/g, ' '),
+    label: field.replace(/_/g, ' '),
   }))
 
 let nodesById: Record<string, Node>
