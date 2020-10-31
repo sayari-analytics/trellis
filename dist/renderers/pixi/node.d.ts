@@ -26,6 +26,7 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     private labelColor?;
     private labelSize?;
     private labelWordWrap?;
+    private labelBackground?;
     private stroke?;
     private icon?;
     private badge?;
@@ -37,6 +38,7 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     private badgeSprites;
     private labelContainer;
     private labelSprite?;
+    private labelBackgroundSprite?;
     private iconSprite?;
     private fontLoader?;
     private fontIconLoader?;

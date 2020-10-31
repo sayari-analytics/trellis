@@ -44,6 +44,7 @@ export declare type NodeStyle = {
     labelColor: string;
     labelSize: number;
     labelWordWrap: number;
+    labelBackground: string;
 };
 export declare type EdgeStyle = {
     width: number;

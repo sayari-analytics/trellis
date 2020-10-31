@@ -46,6 +46,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private labelColor?: number
   private labelSize?: number
   private labelWordWrap?: number
+  private labelBackground?: string
   private stroke?: NodeStyle['stroke']
   private icon?: NodeStyle['icon']
   private badge?: NodeStyle['badge']
@@ -57,6 +58,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private badgeSprites: { fill: PIXI.Sprite, stroke: PIXI.Sprite, icon?: PIXI.Sprite, angle: number }[] = []
   private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
+  private labelBackgroundSprite?: PIXI.Sprite
   private iconSprite?: PIXI.Sprite
   private fontLoader?: CancellablePromise<string>
   private fontIconLoader?: CancellablePromise<string>
@@ -141,19 +143,22 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     const labelColor = node.style?.labelColor === undefined ? DEFAULT_LABEL_COLOR : colorToNumber(node.style?.labelColor)
     const labelSize = node.style?.labelSize ?? DEFAULT_LABEL_SIZE
     const labelWordWrap = node.style?.labelWordWrap
+    const labelBackground = node.style?.labelBackground
 
     if (
       node.label !== this.label ||
       labelFamily !== this.labelFamily ||
       labelColor !== this.labelColor ||
       labelSize !== this.labelSize ||
-      labelWordWrap !== this.labelWordWrap
+      labelWordWrap !== this.labelWordWrap ||
+      labelBackground !== this.labelBackground
     ) {
       this.label = node.label
       this.labelFamily = labelFamily
       this.labelColor = labelColor
       this.labelSize = labelSize
       this.labelWordWrap = labelWordWrap
+      this.labelBackground = labelBackground
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
@@ -165,18 +170,28 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           if(this.label === undefined || this.labelFamily !== family) return
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
-            fontSize: (this.labelSize ?? labelSize) * 2.5, //TODO: is there a way to avoid this?
+            fontSize: (this.labelSize ?? labelSize) * 2.5, // TODO: is there a way to avoid this?
             fill: this.labelColor,
             lineJoin: 'round',
-            stroke: '#fff',
-            strokeThickness: 2.5 * 2.5,
+            stroke: this.labelBackground === undefined ? '#fff' : undefined,
+            strokeThickness: this.labelBackground === undefined ? (2.5 * 2.5) : 0,
             align: 'center',
             wordWrap: labelWordWrap !== undefined,
             wordWrapWidth: labelWordWrap,
           })
-          this.labelSprite.position.set(0, this.radius + LABEL_Y_PADDING)
           this.labelSprite.anchor.set(0.5, 0)
           this.labelSprite.scale.set(0.4)
+          this.labelContainer.addChild(this.labelSprite)
+
+          if (this.labelBackground) {
+            this.labelBackgroundSprite = new PIXI.Sprite(PIXI.Texture.WHITE)
+            this.labelBackgroundSprite.width = this.labelSprite.width + 4
+            this.labelBackgroundSprite.height = this.labelSprite.height
+            this.labelBackgroundSprite.tint = colorToNumber(this.labelBackground)
+            this.labelBackgroundSprite.anchor.set(0.5, 0)
+            this.labelContainer.addChild(this.labelBackgroundSprite)
+          }
+
           this.labelContainer.addChild(this.labelSprite)
         })
       }
@@ -381,6 +396,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     if (this.labelSprite) {
       this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
+    }
+
+    if (this.labelBackgroundSprite) {
+      this.labelBackgroundSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
     }
 
     for (const subgraphNodeId in this.subgraphNodes) {

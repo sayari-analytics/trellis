@@ -52,6 +52,7 @@ export type NodeStyle = {
   labelColor: string
   labelSize: number
   labelWordWrap: number
+  labelBackground: string
 }
 
 export type EdgeStyle = {
