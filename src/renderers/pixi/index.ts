@@ -29,7 +29,8 @@ export type ImageIcon = {
   type: 'imageIcon'
   url: string
   scale?: number;
-  offset?: { x?: number, y?: number }
+  offsetX?: number;
+  offsetY?: number;
 }
 
 export type NodeStyle = {
@@ -51,6 +52,7 @@ export type NodeStyle = {
   labelColor: string
   labelSize: number
   labelWordWrap: number
+  labelBackground: string
 }
 
 export type EdgeStyle = {

@@ -44,9 +44,20 @@ let edges: Graph.Edge[] = []
 
 
 /**
- * Initialize Layout and Renderer Options
+ * Initialize Layout and Renderer
  */
 const container: HTMLDivElement = document.querySelector('#graph')
+const subgraph = Subgraph.Layout()
+const cluster = Cluster.Layout()
+const render = Renderer({
+  container,
+  debug: { stats, logPerformance: false }
+})
+
+
+/**
+ * Initialize Layout and Renderer Options
+ */
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -96,17 +107,6 @@ const renderOptions: Partial<RendererOptions> = {
     render({ nodes, edges, options: renderOptions })
   },
 }
-
-
-/**
- * Initialize Layout and Renderer
- */
-const subgraph = Subgraph.Layout()
-const cluster = Cluster.Layout()
-const render = Renderer({
-  container,
-  debug: { stats, logPerformance: false }
-})
 
 
 /**

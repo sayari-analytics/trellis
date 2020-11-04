@@ -21,6 +21,16 @@ type Node = Graph.Node & { type: string }
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
+const COMPANY = {
+  color: '#ffaf1d',
+  stroke: [{ color: '#F7CA4D', width: 2 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+}
+const PERSON = {
+  color: '#7CBBF3',
+  stroke: [{ color: '#90D7FB', width: 2 }],
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+}
 let nodes = Object.values(graphData.nodes)
   .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
@@ -42,13 +52,13 @@ let nodes = Object.values(graphData.nodes)
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_18` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_19` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_20` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_21` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_22` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_23` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_24` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_25` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_26` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_27` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_21` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_22` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_23` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_24` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_25` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_26` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_27` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_28` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_29` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_30` })))
@@ -66,13 +76,7 @@ let nodes = Object.values(graphData.nodes)
     // label,
     radius: 16,
     type,
-    style: {
-      color: type === 'company' ? '#ffaf1d' : '#7CBBF3',
-      stroke: type === 'company' ?
-        [{ color: '#F7CA4D', width: 2 }] :
-        [{ color: '#90D7FB', width: 2 }],
-      // icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
-    }
+    style: type === 'person' ? PERSON : COMPANY
   }))
 
 let edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
@@ -94,6 +98,10 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_17`, { ...edge, source: `${edge.source}_17`, target: `${edge.target}_17` }]))
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_18`, { ...edge, source: `${edge.source}_18`, target: `${edge.target}_18` }]))
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_19`, { ...edge, source: `${edge.source}_19`, target: `${edge.target}_19` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_20`, { ...edge, source: `${edge.source}_20`, target: `${edge.target}_20` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_21`, { ...edge, source: `${edge.source}_21`, target: `${edge.target}_21` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_22`, { ...edge, source: `${edge.source}_22`, target: `${edge.target}_22` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_23`, { ...edge, source: `${edge.source}_23`, target: `${edge.target}_23` }]))
   // .concat([
   //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
   //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
@@ -117,14 +125,24 @@ let edgesById: Record<string, Graph.Edge>
 
 
 /**
+ * Initialize Layout and Renderer
+ */
+const container: HTMLDivElement = document.querySelector('#graph')
+const layout = Layout()
+const zoomControl = Zoom.Control({ container })
+const render = throttleAnimationFrame(Renderer({
+  container,
+  debug: { stats, logPerformance: false }
+}))
+
+
+/**
  * Initialize Layout and Renderer Options
  */
 const layoutOptions: Partial<LayoutOptions> = {
   nodeStrength: -600,
   tick: 50,
 }
-
-const container: HTMLDivElement = document.querySelector('#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -158,17 +176,6 @@ const renderOptions: Partial<RendererOptions> = {
     render({ nodes, edges, options: renderOptions })
   }
 }
-
-
-/**
- * Initialize Layout and Renderer
- */
-const layout = Layout()
-const zoomControl = Zoom.Control({ container })
-const render = throttleAnimationFrame(Renderer({
-  container,
-  debug: { stats, logPerformance: true }
-}))
 
 
 /**

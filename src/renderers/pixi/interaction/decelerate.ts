@@ -14,7 +14,7 @@ export class Decelerate <N extends Node, E extends Edge>{
   private saved: { x: number, y: number, time: number }[] = []
   private x?: number
   private y?: number
-  private friction = 0.95
+  private friction = 0.9
   private minSpeed = 0.01
   private percentChangeX = this.friction
   private percentChangeY = this.friction

@@ -1,6 +1,7 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as Subgraph from '../../src/layout/subgraph'
+import * as Cluster from '../../src/layout/cluster'
 import { Node, Edge } from '../../src/'
 import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 import { company, person } from '../assets/icons'
@@ -14,7 +15,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+const createCompanyStyle = (): Partial<NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
   icon: { type: 'imageIcon', url: company }
@@ -23,7 +24,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
 const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 6 }],
-  icon: radius > 60 ?
+  icon: radius > 30 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius } :
     { type: 'imageIcon' as const, url: person }
 })
@@ -36,8 +37,8 @@ let nodes = [
   .map<Node>(({ id, label }, idx) => ({
     id,
     label,
-    radius: id === 'a' ? 62 : (20 - idx) * 4,
-    style: id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4)
+    radius: id === 'a' ? 32 : (28 - idx) * 1.8,
+    style: id === 'a' ? createCompanyStyle() : createPersonStyle((28 - idx) * 1.8)
   }))
 
 let edges: Edge[] = [
@@ -49,13 +50,21 @@ let edges: Edge[] = [
 
 
 /**
+ * Initialize Layout and Renderer
+ */
+const container: HTMLDivElement = document.querySelector('#graph')
+const force = Force.Layout()
+const subgraph = Subgraph.Layout()
+const cluster = Cluster.Layout()
+const renderer = Renderer({
+  container,
+  debug: { stats, logPerformance: true }
+})
+
+
+/**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Partial<Force.LayoutOptions> = {
-  nodeStrength: -500,
-}
-
-const container: HTMLDivElement = document.querySelector('div#graph')
 const renderOptions: Partial<RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -86,58 +95,58 @@ const renderOptions: Partial<RendererOptions> = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
-  onNodeDoubleClick: (_, { id }) => {
-    nodes = nodes.map((node) => (node.id === id ? {
-      ...node,
-      radius: 160,
-      style: { ...node.style, color: '#efefef', icon: undefined },
-      subgraph: {
-        nodes: (node.subgraph?.nodes ?? []).concat([
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle(21) },
-          { id: '', radius: 21, label: `${node.id.toUpperCase()} ${node.subgraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle(21) },
-        ])
-          .map<Node>((subNode, idx) => ({ ...subNode, id: `${node.id}_${idx}` })),
-        edges: []
-      },
-    } : node))
+  onNodeDoubleClick: (_, clickedNode) => {
+    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle() },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle() },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle() },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: createCompanyStyle() },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: createCompanyStyle() },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: createCompanyStyle() },
+    ]))
+    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
 
-    subgraph({ nodes, edges }).then((graph) => {
-      nodes = graph.nodes
-      renderer({ nodes, edges, options: renderOptions })
-    })
+    nodes = subgraph(
+      nodes,
+      nodes.map((node) => {
+        if (node.id === clickedNode.id) {
+          return {
+            ...node,
+            radius,
+            style: { ...node.style, color: '#efefef', icon: undefined },
+            subgraph: {
+              nodes: subgraphNodes,
+              edges: []
+            },
+          }
+        }
+
+        return node
+      })
+    )
+
+    renderer({ nodes, edges, options: renderOptions })
   },
   onContainerPointerUp: () => {
-    nodes = nodes.map((node, idx) => (node.subgraph ? {
-      ...node,
-      radius: node.id === 'a' ? 62 : (20 - idx) * 4,
-      style: node.id === 'a' ? createCompanyStyle(62) : createPersonStyle((20 - idx) * 4),
-      subgraph: undefined,
-    } : node))
+    nodes = subgraph(
+      nodes,
+      nodes.map((node, idx) => ({
+        ...node,
+        radius: node.id === 'a' ? 32 : (28 - idx) * 1.8,
+        style: node.id === 'a' ? createCompanyStyle() : createPersonStyle((28 - idx) * 1.8),
+        subgraph: undefined,
+      }))
+    )
 
-    subgraph({ nodes, edges }).then((graph) => {
-      nodes = graph.nodes
-      renderer({ nodes, edges, options: renderOptions })
-    })
+    renderer({ nodes, edges, options: renderOptions })
   },
 }
 
 
 /**
- * Initialize Layout and Renderer
- */
-const force = Force.Layout()
-const subgraph = Subgraph.Layout()
-const renderer = Renderer({
-  container,
-  debug: { stats, logPerformance: true }
-})
-
-
-/**
  * Layout and Render Graph
  */
-force({ nodes, edges, options: layoutOptions }).then((graph) => {
+force({ nodes, edges, options: { nodeStrength: -800 } }).then((graph) => {
   nodes = graph.nodes
   renderer({ nodes, edges, options: renderOptions })
 })

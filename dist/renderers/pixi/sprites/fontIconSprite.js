@@ -28,16 +28,16 @@ var FontIconSprite = /** @class */ (function () {
     FontIconSprite.prototype.create = function (text, fontFamily, fontSize, fontWeight, fill) {
         var icon = text + "-" + fontFamily + "-" + fontSize + "-" + fontWeight + "-" + fill;
         if (this.cache[icon] === undefined) {
-            var textSprite = new PIXI.Text(text, { fontFamily: fontFamily, fontSize: fontSize * 2, fontWeight: fontWeight, fill: fill });
+            var textSprite = new PIXI.Text(text, {
+                fontFamily: fontFamily,
+                fontSize: fontSize * 2,
+                fontWeight: fontWeight,
+                fill: fill
+            });
+            textSprite.updateText(true);
             this.cache[icon] = textSprite.texture;
-            textSprite.name = 'icon';
-            textSprite.position.set(0, 0);
-            textSprite.anchor.set(0.5);
-            textSprite.scale.set(0.5);
-            return textSprite;
         }
         var sprite = new PIXI.Sprite(this.cache[icon]);
-        sprite.name = 'icon';
         sprite.position.set(0, 0);
         sprite.anchor.set(0.5);
         sprite.scale.set(0.5);
