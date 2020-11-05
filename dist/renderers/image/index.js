@@ -32,8 +32,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = void 0;
 var WebGL = __importStar(require("../pixi"));
-exports.Renderer = function () {
-    var pixiRenderer = new WebGL.PIXIRenderer({ container: document.createElement('div'), preserveDrawingBuffer: true });
+exports.Renderer = function (options) {
+    if (options === void 0) { options = {}; }
+    var pixiRenderer = new WebGL.PIXIRenderer({ container: document.createElement('div'), preserveDrawingBuffer: true, backgroundColor: options.backgroundColor });
     var render = function (graph) {
         pixiRenderer.update(__assign(__assign({}, graph), { options: __assign(__assign({}, graph.options), { animate: false }) }));
         return pixiRenderer.base64();

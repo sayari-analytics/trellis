@@ -43,6 +43,7 @@ var arrowSprite_1 = require("./sprites/arrowSprite");
 var circleSprite_1 = require("./sprites/circleSprite");
 var ImageSprite_1 = require("./sprites/ImageSprite");
 var FontIconSprite_1 = require("./sprites/FontIconSprite");
+var utils_2 = require("./utils");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
@@ -383,12 +384,13 @@ var PIXIRenderer = /** @class */ (function () {
             width: this.width,
             height: this.height,
             resolution: 2,
-            transparent: true,
             antialias: true,
             autoDensity: true,
             autoStart: false,
             powerPreference: 'high-performance',
             preserveDrawingBuffer: (_a = options.preserveDrawingBuffer) !== null && _a !== void 0 ? _a : false,
+            transparent: options.backgroundColor === undefined,
+            backgroundColor: options.backgroundColor === undefined ? undefined : utils_2.colorToNumber(options.backgroundColor),
         });
         this.labelsLayer.interactiveChildren = false;
         this.nodesLayer.sortableChildren = true; // TODO - perf test

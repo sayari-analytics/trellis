@@ -11,6 +11,7 @@ import { ArrowSprite } from './sprites/arrowSprite'
 import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
 import { FontIconSprite } from './sprites/FontIconSprite'
+import { colorToNumber } from './utils'
 
 
 install(PIXI)
@@ -173,7 +174,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   root = new PIXI.Container()
   debug?: { logPerformance?: boolean, stats?: Stats }
 
-  constructor(options: { container: HTMLDivElement, preserveDrawingBuffer?: boolean, debug?: { logPerformance?: boolean, stats?: Stats } }) {
+  constructor(options: { container: HTMLDivElement, preserveDrawingBuffer?: boolean, backgroundColor?: string, debug?: { logPerformance?: boolean, stats?: Stats } }) {
     if (!(options.container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
     }
@@ -187,12 +188,13 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       width: this.width,
       height: this.height,
       resolution: 2, // window.devicePixelRatio,
-      transparent: true,
       antialias: true,
       autoDensity: true,
       autoStart: false,
       powerPreference: 'high-performance',
       preserveDrawingBuffer: options.preserveDrawingBuffer ?? false,
+      transparent: options.backgroundColor === undefined,
+      backgroundColor: options.backgroundColor === undefined ? undefined : colorToNumber(options.backgroundColor),
     })
 
     this.labelsLayer.interactiveChildren = false

@@ -19,8 +19,8 @@ export type Options = {
 }
 
 
-export const Renderer = <N extends Node, E extends Edge>() => {
-  const pixiRenderer = new WebGL.PIXIRenderer({ container: document.createElement('div'), preserveDrawingBuffer: true })
+export const Renderer = <N extends Node, E extends Edge>(options: { backgroundColor?: string } = {}) => {
+  const pixiRenderer = new WebGL.PIXIRenderer({ container: document.createElement('div'), preserveDrawingBuffer: true, backgroundColor: options.backgroundColor })
 
   const render = (graph: { nodes: N[], edges: E[], options?: Partial<Options> }) => {
     pixiRenderer.update({ ...graph, options: { ...graph.options, animate: false } })

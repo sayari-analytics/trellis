@@ -177,7 +177,7 @@ downloadControl({
 /**
  * Create Renderers
  */
-const imageRenderer = Png.Renderer()
+const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
 const renderer = WebGL.Renderer({
   container,
   // debug: { stats, logPerformance: true }

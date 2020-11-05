@@ -11,7 +11,9 @@ export declare type Options = {
     y: number;
     zoom: number;
 };
-export declare const Renderer: <N extends Node<Edge<Partial<WebGL.EdgeStyle>>, Partial<WebGL.NodeStyle>>, E extends Edge<Partial<WebGL.EdgeStyle>>>() => {
+export declare const Renderer: <N extends Node<Edge<Partial<WebGL.EdgeStyle>>, Partial<WebGL.NodeStyle>>, E extends Edge<Partial<WebGL.EdgeStyle>>>(options?: {
+    backgroundColor?: string;
+}) => {
     (graph: {
         nodes: N[];
         edges: E[];

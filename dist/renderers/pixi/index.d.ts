@@ -165,6 +165,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     constructor(options: {
         container: HTMLDivElement;
         preserveDrawingBuffer?: boolean;
+        backgroundColor?: string;
         debug?: {
             logPerformance?: boolean;
             stats?: Stats;
