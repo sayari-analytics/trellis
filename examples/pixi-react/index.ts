@@ -1,13 +1,14 @@
-import { createElement, SFC, useState, useCallback, useEffect } from 'react'
+import { createElement, FunctionComponent, useState, useCallback, useEffect } from 'react'
 import { render } from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
 import * as Graph from '../../src'
-import { Zoom, clampZoom } from '../../src/renderers/pixi/bindings/react/zoom'
-import { Renderer } from '../../src/renderers/pixi/bindings/react/renderer'
+import { Zoom, clampZoom } from '../../src/renderers/webgl/bindings/react/zoom'
+import { Renderer } from '../../src/renderers/webgl/bindings/react/renderer'
 import * as Force from '../../src/layout/force'
+import * as Cluster from '../../src/layout/cluster'
 import * as Subgraph from '../../src/layout/subgraph'
-import { NodeStyle } from '../../src/renderers/pixi'
+import * as WebGL from '../../src/renderers/webgl'
 
 
 const stats = new Stats()
@@ -18,16 +19,16 @@ document.body.appendChild(stats.dom)
 type Node = Graph.Node & { type: string }
 
 
-const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+const COMPANY_STYLE: WebGL.NodeStyle = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 }
-})
-const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
+}
+const PERSON_STYLE: WebGL.NodeStyle = {
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.2 }
-})
+  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 22 }
+}
 
 const data = {
   nodes: [
@@ -41,7 +42,7 @@ const data = {
       label,
       radius: 18,
       type: id === 'a' ? 'company' : 'person',
-      style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
+      style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
       subgraph: undefined,
     })),
   edges: [
@@ -57,16 +58,17 @@ const data = {
 }
 
 
-const force = Force.Layout()
-const subgraph = Subgraph.Layout()
+const force = Force.Layout<Node, Graph.Edge>()
+const cluster = Cluster.Layout<Node, Graph.Edge>()
+const subgraph = Subgraph.Layout<Node, Graph.Edge>()
 
 
 /**
  * Render React Layout and Renderer Components
  */
-const App: SFC = () => {
+const App: FunctionComponent = () => {
 
-  const [graph, setGraph] = useState<{ nodes: Graph.Node[], edges: Graph.Edge[], x: number, y: number, zoom: number, minZoom: number, maxZoom: number }>({
+  const [graph, setGraph] = useState<{ nodes: Node[], edges: Graph.Edge[], x: number, y: number, zoom: number, minZoom: number, maxZoom: number }>({
     nodes: [],
     edges: [],
     x: 0,
@@ -77,7 +79,7 @@ const App: SFC = () => {
   })
 
   useEffect(() => {
-    force<Node, Graph.Edge>({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))
+    force({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))
   }, [])
 
   const onContainerDrag = useCallback((_, x: number, y: number) => {
@@ -143,33 +145,52 @@ const App: SFC = () => {
       edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     }))
   }, [])
-  const onNodeDoubleClick = useCallback((_, { id }) => {
-    subgraph({
-      nodes: graph.nodes.map((node) => (node.id === id ? {
-        ...node,
-        style: { ...node.style, color: '#efefef', icon: undefined },
-        subgraph: {
-          nodes: [
-            { id: `${node.id}a`, radius: 10, label: `${node.id.toUpperCase()}A`, style: createCompanyStyle(10) },
-            { id: `${node.id}b`, radius: 10, label: `${node.id.toUpperCase()}B`, style: createCompanyStyle(10) },
-            { id: `${node.id}c`, radius: 10, label: `${node.id.toUpperCase()}C`, style: createCompanyStyle(10) },
-          ],
-          edges: []
-        },
-      } : node)),
-      edges: graph.edges
-    }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))
+  const onNodeDoubleClick = useCallback((_, clickedNode) => {
+    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: COMPANY_STYLE },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: COMPANY_STYLE },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: COMPANY_STYLE },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: COMPANY_STYLE },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: COMPANY_STYLE },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: COMPANY_STYLE },
+    ]))
+    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
+
+    setGraph((graph) => ({
+      ...graph,
+      nodes: subgraph(
+        graph.nodes,
+        graph.nodes.map((node) => {
+          if (node.id === clickedNode.id) {
+            return {
+              ...node,
+              radius,
+              style: { ...node.style, color: '#efefef', icon: undefined },
+              subgraph: {
+                nodes: subgraphNodes,
+                edges: []
+              },
+            }
+          }
+
+          return node
+        })
+      )
+    }))
   }, [graph])
   const onContainerPointerUp = useCallback(() => {
-    subgraph({
-      nodes: graph.nodes.map((node) => (node.subgraph ? {
-        ...node,
-        radius: 18,
-        style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-        subgraph: undefined,
-      } : node)),
-      edges: graph.edges
-    }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))
+    setGraph((graph) => ({
+      ...graph,
+      nodes: subgraph(
+        graph.nodes,
+        graph.nodes.map((node) => ({
+          ...node,
+          radius: 18,
+          style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
+          subgraph: undefined,
+        }))
+      )
+    }))
   }, [graph])
 
   return (

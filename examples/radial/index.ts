@@ -1,7 +1,7 @@
 import Stats from 'stats.js'
 import * as Radial from '../../src/layout/radial'
 import * as Graph from '../../src/'
-import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
+import * as WebGL from '../../src/renderers/webgl'
 import graphData from '../../tmp-data'
 
 
@@ -20,7 +20,7 @@ const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 
-const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 },
@@ -49,7 +49,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   }],
 })
 
-const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.25 },
@@ -125,13 +125,13 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
 /**
  * Initialize Layout and Renderer Options
  */
-const container: HTMLCanvasElement = document.querySelector('canvas#graph')
+const container: HTMLDivElement = document.querySelector('#graph')
 
-const layoutOptions: Partial<Radial.LayoutOptions> = {
+const layoutOptions: Radial.Options = {
   radius: 1200
 }
 
-const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
+const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   onNodePointerDown: (_, { id }, x, y) => {
@@ -178,7 +178,7 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
  * Initialize Layout and Renderer
  */
 const radial = Radial.Layout()
-const renderer = Renderer<Node, Graph.Edge>({
+const renderer = WebGL.Renderer<Node, Graph.Edge>({
   container,
   debug: { stats, logPerformance: false }
 })

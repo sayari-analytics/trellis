@@ -4,14 +4,14 @@ import { Extend } from '../../types'
 import { Node, Edge } from '../../'
 
 
-export type LayoutOptions = {
+export type Options = Partial<{
   nodeStrength: number
   linkDistance: number
   linkStrength?: number
   centerStrength: number
   nodePadding: number
   tick: number
-}
+}>
 
 declare const d3: {
   forceSimulation: typeof forceSimulation
@@ -37,7 +37,7 @@ type LayoutEvent = {
   v: number
   nodes: Node[]
   edges: Edge[]
-  options?: Partial<LayoutOptions>
+  options?: Partial<Options>
 }
 
 type LayoutResultEvent<N extends Node<E>, E extends Edge> = {
@@ -46,7 +46,7 @@ type LayoutResultEvent<N extends Node<E>, E extends Edge> = {
 }
 
 
-export const LAYOUT_OPTIONS: LayoutOptions = {
+export const LAYOUT_OPTIONS = {
   nodeStrength: -500,
   linkDistance: 180,
   linkStrength: undefined,
@@ -68,7 +68,7 @@ const d3ForceScript = `
 `
 
 
-const workerScript = (DEFAULT_OPTIONS: LayoutOptions) => {
+const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
   class Simulation {
 
     private nodePadding = DEFAULT_OPTIONS.nodePadding
@@ -150,12 +150,12 @@ const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOU
 
 
 // TODO - add debugging perf logs
-export const Layout = () => {
+export const Layout = <N extends Node<E>, E extends Edge>() => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
   let v = 0
 
-  const layout = <N extends Node<E>, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
+  const layout = (graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edges = graph.edges
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: ++v } as LayoutEvent)
 

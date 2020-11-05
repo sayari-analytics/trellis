@@ -3,7 +3,7 @@ import * as Force from '../../src/layout/force'
 import * as Subgraph from '../../src/layout/subgraph'
 import * as Cluster from '../../src/layout/cluster'
 import { Node, Edge } from '../../src/'
-import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
+import * as WebGL from '../../src/renderers/webgl'
 import { company, person } from '../assets/icons'
 
 
@@ -15,13 +15,13 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (): Partial<NodeStyle> => ({
+const createCompanyStyle = (): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 6 }],
   icon: { type: 'imageIcon', url: company }
 })
 
-const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 6 }],
   icon: radius > 30 ?
@@ -53,10 +53,10 @@ let edges: Edge[] = [
  * Initialize Layout and Renderer
  */
 const container: HTMLDivElement = document.querySelector('#graph')
-const force = Force.Layout()
-const subgraph = Subgraph.Layout()
-const cluster = Cluster.Layout()
-const renderer = Renderer({
+const force = Force.Layout<Node, Edge>()
+const subgraph = Subgraph.Layout<Node, Edge>()
+const cluster = Cluster.Layout<Node, Edge>()
+const renderer = WebGL.Renderer<Node, Edge>({
   container,
   debug: { stats, logPerformance: true }
 })
@@ -65,7 +65,7 @@ const renderer = Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const renderOptions: Partial<RendererOptions> = {
+const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   onNodePointerDown: (_, { id }, x, y) => {

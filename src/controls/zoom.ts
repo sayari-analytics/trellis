@@ -11,9 +11,9 @@ export type Options = Partial<{
   onZoomOut: (event: PointerEvent) => any
 }>
 
-export type ViewportChangeOptions = {
+export type ViewportChangeOptions = Partial<{
   padding: number
-}
+}>
 
 
 const DEFAULT_TOP = '20px'
@@ -41,7 +41,7 @@ const styleButton = (button: HTMLButtonElement) => {
 }
 
 
-export const zoomTo = (nodes: Node[], options?: Partial<ViewportChangeOptions>) => {
+export const zoomTo = (nodes: Node[], options?: ViewportChangeOptions) => {
   const result = {
     zoom: 1,
     position: [0, 0]
@@ -54,7 +54,7 @@ export const zoomTo = (nodes: Node[], options?: Partial<ViewportChangeOptions>) 
   return result
 }
 
-export const fit = (zoom: number, position: [number, number], nodes: Node[], options?: Partial<ViewportChangeOptions>) => {
+export const fit = (zoom: number, position: [number, number], nodes: Node[], options?: ViewportChangeOptions) => {
   const result = {
     zoom: 1,
     position: [0, 0]

@@ -1,19 +1,33 @@
 import { Extend } from '../../types';
 import { Node, Edge } from '../../';
-export declare type LayoutOptions = {
+export declare type Options = Partial<{
     nodeStrength: number;
     linkDistance: number;
     linkStrength?: number;
     centerStrength: number;
     nodePadding: number;
     tick: number;
+}>;
+export declare const LAYOUT_OPTIONS: {
+    nodeStrength: number;
+    linkDistance: number;
+    linkStrength: undefined;
+    centerStrength: number;
+    nodePadding: number;
+    tick: number;
 };
-export declare const LAYOUT_OPTIONS: LayoutOptions;
-export declare const Layout: () => {
-    <N extends Node<E, Partial<import("../../renderers/pixi").NodeStyle>>, E extends Edge<Partial<import("../../renderers/pixi").EdgeStyle>>>(graph: {
+export declare const Layout: <N extends Node<E, import("../../renderers/webgl").NodeStyle>, E extends Edge<import("../../renderers/webgl").EdgeStyle>>() => {
+    (graph: {
         nodes: N[];
         edges: E[];
-        options?: Partial<LayoutOptions> | undefined;
+        options?: Partial<{
+            nodeStrength: number;
+            linkDistance: number;
+            linkStrength?: number | undefined;
+            centerStrength: number;
+            nodePadding: number;
+            tick: number;
+        }> | undefined;
     }): Promise<{
         nodes: Extend<N, {
             x: number;

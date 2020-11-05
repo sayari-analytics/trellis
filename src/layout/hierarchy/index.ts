@@ -2,14 +2,14 @@ import { hierarchy, HierarchyPointNode, tree } from 'd3-hierarchy'
 import { Node, Edge } from '../../'
 
 
-export type LayoutOptions = {
+export type Options = Partial<{
   x: number
   y: number
   nodeSize: [number, number]
   size: [number, number]
   separation: (a: HierarchyPointNode<Hierarchy>, b: HierarchyPointNode<Hierarchy>) => number
   bfs: boolean
-}
+}>
 
 type Hierarchy = {
   id: string,
@@ -81,8 +81,8 @@ const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarch
 
 
 
-export const Layout = () => {
-  return <N extends Node<E>, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
+export const Layout = <N extends Node<E>, E extends Edge>() => {
+  return (root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []

@@ -1,8 +1,8 @@
 import Stats from 'stats.js'
 import * as Cluster from '../../src/layout/cluster'
 import * as Subgraph from '../../src/layout/subgraph'
+import * as WebGL from '../../src/renderers/webgl'
 import * as Graph from '../../src/'
-import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 
 export const stats = new Stats()
@@ -13,7 +13,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const STYLE: Partial<NodeStyle> = {
+const STYLE: Partial<WebGL.NodeStyle> = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
@@ -49,7 +49,7 @@ let edges: Graph.Edge[] = []
 const container: HTMLDivElement = document.querySelector('#graph')
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
-const render = Renderer({
+const render = WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -58,7 +58,7 @@ const render = Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const renderOptions: Partial<RendererOptions> = {
+const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   onNodeDoubleClick: (_, clickedNode) => {

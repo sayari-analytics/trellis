@@ -5,7 +5,7 @@ import * as Zoom from '../../src/controls/zoom'
 import * as Selection from '../../src/controls/selection'
 import * as Download from '../../src/controls/download'
 import * as Cluster from '../../src/layout/cluster'
-import * as WebGL from '../../src/renderers/pixi'
+import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
 import { Node, Edge } from '../../src/'
 
@@ -20,7 +20,7 @@ document.body.appendChild(stats.dom)
  */
 const container: HTMLDivElement = document.querySelector('#graph')
 
-const createCompanyStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
+const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 },
@@ -49,7 +49,7 @@ const createCompanyStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
   }],
 })
 
-const createPersonStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
+const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#7CBBF3',
   labelSize: 10,
   labelWordWrap: 260,
@@ -69,7 +69,7 @@ const createPersonStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
   }],
 })
 
-const createSubgraphStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
+const createSubgraphStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 2 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 }
@@ -105,7 +105,7 @@ let edges: Edge[] = [
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
-const layoutOptions: Partial<Force.LayoutOptions> = {
+const layoutOptions: Force.Options = {
   nodeStrength: -500,
 }
 
@@ -187,7 +187,7 @@ const renderer = WebGL.Renderer({
 /**
  * Layout and Render Graph
  */
-const renderOptions: Partial<WebGL.RendererOptions> = {
+const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,

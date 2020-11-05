@@ -2,20 +2,20 @@ import * as Hierarchy from '../hierarchy'
 import { Node, Edge } from '../../'
 
 
-export type LayoutOptions = {
+export type Options = Partial<{
   x: number
   y: number
   radius: number
   bfs: boolean
-}
+}>
 
 const TWO_PI = Math.PI * 2
 
 
-export const Layout = () => {
+export const Layout = <N extends Node<E>, E extends Edge>() => {
   const layout = Hierarchy.Layout()
 
-  return <N extends Node<E>, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Partial<LayoutOptions> }) => {
+  return (root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
     const { nodes, edges } = layout(
       root,
       {

@@ -1,8 +1,8 @@
 import Stats from 'stats.js'
-import { Layout, LayoutOptions } from '../../src/layout/force'
+import * as Force from '../../src/layout/force'
 import * as Zoom from '../../src/controls/zoom'
 import * as Graph from '../../src'
-import { Renderer, RendererOptions } from '../../src/renderers/pixi'
+import * as WebGL from '../../src/renderers/webgl'
 import graphData from '../../tmp-data'
 import { throttleAnimationFrame } from '../../src/utils'
 
@@ -121,16 +121,16 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
   }))
 
 let nodesById: Record<string, Node>
-let edgesById: Record<string, Graph.Edge>
+// let edgesById: Record<string, Graph.Edge>
 
 
 /**
  * Initialize Layout and Renderer
  */
 const container: HTMLDivElement = document.querySelector('#graph')
-const layout = Layout()
+const layout = Force.Layout<Node, Graph.Edge>()
 const zoomControl = Zoom.Control({ container })
-const render = throttleAnimationFrame(Renderer({
+const render = throttleAnimationFrame(WebGL.Renderer<Node, Graph.Edge>({
   container,
   debug: { stats, logPerformance: false }
 }))
@@ -139,11 +139,11 @@ const render = throttleAnimationFrame(Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Partial<LayoutOptions> = {
+const layoutOptions: Force.Options = {
   nodeStrength: -600,
   tick: 50,
 }
-const renderOptions: Partial<RendererOptions> = {
+const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -202,7 +202,7 @@ layout({
   nodes = graph.nodes
   edges = graph.edges
   nodesById = nodes.reduce<Record<string, Node>>((nodesById, node) => (nodesById[node.id] = node, nodesById), {})
-  edgesById = edges.reduce<Record<string, Graph.Edge>>((edgesById, edge) => (edgesById[edge.id] = edge, edgesById), {})
+  // edgesById = edges.reduce<Record<string, Graph.Edge>>((edgesById, edge) => (edgesById[edge.id] = edge, edgesById), {})
   render({ nodes, edges, options: renderOptions })
 })
 

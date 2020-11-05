@@ -3,7 +3,7 @@ import * as Hierarchy from '../../src/layout/hierarchy'
 import * as Force from '../../src/layout/force'
 import * as Graph from '../../src/'
 import * as Zoom from '../../src/controls/zoom'
-import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
+import * as WebGL from '../../src/renderers/webgl'
 import graphData from '../../tmp-data'
 
 
@@ -22,7 +22,7 @@ const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 
-const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 },
@@ -51,7 +51,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   }],
 })
 
-const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.2 },
@@ -107,16 +107,26 @@ let forceEdges: Graph.Edge[] = []
 
 
 /**
- * Initialize Layout and Renderer Options
+ * Initialize Layout and Renderer
  */
 const container: HTMLDivElement = document.querySelector('#graph')
+const hierarchy = Hierarchy.Layout<Node, Graph.Edge>()
+const force = Force.Layout<Node, Graph.Edge>()
+const zoomControl = Zoom.Control({ container })
+const renderer = WebGL.Renderer<Node, Graph.Edge>({
+  container,
+  debug: { stats, logPerformance: false }
+})
 
-const layoutOptions: Partial<Hierarchy.LayoutOptions> = {
+
+/**
+ * Initialize Layout and Renderer Options
+ */
+const layoutOptions: Hierarchy.Options = {
   y: container.offsetHeight,
   x: 600,
 }
-
-const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
+const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -187,18 +197,6 @@ const renderOptions: Partial<RendererOptions<Node, Graph.Edge>> = {
     renderer({ nodes, edges, options: renderOptions })
   }
 }
-
-
-/**
- * Initialize Layout and Renderer
- */
-const hierarchy = Hierarchy.Layout()
-const force = Force.Layout()
-const zoomControl = Zoom.Control({ container })
-const renderer = Renderer<Node, Graph.Edge>({
-  container,
-  debug: { stats, logPerformance: false }
-})
 
 
 /**

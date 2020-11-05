@@ -8,14 +8,18 @@ export declare type Options = Partial<{
     onZoomIn: (event: PointerEvent) => any;
     onZoomOut: (event: PointerEvent) => any;
 }>;
-export declare type ViewportChangeOptions = {
+export declare type ViewportChangeOptions = Partial<{
     padding: number;
-};
-export declare const zoomTo: (nodes: Node[], options?: Partial<ViewportChangeOptions> | undefined) => {
+}>;
+export declare const zoomTo: (nodes: Node[], options?: Partial<{
+    padding: number;
+}> | undefined) => {
     zoom: number;
     position: number[];
 };
-export declare const fit: (zoom: number, position: [number, number], nodes: Node[], options?: Partial<ViewportChangeOptions> | undefined) => {
+export declare const fit: (zoom: number, position: [number, number], nodes: Node[], options?: Partial<{
+    padding: number;
+}> | undefined) => {
     zoom: number;
     position: number[];
 };

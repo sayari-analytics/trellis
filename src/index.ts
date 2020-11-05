@@ -1,7 +1,7 @@
-import { NodeStyle, EdgeStyle } from './renderers/pixi'
+import { NodeStyle, EdgeStyle } from './renderers/webgl'
 
 
-export type Node<E extends Edge = Edge, Style = Partial<NodeStyle>> = {
+export type Node<E extends Edge = Edge, Style = NodeStyle> = {
   id: string
   radius: number
   x?: number | undefined // TODO - add prop for fixed position
@@ -15,7 +15,7 @@ export type Node<E extends Edge = Edge, Style = Partial<NodeStyle>> = {
   } | undefined
 }
 
-export type Edge<Style = Partial<EdgeStyle>> = {
+export type Edge<Style = EdgeStyle> = {
   id: string
   source: string
   target: string

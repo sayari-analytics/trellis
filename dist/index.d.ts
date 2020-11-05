@@ -1,5 +1,5 @@
-import { NodeStyle, EdgeStyle } from './renderers/pixi';
-export declare type Node<E extends Edge = Edge, Style = Partial<NodeStyle>> = {
+import { NodeStyle, EdgeStyle } from './renderers/webgl';
+export declare type Node<E extends Edge = Edge, Style = NodeStyle> = {
     id: string;
     radius: number;
     x?: number | undefined;
@@ -12,7 +12,7 @@ export declare type Node<E extends Edge = Edge, Style = Partial<NodeStyle>> = {
         options?: {};
     } | undefined;
 };
-export declare type Edge<Style = Partial<EdgeStyle>> = {
+export declare type Edge<Style = EdgeStyle> = {
     id: string;
     source: string;
     target: string;
