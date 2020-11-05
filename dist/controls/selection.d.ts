@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-export declare type Options = {
+export declare type Options = Partial<{
     className: string;
     top: number;
     left: number;
@@ -9,10 +9,10 @@ export declare type Options = {
     onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;
     onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => void;
-};
+}>;
 export declare const Control: ({ container }: {
     container: HTMLDivElement;
-}) => (options: Partial<Options>) => {
+}) => (options: Options) => {
     onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;
     onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => void;

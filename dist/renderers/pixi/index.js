@@ -46,14 +46,15 @@ var FontIconSprite_1 = require("./sprites/FontIconSprite");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
+    animate: true,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
 };
 var POSITION_ANIMATION_DURATION = 800;
 PIXI.utils.skipHello();
 var PIXIRenderer = /** @class */ (function () {
-    function PIXIRenderer(_a) {
+    function PIXIRenderer(options) {
         var _this = this;
-        var container = _a.container, debug = _a.debug;
+        var _a;
         this.clickedContainer = false;
         this.dirty = false;
         this.viewportDirty = false;
@@ -78,11 +79,12 @@ var PIXIRenderer = /** @class */ (function () {
         this.maxZoom = exports.RENDERER_OPTIONS.maxZoom;
         this.x = exports.RENDERER_OPTIONS.x;
         this.y = exports.RENDERER_OPTIONS.y;
+        this.animate = exports.RENDERER_OPTIONS.animate;
         this.root = new PIXI.Container();
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.nodesEqual, nodesEqual = _t === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _t, _u = _k.edgesEqual, edgesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _u, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animate, animate = _t === void 0 ? exports.RENDERER_OPTIONS.animate : _t, _u = _k.nodesEqual, nodesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _u, _v = _k.edgesEqual, edgesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _v, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -102,6 +104,7 @@ var PIXIRenderer = /** @class */ (function () {
             _this.onWheel = onWheel;
             _this.zoomInteraction.minZoom = minZoom;
             _this.zoomInteraction.maxZoom = maxZoom;
+            _this.animate = animate;
             if (width !== _this.width || height !== _this.height) {
                 _this.width = width;
                 _this.height = height;
@@ -252,7 +255,9 @@ var PIXIRenderer = /** @class */ (function () {
             var elapsedTime = time - _this.previousTime;
             _this.animationDuration += Math.min(20, Math.max(0, elapsedTime)); // clamp to 0 <= x <= 20 to smooth animations
             // this.animationDuration += elapsedTime
-            _this.animationPercent = Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1);
+            _this.animationPercent = _this.animate ?
+                Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
+                1;
             _this.previousTime = time;
             _this.decelerateInteraction.update(elapsedTime);
             if (_this.dirty) {
@@ -270,6 +275,10 @@ var PIXIRenderer = /** @class */ (function () {
                 _this.app.render();
                 _this.viewportDirty = false;
             }
+            if (_this.dataUrl) {
+                _this.dataUrl(_this.app.renderer.view.toDataURL('image/png', 1));
+                _this.dataUrl = undefined;
+            }
         };
         this._debugFirstRender = true;
         this.debugRender = function (time) {
@@ -278,7 +287,9 @@ var PIXIRenderer = /** @class */ (function () {
             var elapsedTime = time - _this.previousTime;
             _this.animationDuration += Math.min(20, Math.max(0, elapsedTime));
             // this.animationDuration += elapsedTime
-            _this.animationPercent = Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1);
+            _this.animationPercent = _this.animate ?
+                Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
+                1;
             _this.previousTime = time;
             _this.decelerateInteraction.update(elapsedTime);
             (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
@@ -358,12 +369,15 @@ var PIXIRenderer = /** @class */ (function () {
             _this.image.delete();
             _this.fontIcon.delete();
         };
-        if (!(container instanceof HTMLDivElement)) {
+        this.base64 = function () {
+            return new Promise(function (resolve) { return _this.dataUrl = resolve; });
+        };
+        if (!(options.container instanceof HTMLDivElement)) {
             throw new Error('container must be an instance of HTMLDivElement');
         }
         var view = document.createElement('canvas');
-        container.appendChild(view);
-        container.style.position = 'relative';
+        options.container.appendChild(view);
+        options.container.style.position = 'relative';
         this.app = new PIXI.Application({
             view: view,
             width: this.width,
@@ -374,6 +388,7 @@ var PIXIRenderer = /** @class */ (function () {
             autoDensity: true,
             autoStart: false,
             powerPreference: 'high-performance',
+            preserveDrawingBuffer: (_a = options.preserveDrawingBuffer) !== null && _a !== void 0 ? _a : false,
         });
         this.labelsLayer.interactiveChildren = false;
         this.nodesLayer.sortableChildren = true; // TODO - perf test
@@ -440,7 +455,7 @@ var PIXIRenderer = /** @class */ (function () {
         this.circle = new circleSprite_1.CircleSprite(this);
         this.image = new ImageSprite_1.ImageSprite();
         this.fontIcon = new FontIconSprite_1.FontIconSprite();
-        this.debug = debug;
+        this.debug = options.debug;
         if (this.debug) {
             this.cancelAnimationLoop = utils_1.animationFrameLoop(this.debugRender);
             this.update = this._debugUpdate;
@@ -459,6 +474,7 @@ exports.Renderer = function (options) {
         pixiRenderer.update(graph);
     };
     render.delete = pixiRenderer.delete;
+    render.base64 = pixiRenderer.base64;
     return render;
 };
 //# sourceMappingURL=index.js.map

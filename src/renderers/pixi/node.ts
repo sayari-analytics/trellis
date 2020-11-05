@@ -476,7 +476,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     this.renderer.clickedNode = this
-    this.renderer.app.renderer.plugins.interaction.on('pointermove', this.nodeMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.nodeMove)
     this.renderer.zoomInteraction.pause()
     this.renderer.dragInteraction.pause()
     this.renderer.decelerateInteraction.pause()
@@ -490,7 +490,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.clickedNode === undefined) return
 
     this.renderer.clickedNode = undefined
-    this.renderer.app.renderer.plugins.interaction.off('pointermove', this.nodeMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.nodeMove)
     this.renderer.zoomInteraction.resume()
     this.renderer.dragInteraction.resume()
     this.renderer.decelerateInteraction.resume()

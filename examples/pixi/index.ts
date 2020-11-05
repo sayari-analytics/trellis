@@ -3,9 +3,11 @@ import * as Force from '../../src/layout/force'
 import * as Subgraph from '../../src/layout/subgraph'
 import * as Zoom from '../../src/controls/zoom'
 import * as Selection from '../../src/controls/selection'
+import * as Download from '../../src/controls/download'
 import * as Cluster from '../../src/layout/cluster'
+import * as WebGL from '../../src/renderers/pixi'
+import * as Png from '../../src/renderers/image'
 import { Node, Edge } from '../../src/'
-import { NodeStyle, Renderer, RendererOptions } from '../../src/renderers/pixi'
 
 
 export const stats = new Stats()
@@ -18,7 +20,7 @@ document.body.appendChild(stats.dom)
  */
 const container: HTMLDivElement = document.querySelector('#graph')
 
-const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
+const createCompanyStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 },
@@ -47,7 +49,7 @@ const createCompanyStyle = (radius: number): Partial<NodeStyle> => ({
   }],
 })
 
-const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
+const createPersonStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
   color: '#7CBBF3',
   labelSize: 10,
   labelWordWrap: 260,
@@ -67,7 +69,7 @@ const createPersonStyle = (radius: number): Partial<NodeStyle> => ({
   }],
 })
 
-const createSubgraphStyle = (radius: number): Partial<NodeStyle> => ({
+const createSubgraphStyle = (radius: number): Partial<WebGL.NodeStyle> => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 2 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 }
@@ -112,6 +114,7 @@ const layoutOptions: Partial<Force.LayoutOptions> = {
  * Create Handlers
  */
 // TODO
+
 
 /**
  * Create Zoom Controls
@@ -158,13 +161,33 @@ const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = select
 
 
 /**
- * Create Renderer
+ * Create Download Controls
  */
-const renderer = Renderer({
+const downloadControl = Download.Control({ container })
+downloadControl({
+  top: 210,
+  onClick: () => imageRenderer({
+    nodes: nodes,
+    edges: edges,
+    options: renderOptions
+  })
+})
+
+
+/**
+ * Create Renderers
+ */
+const imageRenderer = Png.Renderer()
+const renderer = WebGL.Renderer({
   container,
   // debug: { stats, logPerformance: true }
 })
-const renderOptions: Partial<RendererOptions> = {
+
+
+/**
+ * Layout and Render Graph
+ */
+const renderOptions: Partial<WebGL.RendererOptions> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -249,10 +272,6 @@ const renderOptions: Partial<RendererOptions> = {
   }
 }
 
-
-/**
- * Layout and Render Graph
- */
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
   renderer({ nodes, edges, options: renderOptions })

@@ -15,7 +15,7 @@ const DEFAULT_COLOR_SELECTED = '#222'
 // const DEFAULT_DISABLED = '#aaa'
 
 
-export type Options = {
+export type Options = Partial<{
   className: string
   top: number
   left: number
@@ -25,7 +25,7 @@ export type Options = {
   onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => void
   onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void
   onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => void
-}
+}>
 
 
 const styleButton = (button: HTMLButtonElement) => {
@@ -81,7 +81,7 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
   container.style.position = 'relative'
   container.appendChild(controlContainer)
 
-  return (options: Partial<Options>) => {
+  return (options: Options) => {
     controlContainer.style.display = 'block'
     controlContainer.className = options.className ?? 'selection-container'
 

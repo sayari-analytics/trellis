@@ -10,7 +10,6 @@ import { ArrowSprite } from './sprites/arrowSprite';
 import { CircleSprite } from './sprites/circleSprite';
 import { ImageSprite } from './sprites/ImageSprite';
 import { FontIconSprite } from './sprites/FontIconSprite';
-export declare type Event = PIXI.InteractionEvent;
 export declare type TextIcon = {
     type: 'textIcon';
     family: string;
@@ -64,6 +63,7 @@ export declare type RendererOptions<N extends Node = Node, E extends Edge = Edge
     zoom: number;
     minZoom: number;
     maxZoom: number;
+    animate: boolean;
     nodesEqual: (previous: N[], current: N[]) => boolean;
     edgesEqual: (previous: E[], current: E[]) => boolean;
     onNodePointerEnter?: (event: Event, node: N, x: number, y: number) => void;
@@ -84,6 +84,7 @@ export declare type RendererOptions<N extends Node = Node, E extends Edge = Edge
     onContainerPointerLeave?: (event: Event, x: number, y: number) => void;
     onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void;
 };
+declare type Event = PIXI.InteractionEvent;
 export declare const RENDERER_OPTIONS: RendererOptions<Node, Edge>;
 export declare class PIXIRenderer<N extends Node, E extends Edge> {
     update: (graph: {
@@ -128,6 +129,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;
+    dataUrl?: (dataUrl: string) => void;
     onContainerPointerEnter?: (event: Event, x: number, y: number) => void;
     onContainerPointerDown?: (event: Event, x: number, y: number) => void;
     onContainerDrag?: (event: Event | undefined, x: number, y: number) => void;
@@ -153,14 +155,16 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     maxZoom: number;
     x: number;
     y: number;
+    animate: boolean;
     app: PIXI.Application;
     root: PIXI.Container;
     debug?: {
         logPerformance?: boolean;
         stats?: Stats;
     };
-    constructor({ container, debug }: {
+    constructor(options: {
         container: HTMLDivElement;
+        preserveDrawingBuffer?: boolean;
         debug?: {
             logPerformance?: boolean;
             stats?: Stats;
@@ -172,6 +176,7 @@ export declare class PIXIRenderer<N extends Node, E extends Edge> {
     private _debugFirstRender;
     private debugRender;
     delete: () => void;
+    base64: () => Promise<string>;
 }
 export declare const Renderer: <N extends Node<Edge<Partial<EdgeStyle>>, Partial<NodeStyle>>, E extends Edge<Partial<EdgeStyle>>>(options: {
     container: HTMLDivElement;
@@ -186,4 +191,6 @@ export declare const Renderer: <N extends Node<Edge<Partial<EdgeStyle>>, Partial
         options?: Partial<RendererOptions<N, E>> | undefined;
     }): void;
     delete: () => void;
+    base64: () => Promise<string>;
 };
+export {};

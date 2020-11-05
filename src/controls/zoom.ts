@@ -1,7 +1,7 @@
 import { Node } from '../'
 
 
-export type Options = {
+export type Options = Partial<{
   className: string
   top: number
   left: number
@@ -9,7 +9,7 @@ export type Options = {
   bottom: number
   onZoomIn: (event: PointerEvent) => any
   onZoomOut: (event: PointerEvent) => any
-}
+}>
 
 export type ViewportChangeOptions = {
   padding: number
@@ -100,7 +100,7 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
   container.style.position = 'relative'
   container.appendChild(controlContainer)
 
-  return (options: Partial<Options>) => {
+  return (options: Options) => {
     controlContainer.style.display = 'block'
     controlContainer.className = options.className ?? 'zoom-container'
 

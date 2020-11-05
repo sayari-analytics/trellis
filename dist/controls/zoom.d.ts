@@ -1,5 +1,5 @@
 import { Node } from '../';
-export declare type Options = {
+export declare type Options = Partial<{
     className: string;
     top: number;
     left: number;
@@ -7,7 +7,7 @@ export declare type Options = {
     bottom: number;
     onZoomIn: (event: PointerEvent) => any;
     onZoomOut: (event: PointerEvent) => any;
-};
+}>;
 export declare type ViewportChangeOptions = {
     padding: number;
 };
@@ -27,4 +27,4 @@ export declare const clampZoom: (min: number, max: number, zoom: number) => numb
  */
 export declare const Control: ({ container }: {
     container: HTMLDivElement;
-}) => (options: Partial<Options>) => void;
+}) => (options: Options) => void;

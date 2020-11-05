@@ -15,8 +15,6 @@ import { FontIconSprite } from './sprites/FontIconSprite'
 
 install(PIXI)
 
-export type Event = PIXI.InteractionEvent
-
 export type TextIcon = {
   type: 'textIcon'
   family: string
@@ -74,6 +72,7 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   zoom: number
   minZoom: number
   maxZoom: number
+  animate: boolean
   nodesEqual: (previous: N[], current: N[]) => boolean
   edgesEqual: (previous: E[], current: E[]) => boolean
   onNodePointerEnter?: (event: Event, node: N, x: number, y: number) => void
@@ -95,10 +94,12 @@ export type RendererOptions<N extends Node = Node, E extends Edge = Edge> = {
   onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void
 }
 
+type Event = PIXI.InteractionEvent
+
 
 export const RENDERER_OPTIONS: RendererOptions<Node, Edge> = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  nodesEqual: () => false, edgesEqual: () => false,
+  animate: true, nodesEqual: () => false, edgesEqual: () => false,
 }
 
 const POSITION_ANIMATION_DURATION = 800
@@ -139,6 +140,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   zoomInteraction: Zoom<N, E>
   dragInteraction: Drag<N, E>
   decelerateInteraction: Decelerate<N, E>
+  dataUrl?: (dataUrl: string) => void
 
   onContainerPointerEnter?: (event: Event, x: number, y: number) => void
   onContainerPointerDown?: (event: Event, x: number, y: number) => void
@@ -165,18 +167,20 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
   maxZoom = RENDERER_OPTIONS.maxZoom
   x = RENDERER_OPTIONS.x
   y = RENDERER_OPTIONS.y
+  animate = RENDERER_OPTIONS.animate
+
   app: PIXI.Application
   root = new PIXI.Container()
   debug?: { logPerformance?: boolean, stats?: Stats }
 
-  constructor({ container, debug }: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
-    if (!(container instanceof HTMLDivElement)) {
+  constructor(options: { container: HTMLDivElement, preserveDrawingBuffer?: boolean, debug?: { logPerformance?: boolean, stats?: Stats } }) {
+    if (!(options.container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
     }
 
     const view = document.createElement('canvas')
-    container.appendChild(view)
-    container.style.position = 'relative'
+    options.container.appendChild(view)
+    options.container.style.position = 'relative'
 
     this.app = new PIXI.Application({
       view,
@@ -188,6 +192,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       autoDensity: true,
       autoStart: false,
       powerPreference: 'high-performance',
+      preserveDrawingBuffer: options.preserveDrawingBuffer ?? false,
     })
 
     this.labelsLayer.interactiveChildren = false
@@ -245,14 +250,14 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       this.onContainerPointerLeave?.(event, x, y)
     }
 
-    this.app.renderer.plugins.interaction.on('pointerenter', pointerEnter)
-    this.app.renderer.plugins.interaction.on('pointerdown', pointerDown)
-    this.app.renderer.plugins.interaction.on('pointermove', pointerMove)
-    this.app.renderer.plugins.interaction.on('pointerup', pointerUp)
-    this.app.renderer.plugins.interaction.on('pointerupoutside', pointerUp)
-    this.app.renderer.plugins.interaction.on('pointercancel', pointerUp)
-    this.app.renderer.plugins.interaction.on('pointerout', pointerUp)
-    this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerenter', pointerEnter)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerdown', pointerDown)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', pointerMove)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerup', pointerUp)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerupoutside', pointerUp)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointercancel', pointerUp)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerout', pointerUp)
+    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerleave', pointerLeave)
     this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 
     this.arrow = new ArrowSprite<N, E>(this)
@@ -260,7 +265,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.image = new ImageSprite()
     this.fontIcon = new FontIconSprite()
 
-    this.debug = debug
+    this.debug = options.debug
     if (this.debug) {
       this.cancelAnimationLoop = animationFrameLoop(this.debugRender)
       this.update = this._debugUpdate
@@ -275,7 +280,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     edges,
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
-      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
+      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, animate = RENDERER_OPTIONS.animate,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
@@ -301,6 +306,7 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.onWheel = onWheel
     this.zoomInteraction.minZoom = minZoom
     this.zoomInteraction.maxZoom = maxZoom
+    this.animate = animate
 
     if (width !== this.width || height !== this.height) {
       this.width = width
@@ -444,7 +450,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     const elapsedTime = time - this.previousTime
     this.animationDuration += Math.min(20, Math.max(0, elapsedTime)) // clamp to 0 <= x <= 20 to smooth animations
     // this.animationDuration += elapsedTime
-    this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
+    this.animationPercent = this.animate ?
+      Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
+      1
     this.previousTime = time
 
     this.decelerateInteraction.update(elapsedTime)
@@ -465,6 +473,11 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
       this.app.render()
       this.viewportDirty = false
     }
+
+    if (this.dataUrl) {
+      this.dataUrl(this.app.renderer.view.toDataURL('image/png', 1))
+      this.dataUrl = undefined
+    }
   }
 
   private _debugFirstRender = true
@@ -472,7 +485,9 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     const elapsedTime = time - this.previousTime
     this.animationDuration += Math.min(20, Math.max(0, elapsedTime))
     // this.animationDuration += elapsedTime
-    this.animationPercent = Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1)
+    this.animationPercent = this.animate ?
+      Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
+      1
     this.previousTime = time
 
     this.decelerateInteraction.update(elapsedTime)
@@ -559,6 +574,10 @@ export class PIXIRenderer<N extends Node, E extends Edge>{
     this.image.delete()
     this.fontIcon.delete()
   }
+
+  base64 = () => {
+    return new Promise<string>((resolve) => this.dataUrl = resolve)
+  }
 }
 
 
@@ -570,6 +589,7 @@ export const Renderer = <N extends Node, E extends Edge>(options: { container: H
   }
 
   render.delete = pixiRenderer.delete
+  render.base64 = pixiRenderer.base64
 
   return render
 }

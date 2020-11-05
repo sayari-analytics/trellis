@@ -29,7 +29,7 @@ export class Zoom <N extends Node, E extends Edge>{
     }
 
     let point = new PIXI.Point()
-    this.renderer.app.renderer.plugins.interaction.mapPositionToPoint(
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(
       point,
       // account for x/y pivot
       e.clientX - (this.renderer.width / 2),
