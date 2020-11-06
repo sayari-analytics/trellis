@@ -81,8 +81,8 @@ const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarch
 
 
 
-export const Layout = <N extends Node<E>, E extends Edge>() => {
-  return (root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
+export const Layout = () => {
+  return <N extends Node<E>, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []

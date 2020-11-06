@@ -29,7 +29,7 @@ const data = {
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
     .map<Node>(({ id, label, type }) => ({
       id,
-      label,
+      // label,
       radius: 18,
       type,
       style: {
@@ -69,7 +69,7 @@ const data = {
       id,
       source,
       target,
-      label: field.replace(/_/g, ' '),
+      // label: field.replace(/_/g, ' '),
       style: { arrow: 'forward' }
     }))
 }
@@ -171,7 +171,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 /**
  * Layout and Render Graph
  */
-const NODES_PER_TICK = 30
+const NODES_PER_TICK = 3000
 const INTERVAL = 1400
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0

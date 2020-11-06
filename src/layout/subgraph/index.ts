@@ -13,8 +13,8 @@ export const subgraphRadius = <E extends Edge>(radius: number, nodes: Node<E>[])
 }
 
 
-export const Layout = <N extends Node<E>, E extends Edge>() => {
-  return (previousNodes: N[], nextNodes: N[]) => {
+export const Layout = () => {
+  return <N extends Node<E>, E extends Edge>(previousNodes: N[], nextNodes: N[]) => {
     let result: N[] = nextNodes.map((node) => ({ ...node })),
       collapseNode: N,
       collapseNodeX: number,

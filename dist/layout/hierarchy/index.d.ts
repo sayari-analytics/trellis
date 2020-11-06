@@ -12,7 +12,7 @@ declare type Hierarchy = {
     id: string;
     children: Hierarchy[];
 };
-export declare const Layout: <N extends Node<E, import("../../renderers/webgl").NodeStyle>, E extends Edge<import("../../renderers/webgl").EdgeStyle>>() => (root: string, graph: {
+export declare const Layout: () => <N extends Node<E>, E extends Edge>(root: string, graph: {
     nodes: N[];
     edges: E[];
     options?: Partial<{

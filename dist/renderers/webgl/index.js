@@ -476,7 +476,6 @@ exports.Renderer = function (options) {
         pixiRenderer.update(graph);
     };
     render.delete = pixiRenderer.delete;
-    render.base64 = pixiRenderer.base64;
     return render;
 };
 //# sourceMappingURL=index.js.map

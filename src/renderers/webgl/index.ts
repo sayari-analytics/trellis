@@ -581,15 +581,14 @@ export class InternalRenderer<N extends Node, E extends Edge>{
 }
 
 
-export const Renderer = <N extends Node, E extends Edge>(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
-  const pixiRenderer = new InternalRenderer<N, E>(options)
+export const Renderer = (options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+  const pixiRenderer = new InternalRenderer(options)
 
-  const render = (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
-    pixiRenderer.update(graph)
+  const render = <N extends Node, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
+    (pixiRenderer as unknown as InternalRenderer<N, E>).update(graph)
   }
 
   render.delete = pixiRenderer.delete
-  render.base64 = pixiRenderer.base64
 
   return render
 }

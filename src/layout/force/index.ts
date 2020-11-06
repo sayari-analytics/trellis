@@ -150,12 +150,12 @@ const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOU
 
 
 // TODO - add debugging perf logs
-export const Layout = <N extends Node<E>, E extends Edge>() => {
+export const Layout = () => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
   let v = 0
 
-  const layout = (graph: { nodes: N[], edges: E[], options?: Options }) => {
+  const layout = <N extends Node<E>, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edges = graph.edges
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: ++v } as LayoutEvent)
 

@@ -16,8 +16,8 @@ export declare const LAYOUT_OPTIONS: {
     nodePadding: number;
     tick: number;
 };
-export declare const Layout: <N extends Node<E, import("../../renderers/webgl").NodeStyle>, E extends Edge<import("../../renderers/webgl").EdgeStyle>>() => {
-    (graph: {
+export declare const Layout: () => {
+    <N extends Node<E>, E extends Edge>(graph: {
         nodes: N[];
         edges: E[];
         options?: Partial<{

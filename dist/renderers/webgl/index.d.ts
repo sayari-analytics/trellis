@@ -189,18 +189,17 @@ export declare class InternalRenderer<N extends Node, E extends Edge> {
     delete: () => void;
     base64: () => Promise<string>;
 }
-export declare const Renderer: <N extends Node<Edge<EdgeStyle>, NodeStyle>, E extends Edge<EdgeStyle>>(options: {
+export declare const Renderer: (options: {
     container: HTMLDivElement;
     debug?: {
         logPerformance?: boolean;
         stats?: Stats;
     };
 }) => {
-    (graph: {
+    <N extends Node<Edge>, E extends Edge>(graph: {
         nodes: N[];
         edges: E[];
         options?: Options<N, E> | undefined;
     }): void;
     delete: () => void;
-    base64: () => Promise<string>;
 };

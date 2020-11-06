@@ -1,13 +1,13 @@
 import { NodeStyle, EdgeStyle } from './renderers/webgl'
 
 
-export type Node<E extends Edge = Edge, Style = NodeStyle> = {
+export type Node<E extends Edge = Edge> = {
   id: string
   radius: number
   x?: number | undefined // TODO - add prop for fixed position
   y?: number | undefined
   label?: string | undefined
-  style?: Style
+  style?: NodeStyle
   subgraph?: {
     nodes: Node<E>[],
     edges: E[],
@@ -15,10 +15,10 @@ export type Node<E extends Edge = Edge, Style = NodeStyle> = {
   } | undefined
 }
 
-export type Edge<Style = EdgeStyle> = {
+export type Edge = {
   id: string
   source: string
   target: string
   label?: string
-  style?: Style
+  style?: EdgeStyle
 }

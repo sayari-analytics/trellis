@@ -22,7 +22,7 @@ export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Pr
   const renderer = useRef<(graph: { nodes: N[], edges: E[], options?: Partial<Options<N, E>> }) => void>()
 
   useEffect(() => {
-    const _renderer = PixiRenderer<N, E>({ container: ref.current!, debug: props.debug })
+    const _renderer = PixiRenderer({ container: ref.current!, debug: props.debug })
     renderer.current = _renderer
 
     return () => _renderer.delete()

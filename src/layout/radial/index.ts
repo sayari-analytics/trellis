@@ -12,10 +12,10 @@ export type Options = Partial<{
 const TWO_PI = Math.PI * 2
 
 
-export const Layout = <N extends Node<E>, E extends Edge>() => {
+export const Layout = () => {
   const layout = Hierarchy.Layout()
 
-  return (root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
+  return <N extends Node<E>, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
     const { nodes, edges } = layout(
       root,
       {
