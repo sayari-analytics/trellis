@@ -3,7 +3,7 @@ import { EdgeStyle, InternalRenderer } from '.'
 import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI } from './utils'
 import { Node, Edge } from '../..'
 import { ArrowSprite } from './sprites/arrowSprite'
-import { CancellablePromise, FontLoader } from './FontLoader'
+import { FontLoader } from './Loader'
 
 
 
@@ -48,7 +48,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private curve: number = 0
   private doubleClickTimeout: number | undefined
   private doubleClick = false
-  private fontLoader?: CancellablePromise<string>
+  private labelLoader?: () => void
 
   constructor(renderer: InternalRenderer<N, E>, edge: E) {
     this.renderer = renderer
@@ -144,11 +144,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
-      this.fontLoader?.cancel()
+      this.labelLoader?.()
 
       if (this.label) {
-        this.fontLoader = FontLoader(this.labelFamily)
-        this.fontLoader.then((family) => {
+        this.labelLoader = FontLoader(this.labelFamily, (family) => {
           if(this.label === undefined || this.labelFamily !== family) return
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,

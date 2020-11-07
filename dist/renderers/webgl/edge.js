@@ -50,7 +50,7 @@ exports.EdgeRenderer = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var utils_1 = require("./utils");
 var arrowSprite_1 = require("./sprites/arrowSprite");
-var FontLoader_1 = require("./FontLoader");
+var Loader_1 = require("./Loader");
 var LINE_HOVER_RADIUS = 4;
 var DEFAULT_EDGE_WIDTH = 1;
 var DEFAULT_EDGE_COLOR = utils_1.colorToNumber('#ccc');
@@ -210,10 +210,9 @@ var EdgeRenderer = /** @class */ (function () {
             this.labelContainer.removeChildren();
             (_u = this.labelSprite) === null || _u === void 0 ? void 0 : _u.destroy();
             this.labelSprite = undefined;
-            (_v = this.fontLoader) === null || _v === void 0 ? void 0 : _v.cancel();
+            (_v = this.labelLoader) === null || _v === void 0 ? void 0 : _v.call(this);
             if (this.label) {
-                this.fontLoader = FontLoader_1.FontLoader(this.labelFamily);
-                this.fontLoader.then(function (family) {
+                this.labelLoader = Loader_1.FontLoader(this.labelFamily, function (family) {
                     var _a;
                     if (_this.label === undefined || _this.labelFamily !== family)
                         return;

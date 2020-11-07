@@ -28,7 +28,7 @@ export declare class EdgeRenderer<N extends Node, E extends Edge> {
     private curve;
     private doubleClickTimeout;
     private doubleClick;
-    private fontLoader?;
+    private labelLoader?;
     constructor(renderer: InternalRenderer<N, E>, edge: E);
     update(edge: E): this;
     /**

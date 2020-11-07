@@ -40,9 +40,9 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     private labelSprite?;
     private labelBackgroundSprite?;
     private iconSprite?;
-    private fontLoader?;
-    private fontIconLoader?;
-    private badgeIconLoader?;
+    private labelLoader?;
+    private iconLoader?;
+    private badgeIconLoader;
     private doubleClickTimeout;
     private doubleClick;
     private nodeMoveXOffset;

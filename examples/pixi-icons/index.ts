@@ -4,9 +4,10 @@ import * as Subgraph from '../../src/layout/subgraph'
 import * as Cluster from '../../src/layout/cluster'
 import { Node, Edge } from '../../src/'
 import * as WebGL from '../../src/renderers/webgl'
-import { company, person } from '../assets/icons'
+import { company } from '../assets/icons'
+import person from '../assets/person.png'
 
-
+console.log(person)
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
@@ -26,7 +27,7 @@ const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   stroke: [{ color: '#90D7FB', width: 6 }],
   icon: radius > 30 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius } :
-    { type: 'imageIcon' as const, url: person }
+    { type: 'imageIcon' as const, url: person, scale: 0.05 }
 })
 
 let nodes = [
@@ -53,10 +54,10 @@ let edges: Edge[] = [
  * Initialize Layout and Renderer
  */
 const container: HTMLDivElement = document.querySelector('#graph')
-const force = Force.Layout<Node, Edge>()
-const subgraph = Subgraph.Layout<Node, Edge>()
-const cluster = Cluster.Layout<Node, Edge>()
-const renderer = WebGL.Renderer<Node, Edge>({
+const force = Force.Layout()
+const subgraph = Subgraph.Layout()
+const cluster = Cluster.Layout()
+const renderer = WebGL.Renderer({
   container,
   debug: { stats, logPerformance: true }
 })
@@ -68,6 +69,7 @@ const renderer = WebGL.Renderer<Node, Edge>({
 const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
+  zoom: 0.8,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })

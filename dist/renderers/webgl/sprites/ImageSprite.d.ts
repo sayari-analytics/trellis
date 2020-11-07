@@ -1,4 +1,8 @@
 import * as PIXI from 'pixi.js';
+/**
+ * TODO - cacheing textures doesn't always work on initial render
+ * need to use pixi loader
+ */
 export declare class ImageSprite {
     cache: {
         [url: string]: PIXI.Texture;

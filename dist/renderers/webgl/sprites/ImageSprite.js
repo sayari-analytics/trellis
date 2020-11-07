@@ -21,6 +21,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageSprite = void 0;
 var PIXI = __importStar(require("pixi.js"));
+// export class ImageSprite {
+//   cache: { [url: string]: PIXI.Texture } = {}
+//   create(url: string, scale: number = 1, offsetX: number = 0, offsetY: number = 0) {
+//     const sprite = PIXI.Sprite.from(url)
+//     sprite.position.set(offsetX, offsetY)
+//     sprite.anchor.set(0.5)
+//     sprite.scale.set(scale)
+//     return sprite
+//   }
+//   delete() {}
+// }
+/**
+ * TODO - cacheing textures doesn't always work on initial render
+ * need to use pixi loader
+ */
 var ImageSprite = /** @class */ (function () {
     function ImageSprite() {
         this.cache = {};
