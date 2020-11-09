@@ -125,7 +125,7 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
 /**
  * Initialize Layout and Renderer Options
  */
-const container: HTMLDivElement = document.querySelector('#graph')
+const container = document.querySelector('#graph') as HTMLDivElement
 
 const layoutOptions: Radial.Options = {
   radius: 1200
@@ -178,7 +178,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
  * Initialize Layout and Renderer
  */
 const radial = Radial.Layout()
-const renderer = WebGL.Renderer<Node, Graph.Edge>({
+const renderer = WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })

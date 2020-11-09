@@ -27,9 +27,10 @@ const data = {
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
+    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_6` })))
     .map<Node>(({ id, label, type }) => ({
       id,
-      // label,
+      label,
       radius: 18,
       type,
       style: {
@@ -54,6 +55,7 @@ const data = {
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
+    .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
     .concat([
       ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
       ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
@@ -69,7 +71,7 @@ const data = {
       id,
       source,
       target,
-      // label: field.replace(/_/g, ' '),
+      label: field.replace(/_/g, ' '),
       style: { arrow: 'forward' }
     }))
 }
@@ -81,11 +83,11 @@ let edges: Graph.Edge[] = []
 /**
  * Initialize Layout and Renderer
  */
-const container: HTMLDivElement = document.querySelector('#graph')
-const layout = Force.Layout<Node, Graph.Edge>()
-const render = WebGL.Renderer<Node, Graph.Edge>({
+const container = document.querySelector('#graph') as HTMLDivElement
+const layout = Force.Layout()
+const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: true }
+  // debug: { stats, logPerformance: true }
 })
 
 
@@ -96,11 +98,11 @@ const zoomControl = Zoom.Control({ container })
 const zoomOptions: Zoom.Options = {
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
   },
 }
@@ -171,8 +173,8 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 /**
  * Layout and Render Graph
  */
-const NODES_PER_TICK = 3000
-const INTERVAL = 1400
+const NODES_PER_TICK = 40
+const INTERVAL = 1000
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 

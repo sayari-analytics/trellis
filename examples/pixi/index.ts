@@ -18,8 +18,6 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const container: HTMLDivElement = document.querySelector('#graph')
-
 const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
@@ -100,8 +98,14 @@ let edges: Edge[] = [
 
 
 /**
- * Create Layouts
+ * Create Renderer and Layout
  */
+const container = document.querySelector('#graph') as HTMLDivElement
+const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
+const renderer = WebGL.Renderer({
+  container,
+  // debug: { stats, logPerformance: true }
+})
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
@@ -123,11 +127,11 @@ const zoomControl = Zoom.Control({ container })
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     renderer({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     renderer({ nodes, edges, options: renderOptions })
   },
 })
@@ -175,16 +179,6 @@ downloadControl({
 
 
 /**
- * Create Renderers
- */
-const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
-const renderer = WebGL.Renderer({
-  container,
-  // debug: { stats, logPerformance: true }
-})
-
-
-/**
  * Layout and Render Graph
  */
 const renderOptions: WebGL.Options = {
@@ -211,8 +205,8 @@ const renderOptions: WebGL.Options = {
       style: {
         ...node.style,
         stroke: node.id === 'a' ?
-          node.style.stroke.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 0 ? '#FFF' : '#CCC' })) :
-          node.style.stroke.map((stroke) => ({ ...stroke, color: '#CCC' }))
+          node.style?.stroke?.map((stroke, idx) => ({ ...stroke, color: idx % 2 === 0 ? '#FFF' : '#CCC' })) :
+          node.style?.stroke?.map((stroke) => ({ ...stroke, color: '#CCC' }))
       }
     } : node))
     renderer({ nodes, edges, options: renderOptions })

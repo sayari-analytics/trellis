@@ -71,7 +71,7 @@ let nodes = Object.values(graphData.nodes)
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_37` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_38` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_39` })))
-  .map<Node>(({ id, label, type }) => ({
+  .map<Node>(({ id, type }) => ({
     id,
     // label,
     radius: 16,
@@ -113,7 +113,7 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
   //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
   //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
   // ])
-  .map<Graph.Edge>(([id, { field, source, target }]) => ({
+  .map<Graph.Edge>(([id, { source, target }]) => ({
     id,
     source,
     target,
@@ -127,10 +127,10 @@ let nodesById: Record<string, Node>
 /**
  * Initialize Layout and Renderer
  */
-const container: HTMLDivElement = document.querySelector('#graph')
-const layout = Force.Layout<Node, Graph.Edge>()
+const container = document.querySelector('#graph') as HTMLDivElement
+const layout = Force.Layout()
 const zoomControl = Zoom.Control({ container })
-const render = throttleAnimationFrame(WebGL.Renderer<Node, Graph.Edge>({
+const render = throttleAnimationFrame(WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
 }))
@@ -185,11 +185,11 @@ console.log(`node count: ${nodes.length} \nedge count ${edges.length}`)
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
   },
 })

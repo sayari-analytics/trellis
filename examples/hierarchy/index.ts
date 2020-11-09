@@ -109,11 +109,11 @@ let forceEdges: Graph.Edge[] = []
 /**
  * Initialize Layout and Renderer
  */
-const container: HTMLDivElement = document.querySelector('#graph')
-const hierarchy = Hierarchy.Layout<Node, Graph.Edge>()
-const force = Force.Layout<Node, Graph.Edge>()
+const container = document.querySelector('#graph') as HTMLDivElement
+const hierarchy = Hierarchy.Layout()
+const force = Force.Layout()
 const zoomControl = Zoom.Control({ container })
-const renderer = WebGL.Renderer<Node, Graph.Edge>({
+const renderer = WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -205,11 +205,11 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom / 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     renderer({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom, renderOptions.maxZoom, renderOptions.zoom * 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     renderer({ nodes, edges, options: renderOptions })
   },
 })

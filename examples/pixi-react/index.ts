@@ -4,7 +4,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
 import * as Graph from '../../src'
 import { Zoom, clampZoom } from '../../src/renderers/webgl/bindings/react/zoom'
-import { Renderer } from '../../src/renderers/webgl/bindings/react/renderer'
+import { Renderer, Props } from '../../src/renderers/webgl/bindings/react/renderer'
 import * as Force from '../../src/layout/force'
 import * as Cluster from '../../src/layout/cluster'
 import * as Subgraph from '../../src/layout/subgraph'
@@ -17,6 +17,7 @@ document.body.appendChild(stats.dom)
 
 
 type Node = Graph.Node & { type: string }
+type Edge = Graph.Edge
 
 
 const COMPANY_STYLE: WebGL.NodeStyle = {
@@ -30,7 +31,7 @@ const PERSON_STYLE: WebGL.NodeStyle = {
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 22 }
 }
 
-const data = {
+const data: { nodes: Node[], edges: Edge[] } = {
   nodes: [
     { id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }, { id: 'd', label: 'D' }, { id: 'e', label: 'E' },
     { id: 'f', label: 'F' }, { id: 'g', label: 'G' }, { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' },
@@ -58,9 +59,9 @@ const data = {
 }
 
 
-const force = Force.Layout<Node, Graph.Edge>()
-const cluster = Cluster.Layout<Node, Graph.Edge>()
-const subgraph = Subgraph.Layout<Node, Graph.Edge>()
+const force = Force.Layout()
+const cluster = Cluster.Layout()
+const subgraph = Subgraph.Layout()
 
 
 /**
@@ -68,7 +69,7 @@ const subgraph = Subgraph.Layout<Node, Graph.Edge>()
  */
 const App: FunctionComponent = () => {
 
-  const [graph, setGraph] = useState<{ nodes: Node[], edges: Graph.Edge[], x: number, y: number, zoom: number, minZoom: number, maxZoom: number }>({
+  const [graph, setGraph] = useState<{ nodes: Node[], edges: Edge[], x: number, y: number, zoom: number, minZoom: number, maxZoom: number }>({
     nodes: [],
     edges: [],
     x: 0,
@@ -133,13 +134,13 @@ const App: FunctionComponent = () => {
       } : node))
     }))
   }, [])
-  const onEdgePointerEnter = useCallback((_, { id }: Graph.Edge) => {
+  const onEdgePointerEnter = useCallback((_, { id }: Edge) => {
     setGraph((graph) => ({
       ...graph,
       edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     }))
   }, [])
-  const onEdgePointerLeave = useCallback((_, { id }: Graph.Edge) => {
+  const onEdgePointerLeave = useCallback((_, { id }: Edge) => {
     setGraph((graph) => ({
       ...graph,
       edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
@@ -195,14 +196,14 @@ const App: FunctionComponent = () => {
 
   return (
     createElement(ReactResizeDetector, {},
-      ({ width, height }) => (
+      ({ width, height }: { width?: number, height?: number }) => (
         createElement('div', { style: { width: '100%', height: '100%' } }, (
           createElement(Zoom, {
             top: 80,
             onZoomIn,
             onZoomOut,
           }, (
-            createElement(Renderer, {
+            createElement<Props<Node, Edge>>(Renderer, {
               width,
               height,
               nodes: graph.nodes,

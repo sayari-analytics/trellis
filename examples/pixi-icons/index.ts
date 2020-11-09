@@ -53,7 +53,7 @@ let edges: Edge[] = [
 /**
  * Initialize Layout and Renderer
  */
-const container: HTMLDivElement = document.querySelector('#graph')
+const container = document.querySelector('#graph') as HTMLDivElement
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
