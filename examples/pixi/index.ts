@@ -109,9 +109,6 @@ const renderer = WebGL.Renderer({
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
-const layoutOptions: Force.Options = {
-  nodeStrength: -500,
-}
 
 
 /**
@@ -265,6 +262,11 @@ const renderOptions: WebGL.Options = {
     renderer({ nodes, edges, options: renderOptions })
   }
 }
+
+const layoutOptions: Force.Options = {
+  nodeStrength: -500,
+}
+
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes

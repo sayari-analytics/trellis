@@ -47,7 +47,7 @@ type LayoutResultEvent<N extends Node<E>, E extends Edge> = {
 
 
 export const LAYOUT_OPTIONS = {
-  nodeStrength: -500,
+  nodeStrength: -600,
   linkDistance: 180,
   linkStrength: undefined,
   centerStrength: 0.02,
@@ -69,14 +69,20 @@ const d3ForceScript = `
 
 
 const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
-  class Simulation {
-
-    private nodePadding = DEFAULT_OPTIONS.nodePadding
-    private tick = DEFAULT_OPTIONS.tick
-    private forceManyBody = d3.forceManyBody().distanceMax(4000).theta(0.5)
-    private forceLink = d3.forceLink<SimulationNode, SimulationLinkDatum<SimulationNode>>().id((node) => node.id)
+  const layout = ({
+    nodes,
+    edges,
+    options: {
+      nodeStrength = DEFAULT_OPTIONS.nodeStrength,
+      linkDistance = DEFAULT_OPTIONS.linkDistance,
+      linkStrength = DEFAULT_OPTIONS.linkStrength,
+      centerStrength = DEFAULT_OPTIONS.centerStrength,
+      nodePadding = DEFAULT_OPTIONS.nodePadding,
+      tick = DEFAULT_OPTIONS.tick,
+    } = DEFAULT_OPTIONS,
+  }: LayoutEvent) => {
     /**
-     * TODO - should be node.radius + node.totalStrokeWidth + this.nodePadding
+     * TODO - `forceCollide().radius(...)` should be `(node) => node.radius + node.totalStrokeWidth + this.nodePadding`
      * also, only calculate once:
      * (node) => (this.nodeRadii[node.id] !== undefined ?
      *   this.nodeRadii[node.id] :
@@ -84,49 +90,29 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
      * )
      * (node) => (this.nodeRadii[node.id] ??= node.radius + node.totalStrokeWidth + this.nodePadding)
      */
-    private forceCollide = d3.forceCollide<SimulationNode>().radius((node) => node.radius + this.nodePadding)
-    private forceX = d3.forceX(0)
-    private forceY = d3.forceY(0)
-
-    simulation = d3.forceSimulation<SimulationNode>()
-      .force('charge', this.forceManyBody)
-      .force('collision', this.forceCollide)
-      .force('link', this.forceLink)
-      .force('x', this.forceX)
-      .force('y', this.forceY)
+    d3.forceSimulation<SimulationNode>()
+      .force('charge', d3.forceManyBody().distanceMax(4000).theta(0.5).strength(nodeStrength))
+      .force('collision', d3.forceCollide<SimulationNode>().radius((node) => node.radius + nodePadding))
+      .force('x', d3.forceX(0).strength(centerStrength))
+      .force('y', d3.forceY(0).strength(centerStrength))
       .force('center', d3.forceCenter())
+      .nodes(nodes)
+      .force('link', linkStrength === undefined ?
+        d3.forceLink<SimulationNode, SimulationLinkDatum<SimulationNode>>()
+          .id((node) => node.id)
+          .distance(linkDistance)
+          .links(edges) :
+        d3.forceLink<SimulationNode, SimulationLinkDatum<SimulationNode>>()
+          .id((node) => node.id)
+          .distance(linkDistance)
+          .strength(linkStrength)
+          .links(edges)
+      )
       .stop()
+      .tick(tick)
 
-    layout({
-      nodes,
-      edges,
-      options: {
-        nodeStrength = DEFAULT_OPTIONS.nodeStrength,
-        linkDistance = DEFAULT_OPTIONS.linkDistance,
-        linkStrength = DEFAULT_OPTIONS.linkStrength,
-        centerStrength = DEFAULT_OPTIONS.centerStrength,
-        nodePadding = DEFAULT_OPTIONS.nodePadding,
-        tick = DEFAULT_OPTIONS.tick,
-      } = DEFAULT_OPTIONS
-    }: LayoutEvent) {
-      this.forceManyBody.strength(nodeStrength)
-      this.forceLink.distance(linkDistance)
-      linkStrength !== undefined && this.forceLink.strength(linkStrength)
-      this.forceX.strength(centerStrength)
-      this.forceY.strength(centerStrength)
-      this.nodePadding = nodePadding
-      this.tick = tick
-
-      this.simulation.nodes(nodes)
-      this.forceLink.links(edges)
-
-      this.simulation.alpha(1).stop().tick(this.tick)
-
-      return this
-    }
+    return nodes
   }
-
-  const simulation = new Simulation()
 
   let event: LayoutEvent | undefined
 
@@ -136,9 +122,10 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
      */
     if (event === undefined) {
       setTimeout(() => {
-        simulation.layout(event!)
-        self.postMessage({ nodes: simulation.simulation.nodes(), v: data.v })
+        let _event = event!
         event = undefined
+        const nodes = layout(_event)
+        self.postMessage({ nodes, v: _event.v })
       }, 0)
     }
     event = data
@@ -158,6 +145,7 @@ export const Layout = () => {
   const layout = <N extends Node<E>, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edges = graph.edges
     const version = v++
+
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: version } as LayoutEvent)
 
     return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve, reject) => {

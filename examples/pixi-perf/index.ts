@@ -27,7 +27,7 @@ const data = {
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_5` })))
-    .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_6` })))
+    // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_6` })))
     .map<Node>(({ id, label, type }) => ({
       id,
       label,
@@ -55,7 +55,7 @@ const data = {
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
     .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-    .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
+    // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
     .concat([
       ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
       ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
@@ -174,7 +174,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
  * Layout and Render Graph
  */
 const NODES_PER_TICK = 40
-const INTERVAL = 1000
+const INTERVAL = 1400
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
@@ -189,11 +189,19 @@ const update = () => {
   const newNodes = data.nodes.slice(0, (idx + 1) * NODES_PER_TICK)
   const nodeIds = newNodes.reduce<Set<string>>((ids, { id }) => ids.add(id), new Set())
   const newEdges = data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+  /**
+   * uncomment to simulate bad data
+   */
+  // const newEdges = idx === 3 ?
+  //   data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)).concat([{ id: '!', source: 'a', target: 'b' }]) :
+  //   data.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
 
   layout({ nodes: newNodes, edges: newEdges }).then((graph) => {
     nodes = graph.nodes
     edges = graph.edges
     render({ nodes, edges, options: renderOptions })
+  }).catch((error) => {
+    console.error(error)
   })
 }
 
