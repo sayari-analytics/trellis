@@ -157,15 +157,16 @@ export const Layout = () => {
 
   const layout = <N extends Node<E>, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edges = graph.edges
-    const version = v + 1
+    const version = v++
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: version } as LayoutEvent)
 
-    return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve) => {
+    return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve, reject) => {
       worker.onmessage = ({ data }: Message<LayoutResultEvent<N, E>>) => {
         if (data.v === version) {
           resolve({ nodes: data.nodes, edges })
         }
       }
+      worker.onerror = reject
     })
   }
 

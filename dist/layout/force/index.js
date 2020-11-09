@@ -80,15 +80,16 @@ exports.Layout = function () {
     var v = 0;
     var layout = function (graph) {
         var edges = graph.edges;
-        var version = v + 1;
+        var version = v++;
         worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: version });
-        return new Promise(function (resolve) {
+        return new Promise(function (resolve, reject) {
             worker.onmessage = function (_a) {
                 var data = _a.data;
                 if (data.v === version) {
                     resolve({ nodes: data.nodes, edges: edges });
                 }
             };
+            worker.onerror = reject;
         });
     };
     layout.delete = function () {
