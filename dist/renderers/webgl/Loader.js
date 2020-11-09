@@ -22,14 +22,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ImageLoader = exports.FontLoader = exports.Loader = void 0;
+exports.ImageLoader = exports.FontLoader = exports.Async = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var fontfaceobserver_1 = __importDefault(require("fontfaceobserver"));
 var font_cache = {};
 var image_cache = {};
-exports.Loader = function (resolver, cb) {
+/**
+ * generic function for representing a value that is possibly asynchronous
+ * this of this as a promise, except that
+ * - it can resolve synchronously
+ * - it can be cancelled
+ * - it is lazy
+ * - it doesn't handle error conditions
+ * - it can't be chained
+ *
+ * const delay = Async((resolve) => setTimeout(() => resolve('done'), 1000))
+ * const cancel = delay((message) => console.log(message))
+ * cancel()
+ *
+ * // compare to the promise equivlanet
+ * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
+ * delay.then((message) => console.log(message))
+ */
+exports.Async = function (executor) { return function (cb) {
     var cancelled = false;
-    resolver(function (result) {
+    executor(function (result) {
         if (!cancelled) {
             cb(result);
         }
@@ -37,38 +54,47 @@ exports.Loader = function (resolver, cb) {
     return function () {
         cancelled = true;
     };
-};
-exports.FontLoader = function (family, cb) {
+}; };
+exports.FontLoader = function (family) {
     var _a, _b;
     if (font_cache[family]) {
-        return exports.Loader(function (resolve) { return resolve(family); }, cb);
+        return exports.Async(function (resolve) { return resolve(family); });
     }
     else if ((_b = (_a = document) === null || _a === void 0 ? void 0 : _a.fonts) === null || _b === void 0 ? void 0 : _b.load) {
-        return exports.Loader(function (resolve) {
+        return exports.Async(function (resolve) {
             document.fonts.load("1em " + family).then(function () {
                 font_cache[family] = true;
                 resolve(family);
             });
-        }, cb);
+        });
     }
     else {
-        return exports.Loader(function (resolve) {
+        return exports.Async(function (resolve) {
             new fontfaceobserver_1.default(family).load().then(function () {
                 font_cache[family] = true;
                 resolve(family);
             });
-        }, cb);
+        });
     }
 };
-exports.ImageLoader = function (url, cb) {
-    if (image_cache[url]) {
-        return exports.Loader(function (resolve) { return resolve(url); }, cb);
+exports.ImageLoader = function (url) {
+    if (image_cache[url] === true) {
+        return exports.Async(function (resolve) { return resolve(url); });
     }
-    return exports.Loader(function (resolve) {
-        new PIXI.Loader().add(url).load(function () {
+    else if (image_cache[url] instanceof PIXI.Loader) {
+        return exports.Async(function (resolve) {
+            image_cache[url].load(function () {
+                image_cache[url] = true;
+                resolve(url);
+            });
+        });
+    }
+    return exports.Async(function (resolve) {
+        image_cache[url] = new PIXI.Loader().add(url);
+        image_cache[url].load(function () {
             image_cache[url] = true;
             resolve(url);
         });
-    }, cb);
+    });
 };
 //# sourceMappingURL=Loader.js.map

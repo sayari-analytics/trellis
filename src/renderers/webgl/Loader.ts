@@ -5,13 +5,30 @@ import FontFaceObserver from 'fontfaceobserver'
 const font_cache: { [family: string]: boolean } = {}
 
 
-const image_cache: { [url: string]: boolean } = {}
+const image_cache: { [url: string]: PIXI.Loader | true } = {}
 
 
-export const Loader = <T>(resolver: (resolve: (result: T) => void) => void, cb: (result: T) => void) => {
+/**
+ * generic function for representing a value that is possibly asynchronous
+ * this of this as a promise, except that
+ * - it can resolve synchronously
+ * - it can be cancelled
+ * - it is lazy
+ * - it doesn't handle error conditions
+ * - it can't be chained
+ *
+ * const delay = Async((resolve) => setTimeout(() => resolve('done'), 1000))
+ * const cancel = delay((message) => console.log(message))
+ * cancel()
+ *
+ * // compare to the promise equivlanet
+ * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
+ * delay.then((message) => console.log(message))
+ */
+export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (cb: (result: T) => void) => {
   let cancelled = false
 
-  resolver((result) => {
+  executor((result) => {
     if (!cancelled) {
       cb(result)
     }
@@ -23,36 +40,44 @@ export const Loader = <T>(resolver: (resolve: (result: T) => void) => void, cb: 
 }
 
 
-export const FontLoader = (family: string, cb: (family: string) => void) => {
+export const FontLoader = (family: string) => {
   if (font_cache[family]) {
-    return Loader<string>((resolve) => resolve(family), cb)
+    return Async<string>((resolve) => resolve(family))
   } else if ((document as any)?.fonts?.load) {
-    return Loader<string>((resolve) => {
+    return Async<string>((resolve) => {
       (document as any).fonts.load(`1em ${family}`).then(() => {
         font_cache[family] = true
         resolve(family)
       })
-    }, cb)
+    })
   } else {
-    return Loader<string>((resolve) => {
+    return Async<string>((resolve) => {
       new FontFaceObserver(family).load().then(() => {
         font_cache[family] = true
         resolve(family)
       })
-    }, cb)
+    })
   }
 }
 
 
-export const ImageLoader = (url: string, cb: (url: string) => void) => {
-  if (image_cache[url]) {
-    return Loader<string>((resolve) => resolve(url), cb)
+export const ImageLoader = (url: string) => {
+  if (image_cache[url] === true) {
+    return Async<string>((resolve) => resolve(url))
+  } else if (image_cache[url] instanceof PIXI.Loader) {
+    return Async<string>((resolve) => {
+      (image_cache[url] as PIXI.Loader).load(() => {
+        image_cache[url] = true
+        resolve(url)
+      })
+    })
   }
 
-  return Loader<string>((resolve) => {
-    new PIXI.Loader().add(url).load(() => {
+  return Async<string>((resolve) => {
+    image_cache[url] = new PIXI.Loader().add(url)
+    ;(image_cache[url] as PIXI.Loader).load(() => {
       image_cache[url] = true
       resolve(url)
     })
-  }, cb)
+  })
 }

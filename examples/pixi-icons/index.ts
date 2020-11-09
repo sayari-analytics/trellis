@@ -7,7 +7,7 @@ import * as WebGL from '../../src/renderers/webgl'
 import { company } from '../assets/icons'
 import person from '../assets/person.png'
 
-console.log(person)
+
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
@@ -59,7 +59,7 @@ const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
 const renderer = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: true }
+  // debug: { stats, logPerformance: true }
 })
 
 

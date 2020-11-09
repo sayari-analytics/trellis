@@ -147,7 +147,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelLoader?.()
 
       if (this.label) {
-        this.labelLoader = FontLoader(this.labelFamily, (family) => {
+        this.labelLoader = FontLoader(this.labelFamily)((family) => {
           if(this.label === undefined || this.labelFamily !== family) return
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,

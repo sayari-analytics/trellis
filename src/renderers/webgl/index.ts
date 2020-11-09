@@ -561,6 +561,11 @@ export class InternalRenderer<N extends Node, E extends Edge>{
     this.dirty = this.animationPercent < 1
     this.viewportDirty = false
 
+    if (this.dataUrl) {
+      this.dataUrl(this.app.renderer.view.toDataURL('image/png', 1))
+      this.dataUrl = undefined
+    }
+
     performance.clearMarks()
     performance.clearMeasures()
     performance.mark('external')

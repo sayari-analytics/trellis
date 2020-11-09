@@ -212,7 +212,7 @@ var EdgeRenderer = /** @class */ (function () {
             this.labelSprite = undefined;
             (_v = this.labelLoader) === null || _v === void 0 ? void 0 : _v.call(this);
             if (this.label) {
-                this.labelLoader = Loader_1.FontLoader(this.labelFamily, function (family) {
+                this.labelLoader = Loader_1.FontLoader(this.labelFamily)(function (family) {
                     var _a;
                     if (_this.label === undefined || _this.labelFamily !== family)
                         return;

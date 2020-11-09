@@ -80,11 +80,12 @@ exports.Layout = function () {
     var v = 0;
     var layout = function (graph) {
         var edges = graph.edges;
-        worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: ++v });
+        var version = v + 1;
+        worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: version });
         return new Promise(function (resolve) {
             worker.onmessage = function (_a) {
                 var data = _a.data;
-                if (data.v === v) {
+                if (data.v === version) {
                     resolve({ nodes: data.nodes, edges: edges });
                 }
             };

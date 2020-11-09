@@ -358,6 +358,10 @@ var InternalRenderer = /** @class */ (function () {
             }
             _this.dirty = _this.animationPercent < 1;
             _this.viewportDirty = false;
+            if (_this.dataUrl) {
+                _this.dataUrl(_this.app.renderer.view.toDataURL('image/png', 1));
+                _this.dataUrl = undefined;
+            }
             performance.clearMarks();
             performance.clearMeasures();
             performance.mark('external');
