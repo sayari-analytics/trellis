@@ -7,7 +7,7 @@ import * as Download from '../../src/controls/download'
 import * as Cluster from '../../src/layout/cluster'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
-import { Node, Edge } from '../../src/'
+import { Node, Edge, zoomToBounds, getBounds } from '../../src/'
 
 
 export const stats = new Stats()
@@ -167,11 +167,20 @@ const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = select
 const downloadControl = Download.Control({ container })
 downloadControl({
   top: 210,
-  onClick: () => imageRenderer({
-    nodes: nodes,
-    edges: edges,
-    options: renderOptions
-  })
+  onClick: () => {
+    const { x, y, zoom } = zoomToBounds(getBounds(nodes, 80), container.offsetWidth, container.offsetHeight)
+    return imageRenderer({
+      nodes: nodes,
+      edges: edges,
+      options: {
+        width: container.offsetWidth,
+        height: container.offsetHeight,
+        x,
+        y,
+        zoom
+      }
+    })
+  }
 })
 
 
@@ -270,5 +279,9 @@ const layoutOptions: Force.Options = {
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
+  const { x, y, zoom } = zoomToBounds(getBounds(nodes), container.offsetWidth, container.offsetHeight)
+  renderOptions.x = x
+  renderOptions.y = y
+  renderOptions.zoom = zoom
   renderer({ nodes, edges, options: renderOptions })
 })

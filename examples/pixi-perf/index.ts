@@ -2,8 +2,11 @@ import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
 import * as Graph from '../../src/'
 import * as Zoom from '../../src/controls/zoom'
+import * as Download from '../../src/controls/download'
 import * as WebGL from '../../src/renderers/webgl'
+import * as Png from '../../src/renderers/image'
 import graphData from '../../tmp-data'
+import { getBounds, zoomToBounds } from '../../src/'
 
 
 export const stats = new Stats()
@@ -81,7 +84,7 @@ let edges: Graph.Edge[] = []
 
 
 /**
- * Initialize Layout and Renderer
+ * Initialize Layout and Renderers
  */
 const container = document.querySelector('#graph') as HTMLDivElement
 const layout = Force.Layout()
@@ -89,10 +92,11 @@ const render = WebGL.Renderer({
   container,
   // debug: { stats, logPerformance: true }
 })
+const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
 
 
 /**
- * Initialize Controls
+ * Initialize Zoom Control
  */
 const zoomControl = Zoom.Control({ container })
 const zoomOptions: Zoom.Options = {
@@ -110,7 +114,30 @@ zoomControl(zoomOptions)
 
 
 /**
- * Initialize Layout and Renderer Options
+ * Create Download Controls
+ */
+const downloadControl = Download.Control({ container })
+downloadControl({
+  top: 160,
+  onClick: () => {
+    const { x, y, zoom } = zoomToBounds(getBounds(nodes, 80), renderOptions.width!, renderOptions.height!)
+    return imageRenderer({
+      nodes: nodes,
+      edges: edges,
+      options: {
+        width: renderOptions.width!,
+        height: renderOptions.height!,
+        x,
+        y,
+        zoom
+      }
+    })
+  }
+})
+
+
+/**
+ * Layout and Render Graph
  */
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
@@ -170,11 +197,8 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 }
 
 
-/**
- * Layout and Render Graph
- */
 const NODES_PER_TICK = 40
-const INTERVAL = 1400
+const INTERVAL = 2000
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
@@ -199,6 +223,12 @@ const update = () => {
   layout({ nodes: newNodes, edges: newEdges }).then((graph) => {
     nodes = graph.nodes
     edges = graph.edges
+
+    const { x, y, zoom } = zoomToBounds(getBounds(nodes, 0), renderOptions.width!, renderOptions.height!)
+    renderOptions.x = x
+    renderOptions.y = y
+    renderOptions.zoom = zoom
+
     render({ nodes, edges, options: renderOptions })
   }).catch((error) => {
     console.error(error)
