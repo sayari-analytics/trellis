@@ -1,10 +1,10 @@
 import * as PIXI from 'pixi.js'
-import { InternalRenderer, RENDERER_OPTIONS } from '..'
+import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 
 
 /**
- * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * zoom logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Wheel Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/wheel.js)
  */
 export class Zoom <N extends Node, E extends Edge>{
@@ -12,9 +12,6 @@ export class Zoom <N extends Node, E extends Edge>{
   private renderer: InternalRenderer<N, E>
   private onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void
   private paused = false
-
-  minZoom = RENDERER_OPTIONS.minZoom
-  maxZoom = RENDERER_OPTIONS.maxZoom
 
   constructor(renderer: InternalRenderer<N, E>, onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void) {
     this.renderer = renderer
@@ -28,40 +25,33 @@ export class Zoom <N extends Node, E extends Edge>{
       return
     }
 
-    // let point = new PIXI.Point()
-    // ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(
-    //   point,
-    //   // account for x/y pivot
-    //   e.clientX - (this.renderer.width / 2),
-    //   e.clientY - (this.renderer.height / 2)
-    // )
-
     const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
-    const zoom = this.renderer.zoom
+    const zoomStart = this.renderer.root.scale.x
+    const zoomEnd = Math.max(this.renderer.minZoom, Math.min(this.renderer.maxZoom, zoomStart * change))
 
-    if (step > 0 && zoom >= this.maxZoom) {
-      return
-    } else if (step < 0 && zoom <= this.minZoom) {
+    if (
+      (step > 0 && zoomStart >= this.renderer.maxZoom) ||
+      (step < 0 && zoomStart <= this.renderer.minZoom)
+    ) {
       return
     }
 
-    const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom * change))
+    const globalStart = new PIXI.Point()
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(globalStart, e.clientX, e.clientY)
+    const localStart = this.renderer.root.toLocal(globalStart)
 
-    // let oldPoint = this.renderer.root.toLocal(point)
-
-    // this.renderer.root.scale.set(newZoom)
-    // const newPoint = this.renderer.root.toGlobal(oldPoint)
-    // this.renderer.root.scale.set(zoom)
+    this.renderer.root.scale.set(zoomEnd)
+    const globalEnd = this.renderer.root.toGlobal(localStart)
+    const rootX = this.renderer.root.x + globalStart.x - globalEnd.x
+    const rootY = this.renderer.root.y + globalStart.y - globalEnd.y
+    this.renderer.root.scale.set(zoomStart)
 
     this.onContainerWheel(
       e,
-      this.renderer.x,
-      this.renderer.y,
-      newZoom
-      // this.renderer.x + point.x - newPoint.x,
-      // this.renderer.y + point.y - newPoint.y,
-      // newZoom
+      (rootX - (this.renderer.width / 2)) / zoomEnd,
+      (rootY - (this.renderer.height / 2)) / zoomEnd,
+      zoomEnd
     )
   }
 

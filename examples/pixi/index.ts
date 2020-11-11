@@ -10,9 +10,9 @@ import * as Png from '../../src/renderers/image'
 import { Node, Edge, zoomToBounds, getBounds } from '../../src/'
 
 
-// export const stats = new Stats()
-// stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-// document.body.appendChild(stats.dom)
+export const stats = new Stats()
+stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom)
 
 
 /**
@@ -198,14 +198,12 @@ const renderOptions: WebGL.Options = {
   nodesEqual: (prev, current) => prev === current,
   edgesEqual: (prev, current) => prev === current,
   onNodePointerDown: (_, { id }, x, y) => {
-    // console.log(x, y)
     // renderOptions.x = -x
     // renderOptions.y = -y
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_, { id }, x, y) => {
-    // console.log(x, y)
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
@@ -241,40 +239,32 @@ const renderOptions: WebGL.Options = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
-  // onNodeDoubleClick: (_, clickedNode) => {
-  //   const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
-  //     { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
-  //     { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
-  //     { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
-  //     { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: createSubgraphStyle(10) },
-  //   ]))
-  //   const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
+  onNodeDoubleClick: (_, clickedNode) => {
+    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
+      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: createSubgraphStyle(10) },
+    ]))
+    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
 
-  //   nodes = subgraph(
-  //     nodes,
-  //     nodes.map((node) => (node.id === clickedNode.id ? {
-  //       ...node,
-  //       radius,
-  //       style: { ...node.style, color: '#EFEFEF', icon: undefined },
-  //       subgraph: {
-  //         nodes: subgraphNodes,
-  //         edges: []
-  //       },
-  //     } : node))
-  //   )
+    nodes = subgraph(
+      nodes,
+      nodes.map((node) => (node.id === clickedNode.id ? {
+        ...node,
+        radius,
+        style: { ...node.style, color: '#EFEFEF', icon: undefined },
+        subgraph: {
+          nodes: subgraphNodes,
+          edges: []
+        },
+      } : node))
+    )
 
-  //   renderer({ nodes, edges, options: renderOptions })
-  // },
-  onContainerPointerDown: (_, x, y) => {
-    // console.log('x', x, 'y', y)
-    // renderOptions.x = -x
-    // renderOptions.y = -y
-    onContainerPointerDown(_, x, y)
+    renderer({ nodes, edges, options: renderOptions })
   },
-  onContainerDrag: (_, x, y) => {
-    // console.log('center', x, y)
-    onContainerDrag(_, x, y)
-  },
+  onContainerPointerDown,
+  onContainerDrag,
   onContainerPointerUp,
   onWheel: (_, x, y, zoom) => {
     renderOptions.x = x
@@ -291,7 +281,6 @@ const layoutOptions: Force.Options = {
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
-  window.nodes = nodes
   // const bounds = getBounds(nodes)
   // const { x, y, zoom } = zoomToBounds(bounds, container.offsetWidth, container.offsetHeight)
   // renderOptions.x = x

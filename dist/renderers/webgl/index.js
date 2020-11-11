@@ -103,9 +103,9 @@ var InternalRenderer = /** @class */ (function () {
             _this.onEdgePointerUp = onEdgePointerUp;
             _this.onEdgePointerLeave = onEdgePointerLeave;
             _this.onWheel = onWheel;
-            _this.zoomInteraction.minZoom = minZoom;
-            _this.zoomInteraction.maxZoom = maxZoom;
             _this.animate = animate;
+            _this.minZoom = minZoom;
+            _this.maxZoom = maxZoom;
             if (width !== _this.width || height !== _this.height) {
                 _this.width = width;
                 _this.height = height;

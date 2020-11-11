@@ -302,9 +302,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
     this.onWheel = onWheel
-    this.zoomInteraction.minZoom = minZoom
-    this.zoomInteraction.maxZoom = maxZoom
     this.animate = animate
+    this.minZoom = minZoom
+    this.maxZoom = maxZoom
 
     if (width !== this.width || height !== this.height) {
       this.width = width
