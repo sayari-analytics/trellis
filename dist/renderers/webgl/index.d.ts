@@ -1,6 +1,6 @@
 /// <reference types="stats" />
 import * as PIXI from 'pixi.js';
-import { Node, Edge } from '../..';
+import * as Graph from '../..';
 import { NodeRenderer } from './node';
 import { EdgeRenderer } from './edge';
 import { Drag } from './interaction/drag';
@@ -55,7 +55,7 @@ export declare type EdgeStyle = {
     labelWordWrap?: number;
     arrow?: 'forward' | 'reverse' | 'both' | 'none';
 };
-export declare type Options<N extends Node = Node, E extends Edge = Edge> = {
+export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> = {
     width?: number;
     height?: number;
     x?: number;
@@ -96,7 +96,7 @@ export declare const RENDERER_OPTIONS: {
     nodesEqual: () => boolean;
     edgesEqual: () => boolean;
 };
-export declare class InternalRenderer<N extends Node, E extends Edge> {
+export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
     update: (graph: {
         nodes: N[];
         edges: E[];
@@ -196,7 +196,7 @@ export declare const Renderer: (options: {
         stats?: Stats;
     };
 }) => {
-    <N extends Node<Edge>, E extends Edge>(graph: {
+    <N extends Graph.Node<Graph.Edge>, E extends Graph.Edge>(graph: {
         nodes: N[];
         edges: E[];
         options?: Options<N, E> | undefined;

@@ -28,8 +28,8 @@ var Drag = /** @class */ (function () {
                 var distX = x - _this.last.x;
                 var distY = y - _this.last.y;
                 if (_this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-                    var centerX = _this.renderer.x + (x - _this.last.x);
-                    var centerY = _this.renderer.y + (y - _this.last.y);
+                    var centerX = _this.renderer.x + (distX / _this.renderer.zoom);
+                    var centerY = _this.renderer.y + (distY / _this.renderer.zoom);
                     _this.last = { x: x, y: y };
                     _this.moved = true;
                     _this.onContainerDrag(event, centerX, centerY);

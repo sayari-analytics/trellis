@@ -28,13 +28,13 @@ export class Zoom <N extends Node, E extends Edge>{
       return
     }
 
-    let point = new PIXI.Point()
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(
-      point,
-      // account for x/y pivot
-      e.clientX - (this.renderer.width / 2),
-      e.clientY - (this.renderer.height / 2)
-    )
+    // let point = new PIXI.Point()
+    // ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(
+    //   point,
+    //   // account for x/y pivot
+    //   e.clientX - (this.renderer.width / 2),
+    //   e.clientY - (this.renderer.height / 2)
+    // )
 
     const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
@@ -48,17 +48,20 @@ export class Zoom <N extends Node, E extends Edge>{
 
     const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom * change))
 
-    let oldPoint = this.renderer.root.toLocal(point)
+    // let oldPoint = this.renderer.root.toLocal(point)
 
-    this.renderer.root.scale.set(newZoom)
-    const newPoint = this.renderer.root.toGlobal(oldPoint)
-    this.renderer.root.scale.set(zoom)
+    // this.renderer.root.scale.set(newZoom)
+    // const newPoint = this.renderer.root.toGlobal(oldPoint)
+    // this.renderer.root.scale.set(zoom)
 
     this.onContainerWheel(
       e,
-      this.renderer.x + point.x - newPoint.x,
-      this.renderer.y + point.y - newPoint.y,
+      this.renderer.x,
+      this.renderer.y,
       newZoom
+      // this.renderer.x + point.x - newPoint.x,
+      // this.renderer.y + point.y - newPoint.y,
+      // newZoom
     )
   }
 

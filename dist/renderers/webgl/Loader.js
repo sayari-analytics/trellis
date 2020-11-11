@@ -44,11 +44,11 @@ var image_cache = {};
  * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
  * delay.then((message) => console.log(message))
  */
-exports.Async = function (executor) { return function (cb) {
+exports.Async = function (executor) { return function (onfulfilled) {
     var cancelled = false;
     executor(function (result) {
         if (!cancelled) {
-            cb(result);
+            onfulfilled(result);
         }
     });
     return function () {

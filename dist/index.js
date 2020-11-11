@@ -62,6 +62,13 @@ exports.getBounds = function (nodes, padding) {
     }
     return [left - padding, top - padding, right + padding, bottom + padding];
 };
+/**
+ * TODO
+ * - getSelectionBounds Node[] => Bounds
+ * - getViewportBounds { x, y, zoom } => Bounds
+ * - combineBounds/expandBounds/mergeBounds (Bounds, Bounds) => Bounds
+ * - fitBounds Bounds => { x, y, zoom }
+ */
 exports.zoomToBounds = function (_a, width, height) {
     var _b = __read(_a, 4), left = _b[0], top = _b[1], right = _b[2], bottom = _b[3];
     var targetWidth = right - left;

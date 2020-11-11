@@ -20,6 +20,13 @@ export declare type Edge = {
     style?: EdgeStyle;
 };
 export declare const getBounds: (nodes: Node[], padding?: number) => [left: number, top: number, right: number, bottom: number];
+/**
+ * TODO
+ * - getSelectionBounds Node[] => Bounds
+ * - getViewportBounds { x, y, zoom } => Bounds
+ * - combineBounds/expandBounds/mergeBounds (Bounds, Bounds) => Bounds
+ * - fitBounds Bounds => { x, y, zoom }
+ */
 export declare const zoomToBounds: ([left, top, right, bottom]: [left: number, top: number, right: number, bottom: number], width: number, height: number) => {
     x: number;
     y: number;

@@ -109,26 +109,21 @@ var InternalRenderer = /** @class */ (function () {
             if (width !== _this.width || height !== _this.height) {
                 _this.width = width;
                 _this.height = height;
-                _this.root.pivot.x = _this.width / zoom / -2;
-                _this.root.pivot.y = _this.height / zoom / -2;
                 _this.app.renderer.resize(_this.width, _this.height);
                 _this.viewportDirty = true;
             }
-            if (x !== _this.x) {
-                _this.x = _this.root.x = x;
-                _this.viewportDirty = true;
-            }
-            if (y !== _this.y) {
-                _this.y = _this.root.y = y;
+            if (x !== _this.x || y !== _this.y) {
+                _this.x = x;
+                _this.y = y;
                 _this.viewportDirty = true;
             }
             if (zoom !== _this.zoom) {
                 _this.zoom = zoom;
-                _this.root.pivot.x = (_this.width / zoom) / -2;
-                _this.root.pivot.y = (_this.height / zoom) / -2;
-                _this.root.scale.set(zoom); // TODO - interpolate zoom
+                _this.root.scale.set(zoom); // TODO - interpolate zoom; clamp zoom
                 _this.viewportDirty = true;
             }
+            _this.root.x = (_this.x * _this.zoom) + (_this.width / 2); // TODO - interpolate position
+            _this.root.y = (_this.y * _this.zoom) + (_this.height / 2);
             var edgesAreEqual = edgesEqual(_this.edges, edges);
             var nodesAreEqual = nodesEqual(_this.nodes, nodes);
             /**
@@ -245,6 +240,24 @@ var InternalRenderer = /** @class */ (function () {
                 _this.edgesById = edgesById;
                 _this.dirty = true;
             }
+            // this.root.getChildByName('bbox')?.destroy()
+            // const [left, top, right, bottom] = Graph.getBounds(this.nodes, 0)
+            // const viewport = Graph.zoomToBounds([left, top, right, bottom], this.width, this.height)
+            // const bbox = new PIXI.Graphics().lineStyle(1, 0xff0000, 0.5).drawPolygon(new PIXI.Polygon([left, top, right, top, right, bottom, left, bottom]))
+            // bbox.name = 'bbox'
+            // this.root.addChild(bbox)
+            // this.root.getChildByName('bboxCenter')?.destroy()
+            // const bboxCenter = new PIXI.Graphics().lineStyle(2, 0xff0000, 0.5).drawCircle(-viewport.x, -viewport.y, 5)
+            // bboxCenter.name = 'bboxCenter'
+            // this.root.addChild(bboxCenter)
+            // this.root.getChildByName('origin')?.destroy()
+            // const origin = new PIXI.Graphics().lineStyle(6, 0x000000, 1).drawCircle(0, 0, 3)
+            // origin.name = 'origin'
+            // this.root.addChild(origin)
+            // this.root.getChildByName('screenCenter')?.destroy()
+            // const screenCenter = new PIXI.Graphics().lineStyle(2, 0x0000ff, 0.5).drawCircle(-this.x, -this.y, 10)
+            // screenCenter.name = 'screenCenter'
+            // this.root.addChild(screenCenter)
             return _this;
         };
         this._debugUpdate = function (graph) {
@@ -398,8 +411,6 @@ var InternalRenderer = /** @class */ (function () {
         });
         this.labelsLayer.interactiveChildren = false;
         this.nodesLayer.sortableChildren = true; // TODO - perf test
-        this.root.pivot.x = this.width / this.zoom / -2;
-        this.root.pivot.y = this.height / this.zoom / -2;
         this.app.stage.addChild(this.root);
         this.root.addChild(this.edgesGraphic);
         this.root.addChild(this.edgesLayer);

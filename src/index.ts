@@ -46,6 +46,13 @@ export const getBounds = (nodes: Node[], padding: number = 0): [left: number, to
 }
 
 
+/**
+ * TODO
+ * - getSelectionBounds Node[] => Bounds
+ * - getViewportBounds { x, y, zoom } => Bounds
+ * - combineBounds/expandBounds/mergeBounds (Bounds, Bounds) => Bounds
+ * - fitBounds Bounds => { x, y, zoom }
+ */
 export const zoomToBounds = ([left, top, right, bottom]: [left: number, top: number, right: number, bottom: number], width: number, height: number) => {
   const targetWidth = right - left
   const targetHeight = bottom - top

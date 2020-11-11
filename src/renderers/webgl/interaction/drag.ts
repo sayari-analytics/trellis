@@ -43,8 +43,8 @@ export class Drag <N extends Node, E extends Edge>{
       const distX = x - this.last.x
       const distY = y - this.last.y
       if (this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-        const centerX = this.renderer.x + (x - this.last.x)
-        const centerY = this.renderer.y + (y - this.last.y)
+        const centerX = this.renderer.x + (distX / this.renderer.zoom)
+        const centerY = this.renderer.y + (distY / this.renderer.zoom)
         this.last = { x, y }
         this.moved = true
 

@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { install } from '@pixi/unsafe-eval'
-import { Node, Edge } from '../..'
+import * as Graph from '../..'
 import { animationFrameLoop } from '../../utils'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
@@ -65,7 +65,7 @@ export type EdgeStyle = {
   arrow?: 'forward' | 'reverse' | 'both' | 'none'
 }
 
-export type Options<N extends Node = Node, E extends Edge = Edge> = {
+export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> = {
   width?: number
   height?: number
   x?: number
@@ -106,7 +106,7 @@ const POSITION_ANIMATION_DURATION = 800
 PIXI.utils.skipHello()
 
 
-export class InternalRenderer<N extends Node, E extends Edge>{
+export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
 
@@ -198,8 +198,6 @@ export class InternalRenderer<N extends Node, E extends Edge>{
     this.labelsLayer.interactiveChildren = false
     this.nodesLayer.sortableChildren = true // TODO - perf test
 
-    this.root.pivot.x = this.width / this.zoom / -2
-    this.root.pivot.y = this.height / this.zoom / -2
     this.app.stage.addChild(this.root)
     this.root.addChild(this.edgesGraphic)
     this.root.addChild(this.edgesLayer)
@@ -311,29 +309,25 @@ export class InternalRenderer<N extends Node, E extends Edge>{
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
-      this.root.pivot.x = this.width / zoom / -2
-      this.root.pivot.y = this.height / zoom / -2
       this.app.renderer.resize(this.width, this.height)
       this.viewportDirty = true
     }
 
-    if (x !== this.x) {
-      this.x = this.root.x = x
-      this.viewportDirty = true
-    }
-
-    if (y !== this.y) {
-      this.y = this.root.y = y
+    if (x !== this.x || y !== this.y) {
+      this.x = x
+      this.y = y
       this.viewportDirty = true
     }
 
     if (zoom !== this.zoom) {
       this.zoom = zoom
-      this.root.pivot.x = (this.width / zoom) / -2
-      this.root.pivot.y = (this.height / zoom) / -2
-      this.root.scale.set(zoom) // TODO - interpolate zoom
+      this.root.scale.set(zoom) // TODO - interpolate zoom; clamp zoom
       this.viewportDirty = true
     }
+
+    this.root.x = (this.x * this.zoom) + (this.width / 2) // TODO - interpolate position
+    this.root.y = (this.y * this.zoom) + (this.height / 2)
+
 
     const edgesAreEqual = edgesEqual(this.edges, edges)
     const nodesAreEqual = nodesEqual(this.nodes, nodes)
@@ -435,6 +429,28 @@ export class InternalRenderer<N extends Node, E extends Edge>{
       this.edgesById = edgesById
       this.dirty = true
     }
+
+    // this.root.getChildByName('bbox')?.destroy()
+    // const [left, top, right, bottom] = Graph.getBounds(this.nodes, 0)
+    // const viewport = Graph.zoomToBounds([left, top, right, bottom], this.width, this.height)
+    // const bbox = new PIXI.Graphics().lineStyle(1, 0xff0000, 0.5).drawPolygon(new PIXI.Polygon([left, top, right, top, right, bottom, left, bottom]))
+    // bbox.name = 'bbox'
+    // this.root.addChild(bbox)
+
+    // this.root.getChildByName('bboxCenter')?.destroy()
+    // const bboxCenter = new PIXI.Graphics().lineStyle(2, 0xff0000, 0.5).drawCircle(-viewport.x, -viewport.y, 5)
+    // bboxCenter.name = 'bboxCenter'
+    // this.root.addChild(bboxCenter)
+
+    // this.root.getChildByName('origin')?.destroy()
+    // const origin = new PIXI.Graphics().lineStyle(6, 0x000000, 1).drawCircle(0, 0, 3)
+    // origin.name = 'origin'
+    // this.root.addChild(origin)
+
+    // this.root.getChildByName('screenCenter')?.destroy()
+    // const screenCenter = new PIXI.Graphics().lineStyle(2, 0x0000ff, 0.5).drawCircle(-this.x, -this.y, 10)
+    // screenCenter.name = 'screenCenter'
+    // this.root.addChild(screenCenter)
 
 
     return this
@@ -589,7 +605,7 @@ export class InternalRenderer<N extends Node, E extends Edge>{
 export const Renderer = (options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new InternalRenderer(options)
 
-  const render = <N extends Node, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
+  const render = <N extends Graph.Node, E extends Graph.Edge>(graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
     (pixiRenderer as unknown as InternalRenderer<N, E>).update(graph)
   }
 

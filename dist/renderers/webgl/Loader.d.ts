@@ -15,6 +15,6 @@
  * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
  * delay.then((message) => console.log(message))
  */
-export declare const Async: <T>(executor: (resolve: (result: T) => void) => void) => (cb: (result: T) => void) => () => void;
-export declare const FontLoader: (family: string) => (cb: (result: string) => void) => () => void;
-export declare const ImageLoader: (url: string) => (cb: (result: string) => void) => () => void;
+export declare const Async: <T>(executor: (resolve: (result: T) => void) => void) => (onfulfilled: (result: T) => void) => () => void;
+export declare const FontLoader: (family: string) => (onfulfilled: (result: string) => void) => () => void;
+export declare const ImageLoader: (url: string) => (onfulfilled: (result: string) => void) => () => void;

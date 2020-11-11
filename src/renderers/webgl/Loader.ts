@@ -25,12 +25,12 @@ const image_cache: { [url: string]: PIXI.Loader | true } = {}
  * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
  * delay.then((message) => console.log(message))
  */
-export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (cb: (result: T) => void) => {
+export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (onfulfilled: (result: T) => void) => {
   let cancelled = false
 
   executor((result) => {
     if (!cancelled) {
-      cb(result)
+      onfulfilled(result)
     }
   })
 
