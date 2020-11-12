@@ -1,3 +1,5 @@
+import { interpolateBasis, interpolateNumber } from "d3-interpolate"
+
 export const noop = () => {}
 
 
@@ -160,4 +162,20 @@ export const equals = <T>(a: T, b: T) => {
   }
 
   return false
+}
+
+
+export const interpolate = (from: number, to: number, duration: number) => {
+  const start = performance.now()
+  const interpolator = interpolateNumber(from, to)
+  const ease = interpolateBasis([from, interpolator(0.7), interpolator(0.95), to])
+
+  return () => {
+    const elapsed = performance.now() - start
+    if (elapsed >= duration) {
+      return { done: true, value: to }
+    }
+
+    return { done: false, value: ease(elapsed / duration) }
+  }
 }
