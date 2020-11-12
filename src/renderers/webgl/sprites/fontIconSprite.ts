@@ -10,7 +10,7 @@ export class FontIconSprite {
     if (this.cache[icon] === undefined) {
       const textSprite = new PIXI.Text(text, {
         fontFamily,
-        fontSize: fontSize * 2,
+        fontSize: fontSize * 4,
         fontWeight,
         fill
       })
@@ -21,7 +21,7 @@ export class FontIconSprite {
     const sprite = new PIXI.Sprite(this.cache[icon])
     sprite.position.set(0, 0)
     sprite.anchor.set(0.5)
-    sprite.scale.set(0.5)
+    sprite.scale.set(0.25)
 
     return sprite
   }
