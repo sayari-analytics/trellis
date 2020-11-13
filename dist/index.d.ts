@@ -19,16 +19,23 @@ export declare type Edge = {
     label?: string;
     style?: EdgeStyle;
 };
-export declare const getBounds: (nodes: Node[], padding?: number) => [left: number, top: number, right: number, bottom: number];
-/**
- * TODO
- * - getSelectionBounds Node[] => Bounds
- * - getViewportBounds { x, y, zoom } => Bounds
- * - combineBounds/expandBounds/mergeBounds (Bounds, Bounds) => Bounds
- * - fitBounds Bounds => { x, y, zoom }
- */
-export declare const zoomToBounds: ([left, top, right, bottom]: [left: number, top: number, right: number, bottom: number], width: number, height: number) => {
+export declare type Bounds = {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+};
+export declare type Dimensions = {
+    width: number;
+    height: number;
+};
+export declare type Viewport = {
     x: number;
     y: number;
     zoom: number;
 };
+export declare const getSelectionBounds: (nodes: Node[], padding?: number) => Bounds;
+export declare const viewportToBounds: ({ x, y, zoom }: Viewport, { width, height }: Dimensions) => Bounds;
+export declare const mergeBounds: (a: Bounds, b: Bounds) => Bounds;
+export declare const boundsToViewport: ({ left, top, right, bottom }: Bounds, { width, height }: Dimensions) => Viewport;
+export declare const boundsToDimenions: ({ left, top, right, bottom }: Bounds, zoom: number) => Dimensions;

@@ -6,7 +6,6 @@ import * as Download from '../../src/controls/download'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
 import graphData from '../../tmp-data'
-import { getBounds, zoomToBounds } from '../../src/'
 
 
 export const stats = new Stats()
@@ -120,16 +119,17 @@ const downloadControl = Download.Control({ container })
 downloadControl({
   top: 160,
   onClick: () => {
-    const { x, y, zoom } = zoomToBounds(getBounds(nodes, 80), renderOptions.width!, renderOptions.height!)
+    const { width, height } = Graph.boundsToDimenions(Graph.getSelectionBounds(nodes, 80), 1)
+
     return imageRenderer({
       nodes: nodes,
       edges: edges,
       options: {
-        width: renderOptions.width!,
-        height: renderOptions.height!,
-        x,
-        y,
-        zoom
+        width,
+        height,
+        x: 0,
+        y: 0,
+        zoom: 1,
       }
     })
   }
@@ -197,9 +197,9 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 }
 
 
-const NODES_PER_TICK = 40
+const NODES_PER_TICK = 50
 const INTERVAL = 2000
-const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
+const COUNT = 1 // Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
 
@@ -224,7 +224,10 @@ const update = () => {
     nodes = graph.nodes
     edges = graph.edges
 
-    const { x, y, zoom } = zoomToBounds(getBounds(nodes, 0), renderOptions.width!, renderOptions.height!)
+    const { x, y, zoom } = Graph.boundsToViewport(
+      Graph.getSelectionBounds(nodes, 0),
+      { width: renderOptions.width!, height: renderOptions.height! }
+    )
     renderOptions.x = x
     renderOptions.y = y
     renderOptions.zoom = zoom

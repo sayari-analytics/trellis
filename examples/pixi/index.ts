@@ -7,7 +7,7 @@ import * as Download from '../../src/controls/download'
 import * as Cluster from '../../src/layout/cluster'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
-import { Node, Edge, zoomToBounds, getBounds } from '../../src/'
+import { Node, Edge, boundsToViewport, getSelectionBounds, boundsToDimenions } from '../../src/'
 
 
 export const stats = new Stats()
@@ -168,16 +168,17 @@ const downloadControl = Download.Control({ container })
 downloadControl({
   top: 210,
   onClick: () => {
-    const { x, y, zoom } = zoomToBounds(getBounds(nodes, 80), container.offsetWidth, container.offsetHeight)
+    const { width, height } = boundsToDimenions(getSelectionBounds(nodes, 80), 1)
+
     return imageRenderer({
       nodes: nodes,
       edges: edges,
       options: {
-        width: container.offsetWidth,
-        height: container.offsetHeight,
-        x,
-        y,
-        zoom
+        width,
+        height,
+        x: 0,
+        y: 0,
+        zoom: 1,
       }
     })
   }
@@ -281,8 +282,11 @@ const layoutOptions: Force.Options = {
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
-  const bounds = getBounds(nodes)
-  const { x, y, zoom } = zoomToBounds(bounds, container.offsetWidth, container.offsetHeight)
+  const bounds = getSelectionBounds(nodes)
+  const { x, y, zoom } = boundsToViewport(
+    bounds,
+    { width: container.offsetWidth, height: container.offsetHeight }
+  )
   renderOptions.x = x
   renderOptions.y = y
   renderOptions.zoom = zoom

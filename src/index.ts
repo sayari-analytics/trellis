@@ -1,7 +1,7 @@
 import { NodeStyle, EdgeStyle } from './renderers/webgl'
 
 
-export type Node<E extends Edge = Edge> = {
+export type Node<E extends Edge = Edge> = { // TODO - Node doesn't need to be generic
   id: string
   radius: number
   x?: number | undefined // TODO - add prop for fixed position
@@ -25,7 +25,16 @@ export type Edge = {
 }
 
 
-export const getBounds = (nodes: Node[], padding: number = 0): [left: number, top: number, right: number, bottom: number] => {
+export type Bounds = { left: number, top: number, right: number, bottom: number }
+
+
+export type Dimensions = { width: number, height: number }
+
+
+export type Viewport = { x: number, y: number, zoom: number }
+
+
+export const getSelectionBounds = (nodes: Node[], padding: number = 0): Bounds => {
   let left = 0
   let top = 0
   let right = 0
@@ -42,18 +51,33 @@ export const getBounds = (nodes: Node[], padding: number = 0): [left: number, to
     if (nodeBottom > bottom) bottom = nodeBottom
   }
 
-  return [left - padding, top - padding, right + padding, bottom + padding]
+  return { left: left - padding, top: top - padding, right: right + padding, bottom: bottom + padding }
 }
 
 
-/**
- * TODO
- * - getSelectionBounds Node[] => Bounds
- * - getViewportBounds { x, y, zoom } => Bounds
- * - combineBounds/expandBounds/mergeBounds (Bounds, Bounds) => Bounds
- * - fitBounds Bounds => { x, y, zoom }
- */
-export const zoomToBounds = ([left, top, right, bottom]: [left: number, top: number, right: number, bottom: number], width: number, height: number) => {
+export const viewportToBounds = ({ x, y, zoom }: Viewport, { width, height }: Dimensions): Bounds => {
+  const xOffset = width / 2 / zoom
+  const yOffset = height / 2 / zoom
+  return {
+    left: x - xOffset,
+    top: y - yOffset,
+    right: x + xOffset,
+    bottom: y + yOffset,
+  }
+}
+
+
+export const mergeBounds = (a: Bounds, b: Bounds): Bounds => {
+  return {
+    left: Math.min(a.left, b.left),
+    top: Math.min(a.top, b.top),
+    right: Math.max(a.right, b.right),
+    bottom: Math.max(a.bottom, b.bottom),
+  }
+}
+
+
+export const boundsToViewport = ({ left, top, right, bottom }: Bounds, { width, height }: Dimensions): Viewport => {
   const targetWidth = right - left
   const targetHeight = bottom - top
   const x = (targetWidth / 2) - right
@@ -65,5 +89,13 @@ export const zoomToBounds = ([left, top, right, bottom]: [left: number, top: num
   } else {
     // fit to height
     return { x, y, zoom: height / targetHeight }
+  }
+}
+
+
+export const boundsToDimenions = ({ left, top, right, bottom }: Bounds, zoom: number): Dimensions => {
+  return {
+    width: (right - left) / zoom,
+    height: (bottom - top) / zoom,
   }
 }

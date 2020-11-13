@@ -10,25 +10,9 @@ var __values = (this && this.__values) || function(o) {
     };
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.zoomToBounds = exports.getBounds = void 0;
-exports.getBounds = function (nodes, padding) {
+exports.boundsToDimenions = exports.boundsToViewport = exports.mergeBounds = exports.viewportToBounds = exports.getSelectionBounds = void 0;
+exports.getSelectionBounds = function (nodes, padding) {
     var e_1, _a;
     var _b, _c, _d, _e;
     if (padding === void 0) { padding = 0; }
@@ -60,17 +44,31 @@ exports.getBounds = function (nodes, padding) {
         }
         finally { if (e_1) throw e_1.error; }
     }
-    return [left - padding, top - padding, right + padding, bottom + padding];
+    return { left: left - padding, top: top - padding, right: right + padding, bottom: bottom + padding };
 };
-/**
- * TODO
- * - getSelectionBounds Node[] => Bounds
- * - getViewportBounds { x, y, zoom } => Bounds
- * - combineBounds/expandBounds/mergeBounds (Bounds, Bounds) => Bounds
- * - fitBounds Bounds => { x, y, zoom }
- */
-exports.zoomToBounds = function (_a, width, height) {
-    var _b = __read(_a, 4), left = _b[0], top = _b[1], right = _b[2], bottom = _b[3];
+exports.viewportToBounds = function (_a, _b) {
+    var x = _a.x, y = _a.y, zoom = _a.zoom;
+    var width = _b.width, height = _b.height;
+    var xOffset = width / 2 / zoom;
+    var yOffset = height / 2 / zoom;
+    return {
+        left: x - xOffset,
+        top: y - yOffset,
+        right: x + xOffset,
+        bottom: y + yOffset,
+    };
+};
+exports.mergeBounds = function (a, b) {
+    return {
+        left: Math.min(a.left, b.left),
+        top: Math.min(a.top, b.top),
+        right: Math.max(a.right, b.right),
+        bottom: Math.max(a.bottom, b.bottom),
+    };
+};
+exports.boundsToViewport = function (_a, _b) {
+    var left = _a.left, top = _a.top, right = _a.right, bottom = _a.bottom;
+    var width = _b.width, height = _b.height;
     var targetWidth = right - left;
     var targetHeight = bottom - top;
     var x = (targetWidth / 2) - right;
@@ -83,5 +81,12 @@ exports.zoomToBounds = function (_a, width, height) {
         // fit to height
         return { x: x, y: y, zoom: height / targetHeight };
     }
+};
+exports.boundsToDimenions = function (_a, zoom) {
+    var left = _a.left, top = _a.top, right = _a.right, bottom = _a.bottom;
+    return {
+        width: (right - left) / zoom,
+        height: (bottom - top) / zoom,
+    };
 };
 //# sourceMappingURL=index.js.map
