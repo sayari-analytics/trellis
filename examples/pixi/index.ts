@@ -101,10 +101,10 @@ let edges: Edge[] = [
  * Create Renderer and Layout
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
+const imageRenderer = Png.Renderer()
 const renderer = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: true }
+  // debug: { stats, logPerformance: true }
 })
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
@@ -282,13 +282,13 @@ const layoutOptions: Force.Options = {
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
-  const bounds = getSelectionBounds(nodes)
-  const { x, y, zoom } = boundsToViewport(
-    bounds,
-    { width: container.offsetWidth, height: container.offsetHeight }
-  )
-  renderOptions.x = x
-  renderOptions.y = y
-  renderOptions.zoom = zoom
+  // const bounds = getSelectionBounds(nodes)
+  // const { x, y, zoom } = boundsToViewport(
+  //   bounds,
+  //   { width: container.offsetWidth, height: container.offsetHeight }
+  // )
+  // renderOptions.x = x
+  // renderOptions.y = y
+  // renderOptions.zoom = zoom
   renderer({ nodes, edges, options: renderOptions })
 })

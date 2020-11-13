@@ -11,9 +11,7 @@ export declare type Options = {
     y?: number;
     zoom?: number;
 };
-export declare const Renderer: <N extends Node<Edge>, E extends Edge>(options?: {
-    backgroundColor?: string;
-}) => {
+export declare const Renderer: <N extends Node<Edge>, E extends Edge>() => {
     (graph: {
         nodes: N[];
         edges: E[];

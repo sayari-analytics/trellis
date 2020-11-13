@@ -33,6 +33,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = exports.InternalRenderer = exports.RENDERER_OPTIONS = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var unsafe_eval_1 = require("@pixi/unsafe-eval");
+var Graph = __importStar(require("../.."));
 var utils_1 = require("../../utils");
 var node_1 = require("./node");
 var edge_1 = require("./edge");
@@ -43,11 +44,10 @@ var arrowSprite_1 = require("./sprites/arrowSprite");
 var circleSprite_1 = require("./sprites/circleSprite");
 var ImageSprite_1 = require("./sprites/ImageSprite");
 var FontIconSprite_1 = require("./sprites/FontIconSprite");
-var utils_2 = require("./utils");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-    animate: true,
+    animateGraph: true, animateViewport: false,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
 };
 var POSITION_ANIMATION_DURATION = 800;
@@ -55,7 +55,6 @@ PIXI.utils.skipHello();
 var InternalRenderer = /** @class */ (function () {
     function InternalRenderer(options) {
         var _this = this;
-        var _a;
         this.width = exports.RENDERER_OPTIONS.width;
         this.height = exports.RENDERER_OPTIONS.height;
         this.minZoom = exports.RENDERER_OPTIONS.minZoom;
@@ -66,7 +65,8 @@ var InternalRenderer = /** @class */ (function () {
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
         this.targetX = exports.RENDERER_OPTIONS.x;
         this.targetY = exports.RENDERER_OPTIONS.y;
-        this.animate = exports.RENDERER_OPTIONS.animate;
+        this.animateGraph = exports.RENDERER_OPTIONS.animateGraph;
+        this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
         this.dragging = false;
         this.scrolling = false;
         this.dirty = false;
@@ -90,7 +90,7 @@ var InternalRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animate, animate = _t === void 0 ? exports.RENDERER_OPTIONS.animate : _t, _u = _k.nodesEqual, nodesEqual = _u === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _u, _v = _k.edgesEqual, edgesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _v, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animateGraph, animateGraph = _t === void 0 ? exports.RENDERER_OPTIONS.animateGraph : _t, _u = _k.animateViewport, animateViewport = _u === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _u, _v = _k.nodesEqual, nodesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _v, _w = _k.edgesEqual, edgesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _w, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -108,7 +108,8 @@ var InternalRenderer = /** @class */ (function () {
             _this.onEdgePointerUp = onEdgePointerUp;
             _this.onEdgePointerLeave = onEdgePointerLeave;
             _this.onWheel = onWheel;
-            _this.animate = animate;
+            _this.animateGraph = animateGraph;
+            _this.animateViewport = animateViewport;
             _this.minZoom = minZoom;
             _this.maxZoom = maxZoom;
             if (width !== _this.width || height !== _this.height) {
@@ -249,12 +250,14 @@ var InternalRenderer = /** @class */ (function () {
                 _this.dirty = true;
             }
             // this.root.getChildByName('bbox')?.destroy()
-            // const [left, top, right, bottom] = Graph.getBounds(this.nodes, 0)
-            // const viewport = Graph.zoomToBounds([left, top, right, bottom], this.width, this.height)
-            // const bbox = new PIXI.Graphics().lineStyle(1, 0xff0000, 0.5).drawPolygon(new PIXI.Polygon([left, top, right, top, right, bottom, left, bottom]))
+            // const bounds = Graph.getSelectionBounds(this.nodes, 0)
+            // const bbox = new PIXI.Graphics()
+            //   .lineStyle(1, 0xff0000, 0.5)
+            //   .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
             // bbox.name = 'bbox'
             // this.root.addChild(bbox)
             // this.root.getChildByName('bboxCenter')?.destroy()
+            // const viewport = Graph.boundsToViewport(bounds, { width: this.width, height: this.height })
             // const bboxCenter = new PIXI.Graphics().lineStyle(2, 0xff0000, 0.5).drawCircle(-viewport.x, -viewport.y, 5)
             // bboxCenter.name = 'bboxCenter'
             // this.root.addChild(bboxCenter)
@@ -277,7 +280,7 @@ var InternalRenderer = /** @class */ (function () {
             var elapsedTime = time - _this.previousTime;
             _this.animationDuration += Math.min(20, Math.max(0, elapsedTime)); // clamp to 0 <= x <= 20 to smooth animations
             // this.animationDuration += elapsedTime
-            _this.animationPercent = _this.animate ?
+            _this.animationPercent = _this.animateGraph ?
                 Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
                 1;
             _this.previousTime = time;
@@ -297,7 +300,18 @@ var InternalRenderer = /** @class */ (function () {
             _this.viewportDirty = false;
             _this.dirty = _this.animationPercent < 1;
             if (_this.dataUrl) {
-                _this.dataUrl(_this.app.renderer.view.toDataURL('image/png', 1));
+                var bounds = Graph.viewportToBounds({ x: _this.x, y: _this.y, zoom: _this.zoom }, { width: _this.width, height: _this.height });
+                var background = new PIXI.Graphics()
+                    .beginFill(0xffffff)
+                    .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
+                    .endFill();
+                _this.root.addChildAt(background, 0);
+                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, 2);
+                var url = _this.app.renderer.plugins.extract.base64(imageTexture);
+                imageTexture.destroy();
+                _this.root.removeChild(background);
+                background.destroy();
+                _this.dataUrl(url);
                 _this.dataUrl = undefined;
             }
         };
@@ -308,7 +322,7 @@ var InternalRenderer = /** @class */ (function () {
             var elapsedTime = time - _this.previousTime;
             _this.animationDuration += Math.min(20, Math.max(0, elapsedTime));
             // this.animationDuration += elapsedTime
-            _this.animationPercent = _this.animate ?
+            _this.animationPercent = _this.animateGraph ?
                 Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
                 1;
             _this.previousTime = time;
@@ -376,7 +390,18 @@ var InternalRenderer = /** @class */ (function () {
             _this.dirty = _this.animationPercent < 1;
             _this.viewportDirty = false;
             if (_this.dataUrl) {
-                _this.dataUrl(_this.app.renderer.view.toDataURL('image/png', 1));
+                var bounds = Graph.viewportToBounds({ x: _this.x, y: _this.y, zoom: _this.zoom }, { width: _this.width, height: _this.height });
+                var background = new PIXI.Graphics()
+                    .beginFill(0xffffff)
+                    .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
+                    .endFill();
+                _this.root.addChildAt(background, 0);
+                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, 2);
+                var url = _this.app.renderer.plugins.extract.base64(imageTexture);
+                imageTexture.destroy();
+                _this.root.removeChild(background);
+                background.destroy();
+                _this.dataUrl(url);
                 _this.dataUrl = undefined;
             }
             performance.clearMarks();
@@ -409,9 +434,8 @@ var InternalRenderer = /** @class */ (function () {
             autoDensity: true,
             autoStart: false,
             powerPreference: 'high-performance',
-            preserveDrawingBuffer: (_a = options.preserveDrawingBuffer) !== null && _a !== void 0 ? _a : false,
-            transparent: options.backgroundColor === undefined,
-            backgroundColor: options.backgroundColor === undefined ? undefined : utils_2.colorToNumber(options.backgroundColor),
+            preserveDrawingBuffer: false,
+            transparent: true,
         });
         this.labelsLayer.interactiveChildren = false;
         this.nodesLayer.sortableChildren = true; // TODO - perf test

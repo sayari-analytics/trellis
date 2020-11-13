@@ -11,7 +11,6 @@ import { ArrowSprite } from './sprites/arrowSprite'
 import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
 import { FontIconSprite } from './sprites/FontIconSprite'
-import { colorToNumber } from './utils'
 
 
 install(PIXI)
@@ -73,7 +72,8 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   zoom?: number
   minZoom?: number
   maxZoom?: number
-  animate?: boolean
+  animateGraph?: boolean
+  animateViewport?: boolean
   nodesEqual?: (previous: N[], current: N[]) => boolean
   edgesEqual?: (previous: E[], current: E[]) => boolean
   onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
@@ -98,7 +98,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
 
 export const RENDERER_OPTIONS = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animate: true, nodesEqual: () => false, edgesEqual: () => false,
+  animateGraph: true, animateViewport: false, nodesEqual: () => false, edgesEqual: () => false,
 }
 
 const POSITION_ANIMATION_DURATION = 800
@@ -118,7 +118,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   targetZoom = RENDERER_OPTIONS.zoom
   targetX = RENDERER_OPTIONS.x
   targetY = RENDERER_OPTIONS.y
-  animate = RENDERER_OPTIONS.animate
+  animateGraph = RENDERER_OPTIONS.animateGraph
+  animateViewport = RENDERER_OPTIONS.animateViewport
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
   hoveredEdge?: EdgeRenderer<N, E>
@@ -176,7 +177,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   dataUrl?: (dataUrl: string) => void
   update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
 
-  constructor(options: { container: HTMLDivElement, preserveDrawingBuffer?: boolean, backgroundColor?: string, debug?: { logPerformance?: boolean, stats?: Stats } }) {
+  constructor(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
     if (!(options.container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
     }
@@ -194,9 +195,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       autoDensity: true,
       autoStart: false,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: options.preserveDrawingBuffer ?? false,
-      transparent: options.backgroundColor === undefined,
-      backgroundColor: options.backgroundColor === undefined ? undefined : colorToNumber(options.backgroundColor),
+      preserveDrawingBuffer: false,
+      transparent: true,
     })
 
     this.labelsLayer.interactiveChildren = false
@@ -282,7 +282,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     edges,
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
-      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, animate = RENDERER_OPTIONS.animate,
+      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, animateGraph = RENDERER_OPTIONS.animateGraph, animateViewport = RENDERER_OPTIONS.animateViewport,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
@@ -306,7 +306,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
     this.onWheel = onWheel
-    this.animate = animate
+    this.animateGraph = animateGraph
+    this.animateViewport = animateViewport
     this.minZoom = minZoom
     this.maxZoom = maxZoom
 
@@ -437,13 +438,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     // this.root.getChildByName('bbox')?.destroy()
-    // const [left, top, right, bottom] = Graph.getBounds(this.nodes, 0)
-    // const viewport = Graph.zoomToBounds([left, top, right, bottom], this.width, this.height)
-    // const bbox = new PIXI.Graphics().lineStyle(1, 0xff0000, 0.5).drawPolygon(new PIXI.Polygon([left, top, right, top, right, bottom, left, bottom]))
+    // const bounds = Graph.getSelectionBounds(this.nodes, 0)
+    // const bbox = new PIXI.Graphics()
+    //   .lineStyle(1, 0xff0000, 0.5)
+    //   .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
     // bbox.name = 'bbox'
     // this.root.addChild(bbox)
 
     // this.root.getChildByName('bboxCenter')?.destroy()
+    // const viewport = Graph.boundsToViewport(bounds, { width: this.width, height: this.height })
     // const bboxCenter = new PIXI.Graphics().lineStyle(2, 0xff0000, 0.5).drawCircle(-viewport.x, -viewport.y, 5)
     // bboxCenter.name = 'bboxCenter'
     // this.root.addChild(bboxCenter)
@@ -472,7 +475,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     const elapsedTime = time - this.previousTime
     this.animationDuration += Math.min(20, Math.max(0, elapsedTime)) // clamp to 0 <= x <= 20 to smooth animations
     // this.animationDuration += elapsedTime
-    this.animationPercent = this.animate ?
+    this.animationPercent = this.animateGraph ?
       Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
       1
     this.previousTime = time
@@ -498,7 +501,20 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.dirty = this.animationPercent < 1
 
     if (this.dataUrl) {
-      this.dataUrl(this.app.renderer.view.toDataURL('image/png', 1))
+      const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
+      const background = new PIXI.Graphics()
+        .beginFill(0xffffff)
+        .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
+        .endFill()
+
+      this.root.addChildAt(background, 0)
+      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, 2)
+      const url = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture)
+      imageTexture.destroy()
+      this.root.removeChild(background)
+      background.destroy()
+
+      this.dataUrl(url)
       this.dataUrl = undefined
     }
   }
@@ -508,7 +524,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     const elapsedTime = time - this.previousTime
     this.animationDuration += Math.min(20, Math.max(0, elapsedTime))
     // this.animationDuration += elapsedTime
-    this.animationPercent = this.animate ?
+    this.animationPercent = this.animateGraph ?
       Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
       1
     this.previousTime = time
@@ -583,7 +599,20 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.viewportDirty = false
 
     if (this.dataUrl) {
-      this.dataUrl(this.app.renderer.view.toDataURL('image/png', 1))
+      const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
+      const background = new PIXI.Graphics()
+        .beginFill(0xffffff)
+        .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
+        .endFill()
+
+      this.root.addChildAt(background, 0)
+      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, 2)
+      const url = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture)
+      imageTexture.destroy()
+      this.root.removeChild(background)
+      background.destroy()
+
+      this.dataUrl(url)
       this.dataUrl = undefined
     }
 

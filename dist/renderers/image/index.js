@@ -32,11 +32,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = void 0;
 var WebGL = __importStar(require("../webgl"));
-exports.Renderer = function (options) {
-    if (options === void 0) { options = {}; }
-    var pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div'), preserveDrawingBuffer: true, backgroundColor: options.backgroundColor });
+exports.Renderer = function () {
+    var pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div') });
     var render = function (graph) {
-        pixiRenderer.update(__assign(__assign({}, graph), { options: __assign(__assign({}, graph.options), { animate: false }) }));
+        pixiRenderer.update(__assign(__assign({}, graph), { options: __assign(__assign({}, graph.options), { animateGraph: false, animateViewport: false }) }));
         return pixiRenderer.base64();
     };
     render.delete = pixiRenderer.delete;

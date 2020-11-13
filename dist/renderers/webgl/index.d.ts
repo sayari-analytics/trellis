@@ -63,7 +63,8 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     zoom?: number;
     minZoom?: number;
     maxZoom?: number;
-    animate?: boolean;
+    animateGraph?: boolean;
+    animateViewport?: boolean;
     nodesEqual?: (previous: N[], current: N[]) => boolean;
     edgesEqual?: (previous: E[], current: E[]) => boolean;
     onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
@@ -92,7 +93,8 @@ export declare const RENDERER_OPTIONS: {
     zoom: number;
     minZoom: number;
     maxZoom: number;
-    animate: boolean;
+    animateGraph: boolean;
+    animateViewport: boolean;
     nodesEqual: () => boolean;
     edgesEqual: () => boolean;
 };
@@ -107,7 +109,8 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     targetZoom: number;
     targetX: number;
     targetY: number;
-    animate: boolean;
+    animateGraph: boolean;
+    animateViewport: boolean;
     hoveredNode?: NodeRenderer<N, E>;
     clickedNode?: NodeRenderer<N, E>;
     hoveredEdge?: EdgeRenderer<N, E>;
@@ -176,8 +179,6 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     }) => void;
     constructor(options: {
         container: HTMLDivElement;
-        preserveDrawingBuffer?: boolean;
-        backgroundColor?: string;
         debug?: {
             logPerformance?: boolean;
             stats?: Stats;

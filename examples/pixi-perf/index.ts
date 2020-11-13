@@ -91,7 +91,7 @@ const render = WebGL.Renderer({
   container,
   // debug: { stats, logPerformance: true }
 })
-const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
+const imageRenderer = Png.Renderer()
 
 
 /**
@@ -197,9 +197,9 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 }
 
 
-const NODES_PER_TICK = 50
+const NODES_PER_TICK = 40
 const INTERVAL = 2000
-const COUNT = 1 // Math.ceil(data.nodes.length / NODES_PER_TICK)
+const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
 
