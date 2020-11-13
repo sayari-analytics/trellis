@@ -14,7 +14,7 @@ export class Decelerate <N extends Node, E extends Edge>{
   private saved: { x: number, y: number, time: number }[] = []
   private x?: number
   private y?: number
-  private friction = 0.85
+  private friction = 0.88
   private minSpeed = 0.01
   private percentChangeX = this.friction
   private percentChangeY = this.friction
@@ -34,7 +34,7 @@ export class Decelerate <N extends Node, E extends Edge>{
       return
     }
 
-    this.saved.push({ x: this.renderer.x, y: this.renderer.y, time: performance.now() })
+    this.saved.push({ x: this.renderer.x, y: this.renderer.y, time: performance.now() }) // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
     if (this.saved.length > 60) {
       this.saved.splice(0, 30)
     }

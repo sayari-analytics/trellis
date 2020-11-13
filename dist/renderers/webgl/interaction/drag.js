@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Drag = void 0;
 /**
- * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
 var Drag = /** @class */ (function () {
@@ -28,8 +28,10 @@ var Drag = /** @class */ (function () {
                 var distX = x - _this.last.x;
                 var distY = y - _this.last.y;
                 if (_this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-                    var centerX = _this.renderer.x + (distX / _this.renderer.zoom);
-                    var centerY = _this.renderer.y + (distY / _this.renderer.zoom);
+                    // const centerX = this.renderer.root.x + (distX / this.renderer.root.scale.x)
+                    // const centerY = this.renderer.root.y + (distY / this.renderer.root.scale.x)
+                    var centerX = _this.renderer.x + (distX / _this.renderer.root.scale.x); // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
+                    var centerY = _this.renderer.y + (distY / _this.renderer.root.scale.y);
                     _this.last = { x: x, y: y };
                     _this.moved = true;
                     _this.onContainerDrag(event, centerX, centerY);

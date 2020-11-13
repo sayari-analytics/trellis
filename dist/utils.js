@@ -20,7 +20,8 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.equals = exports.interpolateDuration = exports.interpolateInterval = exports.identity = exports.throttleAnimationFrame = exports.animationFrameLoop = exports.batch = exports.throttle = exports.noop = void 0;
+exports.interpolate = exports.equals = exports.interpolateDuration = exports.interpolateInterval = exports.identity = exports.throttleAnimationFrame = exports.animationFrameLoop = exports.batch = exports.throttle = exports.noop = void 0;
+var d3_interpolate_1 = require("d3-interpolate");
 exports.noop = function () { };
 exports.throttle = function (cb, duration) {
     var clear = true;
@@ -155,5 +156,17 @@ exports.equals = function (a, b) {
         return true;
     }
     return false;
+};
+exports.interpolate = function (from, to, duration) {
+    var start = performance.now();
+    var interpolator = d3_interpolate_1.interpolateNumber(from, to);
+    var ease = d3_interpolate_1.interpolateBasis([from, interpolator(0.7), interpolator(0.95), to]);
+    return function () {
+        var elapsed = performance.now() - start;
+        if (elapsed >= duration) {
+            return { done: true, value: to };
+        }
+        return { done: false, value: ease(elapsed / duration) };
+    };
 };
 //# sourceMappingURL=utils.js.map

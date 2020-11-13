@@ -30,7 +30,7 @@ var FontIconSprite = /** @class */ (function () {
         if (this.cache[icon] === undefined) {
             var textSprite = new PIXI.Text(text, {
                 fontFamily: fontFamily,
-                fontSize: fontSize * 2,
+                fontSize: fontSize * 4,
                 fontWeight: fontWeight,
                 fill: fill
             });
@@ -40,7 +40,7 @@ var FontIconSprite = /** @class */ (function () {
         var sprite = new PIXI.Sprite(this.cache[icon]);
         sprite.position.set(0, 0);
         sprite.anchor.set(0.5);
-        sprite.scale.set(0.5);
+        sprite.scale.set(0.25);
         return sprite;
     };
     FontIconSprite.prototype.delete = function () {

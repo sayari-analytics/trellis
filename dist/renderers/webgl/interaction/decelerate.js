@@ -21,7 +21,7 @@ var Decelerate = /** @class */ (function () {
         var _this = this;
         this.paused = false;
         this.saved = [];
-        this.friction = 0.85;
+        this.friction = 0.88;
         this.minSpeed = 0.01;
         this.percentChangeX = this.friction;
         this.percentChangeY = this.friction;
@@ -33,7 +33,7 @@ var Decelerate = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
-            _this.saved.push({ x: _this.renderer.x, y: _this.renderer.y, time: performance.now() });
+            _this.saved.push({ x: _this.renderer.x, y: _this.renderer.y, time: performance.now() }); // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
             if (_this.saved.length > 60) {
                 _this.saved.splice(0, 30);
             }

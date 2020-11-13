@@ -104,7 +104,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const imageRenderer = Png.Renderer({ backgroundColor: '#fff' })
 const renderer = WebGL.Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: true }
 })
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
@@ -124,11 +124,11 @@ const zoomControl = Zoom.Control({ container })
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.5)
     renderer({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.5)
     renderer({ nodes, edges, options: renderOptions })
   },
 })
@@ -281,10 +281,10 @@ const layoutOptions: Force.Options = {
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
-  // const bounds = getBounds(nodes)
-  // const { x, y, zoom } = zoomToBounds(bounds, container.offsetWidth, container.offsetHeight)
-  // renderOptions.x = x
-  // renderOptions.y = y
-  // renderOptions.zoom = zoom
+  const bounds = getBounds(nodes)
+  const { x, y, zoom } = zoomToBounds(bounds, container.offsetWidth, container.offsetHeight)
+  renderOptions.x = x
+  renderOptions.y = y
+  renderOptions.zoom = zoom
   renderer({ nodes, edges, options: renderOptions })
 })

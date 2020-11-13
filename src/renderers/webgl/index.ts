@@ -108,18 +108,25 @@ PIXI.utils.skipHello()
 
 export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
-  update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
-
+  width = RENDERER_OPTIONS.width
+  height = RENDERER_OPTIONS.height
+  minZoom = RENDERER_OPTIONS.minZoom
+  maxZoom = RENDERER_OPTIONS.maxZoom
+  zoom = RENDERER_OPTIONS.zoom
+  x = RENDERER_OPTIONS.x
+  y = RENDERER_OPTIONS.y
+  targetZoom = RENDERER_OPTIONS.zoom
+  targetX = RENDERER_OPTIONS.x
+  targetY = RENDERER_OPTIONS.y
+  animate = RENDERER_OPTIONS.animate
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
   hoveredEdge?: EdgeRenderer<N, E>
   clickedEdge?: EdgeRenderer<N, E>
-  clickedContainer = false
-  cancelAnimationLoop: () => void
+  dragging = false
+  scrolling = false
   dirty = false
   viewportDirty = false
-  previousTime = performance.now()
-  animationDuration = 0
   animationPercent = 0
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
@@ -136,10 +143,17 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   circle: CircleSprite<N, E>
   image: ImageSprite
   fontIcon: FontIconSprite
+  app: PIXI.Application
+  root = new PIXI.Container()
   zoomInteraction: Zoom<N, E>
   dragInteraction: Drag<N, E>
   decelerateInteraction: Decelerate<N, E>
-  dataUrl?: (dataUrl: string) => void
+
+  private clickedContainer = false
+  private previousTime = performance.now()
+  private animationDuration = 0
+  private debug?: { logPerformance?: boolean, stats?: Stats }
+  private cancelAnimationLoop: () => void
 
   onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void
   onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void
@@ -159,18 +173,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  width = RENDERER_OPTIONS.width
-  height = RENDERER_OPTIONS.height
-  zoom = RENDERER_OPTIONS.zoom
-  minZoom = RENDERER_OPTIONS.minZoom
-  maxZoom = RENDERER_OPTIONS.maxZoom
-  x = RENDERER_OPTIONS.x
-  y = RENDERER_OPTIONS.y
-  animate = RENDERER_OPTIONS.animate
-
-  app: PIXI.Application
-  root = new PIXI.Container()
-  debug?: { logPerformance?: boolean, stats?: Stats }
+  dataUrl?: (dataUrl: string) => void
+  update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
 
   constructor(options: { container: HTMLDivElement, preserveDrawingBuffer?: boolean, backgroundColor?: string, debug?: { logPerformance?: boolean, stats?: Stats } }) {
     if (!(options.container instanceof HTMLDivElement)) {
@@ -313,25 +317,27 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-    if (x !== this.x || y !== this.y) {
+    if (zoom !== this.zoom) {
+      this.zoom = zoom
+      this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
+      this.viewportDirty = true
+    }
+
+    if (x !== this.x) {
       this.x = x
+      this.viewportDirty = true
+    }
+
+    if (y !== this.y) {
       this.y = y
       this.viewportDirty = true
     }
 
-    if (zoom !== this.zoom) {
-      this.zoom = zoom
-      this.root.scale.set(zoom) // TODO - interpolate zoom; clamp zoom
-      this.viewportDirty = true
-    }
-
-    this.root.x = (this.x * this.zoom) + (this.width / 2) // TODO - interpolate position
+    this.root.x = (this.x * this.zoom) + (this.width / 2)
     this.root.y = (this.y * this.zoom) + (this.height / 2)
-
 
     const edgesAreEqual = edgesEqual(this.edges, edges)
     const nodesAreEqual = nodesEqual(this.nodes, nodes)
-
 
     /**
      * Build edge indices
@@ -482,13 +488,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       for (const edgeId in this.edgesById) {
         this.edgesById[edgeId].render()
       }
-
-      this.app.render()
-      this.dirty = this.animationPercent < 1
-    } else if (this.viewportDirty) {
-      this.app.render()
-      this.viewportDirty = false
     }
+
+    if (this.viewportDirty || this.dirty) {
+      this.app.render()
+    }
+
+    this.viewportDirty = false
+    this.dirty = this.animationPercent < 1
 
     if (this.dataUrl) {
       this.dataUrl(this.app.renderer.view.toDataURL('image/png', 1))
@@ -526,11 +533,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.edgesById[edgeId].render()
       }
       performance.measure('render', 'render')
+    }
 
-      performance.mark('draw')
-      this.app.render()
-      performance.measure('draw', 'draw')
-    } else if (this.viewportDirty) {
+    if (this.viewportDirty || this.dirty) {
       performance.mark('draw')
       this.app.render()
       performance.measure('draw', 'draw')

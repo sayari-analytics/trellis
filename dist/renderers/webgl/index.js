@@ -56,11 +56,21 @@ var InternalRenderer = /** @class */ (function () {
     function InternalRenderer(options) {
         var _this = this;
         var _a;
-        this.clickedContainer = false;
+        this.width = exports.RENDERER_OPTIONS.width;
+        this.height = exports.RENDERER_OPTIONS.height;
+        this.minZoom = exports.RENDERER_OPTIONS.minZoom;
+        this.maxZoom = exports.RENDERER_OPTIONS.maxZoom;
+        this.zoom = exports.RENDERER_OPTIONS.zoom;
+        this.x = exports.RENDERER_OPTIONS.x;
+        this.y = exports.RENDERER_OPTIONS.y;
+        this.targetZoom = exports.RENDERER_OPTIONS.zoom;
+        this.targetX = exports.RENDERER_OPTIONS.x;
+        this.targetY = exports.RENDERER_OPTIONS.y;
+        this.animate = exports.RENDERER_OPTIONS.animate;
+        this.dragging = false;
+        this.scrolling = false;
         this.dirty = false;
         this.viewportDirty = false;
-        this.previousTime = performance.now();
-        this.animationDuration = 0;
         this.animationPercent = 0;
         this.edgesLayer = new PIXI.Container();
         this.nodesLayer = new PIXI.Container();
@@ -73,15 +83,10 @@ var InternalRenderer = /** @class */ (function () {
         this.nodesById = {};
         this.edgesById = {};
         this.edgeIndex = {};
-        this.width = exports.RENDERER_OPTIONS.width;
-        this.height = exports.RENDERER_OPTIONS.height;
-        this.zoom = exports.RENDERER_OPTIONS.zoom;
-        this.minZoom = exports.RENDERER_OPTIONS.minZoom;
-        this.maxZoom = exports.RENDERER_OPTIONS.maxZoom;
-        this.x = exports.RENDERER_OPTIONS.x;
-        this.y = exports.RENDERER_OPTIONS.y;
-        this.animate = exports.RENDERER_OPTIONS.animate;
         this.root = new PIXI.Container();
+        this.clickedContainer = false;
+        this.previousTime = performance.now();
+        this.animationDuration = 0;
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
@@ -112,17 +117,20 @@ var InternalRenderer = /** @class */ (function () {
                 _this.app.renderer.resize(_this.width, _this.height);
                 _this.viewportDirty = true;
             }
-            if (x !== _this.x || y !== _this.y) {
+            if (zoom !== _this.zoom) {
+                _this.zoom = zoom;
+                _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
+                _this.viewportDirty = true;
+            }
+            if (x !== _this.x) {
                 _this.x = x;
+                _this.viewportDirty = true;
+            }
+            if (y !== _this.y) {
                 _this.y = y;
                 _this.viewportDirty = true;
             }
-            if (zoom !== _this.zoom) {
-                _this.zoom = zoom;
-                _this.root.scale.set(zoom); // TODO - interpolate zoom; clamp zoom
-                _this.viewportDirty = true;
-            }
-            _this.root.x = (_this.x * _this.zoom) + (_this.width / 2); // TODO - interpolate position
+            _this.root.x = (_this.x * _this.zoom) + (_this.width / 2);
             _this.root.y = (_this.y * _this.zoom) + (_this.height / 2);
             var edgesAreEqual = edgesEqual(_this.edges, edges);
             var nodesAreEqual = nodesEqual(_this.nodes, nodes);
@@ -282,13 +290,12 @@ var InternalRenderer = /** @class */ (function () {
                 for (var edgeId in _this.edgesById) {
                     _this.edgesById[edgeId].render();
                 }
-                _this.app.render();
-                _this.dirty = _this.animationPercent < 1;
             }
-            else if (_this.viewportDirty) {
+            if (_this.viewportDirty || _this.dirty) {
                 _this.app.render();
-                _this.viewportDirty = false;
             }
+            _this.viewportDirty = false;
+            _this.dirty = _this.animationPercent < 1;
             if (_this.dataUrl) {
                 _this.dataUrl(_this.app.renderer.view.toDataURL('image/png', 1));
                 _this.dataUrl = undefined;
@@ -323,11 +330,8 @@ var InternalRenderer = /** @class */ (function () {
                     _this.edgesById[edgeId].render();
                 }
                 performance.measure('render', 'render');
-                performance.mark('draw');
-                _this.app.render();
-                performance.measure('draw', 'draw');
             }
-            else if (_this.viewportDirty) {
+            if (_this.viewportDirty || _this.dirty) {
                 performance.mark('draw');
                 _this.app.render();
                 performance.measure('draw', 'draw');

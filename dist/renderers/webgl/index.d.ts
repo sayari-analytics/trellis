@@ -97,21 +97,25 @@ export declare const RENDERER_OPTIONS: {
     edgesEqual: () => boolean;
 };
 export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
-    update: (graph: {
-        nodes: N[];
-        edges: E[];
-        options?: Options<N, E>;
-    }) => void;
+    width: number;
+    height: number;
+    minZoom: number;
+    maxZoom: number;
+    zoom: number;
+    x: number;
+    y: number;
+    targetZoom: number;
+    targetX: number;
+    targetY: number;
+    animate: boolean;
     hoveredNode?: NodeRenderer<N, E>;
     clickedNode?: NodeRenderer<N, E>;
     hoveredEdge?: EdgeRenderer<N, E>;
     clickedEdge?: EdgeRenderer<N, E>;
-    clickedContainer: boolean;
-    cancelAnimationLoop: () => void;
+    dragging: boolean;
+    scrolling: boolean;
     dirty: boolean;
     viewportDirty: boolean;
-    previousTime: number;
-    animationDuration: number;
     animationPercent: number;
     edgesLayer: PIXI.Container;
     nodesLayer: PIXI.Container;
@@ -136,10 +140,16 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     circle: CircleSprite<N, E>;
     image: ImageSprite;
     fontIcon: FontIconSprite;
+    app: PIXI.Application;
+    root: PIXI.Container;
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;
-    dataUrl?: (dataUrl: string) => void;
+    private clickedContainer;
+    private previousTime;
+    private animationDuration;
+    private debug?;
+    private cancelAnimationLoop;
     onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerDrag?: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;
@@ -158,20 +168,12 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void;
     onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void;
     onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void;
-    width: number;
-    height: number;
-    zoom: number;
-    minZoom: number;
-    maxZoom: number;
-    x: number;
-    y: number;
-    animate: boolean;
-    app: PIXI.Application;
-    root: PIXI.Container;
-    debug?: {
-        logPerformance?: boolean;
-        stats?: Stats;
-    };
+    dataUrl?: (dataUrl: string) => void;
+    update: (graph: {
+        nodes: N[];
+        edges: E[];
+        options?: Options<N, E>;
+    }) => void;
     constructor(options: {
         container: HTMLDivElement;
         preserveDrawingBuffer?: boolean;

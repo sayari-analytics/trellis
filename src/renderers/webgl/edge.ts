@@ -31,7 +31,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   private width = DEFAULT_EDGE_WIDTH
   private stroke = DEFAULT_EDGE_COLOR
   private strokeOpacity = DEFAULT_EDGE_OPACITY
-  private line = new PIXI.Container() // can this be a DisplayObject
+  private line = new PIXI.ParticleContainer() // can this be a DisplayObject
   private arrowContainer = new PIXI.Container() // why can't this be a ParticleContainer
   private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
