@@ -35,8 +35,9 @@ var WebGL = __importStar(require("../webgl"));
 exports.Renderer = function () {
     var pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div') });
     var render = function (graph) {
+        var _a;
         pixiRenderer.update(__assign(__assign({}, graph), { options: __assign(__assign({}, graph.options), { animateGraph: false, animateViewport: false }) }));
-        return pixiRenderer.base64();
+        return pixiRenderer.base64((_a = graph.options) === null || _a === void 0 ? void 0 : _a.scale);
     };
     render.delete = pixiRenderer.delete;
     return render;

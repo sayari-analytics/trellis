@@ -16,6 +16,7 @@ export type Options = {
   x?: number
   y?: number
   zoom?: number
+  scale?: number
 }
 
 
@@ -24,7 +25,7 @@ export const Renderer = <N extends Node, E extends Edge>() => {
 
   const render = (graph: { nodes: N[], edges: E[], options?: Options }) => {
     pixiRenderer.update({ ...graph, options: { ...graph.options, animateGraph: false, animateViewport: false } })
-    return pixiRenderer.base64()
+    return pixiRenderer.base64(graph.options?.scale)
   }
 
   render.delete = pixiRenderer.delete

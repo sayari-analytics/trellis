@@ -175,6 +175,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   dataUrl?: (dataUrl: string) => void
+  dataUrlScale = 2
   update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
 
   constructor(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
@@ -508,7 +509,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         .endFill()
 
       this.root.addChildAt(background, 0)
-      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, 2)
+      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, this.dataUrlScale)
       const url = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture)
       imageTexture.destroy()
       this.root.removeChild(background)
@@ -606,7 +607,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         .endFill()
 
       this.root.addChildAt(background, 0)
-      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, 2)
+      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, this.dataUrlScale)
       const url = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture)
       imageTexture.destroy()
       this.root.removeChild(background)
@@ -630,7 +631,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.fontIcon.delete()
   }
 
-  base64 = () => {
+  base64 = (dataUrlScale?: number) => {
+    this.dataUrlScale = dataUrlScale ?? 2
     return new Promise<string>((resolve) => this.dataUrl = resolve)
   }
 }

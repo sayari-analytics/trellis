@@ -87,6 +87,7 @@ var InternalRenderer = /** @class */ (function () {
         this.clickedContainer = false;
         this.previousTime = performance.now();
         this.animationDuration = 0;
+        this.dataUrlScale = 2;
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
@@ -306,7 +307,7 @@ var InternalRenderer = /** @class */ (function () {
                     .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
                     .endFill();
                 _this.root.addChildAt(background, 0);
-                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, 2);
+                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, _this.dataUrlScale);
                 var url = _this.app.renderer.plugins.extract.base64(imageTexture);
                 imageTexture.destroy();
                 _this.root.removeChild(background);
@@ -396,7 +397,7 @@ var InternalRenderer = /** @class */ (function () {
                     .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
                     .endFill();
                 _this.root.addChildAt(background, 0);
-                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, 2);
+                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, _this.dataUrlScale);
                 var url = _this.app.renderer.plugins.extract.base64(imageTexture);
                 imageTexture.destroy();
                 _this.root.removeChild(background);
@@ -416,7 +417,8 @@ var InternalRenderer = /** @class */ (function () {
             _this.image.delete();
             _this.fontIcon.delete();
         };
-        this.base64 = function () {
+        this.base64 = function (dataUrlScale) {
+            _this.dataUrlScale = dataUrlScale !== null && dataUrlScale !== void 0 ? dataUrlScale : 2;
             return new Promise(function (resolve) { return _this.dataUrl = resolve; });
         };
         if (!(options.container instanceof HTMLDivElement)) {
