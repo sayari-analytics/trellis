@@ -607,6 +607,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   private _debugFirstRender = true
   private debugRender = (time: number) => {
+    this.debug?.stats?.update()
     const elapsedTime = time - this.previousTime
     this.animationDuration += Math.min(20, Math.max(0, elapsedTime))
     // this.animationDuration += elapsedTime
@@ -617,7 +618,40 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
     this.decelerateInteraction.update(elapsedTime)
 
-    this.debug?.stats?.update()
+    if (this.interpolateZoom) {
+      const { value, done } = this.interpolateZoom()
+      this.zoom = value
+      this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
+
+      if (done) {
+        this.interpolateZoom = undefined
+      }
+
+      this.viewportDirty = true
+    }
+
+    if (this.interpolateX) {
+      const { value, done } = this.interpolateX()
+      this.x = value
+
+      if (done) {
+        this.interpolateX = undefined
+      }
+
+      this.viewportDirty = true
+    }
+
+    if (this.interpolateY) {
+      const { value, done } = this.interpolateY()
+      this.y = value
+
+      if (done) {
+        this.interpolateY = undefined
+      }
+
+      this.viewportDirty = true
+    }
+
     if (!this._debugFirstRender) {
       performance.measure('external', 'external')
     } else {
@@ -639,6 +673,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
     if (this.viewportDirty || this.dirty) {
       performance.mark('draw')
+      this.root.x = (this.x * this.zoom) + (this.width / 2)
+      this.root.y = (this.y * this.zoom) + (this.height / 2)
       this.app.render()
       performance.measure('draw', 'draw')
     }
