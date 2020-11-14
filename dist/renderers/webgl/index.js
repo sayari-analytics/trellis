@@ -270,6 +270,13 @@ var InternalRenderer = /** @class */ (function () {
             // const screenCenter = new PIXI.Graphics().lineStyle(2, 0x0000ff, 0.5).drawCircle(-this.x, -this.y, 10)
             // screenCenter.name = 'screenCenter'
             // this.root.addChild(screenCenter)
+            // this.root.getChildByName('viewportBbox')?.destroy()
+            // const viewPortBounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
+            // const viewportBbox = new PIXI.Graphics()
+            //   .lineStyle(4, 0xff00ff, 0.5)
+            //   .drawPolygon(new PIXI.Polygon([viewPortBounds.left, viewPortBounds.top, viewPortBounds.right, viewPortBounds.top, viewPortBounds.right, viewPortBounds.bottom, viewPortBounds.left, viewPortBounds.bottom]))
+            // viewportBbox.name = 'viewportBbox'
+            // this.root.addChild(viewportBbox)
             return _this;
         };
         this._debugUpdate = function (graph) {

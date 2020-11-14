@@ -11,7 +11,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boundsToDimenions = exports.boundsToViewport = exports.mergeBounds = exports.viewportToBounds = exports.getSelectionBounds = void 0;
+exports.boundsToDimenions = exports.boundsToViewport = exports.viewportToBounds = exports.mergeBounds = exports.getSelectionBounds = void 0;
 exports.getSelectionBounds = function (nodes, padding) {
     var e_1, _a;
     var _b, _c, _d, _e;
@@ -46,24 +46,25 @@ exports.getSelectionBounds = function (nodes, padding) {
     }
     return { left: left - padding, top: top - padding, right: right + padding, bottom: bottom + padding };
 };
+exports.mergeBounds = function (a, b, padding) {
+    if (padding === void 0) { padding = 0; }
+    return {
+        left: Math.min(a.left, b.left) - padding,
+        top: Math.min(a.top, b.top) - padding,
+        right: Math.max(a.right, b.right) + padding,
+        bottom: Math.max(a.bottom, b.bottom) + padding,
+    };
+};
 exports.viewportToBounds = function (_a, _b) {
     var x = _a.x, y = _a.y, zoom = _a.zoom;
     var width = _b.width, height = _b.height;
     var xOffset = width / 2 / zoom;
     var yOffset = height / 2 / zoom;
     return {
-        left: x - xOffset,
-        top: y - yOffset,
-        right: x + xOffset,
-        bottom: y + yOffset,
-    };
-};
-exports.mergeBounds = function (a, b) {
-    return {
-        left: Math.min(a.left, b.left),
-        top: Math.min(a.top, b.top),
-        right: Math.max(a.right, b.right),
-        bottom: Math.max(a.bottom, b.bottom),
+        left: -(x + xOffset),
+        top: -(y + yOffset),
+        right: -(x - xOffset),
+        bottom: -(y - yOffset),
     };
 };
 exports.boundsToViewport = function (_a, _b) {

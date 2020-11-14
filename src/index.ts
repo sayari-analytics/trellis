@@ -55,24 +55,24 @@ export const getSelectionBounds = (nodes: Node[], padding: number = 0): Bounds =
 }
 
 
-export const viewportToBounds = ({ x, y, zoom }: Viewport, { width, height }: Dimensions): Bounds => {
-  const xOffset = width / 2 / zoom
-  const yOffset = height / 2 / zoom
+export const mergeBounds = (a: Bounds, b: Bounds, padding: number = 0): Bounds => {
   return {
-    left: x - xOffset,
-    top: y - yOffset,
-    right: x + xOffset,
-    bottom: y + yOffset,
+    left: Math.min(a.left, b.left) - padding,
+    top: Math.min(a.top, b.top) - padding,
+    right: Math.max(a.right, b.right) + padding,
+    bottom: Math.max(a.bottom, b.bottom) + padding,
   }
 }
 
 
-export const mergeBounds = (a: Bounds, b: Bounds): Bounds => {
+export const viewportToBounds = ({ x, y, zoom }: Viewport, { width, height }: Dimensions): Bounds => {
+  const xOffset = width / 2 / zoom
+  const yOffset = height / 2 / zoom
   return {
-    left: Math.min(a.left, b.left),
-    top: Math.min(a.top, b.top),
-    right: Math.max(a.right, b.right),
-    bottom: Math.max(a.bottom, b.bottom),
+    left: -(x + xOffset),
+    top: -(y + yOffset),
+    right: -(x - xOffset),
+    bottom: -(y - yOffset),
   }
 }
 

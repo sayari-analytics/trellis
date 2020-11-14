@@ -7,7 +7,7 @@ import * as Download from '../../src/controls/download'
 import * as Cluster from '../../src/layout/cluster'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
-import { Node, Edge, getSelectionBounds, boundsToDimenions } from '../../src/'
+import * as Graph from '../../src/'
 
 
 export const stats = new Stats()
@@ -78,14 +78,14 @@ let nodes = [
   { id: 'h', label: 'H' }, { id: 'i', label: 'I' }, { id: 'j', label: 'J' }, { id: 'k', label: 'K' }, { id: 'l', label: 'L' }, { id: 'm', label: 'M' }, { id: 'n', label: 'N' },
   { id: 'o', label: 'O' }, { id: 'p', label: 'P' }, { id: 'q', label: 'Q' },
 ]
-  .map<Node>(({ id, label }) => ({
+  .map<Graph.Node>(({ id, label }) => ({
     id,
     label,
     radius: 18,
     style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18)
   }))
 
-let edges: Edge[] = [
+let edges: Graph.Edge[] = [
   { id: 'ba', source: 'a', target: 'b', label: 'None' }, { id: 'ca', source: 'a', target: 'c', label: 'None' }, { id: 'da', source: 'a', target: 'd', label: 'None' },
   { id: 'ea', source: 'a', target: 'e', label: 'A to E', style: { arrow: 'forward' } }, { id: 'fa', source: 'a', target: 'f', label: 'A to F', style: { arrow: 'forward' } },
   { id: 'ga', source: 'a', target: 'g', label: 'A to G', style: { arrow: 'forward' } }, { id: 'ha', source: 'a', target: 'h', label: 'A to H', style: { arrow: 'forward' } },
@@ -168,16 +168,18 @@ const downloadControl = Download.Control({ container })
 downloadControl({
   top: 210,
   onClick: () => {
-    const { width, height } = boundsToDimenions(getSelectionBounds(nodes, 80), 1)
+    const bounds = Graph.getSelectionBounds(nodes, 40)
+    const dimensions = Graph.boundsToDimenions(bounds, 1)
+    const viewport = Graph.boundsToViewport(bounds, dimensions)
 
     return imageRenderer({
       nodes: nodes,
       edges: edges,
       options: {
-        width,
-        height,
-        x: 0,
-        y: 0,
+        width: dimensions.width,
+        height: dimensions.height,
+        x: viewport.x,
+        y: viewport.y,
         zoom: 1,
         scale: 2,
       }
