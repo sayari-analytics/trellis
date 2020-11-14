@@ -197,7 +197,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 }
 
 
-const NODES_PER_TICK = 40
+const NODES_PER_TICK = 20
 const INTERVAL = 2000
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
@@ -225,7 +225,7 @@ const update = () => {
     edges = graph.edges
 
     const { x, y, zoom } = Graph.boundsToViewport(
-      Graph.getSelectionBounds(nodes, 0),
+      Graph.getSelectionBounds(nodes, 80),
       { width: renderOptions.width!, height: renderOptions.height! }
     )
     renderOptions.x = x

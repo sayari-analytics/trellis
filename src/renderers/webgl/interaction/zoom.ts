@@ -47,13 +47,13 @@ export class Zoom <N extends Node, E extends Edge>{
     const rootY = this.renderer.root.y + globalStart.y - globalEnd.y
     this.renderer.root.scale.set(zoomStart)
 
+    const x = (rootX - (this.renderer.width / 2)) / zoomEnd
+    const y = (rootY - (this.renderer.height / 2)) / zoomEnd
+
+    this.renderer.dragX = x
+    this.renderer.dragY = y
     this.renderer.wheelZoom = zoomEnd
-    this.onContainerWheel(
-      e,
-      (rootX - (this.renderer.width / 2)) / zoomEnd,
-      (rootY - (this.renderer.height / 2)) / zoomEnd,
-      zoomEnd
-    )
+    this.onContainerWheel(e, x, y, zoomEnd)
   }
 
   pause() {

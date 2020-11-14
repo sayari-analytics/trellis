@@ -201,8 +201,8 @@ const renderOptions: WebGL.Options = {
   nodesEqual: (prev, current) => prev === current,
   edgesEqual: (prev, current) => prev === current,
   onNodePointerDown: (_, { id }, x, y) => {
-    // renderOptions.x = -x
-    // renderOptions.y = -y
+    renderOptions.x = -x
+    renderOptions.y = -y
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },
@@ -282,17 +282,16 @@ const layoutOptions: Force.Options = {
 }
 
 
-// renderer({ nodes, edges, options: renderOptions })
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
 
-  // const { x, y, zoom } = Graph.boundsToViewport(
-  //   Graph.getSelectionBounds(nodes, 40),
-  //   { width: renderOptions.width!, height: renderOptions.height! }
-  // )
-  // renderOptions.x = x
-  // renderOptions.y = y
-  // renderOptions.zoom = zoom
+  const { x, y, zoom } = Graph.boundsToViewport(
+    Graph.getSelectionBounds(nodes, 40),
+    { width: renderOptions.width!, height: renderOptions.height! }
+  )
+  renderOptions.x = x
+  renderOptions.y = y
+  renderOptions.zoom = zoom
 
   renderer({ nodes, edges, options: renderOptions })
 })

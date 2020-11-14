@@ -34,7 +34,7 @@ export class Decelerate <N extends Node, E extends Edge>{
       return
     }
 
-    this.saved.push({ x: this.renderer.x, y: this.renderer.y, time: performance.now() }) // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
+    this.saved.push({ x: this.renderer.x, y: this.renderer.y, time: performance.now() })
     if (this.saved.length > 60) {
       this.saved.splice(0, 30)
     }
@@ -80,6 +80,8 @@ export class Decelerate <N extends Node, E extends Edge>{
     }
 
     if (x || y) {
+      this.renderer.dragX = x ?? this.renderer.x
+      this.renderer.dragY = y ?? this.renderer.y
       this.onContainerDecelerate(x ?? this.renderer.x, y ?? this.renderer.y) // TODO - expose this as a more generic function
     }
   }

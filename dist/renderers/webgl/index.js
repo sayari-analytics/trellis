@@ -60,11 +60,10 @@ var InternalRenderer = /** @class */ (function () {
         this.minZoom = exports.RENDERER_OPTIONS.minZoom;
         this.maxZoom = exports.RENDERER_OPTIONS.maxZoom;
         this.zoom = exports.RENDERER_OPTIONS.zoom;
-        this.zoomTarget = exports.RENDERER_OPTIONS.zoom;
-        this.x = exports.RENDERER_OPTIONS.x;
-        this.y = exports.RENDERER_OPTIONS.y;
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
+        this.x = exports.RENDERER_OPTIONS.x;
         this.targetX = exports.RENDERER_OPTIONS.x;
+        this.y = exports.RENDERER_OPTIONS.y;
         this.targetY = exports.RENDERER_OPTIONS.y;
         this.animateGraph = exports.RENDERER_OPTIONS.animateGraph;
         this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
@@ -120,27 +119,51 @@ var InternalRenderer = /** @class */ (function () {
                 _this.app.renderer.resize(_this.width, _this.height);
                 _this.viewportDirty = true;
             }
-            if (zoom !== _this.zoomTarget) {
-                _this.zoomTarget = zoom;
-                _this.viewportDirty = true;
+            if (zoom !== _this.targetZoom) {
                 if (zoom === _this.wheelZoom || !_this.animateViewport) {
                     _this.interpolateZoom = undefined;
                     _this.zoom = zoom;
                     _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 }
                 else {
-                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, _this.zoomTarget, 600);
+                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, 600);
                 }
                 _this.wheelZoom = undefined;
-            }
-            if (x !== _this.x) {
-                _this.x = x;
+                _this.targetZoom = zoom;
                 _this.viewportDirty = true;
             }
-            if (y !== _this.y) {
-                _this.y = y;
+            if (x !== _this.targetX) {
+                if (x === _this.dragX || !_this.animateViewport) {
+                    _this.interpolateX = undefined;
+                    _this.x = x;
+                }
+                else {
+                    _this.interpolateX = utils_1.interpolate(_this.x, x, 600);
+                }
+                _this.dragX = undefined;
+                _this.targetX = x;
                 _this.viewportDirty = true;
             }
+            if (y !== _this.targetY) {
+                if (y === _this.dragY || !_this.animateViewport) {
+                    _this.interpolateY = undefined;
+                    _this.y = y;
+                }
+                else {
+                    _this.interpolateY = utils_1.interpolate(_this.y, y, 600);
+                }
+                _this.dragY = undefined;
+                _this.targetY = y;
+                _this.viewportDirty = true;
+            }
+            // if (x !== this.x) {
+            //   this.x = x
+            //   this.viewportDirty = true
+            // }
+            // if (y !== this.y) {
+            //   this.y = y
+            //   this.viewportDirty = true
+            // }
             _this.root.x = (_this.x * _this.zoom) + (_this.width / 2);
             _this.root.y = (_this.y * _this.zoom) + (_this.height / 2);
             var edgesAreEqual = edgesEqual(_this.edges, edges);
@@ -308,6 +331,22 @@ var InternalRenderer = /** @class */ (function () {
                 _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 if (done) {
                     _this.interpolateZoom = undefined;
+                }
+                _this.viewportDirty = true;
+            }
+            if (_this.interpolateX) {
+                var _b = _this.interpolateX(), value = _b.value, done = _b.done;
+                _this.x = value;
+                if (done) {
+                    _this.interpolateX = undefined;
+                }
+                _this.viewportDirty = true;
+            }
+            if (_this.interpolateY) {
+                var _c = _this.interpolateY(), value = _c.value, done = _c.done;
+                _this.y = value;
+                if (done) {
+                    _this.interpolateY = undefined;
                 }
                 _this.viewportDirty = true;
             }

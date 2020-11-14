@@ -33,7 +33,7 @@ var Decelerate = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
-            _this.saved.push({ x: _this.renderer.x, y: _this.renderer.y, time: performance.now() }); // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
+            _this.saved.push({ x: _this.renderer.x, y: _this.renderer.y, time: performance.now() });
             if (_this.saved.length > 60) {
                 _this.saved.splice(0, 30);
             }
@@ -84,6 +84,8 @@ var Decelerate = /** @class */ (function () {
                 }
             }
             if (x || y) {
+                _this.renderer.dragX = x !== null && x !== void 0 ? x : _this.renderer.x;
+                _this.renderer.dragY = y !== null && y !== void 0 ? y : _this.renderer.y;
                 _this.onContainerDecelerate(x !== null && x !== void 0 ? x : _this.renderer.x, y !== null && y !== void 0 ? y : _this.renderer.y); // TODO - expose this as a more generic function
             }
         };

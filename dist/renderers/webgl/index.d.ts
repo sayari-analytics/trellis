@@ -104,17 +104,26 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     minZoom: number;
     maxZoom: number;
     zoom: number;
-    zoomTarget: number;
+    targetZoom: number;
     wheelZoom?: number;
     interpolateZoom?: () => {
         value: number;
         done: boolean;
     };
     x: number;
-    y: number;
-    targetZoom: number;
     targetX: number;
+    dragX?: number;
+    interpolateX?: () => {
+        value: number;
+        done: boolean;
+    };
+    y: number;
     targetY: number;
+    dragY?: number;
+    interpolateY?: () => {
+        value: number;
+        done: boolean;
+    };
     animateGraph: boolean;
     animateViewport: boolean;
     hoveredNode?: NodeRenderer<N, E>;

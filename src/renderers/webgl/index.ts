@@ -113,14 +113,17 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   minZoom = RENDERER_OPTIONS.minZoom
   maxZoom = RENDERER_OPTIONS.maxZoom
   zoom = RENDERER_OPTIONS.zoom
-  zoomTarget = RENDERER_OPTIONS.zoom
+  targetZoom = RENDERER_OPTIONS.zoom
   wheelZoom?: number
   interpolateZoom?: () => { value: number, done: boolean }
   x = RENDERER_OPTIONS.x
-  y = RENDERER_OPTIONS.y
-  targetZoom = RENDERER_OPTIONS.zoom
   targetX = RENDERER_OPTIONS.x
+  dragX?: number
+  interpolateX?: () => { value: number, done: boolean }
+  y = RENDERER_OPTIONS.y
   targetY = RENDERER_OPTIONS.y
+  dragY?: number
+  interpolateY?: () => { value: number, done: boolean }
   animateGraph = RENDERER_OPTIONS.animateGraph
   animateViewport = RENDERER_OPTIONS.animateViewport
   hoveredNode?: NodeRenderer<N, E>
@@ -323,30 +326,55 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-    if (zoom !== this.zoomTarget) {
-      this.zoomTarget = zoom
-      this.viewportDirty = true
-
+    if (zoom !== this.targetZoom) {
       if (zoom === this.wheelZoom || !this.animateViewport) {
         this.interpolateZoom = undefined
         this.zoom = zoom
         this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
       } else {
-        this.interpolateZoom = interpolate(this.zoom, this.zoomTarget, 600)
+        this.interpolateZoom = interpolate(this.zoom, zoom, 600)
       }
 
       this.wheelZoom = undefined
-    }
-
-    if (x !== this.x) {
-      this.x = x
+      this.targetZoom = zoom
       this.viewportDirty = true
     }
 
-    if (y !== this.y) {
-      this.y = y
+    if (x !== this.targetX) {
+      if (x === this.dragX || !this.animateViewport) {
+        this.interpolateX = undefined
+        this.x = x
+      } else {
+        this.interpolateX = interpolate(this.x, x, 600)
+      }
+
+      this.dragX = undefined
+      this.targetX = x
       this.viewportDirty = true
     }
+
+    if (y !== this.targetY) {
+      if (y === this.dragY || !this.animateViewport) {
+        this.interpolateY = undefined
+        this.y = y
+      } else {
+        this.interpolateY = interpolate(this.y, y, 600)
+      }
+
+      this.dragY = undefined
+      this.targetY = y
+      this.viewportDirty = true
+    }
+
+    // if (x !== this.x) {
+    //   this.x = x
+    //   this.viewportDirty = true
+    // }
+
+    // if (y !== this.y) {
+    //   this.y = y
+    //   this.viewportDirty = true
+    // }
 
     this.root.x = (this.x * this.zoom) + (this.width / 2)
     this.root.y = (this.y * this.zoom) + (this.height / 2)
@@ -511,6 +539,28 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
       if (done) {
         this.interpolateZoom = undefined
+      }
+
+      this.viewportDirty = true
+    }
+
+    if (this.interpolateX) {
+      const { value, done } = this.interpolateX()
+      this.x = value
+
+      if (done) {
+        this.interpolateX = undefined
+      }
+
+      this.viewportDirty = true
+    }
+
+    if (this.interpolateY) {
+      const { value, done } = this.interpolateY()
+      this.y = value
+
+      if (done) {
+        this.interpolateY = undefined
       }
 
       this.viewportDirty = true

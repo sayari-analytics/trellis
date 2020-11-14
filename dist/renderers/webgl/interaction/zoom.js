@@ -50,8 +50,12 @@ var Zoom = /** @class */ (function () {
             var rootX = _this.renderer.root.x + globalStart.x - globalEnd.x;
             var rootY = _this.renderer.root.y + globalStart.y - globalEnd.y;
             _this.renderer.root.scale.set(zoomStart);
+            var x = (rootX - (_this.renderer.width / 2)) / zoomEnd;
+            var y = (rootY - (_this.renderer.height / 2)) / zoomEnd;
+            _this.renderer.dragX = x;
+            _this.renderer.dragY = y;
             _this.renderer.wheelZoom = zoomEnd;
-            _this.onContainerWheel(e, (rootX - (_this.renderer.width / 2)) / zoomEnd, (rootY - (_this.renderer.height / 2)) / zoomEnd, zoomEnd);
+            _this.onContainerWheel(e, x, y, zoomEnd);
         };
         this.renderer = renderer;
         this.onContainerWheel = onContainerWheel;
