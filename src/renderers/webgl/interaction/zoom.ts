@@ -27,7 +27,7 @@ export class Zoom <N extends Node, E extends Edge>{
 
     const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
-    const zoomStart = this.renderer.root.scale.x
+    const zoomStart = this.renderer.zoom
     const zoomEnd = Math.max(this.renderer.minZoom, Math.min(this.renderer.maxZoom, zoomStart * change))
 
     if (
@@ -47,6 +47,7 @@ export class Zoom <N extends Node, E extends Edge>{
     const rootY = this.renderer.root.y + globalStart.y - globalEnd.y
     this.renderer.root.scale.set(zoomStart)
 
+    this.renderer.wheelZoom = zoomEnd
     this.onContainerWheel(
       e,
       (rootX - (this.renderer.width / 2)) / zoomEnd,

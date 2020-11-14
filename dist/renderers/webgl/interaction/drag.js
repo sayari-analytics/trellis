@@ -28,12 +28,14 @@ var Drag = /** @class */ (function () {
                 var distX = x - _this.last.x;
                 var distY = y - _this.last.y;
                 if (_this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-                    // const centerX = this.renderer.root.x + (distX / this.renderer.root.scale.x)
-                    // const centerY = this.renderer.root.y + (distY / this.renderer.root.scale.x)
-                    var centerX = _this.renderer.x + (distX / _this.renderer.root.scale.x); // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
-                    var centerY = _this.renderer.y + (distY / _this.renderer.root.scale.y);
+                    // const centerX = this.renderer.root.x + (distX / this.renderer.zoom)
+                    // const centerY = this.renderer.root.y + (distY / this.renderer.zoom)
+                    var centerX = _this.renderer.x + (distX / _this.renderer.zoom); // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
+                    var centerY = _this.renderer.y + (distY / _this.renderer.zoom);
                     _this.last = { x: x, y: y };
                     _this.moved = true;
+                    // this.renderer.dragX = centerX
+                    // this.renderer.dragY = centerY
                     _this.onContainerDrag(event, centerX, centerY);
                 }
             }

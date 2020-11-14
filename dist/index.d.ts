@@ -39,3 +39,4 @@ export declare const mergeBounds: (a: Bounds, b: Bounds, padding?: number) => Bo
 export declare const viewportToBounds: ({ x, y, zoom }: Viewport, { width, height }: Dimensions) => Bounds;
 export declare const boundsToViewport: ({ left, top, right, bottom }: Bounds, { width, height }: Dimensions) => Viewport;
 export declare const boundsToDimenions: ({ left, top, right, bottom }: Bounds, zoom: number) => Dimensions;
+export declare const clamp: (min: number, max: number, value: number) => number;

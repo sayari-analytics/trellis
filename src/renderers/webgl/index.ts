@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js'
 import { install } from '@pixi/unsafe-eval'
 import * as Graph from '../..'
-import { animationFrameLoop } from '../../utils'
+import { animationFrameLoop, interpolate } from '../../utils'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import { Drag } from './interaction/drag'
@@ -98,7 +98,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
 
 export const RENDERER_OPTIONS = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animateGraph: true, animateViewport: false, nodesEqual: () => false, edgesEqual: () => false,
+  animateGraph: true, animateViewport: true, nodesEqual: () => false, edgesEqual: () => false,
 }
 
 const POSITION_ANIMATION_DURATION = 800
@@ -113,6 +113,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   minZoom = RENDERER_OPTIONS.minZoom
   maxZoom = RENDERER_OPTIONS.maxZoom
   zoom = RENDERER_OPTIONS.zoom
+  zoomTarget = RENDERER_OPTIONS.zoom
+  wheelZoom?: number
+  interpolateZoom?: () => { value: number, done: boolean }
   x = RENDERER_OPTIONS.x
   y = RENDERER_OPTIONS.y
   targetZoom = RENDERER_OPTIONS.zoom
@@ -312,6 +315,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.minZoom = minZoom
     this.maxZoom = maxZoom
 
+
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
@@ -319,10 +323,19 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-    if (zoom !== this.zoom) {
-      this.zoom = zoom
-      this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
+    if (zoom !== this.zoomTarget) {
+      this.zoomTarget = zoom
       this.viewportDirty = true
+
+      if (zoom === this.wheelZoom || !this.animateViewport) {
+        this.interpolateZoom = undefined
+        this.zoom = zoom
+        this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
+      } else {
+        this.interpolateZoom = interpolate(this.zoom, this.zoomTarget, 600)
+      }
+
+      this.wheelZoom = undefined
     }
 
     if (x !== this.x) {
@@ -491,6 +504,18 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
     this.decelerateInteraction.update(elapsedTime)
 
+    if (this.interpolateZoom) {
+      const { value, done } = this.interpolateZoom()
+      this.zoom = value
+      this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
+
+      if (done) {
+        this.interpolateZoom = undefined
+      }
+
+      this.viewportDirty = true
+    }
+
     if (this.dirty) {
       for (const nodeId in this.nodesById) {
         this.nodesById[nodeId].render()
@@ -503,6 +528,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (this.viewportDirty || this.dirty) {
+      this.root.x = (this.x * this.zoom) + (this.width / 2)
+      this.root.y = (this.y * this.zoom) + (this.height / 2)
       this.app.render()
     }
 

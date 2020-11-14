@@ -36,7 +36,7 @@ var Zoom = /** @class */ (function () {
             }
             var step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500;
             var change = Math.pow(2, 1.1 * step);
-            var zoomStart = _this.renderer.root.scale.x;
+            var zoomStart = _this.renderer.zoom;
             var zoomEnd = Math.max(_this.renderer.minZoom, Math.min(_this.renderer.maxZoom, zoomStart * change));
             if ((step > 0 && zoomStart >= _this.renderer.maxZoom) ||
                 (step < 0 && zoomStart <= _this.renderer.minZoom)) {
@@ -50,6 +50,7 @@ var Zoom = /** @class */ (function () {
             var rootX = _this.renderer.root.x + globalStart.x - globalEnd.x;
             var rootY = _this.renderer.root.y + globalStart.y - globalEnd.y;
             _this.renderer.root.scale.set(zoomStart);
+            _this.renderer.wheelZoom = zoomEnd;
             _this.onContainerWheel(e, (rootX - (_this.renderer.width / 2)) / zoomEnd, (rootY - (_this.renderer.height / 2)) / zoomEnd, zoomEnd);
         };
         this.renderer = renderer;

@@ -181,7 +181,6 @@ downloadControl({
         x: viewport.x,
         y: viewport.y,
         zoom: 1,
-        scale: 2,
       }
     })
   }
@@ -283,7 +282,17 @@ const layoutOptions: Force.Options = {
 }
 
 
+// renderer({ nodes, edges, options: renderOptions })
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
+
+  // const { x, y, zoom } = Graph.boundsToViewport(
+  //   Graph.getSelectionBounds(nodes, 40),
+  //   { width: renderOptions.width!, height: renderOptions.height! }
+  // )
+  // renderOptions.x = x
+  // renderOptions.y = y
+  // renderOptions.zoom = zoom
+
   renderer({ nodes, edges, options: renderOptions })
 })

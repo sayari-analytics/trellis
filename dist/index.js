@@ -11,7 +11,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boundsToDimenions = exports.boundsToViewport = exports.viewportToBounds = exports.mergeBounds = exports.getSelectionBounds = void 0;
+exports.clamp = exports.boundsToDimenions = exports.boundsToViewport = exports.viewportToBounds = exports.mergeBounds = exports.getSelectionBounds = void 0;
 exports.getSelectionBounds = function (nodes, padding) {
     var e_1, _a;
     var _b, _c, _d, _e;
@@ -90,4 +90,5 @@ exports.boundsToDimenions = function (_a, zoom) {
         height: (bottom - top) / zoom,
     };
 };
+exports.clamp = function (min, max, value) { return Math.max(min, Math.min(max, value)); };
 //# sourceMappingURL=index.js.map

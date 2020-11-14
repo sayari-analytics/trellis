@@ -43,13 +43,15 @@ export class Drag <N extends Node, E extends Edge>{
       const distX = x - this.last.x
       const distY = y - this.last.y
       if (this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-        // const centerX = this.renderer.root.x + (distX / this.renderer.root.scale.x)
-        // const centerY = this.renderer.root.y + (distY / this.renderer.root.scale.x)
-        const centerX = this.renderer.x + (distX / this.renderer.root.scale.x) // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
-        const centerY = this.renderer.y + (distY / this.renderer.root.scale.y)
+        // const centerX = this.renderer.root.x + (distX / this.renderer.zoom)
+        // const centerY = this.renderer.root.y + (distY / this.renderer.zoom)
+        const centerX = this.renderer.x + (distX / this.renderer.zoom) // TODO - if position is interpolated, renderer.x is the target position.  need to use current position
+        const centerY = this.renderer.y + (distY / this.renderer.zoom)
         this.last = { x, y }
         this.moved = true
 
+        // this.renderer.dragX = centerX
+        // this.renderer.dragY = centerY
         this.onContainerDrag(event, centerX, centerY)
       }
     }

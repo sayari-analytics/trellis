@@ -47,7 +47,7 @@ var FontIconSprite_1 = require("./sprites/FontIconSprite");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-    animateGraph: true, animateViewport: false,
+    animateGraph: true, animateViewport: true,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
 };
 var POSITION_ANIMATION_DURATION = 800;
@@ -60,6 +60,7 @@ var InternalRenderer = /** @class */ (function () {
         this.minZoom = exports.RENDERER_OPTIONS.minZoom;
         this.maxZoom = exports.RENDERER_OPTIONS.maxZoom;
         this.zoom = exports.RENDERER_OPTIONS.zoom;
+        this.zoomTarget = exports.RENDERER_OPTIONS.zoom;
         this.x = exports.RENDERER_OPTIONS.x;
         this.y = exports.RENDERER_OPTIONS.y;
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
@@ -119,10 +120,18 @@ var InternalRenderer = /** @class */ (function () {
                 _this.app.renderer.resize(_this.width, _this.height);
                 _this.viewportDirty = true;
             }
-            if (zoom !== _this.zoom) {
-                _this.zoom = zoom;
-                _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
+            if (zoom !== _this.zoomTarget) {
+                _this.zoomTarget = zoom;
                 _this.viewportDirty = true;
+                if (zoom === _this.wheelZoom || !_this.animateViewport) {
+                    _this.interpolateZoom = undefined;
+                    _this.zoom = zoom;
+                    _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
+                }
+                else {
+                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, _this.zoomTarget, 600);
+                }
+                _this.wheelZoom = undefined;
             }
             if (x !== _this.x) {
                 _this.x = x;
@@ -293,6 +302,15 @@ var InternalRenderer = /** @class */ (function () {
                 1;
             _this.previousTime = time;
             _this.decelerateInteraction.update(elapsedTime);
+            if (_this.interpolateZoom) {
+                var _a = _this.interpolateZoom(), value = _a.value, done = _a.done;
+                _this.zoom = value;
+                _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
+                if (done) {
+                    _this.interpolateZoom = undefined;
+                }
+                _this.viewportDirty = true;
+            }
             if (_this.dirty) {
                 for (var nodeId in _this.nodesById) {
                     _this.nodesById[nodeId].render();
@@ -303,6 +321,8 @@ var InternalRenderer = /** @class */ (function () {
                 }
             }
             if (_this.viewportDirty || _this.dirty) {
+                _this.root.x = (_this.x * _this.zoom) + (_this.width / 2);
+                _this.root.y = (_this.y * _this.zoom) + (_this.height / 2);
                 _this.app.render();
             }
             _this.viewportDirty = false;

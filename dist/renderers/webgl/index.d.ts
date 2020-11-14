@@ -104,6 +104,12 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     minZoom: number;
     maxZoom: number;
     zoom: number;
+    zoomTarget: number;
+    wheelZoom?: number;
+    interpolateZoom?: () => {
+        value: number;
+        done: boolean;
+    };
     x: number;
     y: number;
     targetZoom: number;
