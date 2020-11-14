@@ -5,7 +5,7 @@ export declare type Options = Partial<{
     radius: number;
     bfs: boolean;
 }>;
-export declare const Layout: () => <N extends Node<E>, E extends Edge>(root: string, graph: {
+export declare const Layout: () => <N extends Node, E extends Edge>(root: string, graph: {
     nodes: N[];
     edges: E[];
     options?: Partial<{

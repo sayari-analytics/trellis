@@ -1,7 +1,7 @@
 import { NodeStyle, EdgeStyle } from './renderers/webgl'
 
 
-export type Node<E extends Edge = Edge> = { // TODO - Node doesn't need to be generic
+export type Node = {
   id: string
   radius: number
   x?: number | undefined // TODO - add prop for fixed position
@@ -9,8 +9,8 @@ export type Node<E extends Edge = Edge> = { // TODO - Node doesn't need to be ge
   label?: string | undefined
   style?: NodeStyle
   subgraph?: {
-    nodes: Node<E>[],
-    edges: E[],
+    nodes: Node[],
+    edges: Edge[],
     options?: {}
   } | undefined
 }

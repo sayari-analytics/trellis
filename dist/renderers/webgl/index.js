@@ -386,6 +386,7 @@ var InternalRenderer = /** @class */ (function () {
         this.debugRender = function (time) {
             var e_4, _a;
             var _b, _c, _d;
+            (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
             var elapsedTime = time - _this.previousTime;
             _this.animationDuration += Math.min(20, Math.max(0, elapsedTime));
             // this.animationDuration += elapsedTime
@@ -394,7 +395,31 @@ var InternalRenderer = /** @class */ (function () {
                 1;
             _this.previousTime = time;
             _this.decelerateInteraction.update(elapsedTime);
-            (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
+            if (_this.interpolateZoom) {
+                var _e = _this.interpolateZoom(), value = _e.value, done = _e.done;
+                _this.zoom = value;
+                _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
+                if (done) {
+                    _this.interpolateZoom = undefined;
+                }
+                _this.viewportDirty = true;
+            }
+            if (_this.interpolateX) {
+                var _f = _this.interpolateX(), value = _f.value, done = _f.done;
+                _this.x = value;
+                if (done) {
+                    _this.interpolateX = undefined;
+                }
+                _this.viewportDirty = true;
+            }
+            if (_this.interpolateY) {
+                var _g = _this.interpolateY(), value = _g.value, done = _g.done;
+                _this.y = value;
+                if (done) {
+                    _this.interpolateY = undefined;
+                }
+                _this.viewportDirty = true;
+            }
             if (!_this._debugFirstRender) {
                 performance.measure('external', 'external');
             }
@@ -414,6 +439,8 @@ var InternalRenderer = /** @class */ (function () {
             }
             if (_this.viewportDirty || _this.dirty) {
                 performance.mark('draw');
+                _this.root.x = (_this.x * _this.zoom) + (_this.width / 2);
+                _this.root.y = (_this.y * _this.zoom) + (_this.height / 2);
                 _this.app.render();
                 performance.measure('draw', 'draw');
             }
@@ -424,8 +451,8 @@ var InternalRenderer = /** @class */ (function () {
                 var draw = 0;
                 var total = 0;
                 try {
-                    for (var _e = __values(performance.getEntriesByType('measure')), _f = _e.next(); !_f.done; _f = _e.next()) {
-                        var measurement = _f.value;
+                    for (var _h = __values(performance.getEntriesByType('measure')), _j = _h.next(); !_j.done; _j = _h.next()) {
+                        var measurement = _j.value;
                         if (measurement.name === 'update') {
                             update = measurement.duration;
                             total += measurement.duration;
@@ -447,7 +474,7 @@ var InternalRenderer = /** @class */ (function () {
                 catch (e_4_1) { e_4 = { error: e_4_1 }; }
                 finally {
                     try {
-                        if (_f && !_f.done && (_a = _e.return)) _a.call(_e);
+                        if (_j && !_j.done && (_a = _h.return)) _a.call(_h);
                     }
                     finally { if (e_4) throw e_4.error; }
                 }

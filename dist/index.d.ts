@@ -1,5 +1,5 @@
 import { NodeStyle, EdgeStyle } from './renderers/webgl';
-export declare type Node<E extends Edge = Edge> = {
+export declare type Node = {
     id: string;
     radius: number;
     x?: number | undefined;
@@ -7,8 +7,8 @@ export declare type Node<E extends Edge = Edge> = {
     label?: string | undefined;
     style?: NodeStyle;
     subgraph?: {
-        nodes: Node<E>[];
-        edges: E[];
+        nodes: Node[];
+        edges: Edge[];
         options?: {};
     } | undefined;
 };

@@ -17,7 +17,7 @@ export declare const LAYOUT_OPTIONS: {
     tick: number;
 };
 export declare const Layout: () => {
-    <N extends Node<E>, E extends Edge>(graph: {
+    <N extends Node, E extends Edge>(graph: {
         nodes: N[];
         edges: E[];
         options?: Partial<{

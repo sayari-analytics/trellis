@@ -40,7 +40,7 @@ type LayoutEvent = {
   options?: Partial<Options>
 }
 
-type LayoutResultEvent<N extends Node<E>, E extends Edge> = {
+type LayoutResultEvent<N extends Node> = {
   v: number
   nodes: Extend<N, { x: number, y: number }>[]
 }
@@ -142,14 +142,14 @@ export const Layout = () => {
   const worker = new Worker(workerUrl)
   let v = 0
 
-  const layout = <N extends Node<E>, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options }) => {
+  const layout = <N extends Node, E extends Edge>(graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edges = graph.edges
     const version = v++
 
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: version } as LayoutEvent)
 
     return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve, reject) => {
-      worker.onmessage = ({ data }: Message<LayoutResultEvent<N, E>>) => {
+      worker.onmessage = ({ data }: Message<LayoutResultEvent<N>>) => {
         if (data.v === version) {
           resolve({ nodes: data.nodes, edges })
         }

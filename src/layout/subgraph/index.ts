@@ -1,7 +1,7 @@
-import { Node, Edge } from '../..'
+import { Node } from '../..'
 
 
-export const subgraphRadius = <E extends Edge>(radius: number, nodes: Node<E>[]) => {
+export const subgraphRadius = (radius: number, nodes: Node[]) => {
   let _radius = radius
 
   for (const node of nodes) {
@@ -14,7 +14,7 @@ export const subgraphRadius = <E extends Edge>(radius: number, nodes: Node<E>[])
 
 
 export const Layout = () => {
-  return <N extends Node<E>, E extends Edge>(previousNodes: N[], nextNodes: N[]) => {
+  return <N extends Node>(previousNodes: N[], nextNodes: N[]) => {
     let result: N[] = nextNodes.map((node) => ({ ...node })),
       collapseNode: N,
       collapseNodeX: number,

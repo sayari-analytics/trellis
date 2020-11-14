@@ -10,4 +10,4 @@ export declare type Props<N extends Node = Node, E extends Edge = Edge> = Partia
         stats?: Stats;
     };
 };
-export declare const Renderer: <N extends Node<Edge> = Node<Edge>, E extends Edge = Edge>(props: Props<N, E>) => import("react").DetailedReactHTMLElement<import("react").HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
+export declare const Renderer: <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => import("react").DetailedReactHTMLElement<import("react").HTMLAttributes<HTMLDivElement>, HTMLDivElement>;

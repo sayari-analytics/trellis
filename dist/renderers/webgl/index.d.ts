@@ -215,7 +215,7 @@ export declare const Renderer: (options: {
         stats?: Stats;
     };
 }) => {
-    <N extends Graph.Node<Graph.Edge>, E extends Graph.Edge>(graph: {
+    <N extends Graph.Node, E extends Graph.Edge>(graph: {
         nodes: N[];
         edges: E[];
         options?: Options<N, E> | undefined;

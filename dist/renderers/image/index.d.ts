@@ -12,7 +12,7 @@ export declare type Options = {
     zoom?: number;
     scale?: number;
 };
-export declare const Renderer: <N extends Node<Edge>, E extends Edge>() => {
+export declare const Renderer: <N extends Node, E extends Edge>() => {
     (graph: {
         nodes: N[];
         edges: E[];

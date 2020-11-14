@@ -1,9 +1,9 @@
 import { pack, hierarchy } from 'd3-hierarchy'
-import { Node, Edge } from '../../'
+import { Node } from '../../'
 
 
 export const Layout = () => {
-  return <N extends Node<E>, E extends Edge>(nodes: N[]) => {
+  return <N extends Node>(nodes: N[]) => {
     const positions: Record<string, [number, number]> = {}
 
     pack<{ id: string, radius: number }>()
