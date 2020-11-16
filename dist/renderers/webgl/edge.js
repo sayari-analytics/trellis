@@ -154,17 +154,15 @@ var EdgeRenderer = /** @class */ (function () {
          * Style
          */
         this.width = (_c = (_b = this.edge.style) === null || _b === void 0 ? void 0 : _b.width) !== null && _c !== void 0 ? _c : DEFAULT_EDGE_WIDTH;
-        this.stroke = ((_d = edge.style) === null || _d === void 0 ? void 0 : _d.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_e = edge.style) === null || _e === void 0 ? void 0 : _e.stroke);
-        this.strokeOpacity = (_g = (_f = edge.style) === null || _f === void 0 ? void 0 : _f.strokeOpacity) !== null && _g !== void 0 ? _g : DEFAULT_EDGE_OPACITY;
         /**
          * Arrow
          */
-        var arrow = (_j = (_h = edge.style) === null || _h === void 0 ? void 0 : _h.arrow) !== null && _j !== void 0 ? _j : DEFAULT_ARROW;
+        var arrow = (_e = (_d = edge.style) === null || _d === void 0 ? void 0 : _d.arrow) !== null && _e !== void 0 ? _e : DEFAULT_ARROW;
         if (this.arrow !== arrow) {
             this.arrow = arrow;
             this.arrowContainer.removeChildren();
-            (_k = this.forwardArrow) === null || _k === void 0 ? void 0 : _k.destroy();
-            (_l = this.reverseArrow) === null || _l === void 0 ? void 0 : _l.destroy();
+            (_f = this.forwardArrow) === null || _f === void 0 ? void 0 : _f.destroy();
+            (_g = this.reverseArrow) === null || _g === void 0 ? void 0 : _g.destroy();
             this.forwardArrow = undefined;
             this.reverseArrow = undefined;
             if (this.arrow === 'forward') {
@@ -188,6 +186,40 @@ var EdgeRenderer = /** @class */ (function () {
                 this.reverseArrow.alpha = this.strokeOpacity;
                 this.arrowContainer.addChild(this.forwardArrow);
                 this.arrowContainer.addChild(this.reverseArrow);
+            }
+        }
+        /**
+         * Stroke
+         */
+        var stroke = ((_h = edge.style) === null || _h === void 0 ? void 0 : _h.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_j = edge.style) === null || _j === void 0 ? void 0 : _j.stroke);
+        if (this.stroke !== stroke) {
+            this.stroke = stroke;
+            if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
+                this.forwardArrow.tint = this.stroke;
+            }
+            else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
+                this.reverseArrow.tint = this.stroke;
+            }
+            else if (this.arrow === 'both' && this.forwardArrow !== undefined && this.reverseArrow !== undefined) {
+                this.reverseArrow.tint = this.stroke;
+                this.forwardArrow.tint = this.stroke;
+            }
+        }
+        /**
+         * Stroke Opacity
+         */
+        var strokeOpacity = (_l = (_k = edge.style) === null || _k === void 0 ? void 0 : _k.strokeOpacity) !== null && _l !== void 0 ? _l : DEFAULT_EDGE_OPACITY;
+        if (this.strokeOpacity !== strokeOpacity) {
+            this.strokeOpacity = strokeOpacity;
+            if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
+                this.forwardArrow.alpha = this.strokeOpacity;
+            }
+            else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
+                this.reverseArrow.alpha = this.strokeOpacity;
+            }
+            else if (this.arrow === 'both' && this.forwardArrow !== undefined && this.reverseArrow !== undefined) {
+                this.reverseArrow.alpha = this.strokeOpacity;
+                this.forwardArrow.alpha = this.strokeOpacity;
             }
         }
         /**
