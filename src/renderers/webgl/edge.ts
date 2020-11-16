@@ -88,9 +88,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     /**
      * Arrow
      */
-    const stroke = edge.style?.stroke === undefined ? DEFAULT_EDGE_COLOR : colorToNumber(edge.style?.stroke)
     const arrow = edge.style?.arrow ?? DEFAULT_ARROW
-    if(this.arrow !== arrow) {
+    if (this.arrow !== arrow) {
       this.arrow = arrow
       this.arrowContainer.removeChildren()
       this.forwardArrow?.destroy()
@@ -120,7 +119,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       }
     }
 
-    if(this.stroke !== stroke) {
+
+    /**
+     * Stroke
+     */
+    const stroke = edge.style?.stroke === undefined ? DEFAULT_EDGE_COLOR : colorToNumber(edge.style?.stroke)
+    if (this.stroke !== stroke) {
       this.stroke = stroke
       if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
         this.forwardArrow.tint = this.stroke

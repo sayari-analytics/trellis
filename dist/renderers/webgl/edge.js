@@ -158,13 +158,12 @@ var EdgeRenderer = /** @class */ (function () {
         /**
          * Arrow
          */
-        var stroke = ((_f = edge.style) === null || _f === void 0 ? void 0 : _f.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_g = edge.style) === null || _g === void 0 ? void 0 : _g.stroke);
-        var arrow = (_j = (_h = edge.style) === null || _h === void 0 ? void 0 : _h.arrow) !== null && _j !== void 0 ? _j : DEFAULT_ARROW;
+        var arrow = (_g = (_f = edge.style) === null || _f === void 0 ? void 0 : _f.arrow) !== null && _g !== void 0 ? _g : DEFAULT_ARROW;
         if (this.arrow !== arrow) {
             this.arrow = arrow;
             this.arrowContainer.removeChildren();
-            (_k = this.forwardArrow) === null || _k === void 0 ? void 0 : _k.destroy();
-            (_l = this.reverseArrow) === null || _l === void 0 ? void 0 : _l.destroy();
+            (_h = this.forwardArrow) === null || _h === void 0 ? void 0 : _h.destroy();
+            (_j = this.reverseArrow) === null || _j === void 0 ? void 0 : _j.destroy();
             this.forwardArrow = undefined;
             this.reverseArrow = undefined;
             if (this.arrow === 'forward') {
@@ -190,9 +189,12 @@ var EdgeRenderer = /** @class */ (function () {
                 this.arrowContainer.addChild(this.reverseArrow);
             }
         }
+        /**
+         * Stroke
+         */
+        var stroke = ((_k = edge.style) === null || _k === void 0 ? void 0 : _k.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_l = edge.style) === null || _l === void 0 ? void 0 : _l.stroke);
         if (this.stroke !== stroke) {
             this.stroke = stroke;
-            console.log('test');
             if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
                 this.forwardArrow.tint = this.stroke;
             }
