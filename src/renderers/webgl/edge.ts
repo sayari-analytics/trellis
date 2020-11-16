@@ -82,15 +82,15 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      * Style
      */
     this.width = this.edge.style?.width ?? DEFAULT_EDGE_WIDTH
-    this.stroke = edge.style?.stroke === undefined ? DEFAULT_EDGE_COLOR : colorToNumber(edge.style?.stroke)
     this.strokeOpacity = edge.style?.strokeOpacity ?? DEFAULT_EDGE_OPACITY
 
 
     /**
      * Arrow
      */
+    const stroke = edge.style?.stroke === undefined ? DEFAULT_EDGE_COLOR : colorToNumber(edge.style?.stroke)
     const arrow = edge.style?.arrow ?? DEFAULT_ARROW
-    if (this.arrow !== arrow) {
+    if(this.arrow !== arrow) {
       this.arrow = arrow
       this.arrowContainer.removeChildren()
       this.forwardArrow?.destroy()
@@ -117,6 +117,18 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
         this.reverseArrow.alpha = this.strokeOpacity
         this.arrowContainer.addChild(this.forwardArrow)
         this.arrowContainer.addChild(this.reverseArrow)
+      }
+    }
+
+    if(this.stroke !== stroke) {
+      this.stroke = stroke
+      if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
+        this.forwardArrow.tint = this.stroke
+      } else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
+        this.reverseArrow.tint = this.stroke
+      } else if (this.arrow === 'both' && this.forwardArrow !== undefined && this.reverseArrow !== undefined) {
+        this.reverseArrow.tint = this.stroke
+        this.forwardArrow.tint = this.stroke
       }
     }
 

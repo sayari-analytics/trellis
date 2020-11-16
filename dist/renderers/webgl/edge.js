@@ -154,11 +154,11 @@ var EdgeRenderer = /** @class */ (function () {
          * Style
          */
         this.width = (_c = (_b = this.edge.style) === null || _b === void 0 ? void 0 : _b.width) !== null && _c !== void 0 ? _c : DEFAULT_EDGE_WIDTH;
-        this.stroke = ((_d = edge.style) === null || _d === void 0 ? void 0 : _d.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_e = edge.style) === null || _e === void 0 ? void 0 : _e.stroke);
-        this.strokeOpacity = (_g = (_f = edge.style) === null || _f === void 0 ? void 0 : _f.strokeOpacity) !== null && _g !== void 0 ? _g : DEFAULT_EDGE_OPACITY;
+        this.strokeOpacity = (_e = (_d = edge.style) === null || _d === void 0 ? void 0 : _d.strokeOpacity) !== null && _e !== void 0 ? _e : DEFAULT_EDGE_OPACITY;
         /**
          * Arrow
          */
+        var stroke = ((_f = edge.style) === null || _f === void 0 ? void 0 : _f.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_g = edge.style) === null || _g === void 0 ? void 0 : _g.stroke);
         var arrow = (_j = (_h = edge.style) === null || _h === void 0 ? void 0 : _h.arrow) !== null && _j !== void 0 ? _j : DEFAULT_ARROW;
         if (this.arrow !== arrow) {
             this.arrow = arrow;
@@ -188,6 +188,20 @@ var EdgeRenderer = /** @class */ (function () {
                 this.reverseArrow.alpha = this.strokeOpacity;
                 this.arrowContainer.addChild(this.forwardArrow);
                 this.arrowContainer.addChild(this.reverseArrow);
+            }
+        }
+        if (this.stroke !== stroke) {
+            this.stroke = stroke;
+            console.log('test');
+            if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
+                this.forwardArrow.tint = this.stroke;
+            }
+            else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
+                this.reverseArrow.tint = this.stroke;
+            }
+            else if (this.arrow === 'both' && this.forwardArrow !== undefined && this.reverseArrow !== undefined) {
+                this.reverseArrow.tint = this.stroke;
+                this.forwardArrow.tint = this.stroke;
             }
         }
         /**
