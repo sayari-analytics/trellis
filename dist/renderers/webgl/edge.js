@@ -154,16 +154,15 @@ var EdgeRenderer = /** @class */ (function () {
          * Style
          */
         this.width = (_c = (_b = this.edge.style) === null || _b === void 0 ? void 0 : _b.width) !== null && _c !== void 0 ? _c : DEFAULT_EDGE_WIDTH;
-        this.strokeOpacity = (_e = (_d = edge.style) === null || _d === void 0 ? void 0 : _d.strokeOpacity) !== null && _e !== void 0 ? _e : DEFAULT_EDGE_OPACITY;
         /**
          * Arrow
          */
-        var arrow = (_g = (_f = edge.style) === null || _f === void 0 ? void 0 : _f.arrow) !== null && _g !== void 0 ? _g : DEFAULT_ARROW;
+        var arrow = (_e = (_d = edge.style) === null || _d === void 0 ? void 0 : _d.arrow) !== null && _e !== void 0 ? _e : DEFAULT_ARROW;
         if (this.arrow !== arrow) {
             this.arrow = arrow;
             this.arrowContainer.removeChildren();
-            (_h = this.forwardArrow) === null || _h === void 0 ? void 0 : _h.destroy();
-            (_j = this.reverseArrow) === null || _j === void 0 ? void 0 : _j.destroy();
+            (_f = this.forwardArrow) === null || _f === void 0 ? void 0 : _f.destroy();
+            (_g = this.reverseArrow) === null || _g === void 0 ? void 0 : _g.destroy();
             this.forwardArrow = undefined;
             this.reverseArrow = undefined;
             if (this.arrow === 'forward') {
@@ -192,7 +191,7 @@ var EdgeRenderer = /** @class */ (function () {
         /**
          * Stroke
          */
-        var stroke = ((_k = edge.style) === null || _k === void 0 ? void 0 : _k.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_l = edge.style) === null || _l === void 0 ? void 0 : _l.stroke);
+        var stroke = ((_h = edge.style) === null || _h === void 0 ? void 0 : _h.stroke) === undefined ? DEFAULT_EDGE_COLOR : utils_1.colorToNumber((_j = edge.style) === null || _j === void 0 ? void 0 : _j.stroke);
         if (this.stroke !== stroke) {
             this.stroke = stroke;
             if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
@@ -204,6 +203,23 @@ var EdgeRenderer = /** @class */ (function () {
             else if (this.arrow === 'both' && this.forwardArrow !== undefined && this.reverseArrow !== undefined) {
                 this.reverseArrow.tint = this.stroke;
                 this.forwardArrow.tint = this.stroke;
+            }
+        }
+        /**
+         * Stroke Opacity
+         */
+        var strokeOpacity = (_l = (_k = edge.style) === null || _k === void 0 ? void 0 : _k.strokeOpacity) !== null && _l !== void 0 ? _l : DEFAULT_EDGE_OPACITY;
+        if (this.strokeOpacity !== strokeOpacity) {
+            this.strokeOpacity = strokeOpacity;
+            if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
+                this.forwardArrow.alpha = this.strokeOpacity;
+            }
+            else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
+                this.reverseArrow.alpha = this.strokeOpacity;
+            }
+            else if (this.arrow === 'both' && this.forwardArrow !== undefined && this.reverseArrow !== undefined) {
+                this.reverseArrow.alpha = this.strokeOpacity;
+                this.forwardArrow.alpha = this.strokeOpacity;
             }
         }
         /**

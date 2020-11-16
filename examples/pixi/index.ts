@@ -235,11 +235,11 @@ const renderOptions: WebGL.Options = {
     renderer({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {
-    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, stroke: '#00A0DF', width: 3 } } : edge))
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_, { id }) => {
-    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, stroke: '#CCC', width: 1 } } : edge))
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     renderer({ nodes, edges, options: renderOptions })
   },
   onNodeDoubleClick: (_, clickedNode) => {
