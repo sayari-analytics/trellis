@@ -132,6 +132,9 @@ exports.Layout = function () {
             edgeIndex[edge.target].push(edge.source);
             return edgeIndex;
         }, {});
+        if (edgeIndex[root] === undefined) {
+            return graph;
+        }
         var layout = ((_a = graph.options) === null || _a === void 0 ? void 0 : _a.size) !== undefined ?
             d3_hierarchy_1.tree().size(graph.options.size) :
             d3_hierarchy_1.tree().nodeSize((_c = (_b = graph.options) === null || _b === void 0 ? void 0 : _b.nodeSize) !== null && _c !== void 0 ? _c : DEFAULT_NODE_SIZE);

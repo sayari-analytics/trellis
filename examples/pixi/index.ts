@@ -201,8 +201,8 @@ const renderOptions: WebGL.Options = {
   nodesEqual: (prev, current) => prev === current,
   edgesEqual: (prev, current) => prev === current,
   onNodePointerDown: (_, { id }, x, y) => {
-    renderOptions.x = -x
-    renderOptions.y = -y
+    // renderOptions.x = -x
+    // renderOptions.y = -y
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     renderer({ nodes, edges, options: renderOptions })
   },

@@ -97,6 +97,10 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
+    if (edgeIndex[root] === undefined) {
+      return graph
+    }
+
     let layout = graph.options?.size !== undefined ?
       tree<Hierarchy>().size(graph.options.size) :
       tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
