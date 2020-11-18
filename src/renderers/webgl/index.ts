@@ -79,6 +79,8 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
+  onNodeDragEnd?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
+  onNodeDragStart?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerUp?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerLeave?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodeDoubleClick?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
@@ -172,6 +174,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
+  onNodeDragEnd?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
+  onNodeDragStart?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerUp?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerLeave?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodeDoubleClick?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
@@ -291,7 +295,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, animateGraph = RENDERER_OPTIONS.animateGraph, animateViewport = RENDERER_OPTIONS.animateViewport,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
-      onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick,
+      onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onNodeDragEnd, onNodeDragStart,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
       onContainerPointerEnter, onContainerPointerDown, onContainerDrag, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, onWheel,
     } = RENDERER_OPTIONS
@@ -305,6 +309,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onNodePointerEnter = onNodePointerEnter
     this.onNodePointerDown = onNodePointerDown
     this.onNodeDrag = onNodeDrag
+    this.onNodeDragEnd = onNodeDragEnd
+    this.onNodeDragStart = onNodeDragStart
     this.onNodePointerUp = onNodePointerUp
     this.onNodePointerLeave = onNodePointerLeave
     this.onNodeDoubleClick = onNodeDoubleClick
@@ -407,7 +413,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
 
     /**
-     * Ndge enter/update/exit
+     * Node enter/update/exit
      */
     if (!nodesAreEqual) {
       this.nodes = nodes

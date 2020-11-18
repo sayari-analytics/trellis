@@ -70,6 +70,8 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
+    onNodeDragEnd?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
+    onNodeDragStart?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerUp?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerLeave?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodeDoubleClick?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
@@ -178,6 +180,8 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
+    onNodeDragEnd?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
+    onNodeDragStart?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerUp?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerLeave?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodeDoubleClick?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;

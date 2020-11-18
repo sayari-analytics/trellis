@@ -80,6 +80,7 @@ var NodeRenderer = /** @class */ (function () {
         this.doubleClick = false;
         this.nodeMoveXOffset = 0;
         this.nodeMoveYOffset = 0;
+        this.draggingNode = false;
         this.pointerEnter = function (event) {
             var _a, _b;
             if (_this.renderer.clickedNode !== undefined)
@@ -141,7 +142,7 @@ var NodeRenderer = /** @class */ (function () {
             (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
         };
         this.pointerUp = function (event) {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f;
             if (_this.renderer.clickedNode === undefined)
                 return;
             _this.renderer.clickedNode = undefined;
@@ -151,18 +152,30 @@ var NodeRenderer = /** @class */ (function () {
             _this.renderer.decelerateInteraction.resume();
             _this.nodeMoveXOffset = 0;
             _this.nodeMoveYOffset = 0;
-            (_b = (_a = _this.renderer).onNodePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
-            if (_this.doubleClick) {
-                _this.doubleClick = false;
-                (_d = (_c = _this.renderer).onNodeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, _this.x, _this.y);
+            // decide which handler to call based on if the node was being dragged
+            if (_this.draggingNode) {
+                _this.draggingNode = false;
+                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
+            }
+            else {
+                (_d = (_c = _this.renderer).onNodePointerUp) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, _this.x, _this.y);
+                if (_this.doubleClick) {
+                    _this.doubleClick = false;
+                    (_f = (_e = _this.renderer).onNodeDoubleClick) === null || _f === void 0 ? void 0 : _f.call(_e, event, _this.node, _this.x, _this.y);
+                }
             }
         };
         this.nodeMove = function (event) {
-            var _a, _b;
+            var _a, _b, _c, _d;
             if (_this.renderer.clickedNode === undefined)
                 return;
             var position = _this.renderer.root.toLocal(event.data.global);
-            (_b = (_a = _this.renderer).onNodeDrag) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+            if (_this.draggingNode === false) {
+                _this.draggingNode = true;
+                // fire both node drag start and on node drag when first drag event occurs, may not need to pass positions in drag start though
+                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+            }
+            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;

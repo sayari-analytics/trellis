@@ -47,6 +47,7 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     private doubleClick;
     private nodeMoveXOffset;
     private nodeMoveYOffset;
+    private draggingNode;
     constructor(renderer: InternalRenderer<N, E>, node: N, x: number, y: number, radius?: number, parent?: NodeRenderer<N, E>);
     update(node: N): this;
     render(): this;
