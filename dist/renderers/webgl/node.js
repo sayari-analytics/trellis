@@ -141,7 +141,7 @@ var NodeRenderer = /** @class */ (function () {
             (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
         };
         this.pointerUp = function (event) {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f;
             if (_this.renderer.clickedNode === undefined)
                 return;
             _this.renderer.clickedNode = undefined;
@@ -151,18 +151,28 @@ var NodeRenderer = /** @class */ (function () {
             _this.renderer.decelerateInteraction.resume();
             _this.nodeMoveXOffset = 0;
             _this.nodeMoveYOffset = 0;
-            (_b = (_a = _this.renderer).onNodePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
-            if (_this.doubleClick) {
-                _this.doubleClick = false;
-                (_d = (_c = _this.renderer).onNodeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, _this.x, _this.y);
+            if (_this.renderer.dragging) {
+                _this.renderer.dragging = false;
+                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
+            }
+            else {
+                (_d = (_c = _this.renderer).onNodePointerUp) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, _this.x, _this.y);
+                if (_this.doubleClick) {
+                    _this.doubleClick = false;
+                    (_f = (_e = _this.renderer).onNodeDoubleClick) === null || _f === void 0 ? void 0 : _f.call(_e, event, _this.node, _this.x, _this.y);
+                }
             }
         };
         this.nodeMove = function (event) {
-            var _a, _b;
+            var _a, _b, _c, _d;
             if (_this.renderer.clickedNode === undefined)
                 return;
             var position = _this.renderer.root.toLocal(event.data.global);
-            (_b = (_a = _this.renderer).onNodeDrag) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+            if (!_this.renderer.dragging) {
+                _this.renderer.dragging = true;
+                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+            }
+            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
@@ -479,8 +489,12 @@ var NodeRenderer = /** @class */ (function () {
     NodeRenderer.prototype.render = function () {
         var e_5, _a, e_6, _b;
         var _this = this;
-        var _c;
-        if (this.renderer.animationPercent < 1 && ((_c = this.renderer.clickedNode) === null || _c === void 0 ? void 0 : _c.node.id) !== this.node.id) {
+        /**
+         * TODO - alternatively, if some node positions should interpolate when other nodes are dragged,
+         * use the same strategy as zoom: record expected new position, and interpolate if update doesn't match
+         * that position
+         */
+        if (this.renderer.animationPercent < 1 && !this.renderer.dragging) {
             this.x = this.interpolateX(this.renderer.animationPercent);
             this.y = this.interpolateY(this.renderer.animationPercent);
             this.radius = this.interpolateRadius(this.renderer.animationPercent);
@@ -505,8 +519,8 @@ var NodeRenderer = /** @class */ (function () {
         var strokeWidths = this.radius;
         if (this.stroke !== undefined) {
             try {
-                for (var _d = __values(this.strokeSprites), _e = _d.next(); !_e.done; _e = _d.next()) {
-                    var _f = _e.value, sprite = _f.sprite, width = _f.width;
+                for (var _c = __values(this.strokeSprites), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    var _e = _d.value, sprite = _e.sprite, width = _e.width;
                     strokeWidths += width;
                     sprite.scale.set(strokeWidths / circleSprite_1.CircleSprite.radius);
                 }
@@ -514,16 +528,16 @@ var NodeRenderer = /** @class */ (function () {
             catch (e_5_1) { e_5 = { error: e_5_1 }; }
             finally {
                 try {
-                    if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
+                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                 }
                 finally { if (e_5) throw e_5.error; }
             }
         }
         if (this.badge !== undefined) {
             try {
-                for (var _g = __values(this.badgeSprites), _h = _g.next(); !_h.done; _h = _g.next()) {
-                    var _j = _h.value, fill = _j.fill, stroke = _j.stroke, icon = _j.icon, angle = _j.angle;
-                    var _k = __read(utils_1.movePoint(0, 0, angle, this.radius + this.strokeWidth), 2), x = _k[0], y = _k[1];
+                for (var _f = __values(this.badgeSprites), _g = _f.next(); !_g.done; _g = _f.next()) {
+                    var _h = _g.value, fill = _h.fill, stroke = _h.stroke, icon = _h.icon, angle = _h.angle;
+                    var _j = __read(utils_1.movePoint(0, 0, angle, this.radius + this.strokeWidth), 2), x = _j[0], y = _j[1];
                     fill.position.set(x, y);
                     stroke.position.set(x, y);
                     icon !== undefined && icon.position.set(x, y);
@@ -532,7 +546,7 @@ var NodeRenderer = /** @class */ (function () {
             catch (e_6_1) { e_6 = { error: e_6_1 }; }
             finally {
                 try {
-                    if (_h && !_h.done && (_b = _g.return)) _b.call(_g);
+                    if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                 }
                 finally { if (e_6) throw e_6.error; }
             }

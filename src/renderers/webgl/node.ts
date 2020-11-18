@@ -370,7 +370,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
   render() {
-    if (this.renderer.animationPercent < 1 && this.renderer.clickedNode?.node.id !== this.node.id) {
+    /**
+     * TODO - alternatively, if some node positions should interpolate when other nodes are dragged,
+     * use the same strategy as zoom: record expected new position, and interpolate if update doesn't match
+     * that position
+     */
+    if (this.renderer.animationPercent < 1 && !this.renderer.dragging) {
       this.x = this.interpolateX(this.renderer.animationPercent)
       this.y = this.interpolateY(this.renderer.animationPercent)
       this.radius = this.interpolateRadius(this.renderer.animationPercent)

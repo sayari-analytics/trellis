@@ -90,7 +90,7 @@ var InternalRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animateGraph, animateGraph = _t === void 0 ? exports.RENDERER_OPTIONS.animateGraph : _t, _u = _k.animateViewport, animateViewport = _u === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _u, _v = _k.nodesEqual, nodesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _v, _w = _k.edgesEqual, edgesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _w, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animateGraph, animateGraph = _t === void 0 ? exports.RENDERER_OPTIONS.animateGraph : _t, _u = _k.animateViewport, animateViewport = _u === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _u, _v = _k.nodesEqual, nodesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _v, _w = _k.edgesEqual, edgesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _w, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onNodeDragEnd = _k.onNodeDragEnd, onNodeDragStart = _k.onNodeDragStart, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -100,6 +100,8 @@ var InternalRenderer = /** @class */ (function () {
             _this.onNodePointerEnter = onNodePointerEnter;
             _this.onNodePointerDown = onNodePointerDown;
             _this.onNodeDrag = onNodeDrag;
+            _this.onNodeDragEnd = onNodeDragEnd;
+            _this.onNodeDragStart = onNodeDragStart;
             _this.onNodePointerUp = onNodePointerUp;
             _this.onNodePointerLeave = onNodePointerLeave;
             _this.onNodeDoubleClick = onNodeDoubleClick;
@@ -191,7 +193,7 @@ var InternalRenderer = /** @class */ (function () {
                 }
             }
             /**
-             * Ndge enter/update/exit
+             * Node enter/update/exit
              */
             if (!nodesAreEqual) {
                 _this.nodes = nodes;
