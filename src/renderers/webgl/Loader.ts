@@ -62,7 +62,7 @@ export const FontLoader = (family: string) => {
 
 
 export const ImageLoader = (url: string) => {
-  if (image_cache[url] === true) {
+  if (/^data:/.test(url) || image_cache[url] === true) {
     return Async<string>((resolve) => resolve(url))
   } else if (image_cache[url] instanceof PIXI.Loader) {
     return Async<string>((resolve) => {
