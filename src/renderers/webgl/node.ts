@@ -515,11 +515,17 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.decelerateInteraction.resume()
     this.nodeMoveXOffset = 0
     this.nodeMoveYOffset = 0
-    this.renderer.onNodePointerUp?.(event, this.node, this.x, this.y)
 
-    if (this.doubleClick) {
-      this.doubleClick = false
-      this.renderer.onNodeDoubleClick?.(event, this.node, this.x, this.y)
+    if (this.renderer.dragging) {
+      this.renderer.dragging = false
+      this.renderer.onNodeDragEnd?.(event, this.node, this.x, this.y)
+    } else {
+      this.renderer.onNodePointerUp?.(event, this.node, this.x, this.y)
+
+      if (this.doubleClick) {
+        this.doubleClick = false
+        this.renderer.onNodeDoubleClick?.(event, this.node, this.x, this.y)
+      }
     }
   }
 
@@ -527,6 +533,12 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.clickedNode === undefined) return
 
     const position = this.renderer.root.toLocal(event.data.global)
+
+    if (!this.renderer.dragging) {
+      this.renderer.dragging = true
+      this.renderer.onNodeDragStart?.(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
+    }
+
     this.renderer.onNodeDrag?.(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
   }
 
