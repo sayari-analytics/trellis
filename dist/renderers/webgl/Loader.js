@@ -78,7 +78,7 @@ exports.FontLoader = function (family) {
     }
 };
 exports.ImageLoader = function (url) {
-    if (image_cache[url] === true) {
+    if (/^data:/.test(url) || image_cache[url] === true) {
         return exports.Async(function (resolve) { return resolve(url); });
     }
     else if (image_cache[url] instanceof PIXI.Loader) {

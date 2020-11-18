@@ -176,7 +176,10 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
       if (this.label) {
         this.labelLoader = FontLoader(this.labelFamily)((family) => {
-          if(this.label === undefined || this.labelFamily !== family) return
+          if (this.label === undefined || this.labelFamily !== family) return
+
+          this.renderer.dirty = true
+
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
             fontSize: (this.labelSize ?? labelSize) * 2.5, //TODO: is there a way to avoid this?

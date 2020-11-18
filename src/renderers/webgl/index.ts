@@ -131,7 +131,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   hoveredEdge?: EdgeRenderer<N, E>
   clickedEdge?: EdgeRenderer<N, E>
   dragging = false
-  scrolling = false
   dirty = false
   viewportDirty = false
   animationPercent = 0
@@ -365,16 +364,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.targetY = y
       this.viewportDirty = true
     }
-
-    // if (x !== this.x) {
-    //   this.x = x
-    //   this.viewportDirty = true
-    // }
-
-    // if (y !== this.y) {
-    //   this.y = y
-    //   this.viewportDirty = true
-    // }
 
     this.root.x = (this.x * this.zoom) + (this.width / 2)
     this.root.y = (this.y * this.zoom) + (this.height / 2)

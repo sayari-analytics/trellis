@@ -166,7 +166,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
       if (this.label) {
         this.labelLoader = FontLoader(this.labelFamily)((family) => {
-          if(this.label === undefined || this.labelFamily !== family) return
+          if (this.label === undefined || this.labelFamily !== family) return
+
+          this.renderer.dirty = true
+
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
             fontSize: (this.labelSize ?? labelSize) * 2.5, // TODO: is there a way to avoid this?
@@ -256,6 +259,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           if (badge.icon?.type === 'textIcon') {
             const badgeIconLoader = FontLoader(badge.icon.family)((family) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
+
+              this.renderer.dirty = true
+
               badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
 
               this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
@@ -268,6 +274,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           } else if (badge.icon?.type === 'imageIcon') {
             const badgeIconLoader = ImageLoader(badge.icon.url)((url) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'imageIcon' || badge.icon?.url !== url) return
+
+              this.renderer.dirty = true
+
               badgeIconSprite = this.renderer.image.create(badge.icon.url)
               this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
 
@@ -298,6 +307,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       if (this.icon?.type === 'textIcon') {
         this.iconLoader = FontLoader(this.icon.family)((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
+
+          this.renderer.dirty = true
+
           this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
 
           if (this.badgeSpriteContainer === undefined) {
@@ -311,6 +323,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       } else if (this.icon?.type === 'imageIcon') {
         this.iconLoader = ImageLoader(this.icon.url)((url) => {
           if (this.icon?.type !== 'imageIcon' || this.icon.url !== url) return
+
+          this.renderer.dirty = true
+
           this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offsetX, this.icon.offsetY)
 
           if (this.badgeSpriteContainer === undefined) {

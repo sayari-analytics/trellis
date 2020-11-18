@@ -68,7 +68,6 @@ var InternalRenderer = /** @class */ (function () {
         this.animateGraph = exports.RENDERER_OPTIONS.animateGraph;
         this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
         this.dragging = false;
-        this.scrolling = false;
         this.dirty = false;
         this.viewportDirty = false;
         this.animationPercent = 0;
@@ -156,14 +155,6 @@ var InternalRenderer = /** @class */ (function () {
                 _this.targetY = y;
                 _this.viewportDirty = true;
             }
-            // if (x !== this.x) {
-            //   this.x = x
-            //   this.viewportDirty = true
-            // }
-            // if (y !== this.y) {
-            //   this.y = y
-            //   this.viewportDirty = true
-            // }
             _this.root.x = (_this.x * _this.zoom) + (_this.width / 2);
             _this.root.y = (_this.y * _this.zoom) + (_this.height / 2);
             var edgesAreEqual = edgesEqual(_this.edges, edges);

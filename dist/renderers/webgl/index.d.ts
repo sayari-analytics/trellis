@@ -131,7 +131,6 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     hoveredEdge?: EdgeRenderer<N, E>;
     clickedEdge?: EdgeRenderer<N, E>;
     dragging: boolean;
-    scrolling: boolean;
     dirty: boolean;
     viewportDirty: boolean;
     animationPercent: number;
