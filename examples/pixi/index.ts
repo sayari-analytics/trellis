@@ -8,8 +8,6 @@ import * as Cluster from '../../src/layout/cluster'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
 import * as Graph from '../../src/'
-import data from '../../tmp-data-3'
-import person from '../assets/person.png'
 
 
 export const stats = new Stats()
@@ -97,10 +95,6 @@ let edges: Graph.Edge[] = [
   { id: 'oa', source: 'c', target: 'o', label: 'Both', style: { arrow: 'both' } }, { id: 'pa', source: 'c', target: 'p', label: 'Both', style: { arrow: 'both' } },
   { id: 'qa', source: 'c', target: 'q', label: 'Both', style: { arrow: 'both' } },
 ]
-
-nodes = data.nodes.map((node) => ({ ...node, style: { ...node.style, icon: { type: 'imageIcon' as const, url: person, scale: 0.03 } } })) as Graph.Node[]
-edges = data.edges as Graph.Edge[]
-
 
 
 /**

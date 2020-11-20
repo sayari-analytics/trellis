@@ -34,38 +34,15 @@ export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (o
 }
 
 
-// export const FontLoader = () => {
-//   const cache: { [family: string]: boolean } = {}
-
-//   return (family: string) => {
-//     if (cache[family]) {
-//       return Async<string>((resolve) => resolve(family))
-//     } else if ((document as any)?.fonts?.load) {
-//       return Async<string>((resolve) => {
-//         (document as any).fonts.load(`1em ${family}`).then(() => {
-//           cache[family] = true
-//           resolve(family)
-//         })
-//       })
-//     } else {
-//       return Async<string>((resolve) => {
-//         new FontFaceObserver(family).load().then(() => {
-//           cache[family] = true
-//           resolve(family)
-//         })
-//       })
-//     }
-//   }
-// }
+const fontCache: { [family: string]: boolean } = {}
 
 export const FontLoader = () => {
-  const cache: { [family: string]: boolean } = {}
   let loadId = 0
   const loading = new Set<number>()
 
   return {
     load: (family: string) => {
-      if (cache[family]) {
+      if (fontCache[family]) {
         return Async<string>((resolve) => resolve(family))
       } else if ((document as any)?.fonts?.load) {
         const _loadId = loadId++
@@ -73,7 +50,7 @@ export const FontLoader = () => {
 
         return Async<string>((resolve) => {
           (document as any).fonts.load(`1em ${family}`).then(() => {
-            cache[family] = true
+            fontCache[family] = true
             loading.delete(_loadId)
             resolve(family)
           })
@@ -84,7 +61,7 @@ export const FontLoader = () => {
           loading.add(_loadId)
 
           new FontFaceObserver(family).load().then(() => {
-            cache[family] = true
+            fontCache[family] = true
             loading.delete(_loadId)
             resolve(family)
           })
@@ -96,48 +73,23 @@ export const FontLoader = () => {
 }
 
 
-// export const ImageLoader = () => {
-//   const cache: { [url: string]: PIXI.Loader | true } = {}
-
-//   return (url: string) => {
-//     if (/^data:/.test(url) || cache[url] === true) {
-//       return Async<string>((resolve) => resolve(url))
-//     } else if (cache[url] instanceof PIXI.Loader) {
-//       return Async<string>((resolve) => {
-//         (cache[url] as PIXI.Loader).load(() => {
-//           cache[url] = true
-//           resolve(url)
-//         })
-//       })
-//     }
-
-//     return Async<string>((resolve) => {
-//       cache[url] = new PIXI.Loader().add(url)
-//       ;(cache[url] as PIXI.Loader).load(() => {
-//         cache[url] = true
-//         resolve(url)
-//       })
-//     })
-//   }
-// }
-
+const image_cache: { [url: string]: PIXI.Loader | true } = {}
 
 export const ImageLoader = () => {
-  const cache: { [url: string]: PIXI.Loader | true } = {}
   let loadId = 0
   const loading = new Set<number>()
 
   return {
     load: (url: string) => {
-      if (/^data:/.test(url) || cache[url] === true) {
+      if (/^data:/.test(url) || image_cache[url] === true) {
         return Async<string>((resolve) => resolve(url))
-      } else if (cache[url] instanceof PIXI.Loader) {
+      } else if (image_cache[url] instanceof PIXI.Loader) {
         const _loadId = loadId++
         loading.add(_loadId)
 
         return Async<string>((resolve) => {
-          (cache[url] as PIXI.Loader).load(() => {
-            cache[url] = true
+          (image_cache[url] as PIXI.Loader).load(() => {
+            image_cache[url] = true
             loading.delete(_loadId)
             resolve(url)
           })
@@ -145,12 +97,12 @@ export const ImageLoader = () => {
       }
 
       return Async<string>((resolve) => {
-        cache[url] = new PIXI.Loader().add(url)
+        image_cache[url] = new PIXI.Loader().add(url)
         const _loadId = loadId++
         loading.add(_loadId)
 
-        ;(cache[url] as PIXI.Loader).load(() => {
-          cache[url] = true
+        ;(image_cache[url] as PIXI.Loader).load(() => {
+          image_cache[url] = true
           loading.delete(_loadId)
           resolve(url)
         })
