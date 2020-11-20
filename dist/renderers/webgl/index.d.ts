@@ -164,8 +164,14 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;
-    fontLoader: (family: string) => (onfulfilled: (result: string) => void) => () => void;
-    imageLoader: (url: string) => (onfulfilled: (result: string) => void) => () => void;
+    fontLoader: {
+        load: (family: string) => (onfulfilled: (result: string) => void) => () => void;
+        loading: () => boolean;
+    };
+    imageLoader: {
+        load: (url: string) => (onfulfilled: (result: string) => void) => () => void;
+        loading: () => boolean;
+    };
     private clickedContainer;
     private previousTime;
     private animationDuration;
@@ -191,8 +197,6 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void;
     onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void;
     onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void;
-    dataUrl?: (dataUrl: string) => void;
-    dataUrlScale: number;
     update: (graph: {
         nodes: N[];
         edges: E[];
@@ -211,7 +215,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     private _debugFirstRender;
     private debugRender;
     delete: () => void;
-    base64: (dataUrlScale?: number | undefined) => Promise<string>;
+    base64: (scale?: number | undefined) => Promise<string>;
 }
 export declare const Renderer: (options: {
     container: HTMLDivElement;

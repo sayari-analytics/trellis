@@ -186,8 +186,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  dataUrl?: (dataUrl: string) => void
-  dataUrlScale = 2
   update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
 
   constructor(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
@@ -583,24 +581,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
     this.viewportDirty = false
     this.dirty = this.animationPercent < 1
-
-    if (this.dataUrl) {
-      const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
-      const background = new PIXI.Graphics()
-        .beginFill(0xffffff)
-        .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
-        .endFill()
-
-      this.root.addChildAt(background, 0)
-      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, this.dataUrlScale)
-      const url = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture)
-      imageTexture.destroy()
-      this.root.removeChild(background)
-      background.destroy()
-
-      this.dataUrl(url)
-      this.dataUrl = undefined
-    }
   }
 
   private _debugFirstRender = true
@@ -718,24 +698,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.dirty = this.animationPercent < 1
     this.viewportDirty = false
 
-    if (this.dataUrl) {
-      const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
-      const background = new PIXI.Graphics()
-        .beginFill(0xffffff)
-        .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
-        .endFill()
-
-      this.root.addChildAt(background, 0)
-      const imageTexture = this.app.renderer.generateTexture(this.root, PIXI.SCALE_MODES.LINEAR, this.dataUrlScale)
-      const url = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture)
-      imageTexture.destroy()
-      this.root.removeChild(background)
-      background.destroy()
-
-      this.dataUrl(url)
-      this.dataUrl = undefined
-    }
-
     performance.clearMarks()
     performance.clearMeasures()
     performance.mark('external')
@@ -750,9 +712,28 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.fontIcon.delete()
   }
 
-  base64 = (dataUrlScale?: number) => {
-    this.dataUrlScale = dataUrlScale ?? 2
-    return new Promise<string>((resolve) => this.dataUrl = resolve)
+  base64 = (scale?: number) => {
+    return new Promise<string>((resolve) => {
+      requestAnimationFrame(() => {
+        this.render(performance.now())
+        const background = new PIXI.Graphics()
+          .beginFill(0xffffff)
+          .drawRect(this.x, this.y, this.width, this.height)
+          .endFill()
+
+        this.root.addChildAt(background, 0)
+        const imageTexture = this.app.renderer.generateTexture(
+          this.root,
+          PIXI.SCALE_MODES.LINEAR,
+          scale ?? 2,
+          new PIXI.Rectangle(this.x, this.y, this.width, this.height)
+        )
+        resolve((this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, 'image/png'))
+        imageTexture.destroy()
+        this.root.removeChild(background)
+        background.destroy()
+      })
+    })
   }
 }
 

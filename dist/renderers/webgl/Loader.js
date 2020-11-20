@@ -53,52 +53,118 @@ exports.Async = function (executor) { return function (onfulfilled) {
         cancelled = true;
     };
 }; };
+// export const FontLoader = () => {
+//   const cache: { [family: string]: boolean } = {}
+//   return (family: string) => {
+//     if (cache[family]) {
+//       return Async<string>((resolve) => resolve(family))
+//     } else if ((document as any)?.fonts?.load) {
+//       return Async<string>((resolve) => {
+//         (document as any).fonts.load(`1em ${family}`).then(() => {
+//           cache[family] = true
+//           resolve(family)
+//         })
+//       })
+//     } else {
+//       return Async<string>((resolve) => {
+//         new FontFaceObserver(family).load().then(() => {
+//           cache[family] = true
+//           resolve(family)
+//         })
+//       })
+//     }
+//   }
+// }
 exports.FontLoader = function () {
     var cache = {};
-    return function (family) {
-        var _a, _b;
-        if (cache[family]) {
-            return exports.Async(function (resolve) { return resolve(family); });
-        }
-        else if ((_b = (_a = document) === null || _a === void 0 ? void 0 : _a.fonts) === null || _b === void 0 ? void 0 : _b.load) {
-            return exports.Async(function (resolve) {
-                document.fonts.load("1em " + family).then(function () {
-                    cache[family] = true;
-                    resolve(family);
+    var loadId = 0;
+    var loading = new Set();
+    return {
+        load: function (family) {
+            var _a, _b;
+            if (cache[family]) {
+                return exports.Async(function (resolve) { return resolve(family); });
+            }
+            else if ((_b = (_a = document) === null || _a === void 0 ? void 0 : _a.fonts) === null || _b === void 0 ? void 0 : _b.load) {
+                var _loadId_1 = loadId++;
+                loading.add(_loadId_1);
+                return exports.Async(function (resolve) {
+                    document.fonts.load("1em " + family).then(function () {
+                        cache[family] = true;
+                        loading.delete(_loadId_1);
+                        resolve(family);
+                    });
                 });
-            });
-        }
-        else {
-            return exports.Async(function (resolve) {
-                new fontfaceobserver_1.default(family).load().then(function () {
-                    cache[family] = true;
-                    resolve(family);
+            }
+            else {
+                return exports.Async(function (resolve) {
+                    var _loadId = loadId++;
+                    loading.add(_loadId);
+                    new fontfaceobserver_1.default(family).load().then(function () {
+                        cache[family] = true;
+                        loading.delete(_loadId);
+                        resolve(family);
+                    });
                 });
-            });
-        }
+            }
+        },
+        loading: function () { return loading.size > 0; }
     };
 };
+// export const ImageLoader = () => {
+//   const cache: { [url: string]: PIXI.Loader | true } = {}
+//   return (url: string) => {
+//     if (/^data:/.test(url) || cache[url] === true) {
+//       return Async<string>((resolve) => resolve(url))
+//     } else if (cache[url] instanceof PIXI.Loader) {
+//       return Async<string>((resolve) => {
+//         (cache[url] as PIXI.Loader).load(() => {
+//           cache[url] = true
+//           resolve(url)
+//         })
+//       })
+//     }
+//     return Async<string>((resolve) => {
+//       cache[url] = new PIXI.Loader().add(url)
+//       ;(cache[url] as PIXI.Loader).load(() => {
+//         cache[url] = true
+//         resolve(url)
+//       })
+//     })
+//   }
+// }
 exports.ImageLoader = function () {
     var cache = {};
-    return function (url) {
-        if (/^data:/.test(url) || cache[url] === true) {
-            return exports.Async(function (resolve) { return resolve(url); });
-        }
-        else if (cache[url] instanceof PIXI.Loader) {
+    var loadId = 0;
+    var loading = new Set();
+    return {
+        load: function (url) {
+            if (/^data:/.test(url) || cache[url] === true) {
+                return exports.Async(function (resolve) { return resolve(url); });
+            }
+            else if (cache[url] instanceof PIXI.Loader) {
+                var _loadId_2 = loadId++;
+                loading.add(_loadId_2);
+                return exports.Async(function (resolve) {
+                    cache[url].load(function () {
+                        cache[url] = true;
+                        loading.delete(_loadId_2);
+                        resolve(url);
+                    });
+                });
+            }
             return exports.Async(function (resolve) {
+                cache[url] = new PIXI.Loader().add(url);
+                var _loadId = loadId++;
+                loading.add(_loadId);
                 cache[url].load(function () {
                     cache[url] = true;
+                    loading.delete(_loadId);
                     resolve(url);
                 });
             });
-        }
-        return exports.Async(function (resolve) {
-            cache[url] = new PIXI.Loader().add(url);
-            cache[url].load(function () {
-                cache[url] = true;
-                resolve(url);
-            });
-        });
+        },
+        loading: function () { return loading.size > 0; }
     };
 };
 //# sourceMappingURL=Loader.js.map

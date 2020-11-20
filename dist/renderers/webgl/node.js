@@ -257,7 +257,7 @@ var NodeRenderer = /** @class */ (function () {
             this.labelSprite = undefined;
             (_u = this.labelLoader) === null || _u === void 0 ? void 0 : _u.call(this);
             if (this.label) {
-                this.labelLoader = this.renderer.fontLoader(this.labelFamily)(function (family) {
+                this.labelLoader = this.renderer.fontLoader.load(this.labelFamily)(function (family) {
                     var _a;
                     if (_this.label === undefined || _this.labelFamily !== family)
                         return;
@@ -358,7 +358,7 @@ var NodeRenderer = /** @class */ (function () {
                     badgeStrokeSprite.scale.set(badgeStrokeRadius / circleSprite_1.CircleSprite.radius);
                     var badgeIconSprite;
                     if (((_3 = badge.icon) === null || _3 === void 0 ? void 0 : _3.type) === 'textIcon') {
-                        var badgeIconLoader = this_1.renderer.fontLoader(badge.icon.family)(function (family) {
+                        var badgeIconLoader = this_1.renderer.fontLoader.load(badge.icon.family)(function (family) {
                             var _a, _b;
                             if (_this.badgeSpriteContainer === undefined || ((_a = badge.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || ((_b = badge.icon) === null || _b === void 0 ? void 0 : _b.family) !== family)
                                 return;
@@ -373,7 +373,7 @@ var NodeRenderer = /** @class */ (function () {
                         this_1.badgeIconLoader.push(badgeIconLoader);
                     }
                     else if (((_4 = badge.icon) === null || _4 === void 0 ? void 0 : _4.type) === 'imageIcon') {
-                        var badgeIconLoader = this_1.renderer.imageLoader(badge.icon.url)(function (url) {
+                        var badgeIconLoader = this_1.renderer.imageLoader.load(badge.icon.url)(function (url) {
                             var _a, _b;
                             if (_this.badgeSpriteContainer === undefined || ((_a = badge.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'imageIcon' || ((_b = badge.icon) === null || _b === void 0 ? void 0 : _b.url) !== url)
                                 return;
@@ -416,7 +416,7 @@ var NodeRenderer = /** @class */ (function () {
                 (_7 = this.iconLoader) === null || _7 === void 0 ? void 0 : _7.call(this);
             }
             if (((_8 = this.icon) === null || _8 === void 0 ? void 0 : _8.type) === 'textIcon') {
-                this.iconLoader = this.renderer.fontLoader(this.icon.family)(function (family) {
+                this.iconLoader = this.renderer.fontLoader.load(this.icon.family)(function (family) {
                     var _a;
                     if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || _this.icon.family !== family)
                         return;
@@ -433,7 +433,7 @@ var NodeRenderer = /** @class */ (function () {
                 });
             }
             else if (((_9 = this.icon) === null || _9 === void 0 ? void 0 : _9.type) === 'imageIcon') {
-                this.iconLoader = this.renderer.imageLoader(this.icon.url)(function (url) {
+                this.iconLoader = this.renderer.imageLoader.load(this.icon.url)(function (url) {
                     var _a;
                     if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'imageIcon' || _this.icon.url !== url)
                         return;

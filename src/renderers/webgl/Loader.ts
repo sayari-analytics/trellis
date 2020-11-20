@@ -34,52 +34,128 @@ export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (o
 }
 
 
+// export const FontLoader = () => {
+//   const cache: { [family: string]: boolean } = {}
+
+//   return (family: string) => {
+//     if (cache[family]) {
+//       return Async<string>((resolve) => resolve(family))
+//     } else if ((document as any)?.fonts?.load) {
+//       return Async<string>((resolve) => {
+//         (document as any).fonts.load(`1em ${family}`).then(() => {
+//           cache[family] = true
+//           resolve(family)
+//         })
+//       })
+//     } else {
+//       return Async<string>((resolve) => {
+//         new FontFaceObserver(family).load().then(() => {
+//           cache[family] = true
+//           resolve(family)
+//         })
+//       })
+//     }
+//   }
+// }
+
 export const FontLoader = () => {
   const cache: { [family: string]: boolean } = {}
+  let loadId = 0
+  const loading = new Set<number>()
 
-  return (family: string) => {
-    if (cache[family]) {
-      return Async<string>((resolve) => resolve(family))
-    } else if ((document as any)?.fonts?.load) {
-      return Async<string>((resolve) => {
-        (document as any).fonts.load(`1em ${family}`).then(() => {
-          cache[family] = true
-          resolve(family)
+  return {
+    load: (family: string) => {
+      if (cache[family]) {
+        return Async<string>((resolve) => resolve(family))
+      } else if ((document as any)?.fonts?.load) {
+        const _loadId = loadId++
+        loading.add(_loadId)
+
+        return Async<string>((resolve) => {
+          (document as any).fonts.load(`1em ${family}`).then(() => {
+            cache[family] = true
+            loading.delete(_loadId)
+            resolve(family)
+          })
         })
-      })
-    } else {
-      return Async<string>((resolve) => {
-        new FontFaceObserver(family).load().then(() => {
-          cache[family] = true
-          resolve(family)
+      } else {
+        return Async<string>((resolve) => {
+          const _loadId = loadId++
+          loading.add(_loadId)
+
+          new FontFaceObserver(family).load().then(() => {
+            cache[family] = true
+            loading.delete(_loadId)
+            resolve(family)
+          })
         })
-      })
-    }
+      }
+    },
+    loading: () => loading.size > 0
   }
 }
 
 
+// export const ImageLoader = () => {
+//   const cache: { [url: string]: PIXI.Loader | true } = {}
+
+//   return (url: string) => {
+//     if (/^data:/.test(url) || cache[url] === true) {
+//       return Async<string>((resolve) => resolve(url))
+//     } else if (cache[url] instanceof PIXI.Loader) {
+//       return Async<string>((resolve) => {
+//         (cache[url] as PIXI.Loader).load(() => {
+//           cache[url] = true
+//           resolve(url)
+//         })
+//       })
+//     }
+
+//     return Async<string>((resolve) => {
+//       cache[url] = new PIXI.Loader().add(url)
+//       ;(cache[url] as PIXI.Loader).load(() => {
+//         cache[url] = true
+//         resolve(url)
+//       })
+//     })
+//   }
+// }
+
+
 export const ImageLoader = () => {
   const cache: { [url: string]: PIXI.Loader | true } = {}
+  let loadId = 0
+  const loading = new Set<number>()
 
-  return (url: string) => {
-    if (/^data:/.test(url) || cache[url] === true) {
-      return Async<string>((resolve) => resolve(url))
-    } else if (cache[url] instanceof PIXI.Loader) {
+  return {
+    load: (url: string) => {
+      if (/^data:/.test(url) || cache[url] === true) {
+        return Async<string>((resolve) => resolve(url))
+      } else if (cache[url] instanceof PIXI.Loader) {
+        const _loadId = loadId++
+        loading.add(_loadId)
+
+        return Async<string>((resolve) => {
+          (cache[url] as PIXI.Loader).load(() => {
+            cache[url] = true
+            loading.delete(_loadId)
+            resolve(url)
+          })
+        })
+      }
+
       return Async<string>((resolve) => {
-        (cache[url] as PIXI.Loader).load(() => {
+        cache[url] = new PIXI.Loader().add(url)
+        const _loadId = loadId++
+        loading.add(_loadId)
+
+        ;(cache[url] as PIXI.Loader).load(() => {
           cache[url] = true
+          loading.delete(_loadId)
           resolve(url)
         })
       })
-    }
-
-    return Async<string>((resolve) => {
-      cache[url] = new PIXI.Loader().add(url)
-      ;(cache[url] as PIXI.Loader).load(() => {
-        cache[url] = true
-        resolve(url)
-      })
-    })
+    },
+    loading: () => loading.size > 0
   }
 }

@@ -33,7 +33,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = exports.InternalRenderer = exports.RENDERER_OPTIONS = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var unsafe_eval_1 = require("@pixi/unsafe-eval");
-var Graph = __importStar(require("../.."));
 var utils_1 = require("../../utils");
 var node_1 = require("./node");
 var edge_1 = require("./edge");
@@ -89,7 +88,6 @@ var InternalRenderer = /** @class */ (function () {
         this.clickedContainer = false;
         this.previousTime = performance.now();
         this.animationDuration = 0;
-        this.dataUrlScale = 2;
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
@@ -362,21 +360,6 @@ var InternalRenderer = /** @class */ (function () {
             }
             _this.viewportDirty = false;
             _this.dirty = _this.animationPercent < 1;
-            if (_this.dataUrl) {
-                var bounds = Graph.viewportToBounds({ x: _this.x, y: _this.y, zoom: _this.zoom }, { width: _this.width, height: _this.height });
-                var background = new PIXI.Graphics()
-                    .beginFill(0xffffff)
-                    .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
-                    .endFill();
-                _this.root.addChildAt(background, 0);
-                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, _this.dataUrlScale);
-                var url = _this.app.renderer.plugins.extract.base64(imageTexture);
-                imageTexture.destroy();
-                _this.root.removeChild(background);
-                background.destroy();
-                _this.dataUrl(url);
-                _this.dataUrl = undefined;
-            }
         };
         this._debugFirstRender = true;
         this.debugRender = function (time) {
@@ -479,21 +462,6 @@ var InternalRenderer = /** @class */ (function () {
             }
             _this.dirty = _this.animationPercent < 1;
             _this.viewportDirty = false;
-            if (_this.dataUrl) {
-                var bounds = Graph.viewportToBounds({ x: _this.x, y: _this.y, zoom: _this.zoom }, { width: _this.width, height: _this.height });
-                var background = new PIXI.Graphics()
-                    .beginFill(0xffffff)
-                    .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
-                    .endFill();
-                _this.root.addChildAt(background, 0);
-                var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, _this.dataUrlScale);
-                var url = _this.app.renderer.plugins.extract.base64(imageTexture);
-                imageTexture.destroy();
-                _this.root.removeChild(background);
-                background.destroy();
-                _this.dataUrl(url);
-                _this.dataUrl = undefined;
-            }
             performance.clearMarks();
             performance.clearMeasures();
             performance.mark('external');
@@ -506,9 +474,22 @@ var InternalRenderer = /** @class */ (function () {
             _this.image.delete();
             _this.fontIcon.delete();
         };
-        this.base64 = function (dataUrlScale) {
-            _this.dataUrlScale = dataUrlScale !== null && dataUrlScale !== void 0 ? dataUrlScale : 2;
-            return new Promise(function (resolve) { return _this.dataUrl = resolve; });
+        this.base64 = function (scale) {
+            return new Promise(function (resolve) {
+                requestAnimationFrame(function () {
+                    _this.render(performance.now());
+                    var background = new PIXI.Graphics()
+                        .beginFill(0xffffff)
+                        .drawRect(_this.x, _this.y, _this.width, _this.height)
+                        .endFill();
+                    _this.root.addChildAt(background, 0);
+                    var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, scale !== null && scale !== void 0 ? scale : 2, new PIXI.Rectangle(_this.x, _this.y, _this.width, _this.height));
+                    resolve(_this.app.renderer.plugins.extract.base64(imageTexture, 'image/png'));
+                    imageTexture.destroy();
+                    _this.root.removeChild(background);
+                    background.destroy();
+                });
+            });
         };
         if (!(options.container instanceof HTMLDivElement)) {
             throw new Error('container must be an instance of HTMLDivElement');

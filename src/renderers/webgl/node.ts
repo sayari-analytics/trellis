@@ -164,7 +164,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelLoader?.()
 
       if (this.label) {
-        this.labelLoader = this.renderer.fontLoader(this.labelFamily)((family) => {
+        this.labelLoader = this.renderer.fontLoader.load(this.labelFamily)((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
           this.renderer.dirty = true
@@ -256,7 +256,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           let badgeIconSprite: PIXI.Sprite | undefined
 
           if (badge.icon?.type === 'textIcon') {
-            const badgeIconLoader = this.renderer.fontLoader(badge.icon.family)((family) => {
+            const badgeIconLoader = this.renderer.fontLoader.load(badge.icon.family)((family) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
 
               this.renderer.dirty = true
@@ -271,7 +271,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
             })
             this.badgeIconLoader.push(badgeIconLoader)
           } else if (badge.icon?.type === 'imageIcon') {
-            const badgeIconLoader = this.renderer.imageLoader(badge.icon.url)((url) => {
+            const badgeIconLoader = this.renderer.imageLoader.load(badge.icon.url)((url) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'imageIcon' || badge.icon?.url !== url) return
 
               this.renderer.dirty = true
@@ -304,7 +304,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
 
       if (this.icon?.type === 'textIcon') {
-        this.iconLoader = this.renderer.fontLoader(this.icon.family)((family) => {
+        this.iconLoader = this.renderer.fontLoader.load(this.icon.family)((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
 
           this.renderer.dirty = true
@@ -320,7 +320,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
           }
         })
       } else if (this.icon?.type === 'imageIcon') {
-        this.iconLoader = this.renderer.imageLoader(this.icon.url)((url) => {
+        this.iconLoader = this.renderer.imageLoader.load(this.icon.url)((url) => {
           if (this.icon?.type !== 'imageIcon' || this.icon.url !== url) return
 
           this.renderer.dirty = true
