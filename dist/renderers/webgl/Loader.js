@@ -25,11 +25,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageLoader = exports.FontLoader = exports.Async = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var fontfaceobserver_1 = __importDefault(require("fontfaceobserver"));
-var font_cache = {};
-var image_cache = {};
 /**
  * generic function for representing a value that is possibly asynchronous
- * this of this as a promise, except that
+ * think of this as a promise, except that
  * - it can resolve synchronously
  * - it can be cancelled
  * - it is lazy
@@ -55,46 +53,52 @@ exports.Async = function (executor) { return function (onfulfilled) {
         cancelled = true;
     };
 }; };
-exports.FontLoader = function (family) {
-    var _a, _b;
-    if (font_cache[family]) {
-        return exports.Async(function (resolve) { return resolve(family); });
-    }
-    else if ((_b = (_a = document) === null || _a === void 0 ? void 0 : _a.fonts) === null || _b === void 0 ? void 0 : _b.load) {
-        return exports.Async(function (resolve) {
-            document.fonts.load("1em " + family).then(function () {
-                font_cache[family] = true;
-                resolve(family);
+exports.FontLoader = function () {
+    var cache = {};
+    return function (family) {
+        var _a, _b;
+        if (cache[family]) {
+            return exports.Async(function (resolve) { return resolve(family); });
+        }
+        else if ((_b = (_a = document) === null || _a === void 0 ? void 0 : _a.fonts) === null || _b === void 0 ? void 0 : _b.load) {
+            return exports.Async(function (resolve) {
+                document.fonts.load("1em " + family).then(function () {
+                    cache[family] = true;
+                    resolve(family);
+                });
             });
-        });
-    }
-    else {
-        return exports.Async(function (resolve) {
-            new fontfaceobserver_1.default(family).load().then(function () {
-                font_cache[family] = true;
-                resolve(family);
+        }
+        else {
+            return exports.Async(function (resolve) {
+                new fontfaceobserver_1.default(family).load().then(function () {
+                    cache[family] = true;
+                    resolve(family);
+                });
             });
-        });
-    }
+        }
+    };
 };
-exports.ImageLoader = function (url) {
-    if (/^data:/.test(url) || image_cache[url] === true) {
-        return exports.Async(function (resolve) { return resolve(url); });
-    }
-    else if (image_cache[url] instanceof PIXI.Loader) {
+exports.ImageLoader = function () {
+    var cache = {};
+    return function (url) {
+        if (/^data:/.test(url) || cache[url] === true) {
+            return exports.Async(function (resolve) { return resolve(url); });
+        }
+        else if (cache[url] instanceof PIXI.Loader) {
+            return exports.Async(function (resolve) {
+                cache[url].load(function () {
+                    cache[url] = true;
+                    resolve(url);
+                });
+            });
+        }
         return exports.Async(function (resolve) {
-            image_cache[url].load(function () {
-                image_cache[url] = true;
+            cache[url] = new PIXI.Loader().add(url);
+            cache[url].load(function () {
+                cache[url] = true;
                 resolve(url);
             });
         });
-    }
-    return exports.Async(function (resolve) {
-        image_cache[url] = new PIXI.Loader().add(url);
-        image_cache[url].load(function () {
-            image_cache[url] = true;
-            resolve(url);
-        });
-    });
+    };
 };
 //# sourceMappingURL=Loader.js.map

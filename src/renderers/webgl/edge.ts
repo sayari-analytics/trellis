@@ -3,12 +3,9 @@ import { EdgeStyle, InternalRenderer } from '.'
 import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI } from './utils'
 import { Node, Edge } from '../..'
 import { ArrowSprite } from './sprites/arrowSprite'
-import { FontLoader } from './Loader'
-
 
 
 const LINE_HOVER_RADIUS = 4
-
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = colorToNumber('#ccc')
 const DEFAULT_EDGE_OPACITY = 1
@@ -175,7 +172,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelLoader?.()
 
       if (this.label) {
-        this.labelLoader = FontLoader(this.labelFamily)((family) => {
+        this.labelLoader = this.renderer.fontLoader(this.labelFamily)((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
           this.renderer.dirty = true

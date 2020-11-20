@@ -176,11 +176,26 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
       layout = 'force'
       nodes = forceNodes
       edges = forceEdges
+      // const { x, y, zoom } = Graph.boundsToViewport(
+      //   Graph.getSelectionBounds(nodes, 80),
+      //   { width: renderOptions.width!, height: renderOptions.height! }
+      // )
+      // renderOptions.x = x
+      // renderOptions.y = y
+      // renderOptions.zoom = zoom
+
       renderer({ nodes, edges, options: renderOptions })
     } else {
       layout = 'hierarchy'
       nodes = hierarchyNodes
       edges = hierarchyEdges
+      // const { x, y, zoom } = Graph.boundsToViewport(
+      //   Graph.getSelectionBounds(nodes, 80),
+      //   { width: renderOptions.width!, height: renderOptions.height! }
+      // )
+      // renderOptions.x = x
+      // renderOptions.y = y
+      // renderOptions.zoom = zoom
 
       renderer({ nodes, edges, options: renderOptions })
     }
@@ -221,6 +236,14 @@ edges = hierarchyEdges = hierarchyData.edges
 force({ nodes, edges }).then((forceData) => {
   forceNodes = forceData.nodes
   forceEdges = forceData.edges
+
+  const { x, y, zoom } = Graph.boundsToViewport(
+    Graph.getSelectionBounds(nodes, 80),
+    { width: renderOptions.width!, height: renderOptions.height! }
+  )
+  renderOptions.x = x
+  renderOptions.y = y
+  renderOptions.zoom = zoom
 
   renderer({ nodes, edges, options: renderOptions })
 })

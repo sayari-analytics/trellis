@@ -11,6 +11,7 @@ import { ArrowSprite } from './sprites/arrowSprite'
 import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
 import { FontIconSprite } from './sprites/FontIconSprite'
+import { FontLoader, ImageLoader } from './Loader'
 
 
 install(PIXI)
@@ -156,6 +157,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   zoomInteraction: Zoom<N, E>
   dragInteraction: Drag<N, E>
   decelerateInteraction: Decelerate<N, E>
+  fontLoader = FontLoader()
+  imageLoader = ImageLoader()
 
   private clickedContainer = false
   private previousTime = performance.now()

@@ -1,6 +1,6 @@
 /**
  * generic function for representing a value that is possibly asynchronous
- * this of this as a promise, except that
+ * think of this as a promise, except that
  * - it can resolve synchronously
  * - it can be cancelled
  * - it is lazy
@@ -16,5 +16,5 @@
  * delay.then((message) => console.log(message))
  */
 export declare const Async: <T>(executor: (resolve: (result: T) => void) => void) => (onfulfilled: (result: T) => void) => () => void;
-export declare const FontLoader: (family: string) => (onfulfilled: (result: string) => void) => () => void;
-export declare const ImageLoader: (url: string) => (onfulfilled: (result: string) => void) => () => void;
+export declare const FontLoader: () => (family: string) => (onfulfilled: (result: string) => void) => () => void;
+export declare const ImageLoader: () => (url: string) => (onfulfilled: (result: string) => void) => () => void;

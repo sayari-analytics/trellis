@@ -44,6 +44,7 @@ var arrowSprite_1 = require("./sprites/arrowSprite");
 var circleSprite_1 = require("./sprites/circleSprite");
 var ImageSprite_1 = require("./sprites/ImageSprite");
 var FontIconSprite_1 = require("./sprites/FontIconSprite");
+var Loader_1 = require("./Loader");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
@@ -83,6 +84,8 @@ var InternalRenderer = /** @class */ (function () {
         this.edgesById = {};
         this.edgeIndex = {};
         this.root = new PIXI.Container();
+        this.fontLoader = Loader_1.FontLoader();
+        this.imageLoader = Loader_1.ImageLoader();
         this.clickedContainer = false;
         this.previousTime = performance.now();
         this.animationDuration = 0;

@@ -2,15 +2,9 @@ import * as PIXI from 'pixi.js'
 import FontFaceObserver from 'fontfaceobserver'
 
 
-const font_cache: { [family: string]: boolean } = {}
-
-
-const image_cache: { [url: string]: PIXI.Loader | true } = {}
-
-
 /**
  * generic function for representing a value that is possibly asynchronous
- * this of this as a promise, except that
+ * think of this as a promise, except that
  * - it can resolve synchronously
  * - it can be cancelled
  * - it is lazy
@@ -40,44 +34,52 @@ export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (o
 }
 
 
-export const FontLoader = (family: string) => {
-  if (font_cache[family]) {
-    return Async<string>((resolve) => resolve(family))
-  } else if ((document as any)?.fonts?.load) {
-    return Async<string>((resolve) => {
-      (document as any).fonts.load(`1em ${family}`).then(() => {
-        font_cache[family] = true
-        resolve(family)
+export const FontLoader = () => {
+  const cache: { [family: string]: boolean } = {}
+
+  return (family: string) => {
+    if (cache[family]) {
+      return Async<string>((resolve) => resolve(family))
+    } else if ((document as any)?.fonts?.load) {
+      return Async<string>((resolve) => {
+        (document as any).fonts.load(`1em ${family}`).then(() => {
+          cache[family] = true
+          resolve(family)
+        })
       })
-    })
-  } else {
-    return Async<string>((resolve) => {
-      new FontFaceObserver(family).load().then(() => {
-        font_cache[family] = true
-        resolve(family)
+    } else {
+      return Async<string>((resolve) => {
+        new FontFaceObserver(family).load().then(() => {
+          cache[family] = true
+          resolve(family)
+        })
       })
-    })
+    }
   }
 }
 
 
-export const ImageLoader = (url: string) => {
-  if (/^data:/.test(url) || image_cache[url] === true) {
-    return Async<string>((resolve) => resolve(url))
-  } else if (image_cache[url] instanceof PIXI.Loader) {
+export const ImageLoader = () => {
+  const cache: { [url: string]: PIXI.Loader | true } = {}
+
+  return (url: string) => {
+    if (/^data:/.test(url) || cache[url] === true) {
+      return Async<string>((resolve) => resolve(url))
+    } else if (cache[url] instanceof PIXI.Loader) {
+      return Async<string>((resolve) => {
+        (cache[url] as PIXI.Loader).load(() => {
+          cache[url] = true
+          resolve(url)
+        })
+      })
+    }
+
     return Async<string>((resolve) => {
-      (image_cache[url] as PIXI.Loader).load(() => {
-        image_cache[url] = true
+      cache[url] = new PIXI.Loader().add(url)
+      ;(cache[url] as PIXI.Loader).load(() => {
+        cache[url] = true
         resolve(url)
       })
     })
   }
-
-  return Async<string>((resolve) => {
-    image_cache[url] = new PIXI.Loader().add(url)
-    ;(image_cache[url] as PIXI.Loader).load(() => {
-      image_cache[url] = true
-      resolve(url)
-    })
-  })
 }

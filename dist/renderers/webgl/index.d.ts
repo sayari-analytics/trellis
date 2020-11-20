@@ -164,6 +164,8 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     zoomInteraction: Zoom<N, E>;
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;
+    fontLoader: (family: string) => (onfulfilled: (result: string) => void) => () => void;
+    imageLoader: (url: string) => (onfulfilled: (result: string) => void) => () => void;
     private clickedContainer;
     private previousTime;
     private animationDuration;
