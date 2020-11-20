@@ -84,7 +84,7 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
     download.onclick = () => {
       options.onClick?.()?.then((url: string) => {
         const link = document.createElement('a')
-        link.setAttribute('download', options.fileName ?? 'download.png')
+        link.setAttribute('download', options.fileName ?? 'download')
         link.href = url
         document.body.appendChild(link)
         link.click()

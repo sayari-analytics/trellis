@@ -215,7 +215,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     private _debugFirstRender;
     private debugRender;
     delete: () => void;
-    base64: (scale?: number | undefined) => Promise<string>;
+    base64: (resolution?: number, mimetype?: string) => Promise<string>;
 }
 export declare const Renderer: (options: {
     container: HTMLDivElement;

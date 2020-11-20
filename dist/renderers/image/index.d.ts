@@ -10,7 +10,8 @@ export declare type Options = {
     x?: number;
     y?: number;
     zoom?: number;
-    scale?: number;
+    resolution?: number;
+    mimetype?: string;
 };
 export declare const Renderer: <N extends Node, E extends Edge>() => {
     (graph: {

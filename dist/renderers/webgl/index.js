@@ -474,7 +474,9 @@ var InternalRenderer = /** @class */ (function () {
             _this.image.delete();
             _this.fontIcon.delete();
         };
-        this.base64 = function (scale) {
+        this.base64 = function (resolution, mimetype) {
+            if (resolution === void 0) { resolution = 2; }
+            if (mimetype === void 0) { mimetype = 'image/jpeg'; }
             return new Promise(function (resolve) {
                 requestAnimationFrame(function () {
                     _this.render(performance.now());
@@ -483,8 +485,8 @@ var InternalRenderer = /** @class */ (function () {
                         .drawRect(_this.x, _this.y, _this.width, _this.height)
                         .endFill();
                     _this.root.addChildAt(background, 0);
-                    var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, scale !== null && scale !== void 0 ? scale : 2, new PIXI.Rectangle(_this.x, _this.y, _this.width, _this.height));
-                    resolve(_this.app.renderer.plugins.extract.base64(imageTexture, 'image/png'));
+                    var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, resolution !== null && resolution !== void 0 ? resolution : 2, new PIXI.Rectangle(_this.x, _this.y, _this.width, _this.height));
+                    resolve(_this.app.renderer.plugins.extract.base64(imageTexture, mimetype));
                     imageTexture.destroy();
                     _this.root.removeChild(background);
                     background.destroy();

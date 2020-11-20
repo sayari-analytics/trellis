@@ -72,7 +72,7 @@ exports.Control = function (_a) {
             (_b = (_a = options.onClick) === null || _a === void 0 ? void 0 : _a.call(options)) === null || _b === void 0 ? void 0 : _b.then(function (url) {
                 var _a;
                 var link = document.createElement('a');
-                link.setAttribute('download', (_a = options.fileName) !== null && _a !== void 0 ? _a : 'download.png');
+                link.setAttribute('download', (_a = options.fileName) !== null && _a !== void 0 ? _a : 'download');
                 link.href = url;
                 document.body.appendChild(link);
                 link.click();

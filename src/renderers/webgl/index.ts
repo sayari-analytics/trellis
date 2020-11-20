@@ -712,7 +712,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.fontIcon.delete()
   }
 
-  base64 = (scale?: number) => {
+  base64 = (resolution: number = 2, mimetype: string = 'image/jpeg') => {
     return new Promise<string>((resolve) => {
       requestAnimationFrame(() => {
         this.render(performance.now())
@@ -725,10 +725,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         const imageTexture = this.app.renderer.generateTexture(
           this.root,
           PIXI.SCALE_MODES.LINEAR,
-          scale ?? 2,
+          resolution ?? 2,
           new PIXI.Rectangle(this.x, this.y, this.width, this.height)
         )
-        resolve((this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, 'image/png'))
+        resolve((this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype))
         imageTexture.destroy()
         this.root.removeChild(background)
         background.destroy()
