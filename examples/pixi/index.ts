@@ -8,6 +8,8 @@ import * as Cluster from '../../src/layout/cluster'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
 import * as Graph from '../../src/'
+import data from '../../tmp-data-3'
+import person from '../assets/person.png'
 
 
 export const stats = new Stats()
@@ -96,6 +98,10 @@ let edges: Graph.Edge[] = [
   { id: 'qa', source: 'c', target: 'q', label: 'Both', style: { arrow: 'both' } },
 ]
 
+nodes = data.nodes.map((node) => ({ ...node, style: { ...node.style, icon: { type: 'imageIcon' as const, url: person, scale: 0.03 } } })) as Graph.Node[]
+edges = data.edges as Graph.Edge[]
+
+
 
 /**
  * Create Renderer and Layout
@@ -168,7 +174,7 @@ const downloadControl = Download.Control({ container })
 downloadControl({
   top: 210,
   onClick: () => {
-    const bounds = Graph.getSelectionBounds(nodes, 40)
+    const bounds = Graph.getSelectionBounds(nodes, 60)
     const dimensions = Graph.boundsToDimenions(bounds, 1)
     const viewport = Graph.boundsToViewport(bounds, dimensions)
 

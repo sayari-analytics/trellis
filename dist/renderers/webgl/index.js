@@ -478,18 +478,22 @@ var InternalRenderer = /** @class */ (function () {
             if (resolution === void 0) { resolution = 2; }
             if (mimetype === void 0) { mimetype = 'image/jpeg'; }
             return new Promise(function (resolve) {
-                requestAnimationFrame(function () {
-                    _this.render(performance.now());
-                    var background = new PIXI.Graphics()
-                        .beginFill(0xffffff)
-                        .drawRect(_this.x, _this.y, _this.width, _this.height)
-                        .endFill();
-                    _this.root.addChildAt(background, 0);
-                    var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, resolution !== null && resolution !== void 0 ? resolution : 2, new PIXI.Rectangle(_this.x, _this.y, _this.width, _this.height));
-                    resolve(_this.app.renderer.plugins.extract.base64(imageTexture, mimetype));
-                    imageTexture.destroy();
-                    _this.root.removeChild(background);
-                    background.destroy();
+                var cancelAnimationFrame = utils_1.animationFrameLoop(function (time) {
+                    if (!_this.fontLoader.loading() && !_this.imageLoader.loading()) {
+                        _this.render(time);
+                        // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
+                        var background = new PIXI.Graphics()
+                            .beginFill(0xffffff)
+                            .drawRect((-_this.x * _this.zoom) - (_this.width / 2), (-_this.y * _this.zoom) - (_this.height / 2), _this.width, _this.height)
+                            .endFill();
+                        _this.root.addChildAt(background, 0);
+                        var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, resolution !== null && resolution !== void 0 ? resolution : 2);
+                        resolve(_this.app.renderer.plugins.extract.base64(imageTexture, mimetype));
+                        imageTexture.destroy();
+                        _this.root.removeChild(background);
+                        background.destroy();
+                        cancelAnimationFrame();
+                    }
                 });
             });
         };

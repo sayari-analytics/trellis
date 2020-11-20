@@ -714,24 +714,31 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   base64 = (resolution: number = 2, mimetype: string = 'image/jpeg') => {
     return new Promise<string>((resolve) => {
-      requestAnimationFrame(() => {
-        this.render(performance.now())
-        const background = new PIXI.Graphics()
-          .beginFill(0xffffff)
-          .drawRect(this.x, this.y, this.width, this.height)
-          .endFill()
+      const cancelAnimationFrame = animationFrameLoop((time) => {
+        if (!this.fontLoader.loading() && !this.imageLoader.loading()) {
+          this.render(time)
+          // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
+          const background = new PIXI.Graphics()
+            .beginFill(0xffffff)
+            .drawRect((-this.x * this.zoom) - (this.width / 2), (-this.y * this.zoom) - (this.height / 2), this.width, this.height)
+            .endFill()
 
-        this.root.addChildAt(background, 0)
-        const imageTexture = this.app.renderer.generateTexture(
-          this.root,
-          PIXI.SCALE_MODES.LINEAR,
-          resolution ?? 2,
-          new PIXI.Rectangle(this.x, this.y, this.width, this.height)
-        )
-        resolve((this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype))
-        imageTexture.destroy()
-        this.root.removeChild(background)
-        background.destroy()
+          this.root.addChildAt(background, 0)
+
+          const imageTexture = this.app.renderer.generateTexture(
+            this.root,
+            PIXI.SCALE_MODES.LINEAR,
+            resolution ?? 2,
+            // new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
+          )
+
+          resolve((this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype))
+
+          imageTexture.destroy()
+          this.root.removeChild(background)
+          background.destroy()
+          cancelAnimationFrame()
+        }
       })
     })
   }
