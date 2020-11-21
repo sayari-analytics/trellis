@@ -53,8 +53,8 @@ exports.Async = function (executor) { return function (onfulfilled) {
         cancelled = true;
     };
 }; };
-var fontCache = {};
 exports.FontLoader = function () {
+    var fontCache = {};
     var loadId = 0;
     var loading = new Set();
     return {
@@ -89,32 +89,22 @@ exports.FontLoader = function () {
         loading: function () { return loading.size > 0; }
     };
 };
-var image_cache = {};
 exports.ImageLoader = function () {
+    var image_cache = {};
     var loadId = 0;
     var loading = new Set();
     return {
         load: function (url) {
-            if (/^data:/.test(url) || image_cache[url] === true) {
+            if (/^data:/.test(url)) {
                 return exports.Async(function (resolve) { return resolve(url); });
             }
-            else if (image_cache[url] instanceof PIXI.Loader) {
-                var _loadId_2 = loadId++;
-                loading.add(_loadId_2);
-                return exports.Async(function (resolve) {
-                    image_cache[url].load(function () {
-                        image_cache[url] = true;
-                        loading.delete(_loadId_2);
-                        resolve(url);
-                    });
-                });
+            if (image_cache[url] === undefined) {
+                image_cache[url] = new PIXI.Loader().add(url);
             }
             return exports.Async(function (resolve) {
-                image_cache[url] = new PIXI.Loader().add(url);
                 var _loadId = loadId++;
                 loading.add(_loadId);
                 image_cache[url].load(function () {
-                    image_cache[url] = true;
                     loading.delete(_loadId);
                     resolve(url);
                 });

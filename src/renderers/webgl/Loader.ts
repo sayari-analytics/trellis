@@ -34,9 +34,8 @@ export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (o
 }
 
 
-const fontCache: { [family: string]: boolean } = {}
-
 export const FontLoader = () => {
+  const fontCache: { [family: string]: boolean } = {}
   let loadId = 0
   const loading = new Set<number>()
 
@@ -73,36 +72,26 @@ export const FontLoader = () => {
 }
 
 
-const image_cache: { [url: string]: PIXI.Loader | true } = {}
-
 export const ImageLoader = () => {
+  const image_cache: { [url: string]: PIXI.Loader } = {}
   let loadId = 0
   const loading = new Set<number>()
 
   return {
     load: (url: string) => {
-      if (/^data:/.test(url) || image_cache[url] === true) {
+      if (/^data:/.test(url)) {
         return Async<string>((resolve) => resolve(url))
-      } else if (image_cache[url] instanceof PIXI.Loader) {
-        const _loadId = loadId++
-        loading.add(_loadId)
+      }
 
-        return Async<string>((resolve) => {
-          (image_cache[url] as PIXI.Loader).load(() => {
-            image_cache[url] = true
-            loading.delete(_loadId)
-            resolve(url)
-          })
-        })
+      if (image_cache[url] === undefined) {
+        image_cache[url] = new PIXI.Loader().add(url)
       }
 
       return Async<string>((resolve) => {
-        image_cache[url] = new PIXI.Loader().add(url)
         const _loadId = loadId++
         loading.add(_loadId)
 
         ;(image_cache[url] as PIXI.Loader).load(() => {
-          image_cache[url] = true
           loading.delete(_loadId)
           resolve(url)
         })
