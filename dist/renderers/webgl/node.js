@@ -422,14 +422,15 @@ var NodeRenderer = /** @class */ (function () {
                         return;
                     _this.renderer.dirty = true;
                     _this.iconSprite = _this.renderer.fontIcon.create(_this.icon.text, _this.icon.family, _this.icon.size, 'normal', _this.icon.color);
-                    if (_this.badgeSpriteContainer === undefined) {
-                        // no badges - add to top of nodeContainer
-                        _this.nodeContainer.addChild(_this.iconSprite);
-                    }
-                    else {
-                        // badges - add below badges
-                        _this.nodeContainer.addChildAt(_this.iconSprite, _this.nodeContainer.children.length - 1);
-                    }
+                    /**
+                     * TODO - ensure that icons are added below badges
+                     */
+                    // if (this.badgeSpriteContainer === undefined) {
+                    //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
+                    // } else {
+                    //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
+                    // }
+                    _this.nodeContainer.addChild(_this.iconSprite);
                 });
             }
             else if (((_9 = this.icon) === null || _9 === void 0 ? void 0 : _9.type) === 'imageIcon') {
@@ -439,14 +440,15 @@ var NodeRenderer = /** @class */ (function () {
                         return;
                     _this.renderer.dirty = true;
                     _this.iconSprite = _this.renderer.image.create(_this.icon.url, _this.icon.scale, _this.icon.offsetX, _this.icon.offsetY);
-                    if (_this.badgeSpriteContainer === undefined) {
-                        // no badges - add to top of nodeContainer
-                        _this.nodeContainer.addChild(_this.iconSprite);
-                    }
-                    else {
-                        // badges - add below badges
-                        _this.nodeContainer.addChildAt(_this.iconSprite, _this.nodeContainer.children.length - 1);
-                    }
+                    /**
+                     * TODO - ensure that icons are added below badges
+                     */
+                    // if (this.badgeSpriteContainer === undefined) {
+                    //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
+                    // } else {
+                    //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
+                    // }
+                    _this.nodeContainer.addChild(_this.iconSprite);
                 });
             }
         }

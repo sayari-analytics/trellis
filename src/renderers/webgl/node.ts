@@ -311,13 +311,15 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
           this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
 
-          if (this.badgeSpriteContainer === undefined) {
-            // no badges - add to top of nodeContainer
-            this.nodeContainer.addChild(this.iconSprite)
-          } else {
-            // badges - add below badges
-            this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
-          }
+          /**
+           * TODO - ensure that icons are added below badges
+           */
+          // if (this.badgeSpriteContainer === undefined) {
+          //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
+          // } else {
+          //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
+          // }
+          this.nodeContainer.addChild(this.iconSprite)
         })
       } else if (this.icon?.type === 'imageIcon') {
         this.iconLoader = this.renderer.imageLoader.load(this.icon.url)((url) => {
@@ -327,13 +329,15 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
           this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offsetX, this.icon.offsetY)
 
-          if (this.badgeSpriteContainer === undefined) {
-            // no badges - add to top of nodeContainer
-            this.nodeContainer.addChild(this.iconSprite)
-          } else {
-            // badges - add below badges
-            this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1)
-          }
+          /**
+           * TODO - ensure that icons are added below badges
+           */
+          // if (this.badgeSpriteContainer === undefined) {
+          //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
+          // } else {
+          //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
+          // }
+          this.nodeContainer.addChild(this.iconSprite)
         })
       }
     }
