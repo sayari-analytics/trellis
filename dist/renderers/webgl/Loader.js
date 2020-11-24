@@ -25,6 +25,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageLoader = exports.FontLoader = exports.Async = void 0;
 var PIXI = __importStar(require("pixi.js"));
 var fontfaceobserver_1 = __importDefault(require("fontfaceobserver"));
+var utils_1 = require("../../utils");
+var warn = utils_1.throttle(function (err) { return console.warn(err); }, 0);
 /**
  * generic function for representing a value that is possibly asynchronous
  * think of this as a promise, except that
@@ -78,7 +80,15 @@ exports.FontLoader = function () {
                 return exports.Async(function (resolve) {
                     var _loadId = loadId++;
                     loading.add(_loadId);
-                    new fontfaceobserver_1.default(family).load().then(function () {
+                    new fontfaceobserver_1.default(family)
+                        .load()
+                        .then(function () {
+                        fontCache[family] = true;
+                        loading.delete(_loadId);
+                        resolve(family);
+                    })
+                        .catch(function (err) {
+                        warn(err);
                         fontCache[family] = true;
                         loading.delete(_loadId);
                         resolve(family);

@@ -1,6 +1,9 @@
 import * as PIXI from 'pixi.js'
 import FontFaceObserver from 'fontfaceobserver'
+import { throttle } from '../../utils'
 
+
+const warn = throttle((err) => console.warn(err), 0)
 
 /**
  * generic function for representing a value that is possibly asynchronous
@@ -59,11 +62,19 @@ export const FontLoader = () => {
           const _loadId = loadId++
           loading.add(_loadId)
 
-          new FontFaceObserver(family).load().then(() => {
-            fontCache[family] = true
-            loading.delete(_loadId)
-            resolve(family)
-          })
+          new FontFaceObserver(family)
+            .load()
+            .then(() => {
+              fontCache[family] = true
+              loading.delete(_loadId)
+              resolve(family)
+            })
+            .catch((err) => {
+              warn(err)
+              fontCache[family] = true
+              loading.delete(_loadId)
+              resolve(family)
+            })
         })
       }
     },

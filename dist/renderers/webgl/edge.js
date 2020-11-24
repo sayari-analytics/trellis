@@ -259,7 +259,6 @@ var EdgeRenderer = /** @class */ (function () {
                         wordWrap: labelWordWrap !== undefined,
                         wordWrapWidth: labelWordWrap,
                     });
-                    _this.labelSprite.name = 'text';
                     _this.labelSprite.scale.set(0.4);
                     _this.labelSprite.anchor.set(0.5, 0.5);
                     _this.labelContainer.addChild(_this.labelSprite);
@@ -428,14 +427,13 @@ var EdgeRenderer = /** @class */ (function () {
          * - truncate text, rather than hiding, or shrink size
          * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
          */
-        if (this.label) {
+        if (this.label && this.labelSprite) {
             var edgeLength = utils_1.length(this.x0, this.y0, this.x1, this.y1);
-            var text = this.labelContainer.getChildAt(0);
-            if (text.width > edgeLength) {
-                text.visible = false;
+            if (this.labelSprite.width > edgeLength) {
+                this.labelSprite.visible = false;
             }
             else {
-                text.visible = true;
+                this.labelSprite.visible = true;
             }
         }
     };

@@ -189,7 +189,6 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
             wordWrapWidth: labelWordWrap,
           })
 
-          this.labelSprite.name = 'text'
           this.labelSprite.scale.set(0.4)
           this.labelSprite.anchor.set(0.5, 0.5)
           this.labelContainer.addChild(this.labelSprite)
@@ -380,13 +379,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      * - truncate text, rather than hiding, or shrink size
      * - improve text resolution at high zoom, and maybe decrease/hide at low zoom
      */
-    if (this.label) {
+    if (this.label && this.labelSprite) {
       const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
-      const text = this.labelContainer.getChildAt(0) as PIXI.Text
-      if (text.width > edgeLength) {
-        text.visible = false
+      if (this.labelSprite.width > edgeLength) {
+        this.labelSprite.visible = false
       } else {
-        text.visible = true
+        this.labelSprite.visible = true
       }
     }
   }
