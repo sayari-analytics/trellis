@@ -20,7 +20,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FontIconSprite = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 var FontIconSprite = /** @class */ (function () {
     function FontIconSprite() {
         this.cache = {};

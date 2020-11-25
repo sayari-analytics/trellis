@@ -1,4 +1,4 @@
-import * as PIXI from 'pixi.js';
+import * as PIXI from 'pixi.js-legacy';
 /**
  * TODO - cacheing textures doesn't always work on initial render
  * need to use pixi loader

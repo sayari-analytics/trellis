@@ -20,7 +20,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageSprite = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 // export class ImageSprite {
 //   cache: { [url: string]: PIXI.Texture } = {}
 //   create(url: string, scale: number = 1, offsetX: number = 0, offsetY: number = 0) {

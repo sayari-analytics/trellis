@@ -47,7 +47,7 @@ var __read = (this && this.__read) || function (o, n) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EdgeRenderer = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 var utils_1 = require("./utils");
 var arrowSprite_1 = require("./sprites/arrowSprite");
 var LINE_HOVER_RADIUS = 4;

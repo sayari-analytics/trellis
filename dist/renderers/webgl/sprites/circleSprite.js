@@ -20,7 +20,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CircleSprite = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 var CircleSprite = /** @class */ (function () {
     function CircleSprite(renderer) {
         this.texture = renderer.app.renderer.generateTexture(new PIXI.Graphics()

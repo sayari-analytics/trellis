@@ -20,7 +20,7 @@
     "d3-hierarchy": "^2.0.0",
     "d3-interpolate": "^1.4.0",
     "fontfaceobserver": "^2.1.0",
-    "pixi.js": "^5.3.3"
+    "pixi.js-legacy": "^5.3.3"
   },
   "devDependencies": {
     "@types/d3-color": "^1.2.2",

@@ -47,7 +47,7 @@ var __read = (this && this.__read) || function (o, n) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeRenderer = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 var d3_interpolate_1 = require("d3-interpolate");
 var utils_1 = require("./utils");
 var utils_2 = require("../../utils");

@@ -1,5 +1,5 @@
 /// <reference types="stats" />
-import * as PIXI from 'pixi.js';
+import * as PIXI from 'pixi.js-legacy';
 import * as Graph from '../..';
 import { NodeRenderer } from './node';
 import { EdgeRenderer } from './edge';

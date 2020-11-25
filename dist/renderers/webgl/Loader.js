@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageLoader = exports.FontLoader = exports.Async = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 var fontfaceobserver_1 = __importDefault(require("fontfaceobserver"));
 var utils_1 = require("../../utils");
 var warn = utils_1.throttle(function (err) { return console.warn(err); }, 0);

@@ -31,7 +31,7 @@ var __values = (this && this.__values) || function(o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = exports.InternalRenderer = exports.RENDERER_OPTIONS = void 0;
-var PIXI = __importStar(require("pixi.js"));
+var PIXI = __importStar(require("pixi.js-legacy"));
 var unsafe_eval_1 = require("@pixi/unsafe-eval");
 var utils_1 = require("../../utils");
 var node_1 = require("./node");

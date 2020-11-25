@@ -1,4 +1,4 @@
-import * as PIXI from 'pixi.js'
+import * as PIXI from 'pixi.js-legacy'
 import { install } from '@pixi/unsafe-eval'
 import * as Graph from '../..'
 import { animationFrameLoop, interpolate } from '../../utils'
