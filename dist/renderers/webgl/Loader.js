@@ -105,9 +105,6 @@ exports.ImageLoader = function () {
     var loading = new Set();
     return {
         load: function (url) {
-            if (/^data:/.test(url)) {
-                return exports.Async(function (resolve) { return resolve(url); });
-            }
             if (image_cache[url] === undefined) {
                 image_cache[url] = new PIXI.Loader().add(url);
             }

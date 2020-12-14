@@ -90,10 +90,6 @@ export const ImageLoader = () => {
 
   return {
     load: (url: string) => {
-      if (/^data:/.test(url)) {
-        return Async<string>((resolve) => resolve(url))
-      }
-
       if (image_cache[url] === undefined) {
         image_cache[url] = new PIXI.Loader().add(url)
       }
