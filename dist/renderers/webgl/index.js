@@ -488,11 +488,12 @@ var InternalRenderer = /** @class */ (function () {
                             .endFill();
                         _this.root.addChildAt(background, 0);
                         var imageTexture = _this.app.renderer.generateTexture(_this.root, PIXI.SCALE_MODES.LINEAR, resolution !== null && resolution !== void 0 ? resolution : 2);
-                        resolve(_this.app.renderer.plugins.extract.base64(imageTexture, mimetype));
+                        var dataURL = _this.app.renderer.plugins.extract.base64(imageTexture, mimetype);
                         imageTexture.destroy();
                         _this.root.removeChild(background);
                         background.destroy();
                         cancelAnimationFrame();
+                        resolve(dataURL);
                     }
                 });
             });

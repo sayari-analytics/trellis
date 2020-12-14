@@ -732,12 +732,13 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
             // new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
           )
 
-          resolve((this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype))
-
+          const dataURL = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype)
           imageTexture.destroy()
           this.root.removeChild(background)
           background.destroy()
           cancelAnimationFrame()
+
+          resolve(dataURL)
         }
       })
     })

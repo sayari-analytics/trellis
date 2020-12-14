@@ -13,11 +13,8 @@ export declare type Options = {
     resolution?: number;
     mimetype?: string;
 };
-export declare const Renderer: <N extends Node, E extends Edge>() => {
-    (graph: {
-        nodes: N[];
-        edges: E[];
-        options?: Options | undefined;
-    }): Promise<string>;
-    delete: () => void;
-};
+export declare const Renderer: <N extends Node, E extends Edge>() => (graph: {
+    nodes: N[];
+    edges: E[];
+    options?: Options | undefined;
+}) => Promise<string>;

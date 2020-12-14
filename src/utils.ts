@@ -1,4 +1,5 @@
-import { interpolateBasis, interpolateNumber } from "d3-interpolate"
+import { interpolateBasis, interpolateNumber } from 'd3-interpolate'
+
 
 export const noop = () => {}
 
@@ -43,8 +44,8 @@ export const animationFrameLoop = (cb: (time: number) => void) => {
   let frame: number
 
   const tick = (time: number) => {
-    cb(time)
     frame = requestAnimationFrame(tick)
+    cb(time)
   }
 
   frame = requestAnimationFrame(tick)

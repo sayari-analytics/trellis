@@ -57,8 +57,8 @@ exports.batch = function (cb, duration) {
 exports.animationFrameLoop = function (cb) {
     var frame;
     var tick = function (time) {
-        cb(time);
         frame = requestAnimationFrame(tick);
+        cb(time);
     };
     frame = requestAnimationFrame(tick);
     return function () { return cancelAnimationFrame(frame); };

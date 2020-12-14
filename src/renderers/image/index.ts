@@ -22,14 +22,15 @@ export type Options = {
 
 
 export const Renderer = <N extends Node, E extends Edge>() => {
-  const pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div') })
-
-  const render = (graph: { nodes: N[], edges: E[], options?: Options }) => {
+  return (graph: { nodes: N[], edges: E[], options?: Options }) => {
+    const pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div') })
     pixiRenderer.update({ ...graph, options: { ...graph.options, animateGraph: false, animateViewport: false } })
-    return pixiRenderer.base64(graph.options?.resolution, graph.options?.mimetype)
+
+    return pixiRenderer
+      .base64(graph.options?.resolution, graph.options?.mimetype)
+      .then((dataURL) => {
+        pixiRenderer.delete()
+        return dataURL
+      })
   }
-
-  render.delete = pixiRenderer.delete
-
-  return render
 }
