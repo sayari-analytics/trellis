@@ -210,9 +210,9 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
         };
     });
     private _update;
-    private _debugUpdate;
     private render;
-    private _debugFirstRender;
+    private _measurePerformance?;
+    private _debugUpdate;
     private debugRender;
     delete: () => void;
     base64: (resolution?: number, mimetype?: string) => Promise<string>;

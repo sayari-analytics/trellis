@@ -305,11 +305,6 @@ var InternalRenderer = /** @class */ (function () {
             // this.root.addChild(viewportBbox)
             return _this;
         };
-        this._debugUpdate = function (graph) {
-            performance.mark('update');
-            _this._update(graph);
-            performance.measure('update', 'update');
-        };
         this.render = function (time) {
             var elapsedTime = time - _this.previousTime;
             _this.animationDuration += Math.min(20, Math.max(0, elapsedTime)); // clamp to 0 <= x <= 20 to smooth animations
@@ -361,7 +356,14 @@ var InternalRenderer = /** @class */ (function () {
             _this.viewportDirty = false;
             _this.dirty = _this.animationPercent < 1;
         };
-        this._debugFirstRender = true;
+        this._debugUpdate = function (graph) {
+            if (_this._measurePerformance) {
+                performance.measure('external', 'external');
+            }
+            performance.mark('update');
+            _this._update(graph);
+            performance.measure('update', 'update');
+        };
         this.debugRender = function (time) {
             var e_4, _a;
             var _b, _c, _d;
@@ -399,12 +401,6 @@ var InternalRenderer = /** @class */ (function () {
                 }
                 _this.viewportDirty = true;
             }
-            if (!_this._debugFirstRender) {
-                performance.measure('external', 'external');
-            }
-            else {
-                _this._debugFirstRender = false;
-            }
             if (_this.dirty) {
                 performance.mark('render');
                 for (var nodeId in _this.nodesById) {
@@ -423,6 +419,9 @@ var InternalRenderer = /** @class */ (function () {
                 _this.app.render();
                 performance.measure('draw', 'draw');
             }
+            if (_this._measurePerformance) {
+                performance.measure('total', 'total');
+            }
             if (((_d = _this.debug) === null || _d === void 0 ? void 0 : _d.logPerformance) && (_this.dirty || _this.viewportDirty)) {
                 var external_1 = 0;
                 var update = 0;
@@ -434,19 +433,18 @@ var InternalRenderer = /** @class */ (function () {
                         var measurement = _j.value;
                         if (measurement.name === 'update') {
                             update = measurement.duration;
-                            total += measurement.duration;
                         }
                         else if (measurement.name === 'render') {
                             render = measurement.duration;
-                            total += measurement.duration;
                         }
                         else if (measurement.name === 'draw') {
                             draw = measurement.duration;
-                            total += measurement.duration;
                         }
                         else if (measurement.name === 'external') {
                             external_1 = measurement.duration;
-                            total += measurement.duration;
+                        }
+                        else if (measurement.name === 'total') {
+                            total = measurement.duration;
                         }
                     }
                 }
@@ -465,6 +463,8 @@ var InternalRenderer = /** @class */ (function () {
             performance.clearMarks();
             performance.clearMeasures();
             performance.mark('external');
+            performance.mark('total');
+            _this._measurePerformance = true;
         };
         this.delete = function () {
             _this.cancelAnimationLoop();

@@ -511,12 +511,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     return this
   }
 
-  private _debugUpdate = (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
-    performance.mark('update')
-    this._update(graph)
-    performance.measure('update', 'update')
-  }
-
   private render = (time: number) => {
     const elapsedTime = time - this.previousTime
     this.animationDuration += Math.min(20, Math.max(0, elapsedTime)) // clamp to 0 <= x <= 20 to smooth animations
@@ -583,7 +577,17 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.dirty = this.animationPercent < 1
   }
 
-  private _debugFirstRender = true
+  private _measurePerformance?: true
+  private _debugUpdate = (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
+    if (this._measurePerformance) {
+      performance.measure('external', 'external')
+    }
+
+    performance.mark('update')
+    this._update(graph)
+    performance.measure('update', 'update')
+  }
+
   private debugRender = (time: number) => {
     this.debug?.stats?.update()
     const elapsedTime = time - this.previousTime
@@ -630,12 +634,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-    if (!this._debugFirstRender) {
-      performance.measure('external', 'external')
-    } else {
-      this._debugFirstRender = false
-    }
-
     if (this.dirty) {
       performance.mark('render')
       for (const nodeId in this.nodesById) {
@@ -657,6 +655,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       performance.measure('draw', 'draw')
     }
 
+    if (this._measurePerformance) {
+      performance.measure('total', 'total')
+    }
+
     if (this.debug?.logPerformance && (this.dirty || this.viewportDirty)) {
       let external = 0
       let update = 0
@@ -666,16 +668,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       for (const measurement of performance.getEntriesByType('measure')) {
         if (measurement.name === 'update') {
           update = measurement.duration
-          total += measurement.duration
         } else if (measurement.name === 'render') {
           render = measurement.duration
-          total += measurement.duration
         } else if (measurement.name === 'draw') {
           draw = measurement.duration
-          total += measurement.duration
         } else if (measurement.name === 'external') {
           external = measurement.duration
-          total += measurement.duration
+        } else if (measurement.name === 'total') {
+          total = measurement.duration
         }
       }
 
@@ -701,6 +701,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     performance.clearMarks()
     performance.clearMeasures()
     performance.mark('external')
+    performance.mark('total')
+    this._measurePerformance = true
   }
 
   delete = () => {
