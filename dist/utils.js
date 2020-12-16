@@ -158,11 +158,15 @@ exports.equals = function (a, b) {
     return false;
 };
 exports.interpolate = function (from, to, duration) {
-    var start = performance.now();
+    var elapsed = 0;
+    var t1 = performance.now();
     var interpolator = d3_interpolate_1.interpolateNumber(from, to);
     var ease = d3_interpolate_1.interpolateBasis([from, interpolator(0.7), interpolator(0.95), to]);
     return function () {
-        var elapsed = performance.now() - start;
+        var t2 = performance.now();
+        var diff = Math.max(20, t2 - t1);
+        elapsed += diff;
+        t1 = t2;
         if (elapsed >= duration) {
             return { done: true, value: to };
         }

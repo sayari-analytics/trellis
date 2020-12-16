@@ -67,6 +67,8 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     animateViewport?: boolean;
     nodesEqual?: (previous: N[], current: N[]) => boolean;
     edgesEqual?: (previous: E[], current: E[]) => boolean;
+    nodeIsEqual?: (previous: N, current: N) => boolean;
+    edgeIsEqual?: (previous: E, current: E) => boolean;
     onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
     onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void;
@@ -99,33 +101,20 @@ export declare const RENDERER_OPTIONS: {
     animateViewport: boolean;
     nodesEqual: () => boolean;
     edgesEqual: () => boolean;
+    nodeIsEqual: () => boolean;
+    edgeIsEqual: () => boolean;
 };
 export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
     width: number;
     height: number;
     minZoom: number;
     maxZoom: number;
-    zoom: number;
-    targetZoom: number;
-    wheelZoom?: number;
-    interpolateZoom?: () => {
-        value: number;
-        done: boolean;
-    };
     x: number;
-    targetX: number;
-    dragX?: number;
-    interpolateX?: () => {
-        value: number;
-        done: boolean;
-    };
+    expectedViewportXPosition?: number;
     y: number;
-    targetY: number;
-    dragY?: number;
-    interpolateY?: () => {
-        value: number;
-        done: boolean;
-    };
+    expectedViewportYPosition?: number;
+    zoom: number;
+    expectedViewportZoom?: number;
     animateGraph: boolean;
     animateViewport: boolean;
     hoveredNode?: NodeRenderer<N, E>;
@@ -135,7 +124,6 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     dragging: boolean;
     dirty: boolean;
     viewportDirty: boolean;
-    animationPercent: number;
     edgesLayer: PIXI.Container;
     nodesLayer: PIXI.Container;
     labelsLayer: PIXI.Container;
@@ -174,9 +162,14 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     };
     private clickedContainer;
     private previousTime;
-    private animationDuration;
     private debug?;
     private cancelAnimationLoop;
+    private interpolateX?;
+    private targetX;
+    private interpolateY?;
+    private targetY;
+    private interpolateZoom?;
+    private targetZoom;
     onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerDrag?: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;

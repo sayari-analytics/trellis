@@ -167,12 +167,17 @@ export const equals = <T>(a: T, b: T) => {
 
 
 export const interpolate = (from: number, to: number, duration: number) => {
-  const start = performance.now()
+  let elapsed = 0
+  let t1 = performance.now()
   const interpolator = interpolateNumber(from, to)
   const ease = interpolateBasis([from, interpolator(0.7), interpolator(0.95), to])
 
   return () => {
-    const elapsed = performance.now() - start
+    const t2 = performance.now()
+    const diff = Math.max(20, t2 - t1)
+    elapsed += diff
+    t1 = t2
+
     if (elapsed >= duration) {
       return { done: true, value: to }
     }

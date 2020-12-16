@@ -32,8 +32,8 @@ var Drag = /** @class */ (function () {
                     var centerY = _this.renderer.y + (distY / _this.renderer.zoom);
                     _this.last = { x: x, y: y };
                     _this.moved = true;
-                    _this.renderer.dragX = centerX;
-                    _this.renderer.dragY = centerY;
+                    _this.renderer.expectedViewportXPosition = centerX;
+                    _this.renderer.expectedViewportYPosition = centerY;
                     _this.onContainerDrag(event, centerX, centerY);
                 }
             }

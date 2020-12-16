@@ -48,7 +48,6 @@ var __read = (this && this.__read) || function (o, n) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NodeRenderer = void 0;
 var PIXI = __importStar(require("pixi.js-legacy"));
-var d3_interpolate_1 = require("d3-interpolate");
 var utils_1 = require("./utils");
 var utils_2 = require("../../utils");
 var circleSprite_1 = require("./sprites/circleSprite");
@@ -67,9 +66,7 @@ var NodeRenderer = /** @class */ (function () {
         var _this = this;
         this.strokeWidth = 0;
         this.subgraphNodes = {};
-        this.interpolateX = function () { return _this.endX; };
-        this.interpolateY = function () { return _this.endY; };
-        this.interpolateRadius = function () { return _this.endRadius; };
+        this.dirty = false;
         this.nodeContainer = new PIXI.Container();
         this.strokeSpriteContainer = [];
         this.strokeSprites = [];
@@ -167,11 +164,15 @@ var NodeRenderer = /** @class */ (function () {
             if (_this.renderer.clickedNode === undefined)
                 return;
             var position = _this.renderer.root.toLocal(event.data.global);
+            var x = position.x - _this.nodeMoveXOffset;
+            var y = position.y - _this.nodeMoveYOffset;
+            _this.expectedNodeXPosition = x;
+            _this.expectedNodeYPosition = y;
             if (!_this.renderer.dragging) {
                 _this.renderer.dragging = true;
-                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, x, y);
             }
-            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, position.x - _this.nodeMoveXOffset, position.y - _this.nodeMoveYOffset);
+            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, x, y);
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
@@ -205,41 +206,65 @@ var NodeRenderer = /** @class */ (function () {
             this.renderer.labelsLayer.addChild(this.labelContainer);
         }
         this.node = node;
-        this.startX = this.endX = this.x = x;
-        this.startY = this.endY = this.y = y;
-        this.startRadius = this.endRadius = this.radius = radius !== null && radius !== void 0 ? radius : DEFAULT_RADIUS;
+        this.targetX = this.x = x;
+        this.targetY = this.y = y;
+        this.targetRadius = this.radius = radius !== null && radius !== void 0 ? radius : DEFAULT_RADIUS;
         this.update(node);
     }
     NodeRenderer.prototype.update = function (node) {
         var e_1, _a, e_2, _b, e_3, _c, e_4, _d;
         var _this = this;
-        var _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10;
+        var _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9;
         this.node = node;
-        this.startX = this.x;
-        this.endX = (_e = node.x) !== null && _e !== void 0 ? _e : 0;
-        var interpolateXNumber = d3_interpolate_1.interpolateNumber(this.startX, this.endX);
-        this.interpolateX = d3_interpolate_1.interpolateBasis([this.startX, interpolateXNumber(0.7), interpolateXNumber(0.95), this.endX]);
-        this.startY = this.y;
-        this.endY = (_f = node.y) !== null && _f !== void 0 ? _f : 0;
-        var interpolateYNumber = d3_interpolate_1.interpolateNumber(this.startY, this.endY);
-        this.interpolateY = d3_interpolate_1.interpolateBasis([this.startY, interpolateYNumber(0.7), interpolateYNumber(0.95), this.endY]);
-        this.startRadius = this.radius;
-        this.endRadius = (_g = node.radius) !== null && _g !== void 0 ? _g : DEFAULT_RADIUS;
-        var interpolateRadiusNumber = d3_interpolate_1.interpolateNumber(this.startRadius, this.endRadius);
-        this.interpolateRadius = d3_interpolate_1.interpolateBasis([this.startRadius, interpolateRadiusNumber(0.7), interpolateRadiusNumber(0.95), this.endRadius]);
+        this.dirty = true;
+        var x = (_e = this.node.x) !== null && _e !== void 0 ? _e : 0;
+        if (x !== this.targetX) {
+            if (x === this.expectedNodeXPosition || !this.renderer.animateGraph) {
+                this.interpolateX = undefined;
+                this.x = x;
+            }
+            else {
+                this.interpolateX = utils_2.interpolate(this.x, x, 800);
+            }
+            this.expectedNodeXPosition = undefined;
+            this.targetX = x;
+        }
+        var y = (_f = this.node.y) !== null && _f !== void 0 ? _f : 0;
+        if (y !== this.targetY) {
+            if (y === this.expectedNodeYPosition || !this.renderer.animateGraph) {
+                this.interpolateY = undefined;
+                this.y = y;
+            }
+            else {
+                this.interpolateY = utils_2.interpolate(this.y, y, 800);
+            }
+            this.expectedNodeYPosition = undefined;
+            this.targetY = y;
+        }
+        var radius = this.node.radius;
+        if (radius !== this.targetRadius) {
+            if (!this.renderer.animateGraph) { // TODO - animateRadius
+                this.interpolateRadius = undefined;
+                this.radius = radius;
+            }
+            else {
+                this.interpolateRadius = utils_2.interpolate(this.radius, radius, 800);
+            }
+            this.targetRadius = radius;
+        }
         /**
          * Styles
          */
-        this.fillSprite.tint = ((_h = this.node.style) === null || _h === void 0 ? void 0 : _h.color) === undefined ? DEFAULT_NODE_FILL : utils_1.colorToNumber((_j = this.node.style) === null || _j === void 0 ? void 0 : _j.color);
+        this.fillSprite.tint = ((_g = this.node.style) === null || _g === void 0 ? void 0 : _g.color) === undefined ? DEFAULT_NODE_FILL : utils_1.colorToNumber((_h = this.node.style) === null || _h === void 0 ? void 0 : _h.color);
         // this.fillOpacity = this.fillSprite.alpha = this.node.style?.fillOpacity ?? NODE_STYLES.fillOpacity // TODO - to enable fill opacity, mask out center of strokeSprite
         /**
          * Label
          */
-        var labelFamily = (_l = (_k = node.style) === null || _k === void 0 ? void 0 : _k.labelFamily) !== null && _l !== void 0 ? _l : DEFAULT_LABEL_FAMILY;
-        var labelColor = ((_m = node.style) === null || _m === void 0 ? void 0 : _m.labelColor) === undefined ? DEFAULT_LABEL_COLOR : utils_1.colorToNumber((_o = node.style) === null || _o === void 0 ? void 0 : _o.labelColor);
-        var labelSize = (_q = (_p = node.style) === null || _p === void 0 ? void 0 : _p.labelSize) !== null && _q !== void 0 ? _q : DEFAULT_LABEL_SIZE;
-        var labelWordWrap = (_r = node.style) === null || _r === void 0 ? void 0 : _r.labelWordWrap;
-        var labelBackground = (_s = node.style) === null || _s === void 0 ? void 0 : _s.labelBackground;
+        var labelFamily = (_k = (_j = node.style) === null || _j === void 0 ? void 0 : _j.labelFamily) !== null && _k !== void 0 ? _k : DEFAULT_LABEL_FAMILY;
+        var labelColor = ((_l = node.style) === null || _l === void 0 ? void 0 : _l.labelColor) === undefined ? DEFAULT_LABEL_COLOR : utils_1.colorToNumber((_m = node.style) === null || _m === void 0 ? void 0 : _m.labelColor);
+        var labelSize = (_p = (_o = node.style) === null || _o === void 0 ? void 0 : _o.labelSize) !== null && _p !== void 0 ? _p : DEFAULT_LABEL_SIZE;
+        var labelWordWrap = (_q = node.style) === null || _q === void 0 ? void 0 : _q.labelWordWrap;
+        var labelBackground = (_r = node.style) === null || _r === void 0 ? void 0 : _r.labelBackground;
         if (node.label !== this.label ||
             labelFamily !== this.labelFamily ||
             labelColor !== this.labelColor ||
@@ -253,9 +278,9 @@ var NodeRenderer = /** @class */ (function () {
             this.labelWordWrap = labelWordWrap;
             this.labelBackground = labelBackground;
             this.labelContainer.removeChildren();
-            (_t = this.labelSprite) === null || _t === void 0 ? void 0 : _t.destroy();
+            (_s = this.labelSprite) === null || _s === void 0 ? void 0 : _s.destroy();
             this.labelSprite = undefined;
-            (_u = this.labelLoader) === null || _u === void 0 ? void 0 : _u.call(this);
+            (_t = this.labelLoader) === null || _t === void 0 ? void 0 : _t.call(this);
             if (this.label) {
                 this.labelLoader = this.renderer.fontLoader.load(this.labelFamily)(function (family) {
                     var _a;
@@ -291,11 +316,11 @@ var NodeRenderer = /** @class */ (function () {
         /**
          * Strokes
          */
-        if (!utils_2.equals((_v = node.style) === null || _v === void 0 ? void 0 : _v.stroke, this.stroke)) {
-            this.stroke = (_w = node.style) === null || _w === void 0 ? void 0 : _w.stroke;
+        if (!utils_2.equals((_u = node.style) === null || _u === void 0 ? void 0 : _u.stroke, this.stroke)) {
+            this.stroke = (_v = node.style) === null || _v === void 0 ? void 0 : _v.stroke;
             try {
-                for (var _11 = __values(this.strokeSpriteContainer), _12 = _11.next(); !_12.done; _12 = _11.next()) {
-                    var container = _12.value;
+                for (var _10 = __values(this.strokeSpriteContainer), _11 = _10.next(); !_11.done; _11 = _10.next()) {
+                    var container = _11.value;
                     this.nodeContainer.removeChild(container);
                     container.destroy();
                 }
@@ -303,7 +328,7 @@ var NodeRenderer = /** @class */ (function () {
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_12 && !_12.done && (_a = _11.return)) _a.call(_11);
+                    if (_11 && !_11.done && (_a = _10.return)) _a.call(_10);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
@@ -316,11 +341,11 @@ var NodeRenderer = /** @class */ (function () {
                     return sum + width;
                 }, 0);
                 try {
-                    for (var _13 = __values(this.stroke), _14 = _13.next(); !_14.done; _14 = _13.next()) {
-                        var stroke = _14.value;
+                    for (var _12 = __values(this.stroke), _13 = _12.next(); !_13.done; _13 = _12.next()) {
+                        var stroke = _13.value;
                         var strokeSprite = this.renderer.circle.create();
                         strokeSprite.tint = stroke.color === undefined ? DEFAULT_NODE_STROKE : utils_1.colorToNumber(stroke.color);
-                        this.strokeSprites.push({ sprite: strokeSprite, width: (_x = stroke.width) !== null && _x !== void 0 ? _x : DEFAULT_NODE_STROKE_WIDTH });
+                        this.strokeSprites.push({ sprite: strokeSprite, width: (_w = stroke.width) !== null && _w !== void 0 ? _w : DEFAULT_NODE_STROKE_WIDTH });
                         var container = new PIXI.Container();
                         container.addChild(strokeSprite);
                         this.strokeSpriteContainer.push(container);
@@ -330,7 +355,7 @@ var NodeRenderer = /** @class */ (function () {
                 catch (e_2_1) { e_2 = { error: e_2_1 }; }
                 finally {
                     try {
-                        if (_14 && !_14.done && (_b = _13.return)) _b.call(_13);
+                        if (_13 && !_13.done && (_b = _12.return)) _b.call(_12);
                     }
                     finally { if (e_2) throw e_2.error; }
                 }
@@ -339,17 +364,17 @@ var NodeRenderer = /** @class */ (function () {
         /**
          * Badges
          */
-        if (!utils_2.equals((_y = node.style) === null || _y === void 0 ? void 0 : _y.badge, this.badge)) {
-            this.badge = (_z = node.style) === null || _z === void 0 ? void 0 : _z.badge;
-            (_0 = this.badgeSpriteContainer) === null || _0 === void 0 ? void 0 : _0.destroy();
+        if (!utils_2.equals((_x = node.style) === null || _x === void 0 ? void 0 : _x.badge, this.badge)) {
+            this.badge = (_y = node.style) === null || _y === void 0 ? void 0 : _y.badge;
+            (_z = this.badgeSpriteContainer) === null || _z === void 0 ? void 0 : _z.destroy();
             this.badgeSpriteContainer = undefined;
             this.badgeSprites = [];
             this.badgeIconLoader.forEach(function (loader) { return loader(); });
             if (this.badge !== undefined) {
                 this.badgeSpriteContainer = new PIXI.Container();
                 var _loop_1 = function (badge) {
-                    var badgeRadius = (_1 = badge.radius) !== null && _1 !== void 0 ? _1 : DEFAULT_BADGE_RADIUS;
-                    var badgeStrokeRadius = badgeRadius + ((_2 = badge.strokeWidth) !== null && _2 !== void 0 ? _2 : DEFAULT_BADGE_STROKE_WIDTH);
+                    var badgeRadius = (_0 = badge.radius) !== null && _0 !== void 0 ? _0 : DEFAULT_BADGE_RADIUS;
+                    var badgeStrokeRadius = badgeRadius + ((_1 = badge.strokeWidth) !== null && _1 !== void 0 ? _1 : DEFAULT_BADGE_STROKE_WIDTH);
                     var badgeFillSprite = this_1.renderer.circle.create();
                     badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : utils_1.colorToNumber(badge.color);
                     badgeFillSprite.scale.set(badgeRadius / circleSprite_1.CircleSprite.radius);
@@ -357,7 +382,7 @@ var NodeRenderer = /** @class */ (function () {
                     badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : utils_1.colorToNumber(badge.stroke);
                     badgeStrokeSprite.scale.set(badgeStrokeRadius / circleSprite_1.CircleSprite.radius);
                     var badgeIconSprite;
-                    if (((_3 = badge.icon) === null || _3 === void 0 ? void 0 : _3.type) === 'textIcon') {
+                    if (((_2 = badge.icon) === null || _2 === void 0 ? void 0 : _2.type) === 'textIcon') {
                         var badgeIconLoader = this_1.renderer.fontLoader.load(badge.icon.family)(function (family) {
                             var _a, _b;
                             if (_this.badgeSpriteContainer === undefined || ((_a = badge.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || ((_b = badge.icon) === null || _b === void 0 ? void 0 : _b.family) !== family)
@@ -372,7 +397,7 @@ var NodeRenderer = /** @class */ (function () {
                         });
                         this_1.badgeIconLoader.push(badgeIconLoader);
                     }
-                    else if (((_4 = badge.icon) === null || _4 === void 0 ? void 0 : _4.type) === 'imageIcon') {
+                    else if (((_3 = badge.icon) === null || _3 === void 0 ? void 0 : _3.type) === 'imageIcon') {
                         var badgeIconLoader = this_1.renderer.imageLoader.load(badge.icon.url)(function (url) {
                             var _a, _b;
                             if (_this.badgeSpriteContainer === undefined || ((_a = badge.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'imageIcon' || ((_b = badge.icon) === null || _b === void 0 ? void 0 : _b.url) !== url)
@@ -390,15 +415,15 @@ var NodeRenderer = /** @class */ (function () {
                 };
                 var this_1 = this;
                 try {
-                    for (var _15 = __values(this.badge), _16 = _15.next(); !_16.done; _16 = _15.next()) {
-                        var badge = _16.value;
+                    for (var _14 = __values(this.badge), _15 = _14.next(); !_15.done; _15 = _14.next()) {
+                        var badge = _15.value;
                         _loop_1(badge);
                     }
                 }
                 catch (e_3_1) { e_3 = { error: e_3_1 }; }
                 finally {
                     try {
-                        if (_16 && !_16.done && (_c = _15.return)) _c.call(_15);
+                        if (_15 && !_15.done && (_c = _14.return)) _c.call(_14);
                     }
                     finally { if (e_3) throw e_3.error; }
                 }
@@ -407,15 +432,15 @@ var NodeRenderer = /** @class */ (function () {
         /**
          * Icon
          */
-        if (!utils_2.equals((_5 = node.style) === null || _5 === void 0 ? void 0 : _5.icon, this.icon)) {
-            this.icon = (_6 = node.style) === null || _6 === void 0 ? void 0 : _6.icon;
+        if (!utils_2.equals((_4 = node.style) === null || _4 === void 0 ? void 0 : _4.icon, this.icon)) {
+            this.icon = (_5 = node.style) === null || _5 === void 0 ? void 0 : _5.icon;
             if (this.iconSprite !== undefined) {
                 this.nodeContainer.removeChild(this.iconSprite);
                 this.iconSprite.destroy();
                 this.iconSprite = undefined;
-                (_7 = this.iconLoader) === null || _7 === void 0 ? void 0 : _7.call(this);
+                (_6 = this.iconLoader) === null || _6 === void 0 ? void 0 : _6.call(this);
             }
-            if (((_8 = this.icon) === null || _8 === void 0 ? void 0 : _8.type) === 'textIcon') {
+            if (((_7 = this.icon) === null || _7 === void 0 ? void 0 : _7.type) === 'textIcon') {
                 this.iconLoader = this.renderer.fontLoader.load(this.icon.family)(function (family) {
                     var _a;
                     if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'textIcon' || _this.icon.family !== family)
@@ -433,7 +458,7 @@ var NodeRenderer = /** @class */ (function () {
                     _this.nodeContainer.addChild(_this.iconSprite);
                 });
             }
-            else if (((_9 = this.icon) === null || _9 === void 0 ? void 0 : _9.type) === 'imageIcon') {
+            else if (((_8 = this.icon) === null || _8 === void 0 ? void 0 : _8.type) === 'imageIcon') {
                 this.iconLoader = this.renderer.imageLoader.load(this.icon.url)(function (url) {
                     var _a;
                     if (((_a = _this.icon) === null || _a === void 0 ? void 0 : _a.type) !== 'imageIcon' || _this.icon.url !== url)
@@ -456,10 +481,10 @@ var NodeRenderer = /** @class */ (function () {
          * Subgraph Node
          */
         var subgraphNodes = {};
-        if ((_10 = node.subgraph) === null || _10 === void 0 ? void 0 : _10.nodes) {
+        if ((_9 = node.subgraph) === null || _9 === void 0 ? void 0 : _9.nodes) {
             try {
-                for (var _17 = __values(node.subgraph.nodes), _18 = _17.next(); !_18.done; _18 = _17.next()) {
-                    var subgraphNode = _18.value;
+                for (var _16 = __values(node.subgraph.nodes), _17 = _16.next(); !_17.done; _17 = _16.next()) {
+                    var subgraphNode = _17.value;
                     if (this.subgraphNodes[subgraphNode.id] === undefined) {
                         // enter subgraph node
                         subgraphNodes[subgraphNode.id] = new NodeRenderer(this.renderer, subgraphNode, 0, 0, subgraphNode.radius, this);
@@ -473,7 +498,7 @@ var NodeRenderer = /** @class */ (function () {
             catch (e_4_1) { e_4 = { error: e_4_1 }; }
             finally {
                 try {
-                    if (_18 && !_18.done && (_d = _17.return)) _d.call(_17);
+                    if (_17 && !_17.done && (_d = _16.return)) _d.call(_16);
                 }
                 finally { if (e_4) throw e_4.error; }
             }
@@ -489,24 +514,36 @@ var NodeRenderer = /** @class */ (function () {
     };
     NodeRenderer.prototype.render = function () {
         var e_5, _a, e_6, _b;
-        var _this = this;
-        /**
-         * TODO - alternatively, if some node positions should interpolate when other nodes are dragged,
-         * use the same strategy as zoom: record expected new position, and interpolate if update doesn't match
-         * that position
-         */
-        if (this.renderer.animationPercent < 1 && !this.renderer.dragging) {
-            this.x = this.interpolateX(this.renderer.animationPercent);
-            this.y = this.interpolateY(this.renderer.animationPercent);
-            this.radius = this.interpolateRadius(this.renderer.animationPercent);
+        this.dirty = false;
+        if (this.interpolateX) {
+            var _c = this.interpolateX(), value = _c.value, done = _c.done;
+            this.x = value;
+            if (done) {
+                this.interpolateX = undefined;
+            }
+            else {
+                this.dirty = true;
+            }
         }
-        else {
-            this.x = this.startX = this.endX;
-            this.y = this.startY = this.endY;
-            this.radius = this.startRadius = this.endRadius;
-            this.interpolateX = function () { return _this.x; };
-            this.interpolateY = function () { return _this.y; };
-            this.interpolateRadius = function () { return _this.radius; };
+        if (this.interpolateY) {
+            var _d = this.interpolateY(), value = _d.value, done = _d.done;
+            this.y = value;
+            if (done) {
+                this.interpolateY = undefined;
+            }
+            else {
+                this.dirty = true;
+            }
+        }
+        if (this.interpolateRadius) {
+            var _e = this.interpolateRadius(), value = _e.value, done = _e.done;
+            this.radius = value;
+            if (done) {
+                this.interpolateRadius = undefined;
+            }
+            else {
+                this.dirty = true;
+            }
         }
         if (this.parent) {
             this.nodeContainer.x = this.labelContainer.x = this.x + this.parent.x;
@@ -520,8 +557,8 @@ var NodeRenderer = /** @class */ (function () {
         var strokeWidths = this.radius;
         if (this.stroke !== undefined) {
             try {
-                for (var _c = __values(this.strokeSprites), _d = _c.next(); !_d.done; _d = _c.next()) {
-                    var _e = _d.value, sprite = _e.sprite, width = _e.width;
+                for (var _f = __values(this.strokeSprites), _g = _f.next(); !_g.done; _g = _f.next()) {
+                    var _h = _g.value, sprite = _h.sprite, width = _h.width;
                     strokeWidths += width;
                     sprite.scale.set(strokeWidths / circleSprite_1.CircleSprite.radius);
                 }
@@ -529,16 +566,16 @@ var NodeRenderer = /** @class */ (function () {
             catch (e_5_1) { e_5 = { error: e_5_1 }; }
             finally {
                 try {
-                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                    if (_g && !_g.done && (_a = _f.return)) _a.call(_f);
                 }
                 finally { if (e_5) throw e_5.error; }
             }
         }
         if (this.badge !== undefined) {
             try {
-                for (var _f = __values(this.badgeSprites), _g = _f.next(); !_g.done; _g = _f.next()) {
-                    var _h = _g.value, fill = _h.fill, stroke = _h.stroke, icon = _h.icon, angle = _h.angle;
-                    var _j = __read(utils_1.movePoint(0, 0, angle, this.radius + this.strokeWidth), 2), x = _j[0], y = _j[1];
+                for (var _j = __values(this.badgeSprites), _k = _j.next(); !_k.done; _k = _j.next()) {
+                    var _l = _k.value, fill = _l.fill, stroke = _l.stroke, icon = _l.icon, angle = _l.angle;
+                    var _m = __read(utils_1.movePoint(0, 0, angle, this.radius + this.strokeWidth), 2), x = _m[0], y = _m[1];
                     fill.position.set(x, y);
                     stroke.position.set(x, y);
                     icon !== undefined && icon.position.set(x, y);
@@ -547,7 +584,7 @@ var NodeRenderer = /** @class */ (function () {
             catch (e_6_1) { e_6 = { error: e_6_1 }; }
             finally {
                 try {
-                    if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
+                    if (_k && !_k.done && (_b = _j.return)) _b.call(_j);
                 }
                 finally { if (e_6) throw e_6.error; }
             }

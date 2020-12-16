@@ -77,6 +77,8 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   animateViewport?: boolean
   nodesEqual?: (previous: N[], current: N[]) => boolean
   edgesEqual?: (previous: E[], current: E[]) => boolean
+  nodeIsEqual?: (previous: N, current: N) => boolean
+  edgeIsEqual?: (previous: E, current: E) => boolean
   onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
   onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
@@ -101,10 +103,9 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
 
 export const RENDERER_OPTIONS = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animateGraph: true, animateViewport: true, nodesEqual: () => false, edgesEqual: () => false,
+  animateGraph: true, animateViewport: true,
+  nodesEqual: () => false, edgesEqual: () => false, nodeIsEqual: () => false, edgeIsEqual: () => false,
 }
-
-const POSITION_ANIMATION_DURATION = 800
 
 PIXI.utils.skipHello()
 
@@ -115,18 +116,12 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   height = RENDERER_OPTIONS.height
   minZoom = RENDERER_OPTIONS.minZoom
   maxZoom = RENDERER_OPTIONS.maxZoom
-  zoom = RENDERER_OPTIONS.zoom
-  targetZoom = RENDERER_OPTIONS.zoom
-  wheelZoom?: number
-  interpolateZoom?: () => { value: number, done: boolean }
   x = RENDERER_OPTIONS.x
-  targetX = RENDERER_OPTIONS.x
-  dragX?: number
-  interpolateX?: () => { value: number, done: boolean }
+  expectedViewportXPosition?: number
   y = RENDERER_OPTIONS.y
-  targetY = RENDERER_OPTIONS.y
-  dragY?: number
-  interpolateY?: () => { value: number, done: boolean }
+  expectedViewportYPosition?: number
+  zoom = RENDERER_OPTIONS.zoom
+  expectedViewportZoom?: number
   animateGraph = RENDERER_OPTIONS.animateGraph
   animateViewport = RENDERER_OPTIONS.animateViewport
   hoveredNode?: NodeRenderer<N, E>
@@ -136,7 +131,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   dragging = false
   dirty = false
   viewportDirty = false
-  animationPercent = 0
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -162,9 +156,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   private clickedContainer = false
   private previousTime = performance.now()
-  private animationDuration = 0
   private debug?: { logPerformance?: boolean, stats?: Stats }
   private cancelAnimationLoop: () => void
+  private interpolateX?: () => { value: number, done: boolean }
+  private targetX = RENDERER_OPTIONS.x
+  private interpolateY?: () => { value: number, done: boolean }
+  private targetY = RENDERER_OPTIONS.y
+  private interpolateZoom?: () => { value: number, done: boolean }
+  private targetZoom = RENDERER_OPTIONS.zoom
 
   onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void
   onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void
@@ -294,7 +293,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, animateGraph = RENDERER_OPTIONS.animateGraph, animateViewport = RENDERER_OPTIONS.animateViewport,
-      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual,
+      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onNodeDragEnd, onNodeDragStart,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
       onContainerPointerEnter, onContainerPointerDown, onContainerDrag, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, onWheel,
@@ -333,7 +332,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (zoom !== this.targetZoom) {
-      if (zoom === this.wheelZoom || !this.animateViewport) {
+      if (zoom === this.expectedViewportZoom || !this.animateViewport) {
         this.interpolateZoom = undefined
         this.zoom = zoom
         this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
@@ -341,33 +340,33 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.interpolateZoom = interpolate(this.zoom, zoom, 600)
       }
 
-      this.wheelZoom = undefined
+      this.expectedViewportZoom = undefined
       this.targetZoom = zoom
       this.viewportDirty = true
     }
 
     if (x !== this.targetX) {
-      if (x === this.dragX || !this.animateViewport) {
+      if (x === this.expectedViewportXPosition || !this.animateViewport) {
         this.interpolateX = undefined
         this.x = x
       } else {
         this.interpolateX = interpolate(this.x, x, 600)
       }
 
-      this.dragX = undefined
+      this.expectedViewportXPosition = undefined
       this.targetX = x
       this.viewportDirty = true
     }
 
     if (y !== this.targetY) {
-      if (y === this.dragY || !this.animateViewport) {
+      if (y === this.expectedViewportYPosition || !this.animateViewport) {
         this.interpolateY = undefined
         this.y = y
       } else {
         this.interpolateY = interpolate(this.y, y, 600)
       }
 
-      this.dragY = undefined
+      this.expectedViewportYPosition = undefined
       this.targetY = y
       this.viewportDirty = true
     }
@@ -423,12 +422,13 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
           }
 
           nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? 0, this.nodesById[adjacentNode ?? '']?.y ?? 0, node.radius)
-          /**
-           * alternatively, don't animate entering nodes
-           */
-          // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode]?.x ?? node.x ?? 0, this.nodesById[adjacentNode]?.y ?? node.y ?? 0, node.radius)
-        } else {
+          this.dirty = true
+        } else if (!nodeIsEqual(this.nodesById[node.id].node, node)) {
+          // node update
           nodesById[node.id] = this.nodesById[node.id].update(node)
+          this.dirty = true
+        } else {
+          nodesById[node.id] = this.nodesById[node.id]
         }
       }
 
@@ -436,12 +436,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         if (nodesById[nodeId] === undefined) {
           // node exit
           this.nodesById[nodeId].delete()
+          this.dirty = true
         }
       }
 
-      this.animationDuration = 0
       this.nodesById = nodesById
-      this.dirty = true
     }
 
 
@@ -454,13 +453,16 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
 
       for (const edge of edges) {
-        const id = edge.id
-        if (this.edgesById[id] === undefined) {
+        if (this.edgesById[edge.id] === undefined) {
           // edge enter
-          edgesById[id] = new EdgeRenderer(this, edge)
-        } else {
+          edgesById[edge.id] = new EdgeRenderer(this, edge)
+          this.dirty = true
+        } else if (!edgeIsEqual(this.edgesById[edge.id].edge, edge)) {
           // edge update
-          edgesById[id] = this.edgesById[id].update(edge)
+          edgesById[edge.id] = this.edgesById[edge.id].update(edge)
+          this.dirty = true
+        } else {
+          edgesById[edge.id] = this.edgesById[edge.id]
         }
       }
 
@@ -468,11 +470,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         if (edgesById[edgeId] === undefined) {
           // edge exit
           this.edgesById[edgeId].delete()
+          this.dirty = true
         }
       }
 
       this.edgesById = edgesById
-      this.dirty = true
     }
 
     // this.root.getChildByName('bbox')?.destroy()
@@ -513,11 +515,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   private render = (time: number) => {
     const elapsedTime = time - this.previousTime
-    this.animationDuration += Math.min(20, Math.max(0, elapsedTime)) // clamp to 0 <= x <= 20 to smooth animations
-    // this.animationDuration += elapsedTime
-    this.animationPercent = this.animateGraph ?
-      Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
-      1
     this.previousTime = time
 
     this.decelerateInteraction.update(elapsedTime)
@@ -556,9 +553,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
+
+    let dirty = false
+
     if (this.dirty) {
       for (const nodeId in this.nodesById) {
-        this.nodesById[nodeId].render()
+        if (this.nodesById[nodeId].dirty) {
+          this.nodesById[nodeId].render()
+          dirty = dirty || this.nodesById[nodeId].dirty
+        }
       }
 
       this.edgesGraphic.clear()
@@ -574,7 +577,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     this.viewportDirty = false
-    this.dirty = this.animationPercent < 1
+    this.dirty = dirty
   }
 
   private _measurePerformance?: true
@@ -591,11 +594,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private debugRender = (time: number) => {
     this.debug?.stats?.update()
     const elapsedTime = time - this.previousTime
-    this.animationDuration += Math.min(20, Math.max(0, elapsedTime))
-    // this.animationDuration += elapsedTime
-    this.animationPercent = this.animateGraph ?
-      Math.min(this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
-      1
     this.previousTime = time
 
     this.decelerateInteraction.update(elapsedTime)
@@ -634,10 +632,16 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
+
+    let dirty = false
+
     if (this.dirty) {
       performance.mark('render')
       for (const nodeId in this.nodesById) {
-        this.nodesById[nodeId].render()
+        if (this.nodesById[nodeId].dirty) {
+          this.nodesById[nodeId].render()
+          dirty = dirty || this.nodesById[nodeId].dirty
+        }
       }
 
       this.edgesGraphic.clear()
@@ -695,8 +699,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       )
     }
 
-    this.dirty = this.animationPercent < 1
     this.viewportDirty = false
+    this.dirty = dirty
 
     performance.clearMarks()
     performance.clearMeasures()

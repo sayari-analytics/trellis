@@ -84,8 +84,8 @@ var Decelerate = /** @class */ (function () {
                 }
             }
             if (x || y) {
-                _this.renderer.dragX = x !== null && x !== void 0 ? x : _this.renderer.x;
-                _this.renderer.dragY = y !== null && y !== void 0 ? y : _this.renderer.y;
+                _this.renderer.expectedViewportXPosition = x !== null && x !== void 0 ? x : _this.renderer.x;
+                _this.renderer.expectedViewportYPosition = y !== null && y !== void 0 ? y : _this.renderer.y;
                 _this.onContainerDecelerate(x !== null && x !== void 0 ? x : _this.renderer.x, y !== null && y !== void 0 ? y : _this.renderer.y); // TODO - expose this as a more generic function
             }
         };

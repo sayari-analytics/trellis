@@ -52,9 +52,9 @@ var Zoom = /** @class */ (function () {
             _this.renderer.root.scale.set(zoomStart);
             var x = (rootX - (_this.renderer.width / 2)) / zoomEnd;
             var y = (rootY - (_this.renderer.height / 2)) / zoomEnd;
-            _this.renderer.dragX = x;
-            _this.renderer.dragY = y;
-            _this.renderer.wheelZoom = zoomEnd;
+            _this.renderer.expectedViewportXPosition = x;
+            _this.renderer.expectedViewportYPosition = y;
+            _this.renderer.expectedViewportZoom = zoomEnd;
             _this.onContainerWheel(e, x, y, zoomEnd);
         };
         this.renderer = renderer;

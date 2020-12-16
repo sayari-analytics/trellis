@@ -1,9 +1,8 @@
 import * as PIXI from 'pixi.js-legacy'
-import { interpolateNumber, interpolateBasis } from 'd3-interpolate'
 import { InternalRenderer, NodeStyle } from '.'
 import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
 import { Node, Edge } from '../..'
-import { equals } from '../../utils'
+import { equals, interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
 
 
@@ -28,18 +27,18 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   strokeWidth = 0
   subgraphNodes: { [id: string]: NodeRenderer<N, E> } = {}
   parent?: NodeRenderer<N, E>
+  dirty = false
 
   private renderer: InternalRenderer<N, E>
   private depth: number
-  private startX: number
-  private startY: number
-  private startRadius: number
-  private endX: number
-  private endY: number
-  private endRadius: number
-  private interpolateX: (percent: number) => number = () => this.endX
-  private interpolateY: (percent: number) => number = () => this.endY
-  private interpolateRadius: (percent: number) => number = () => this.endRadius
+  private targetX: number
+  private interpolateX?: () => { value: number, done: boolean }
+  private expectedNodeXPosition?: number
+  private targetY: number
+  private interpolateY?: () => { value: number, done: boolean }
+  private expectedNodeYPosition?: number
+  private targetRadius: number
+  private interpolateRadius?: () => { value: number, done: boolean }
   private label?: string
   private labelFamily?: string
   private labelColor?: number
@@ -100,32 +99,53 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     this.node = node
-    this.startX = this.endX = this.x = x
-    this.startY = this.endY = this.y = y
-    this.startRadius = this.endRadius = this.radius = radius ?? DEFAULT_RADIUS
+    this.targetX = this.x = x
+    this.targetY= this.y = y
+    this.targetRadius = this.radius = radius ?? DEFAULT_RADIUS
     this.update(node)
   }
 
   update(node: N) {
     this.node = node
+    this.dirty = true
 
-    this.startX = this.x
-    this.endX = node.x ?? 0
+    const x = this.node.x ?? 0
+    if (x !== this.targetX) {
+      if (x === this.expectedNodeXPosition || !this.renderer.animateGraph) {
+        this.interpolateX = undefined
+        this.x = x
+      } else {
+        this.interpolateX = interpolate(this.x, x, 800)
+      }
 
-    const interpolateXNumber = interpolateNumber(this.startX, this.endX)
-    this.interpolateX = interpolateBasis([this.startX, interpolateXNumber(0.7), interpolateXNumber(0.95), this.endX])
+      this.expectedNodeXPosition = undefined
+      this.targetX = x
+    }
 
-    this.startY = this.y
-    this.endY = node.y ?? 0
+    const y = this.node.y ?? 0
+    if (y !== this.targetY) {
+      if (y === this.expectedNodeYPosition || !this.renderer.animateGraph) {
+        this.interpolateY = undefined
+        this.y = y
+      } else {
+        this.interpolateY = interpolate(this.y, y, 800)
+      }
 
-    const interpolateYNumber = interpolateNumber(this.startY, this.endY)
-    this.interpolateY = interpolateBasis([this.startY, interpolateYNumber(0.7), interpolateYNumber(0.95), this.endY])
+      this.expectedNodeYPosition = undefined
+      this.targetY = y
+    }
 
-    this.startRadius = this.radius
-    this.endRadius = node.radius ?? DEFAULT_RADIUS
+    const radius = this.node.radius
+    if (radius !== this.targetRadius) {
+      if (!this.renderer.animateGraph) { // TODO - animateRadius
+        this.interpolateRadius = undefined
+        this.radius = radius
+      } else {
+        this.interpolateRadius = interpolate(this.radius, radius, 800)
+      }
 
-    const interpolateRadiusNumber = interpolateNumber(this.startRadius, this.endRadius)
-    this.interpolateRadius = interpolateBasis([this.startRadius, interpolateRadiusNumber(0.7), interpolateRadiusNumber(0.95), this.endRadius])
+      this.targetRadius = radius
+    }
 
 
     /**
@@ -373,23 +393,41 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
   render() {
-    /**
-     * TODO - alternatively, if some node positions should interpolate when other nodes are dragged,
-     * use the same strategy as zoom: record expected new position, and interpolate if update doesn't match
-     * that position
-     */
-    if (this.renderer.animationPercent < 1 && !this.renderer.dragging) {
-      this.x = this.interpolateX(this.renderer.animationPercent)
-      this.y = this.interpolateY(this.renderer.animationPercent)
-      this.radius = this.interpolateRadius(this.renderer.animationPercent)
-    } else {
-      this.x = this.startX = this.endX
-      this.y = this.startY = this.endY
-      this.radius = this.startRadius = this.endRadius
-      this.interpolateX = () => this.x
-      this.interpolateY = () => this.y
-      this.interpolateRadius = () => this.radius
+    this.dirty = false
+
+    if (this.interpolateX) {
+      const { value, done } = this.interpolateX()
+      this.x = value
+
+      if (done) {
+        this.interpolateX = undefined
+      } else {
+        this.dirty = true
+      }
     }
+
+    if (this.interpolateY) {
+      const { value, done } = this.interpolateY()
+      this.y = value
+
+      if (done) {
+        this.interpolateY = undefined
+      } else {
+        this.dirty = true
+      }
+    }
+
+    if (this.interpolateRadius) {
+      const { value, done } = this.interpolateRadius()
+      this.radius = value
+
+      if (done) {
+        this.interpolateRadius = undefined
+      } else {
+        this.dirty = true
+      }
+    }
+
 
     if (this.parent) {
       this.nodeContainer.x = this.labelContainer.x = this.x + this.parent.x
@@ -541,13 +579,18 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     if (this.renderer.clickedNode === undefined) return
 
     const position = this.renderer.root.toLocal(event.data.global)
+    const x = position.x - this.nodeMoveXOffset
+    const y = position.y - this.nodeMoveYOffset
+
+    this.expectedNodeXPosition = x
+    this.expectedNodeYPosition = y
 
     if (!this.renderer.dragging) {
       this.renderer.dragging = true
-      this.renderer.onNodeDragStart?.(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
+      this.renderer.onNodeDragStart?.(event, this.node, x, y)
     }
 
-    this.renderer.onNodeDrag?.(event, this.node, position.x - this.nodeMoveXOffset, position.y - this.nodeMoveYOffset)
+    this.renderer.onNodeDrag?.(event, this.node, x, y)
   }
 
 

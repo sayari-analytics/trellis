@@ -48,8 +48,8 @@ export class Drag <N extends Node, E extends Edge>{
         this.last = { x, y }
         this.moved = true
 
-        this.renderer.dragX = centerX
-        this.renderer.dragY = centerY
+        this.renderer.expectedViewportXPosition = centerX
+        this.renderer.expectedViewportYPosition = centerY
         this.onContainerDrag(event, centerX, centerY)
       }
     }

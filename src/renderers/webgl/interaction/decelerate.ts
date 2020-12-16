@@ -80,8 +80,8 @@ export class Decelerate <N extends Node, E extends Edge>{
     }
 
     if (x || y) {
-      this.renderer.dragX = x ?? this.renderer.x
-      this.renderer.dragY = y ?? this.renderer.y
+      this.renderer.expectedViewportXPosition = x ?? this.renderer.x
+      this.renderer.expectedViewportYPosition = y ?? this.renderer.y
       this.onContainerDecelerate(x ?? this.renderer.x, y ?? this.renderer.y) // TODO - expose this as a more generic function
     }
   }

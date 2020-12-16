@@ -48,9 +48,8 @@ unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
     animateGraph: true, animateViewport: true,
-    nodesEqual: function () { return false; }, edgesEqual: function () { return false; },
+    nodesEqual: function () { return false; }, edgesEqual: function () { return false; }, nodeIsEqual: function () { return false; }, edgeIsEqual: function () { return false; },
 };
-var POSITION_ANIMATION_DURATION = 800;
 PIXI.utils.skipHello();
 var InternalRenderer = /** @class */ (function () {
     function InternalRenderer(options) {
@@ -59,18 +58,14 @@ var InternalRenderer = /** @class */ (function () {
         this.height = exports.RENDERER_OPTIONS.height;
         this.minZoom = exports.RENDERER_OPTIONS.minZoom;
         this.maxZoom = exports.RENDERER_OPTIONS.maxZoom;
-        this.zoom = exports.RENDERER_OPTIONS.zoom;
-        this.targetZoom = exports.RENDERER_OPTIONS.zoom;
         this.x = exports.RENDERER_OPTIONS.x;
-        this.targetX = exports.RENDERER_OPTIONS.x;
         this.y = exports.RENDERER_OPTIONS.y;
-        this.targetY = exports.RENDERER_OPTIONS.y;
+        this.zoom = exports.RENDERER_OPTIONS.zoom;
         this.animateGraph = exports.RENDERER_OPTIONS.animateGraph;
         this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
         this.dragging = false;
         this.dirty = false;
         this.viewportDirty = false;
-        this.animationPercent = 0;
         this.edgesLayer = new PIXI.Container();
         this.nodesLayer = new PIXI.Container();
         this.labelsLayer = new PIXI.Container();
@@ -87,11 +82,13 @@ var InternalRenderer = /** @class */ (function () {
         this.imageLoader = Loader_1.ImageLoader();
         this.clickedContainer = false;
         this.previousTime = performance.now();
-        this.animationDuration = 0;
+        this.targetX = exports.RENDERER_OPTIONS.x;
+        this.targetY = exports.RENDERER_OPTIONS.y;
+        this.targetZoom = exports.RENDERER_OPTIONS.zoom;
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animateGraph, animateGraph = _t === void 0 ? exports.RENDERER_OPTIONS.animateGraph : _t, _u = _k.animateViewport, animateViewport = _u === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _u, _v = _k.nodesEqual, nodesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _v, _w = _k.edgesEqual, edgesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _w, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onNodeDragEnd = _k.onNodeDragEnd, onNodeDragStart = _k.onNodeDragStart, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animateGraph, animateGraph = _t === void 0 ? exports.RENDERER_OPTIONS.animateGraph : _t, _u = _k.animateViewport, animateViewport = _u === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _u, _v = _k.nodesEqual, nodesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _v, _w = _k.edgesEqual, edgesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _w, _x = _k.nodeIsEqual, nodeIsEqual = _x === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _x, _y = _k.edgeIsEqual, edgeIsEqual = _y === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _y, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onNodeDragEnd = _k.onNodeDragEnd, onNodeDragStart = _k.onNodeDragStart, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -122,7 +119,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (zoom !== _this.targetZoom) {
-                if (zoom === _this.wheelZoom || !_this.animateViewport) {
+                if (zoom === _this.expectedViewportZoom || !_this.animateViewport) {
                     _this.interpolateZoom = undefined;
                     _this.zoom = zoom;
                     _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
@@ -130,31 +127,31 @@ var InternalRenderer = /** @class */ (function () {
                 else {
                     _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, 600);
                 }
-                _this.wheelZoom = undefined;
+                _this.expectedViewportZoom = undefined;
                 _this.targetZoom = zoom;
                 _this.viewportDirty = true;
             }
             if (x !== _this.targetX) {
-                if (x === _this.dragX || !_this.animateViewport) {
+                if (x === _this.expectedViewportXPosition || !_this.animateViewport) {
                     _this.interpolateX = undefined;
                     _this.x = x;
                 }
                 else {
                     _this.interpolateX = utils_1.interpolate(_this.x, x, 600);
                 }
-                _this.dragX = undefined;
+                _this.expectedViewportXPosition = undefined;
                 _this.targetX = x;
                 _this.viewportDirty = true;
             }
             if (y !== _this.targetY) {
-                if (y === _this.dragY || !_this.animateViewport) {
+                if (y === _this.expectedViewportYPosition || !_this.animateViewport) {
                     _this.interpolateY = undefined;
                     _this.y = y;
                 }
                 else {
                     _this.interpolateY = utils_1.interpolate(_this.y, y, 600);
                 }
-                _this.dragY = undefined;
+                _this.expectedViewportYPosition = undefined;
                 _this.targetY = y;
                 _this.viewportDirty = true;
             }
@@ -213,13 +210,15 @@ var InternalRenderer = /** @class */ (function () {
                                 });
                             }
                             nodesById[node.id] = new node_1.NodeRenderer(_this, node, (_f = (_e = _this.nodesById[adjacentNode !== null && adjacentNode !== void 0 ? adjacentNode : '']) === null || _e === void 0 ? void 0 : _e.x) !== null && _f !== void 0 ? _f : 0, (_h = (_g = _this.nodesById[adjacentNode !== null && adjacentNode !== void 0 ? adjacentNode : '']) === null || _g === void 0 ? void 0 : _g.y) !== null && _h !== void 0 ? _h : 0, node.radius);
-                            /**
-                             * alternatively, don't animate entering nodes
-                             */
-                            // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode]?.x ?? node.x ?? 0, this.nodesById[adjacentNode]?.y ?? node.y ?? 0, node.radius)
+                            _this.dirty = true;
+                        }
+                        else if (!nodeIsEqual(_this.nodesById[node.id].node, node)) {
+                            // node update
+                            nodesById[node.id] = _this.nodesById[node.id].update(node);
+                            _this.dirty = true;
                         }
                         else {
-                            nodesById[node.id] = _this.nodesById[node.id].update(node);
+                            nodesById[node.id] = _this.nodesById[node.id];
                         }
                     }
                 }
@@ -234,11 +233,10 @@ var InternalRenderer = /** @class */ (function () {
                     if (nodesById[nodeId] === undefined) {
                         // node exit
                         _this.nodesById[nodeId].delete();
+                        _this.dirty = true;
                     }
                 }
-                _this.animationDuration = 0;
                 _this.nodesById = nodesById;
-                _this.dirty = true;
             }
             /**
              * Edge enter/update/exit
@@ -249,14 +247,18 @@ var InternalRenderer = /** @class */ (function () {
                 try {
                     for (var edges_2 = __values(edges), edges_2_1 = edges_2.next(); !edges_2_1.done; edges_2_1 = edges_2.next()) {
                         var edge = edges_2_1.value;
-                        var id = edge.id;
-                        if (_this.edgesById[id] === undefined) {
+                        if (_this.edgesById[edge.id] === undefined) {
                             // edge enter
-                            edgesById[id] = new edge_1.EdgeRenderer(_this, edge);
+                            edgesById[edge.id] = new edge_1.EdgeRenderer(_this, edge);
+                            _this.dirty = true;
+                        }
+                        else if (!edgeIsEqual(_this.edgesById[edge.id].edge, edge)) {
+                            // edge update
+                            edgesById[edge.id] = _this.edgesById[edge.id].update(edge);
+                            _this.dirty = true;
                         }
                         else {
-                            // edge update
-                            edgesById[id] = _this.edgesById[id].update(edge);
+                            edgesById[edge.id] = _this.edgesById[edge.id];
                         }
                     }
                 }
@@ -271,10 +273,10 @@ var InternalRenderer = /** @class */ (function () {
                     if (edgesById[edgeId] === undefined) {
                         // edge exit
                         _this.edgesById[edgeId].delete();
+                        _this.dirty = true;
                     }
                 }
                 _this.edgesById = edgesById;
-                _this.dirty = true;
             }
             // this.root.getChildByName('bbox')?.destroy()
             // const bounds = Graph.getSelectionBounds(this.nodes, 0)
@@ -307,11 +309,6 @@ var InternalRenderer = /** @class */ (function () {
         };
         this.render = function (time) {
             var elapsedTime = time - _this.previousTime;
-            _this.animationDuration += Math.min(20, Math.max(0, elapsedTime)); // clamp to 0 <= x <= 20 to smooth animations
-            // this.animationDuration += elapsedTime
-            _this.animationPercent = _this.animateGraph ?
-                Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
-                1;
             _this.previousTime = time;
             _this.decelerateInteraction.update(elapsedTime);
             if (_this.interpolateZoom) {
@@ -339,9 +336,13 @@ var InternalRenderer = /** @class */ (function () {
                 }
                 _this.viewportDirty = true;
             }
+            var dirty = false;
             if (_this.dirty) {
                 for (var nodeId in _this.nodesById) {
-                    _this.nodesById[nodeId].render();
+                    if (_this.nodesById[nodeId].dirty) {
+                        _this.nodesById[nodeId].render();
+                        dirty = dirty || _this.nodesById[nodeId].dirty;
+                    }
                 }
                 _this.edgesGraphic.clear();
                 for (var edgeId in _this.edgesById) {
@@ -354,7 +355,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.app.render();
             }
             _this.viewportDirty = false;
-            _this.dirty = _this.animationPercent < 1;
+            _this.dirty = dirty;
         };
         this._debugUpdate = function (graph) {
             if (_this._measurePerformance) {
@@ -369,11 +370,6 @@ var InternalRenderer = /** @class */ (function () {
             var _b, _c, _d;
             (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
             var elapsedTime = time - _this.previousTime;
-            _this.animationDuration += Math.min(20, Math.max(0, elapsedTime));
-            // this.animationDuration += elapsedTime
-            _this.animationPercent = _this.animateGraph ?
-                Math.min(_this.animationDuration / POSITION_ANIMATION_DURATION, 1) :
-                1;
             _this.previousTime = time;
             _this.decelerateInteraction.update(elapsedTime);
             if (_this.interpolateZoom) {
@@ -401,10 +397,14 @@ var InternalRenderer = /** @class */ (function () {
                 }
                 _this.viewportDirty = true;
             }
+            var dirty = false;
             if (_this.dirty) {
                 performance.mark('render');
                 for (var nodeId in _this.nodesById) {
-                    _this.nodesById[nodeId].render();
+                    if (_this.nodesById[nodeId].dirty) {
+                        _this.nodesById[nodeId].render();
+                        dirty = dirty || _this.nodesById[nodeId].dirty;
+                    }
                 }
                 _this.edgesGraphic.clear();
                 for (var edgeId in _this.edgesById) {
@@ -458,8 +458,8 @@ var InternalRenderer = /** @class */ (function () {
                 // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
                 console.log("%c" + total.toFixed(1) + "ms%c (update: %c" + update.toFixed(1) + "%c, render: %c" + render.toFixed(1) + "%c, draw: %c" + draw.toFixed(1) + "%c, external: %c" + external_1.toFixed(1) + "%c)", "color: " + (total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'), 'color: #666', "color: " + (update <= 5 ? '#6c6' : update <= 10 ? '#f88' : update <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (render <= 5 ? '#6c6' : render <= 10 ? '#f88' : render <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (draw <= 5 ? '#6c6' : draw <= 10 ? '#f88' : draw <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (external_1 <= 5 ? '#6c6' : external_1 <= 10 ? '#f88' : external_1 <= 20 ? '#e22' : '#a00'), 'color: #666');
             }
-            _this.dirty = _this.animationPercent < 1;
             _this.viewportDirty = false;
+            _this.dirty = dirty;
             performance.clearMarks();
             performance.clearMeasures();
             performance.mark('external');

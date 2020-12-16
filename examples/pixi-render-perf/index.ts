@@ -59,18 +59,34 @@ let nodes = Object.values(graphData.nodes)
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_25` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_26` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_27` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_28` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_29` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_30` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_31` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_32` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_33` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_34` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_35` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_36` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_37` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_38` })))
-  // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_39` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_28` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_29` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_30` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_31` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_32` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_33` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_34` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_35` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_36` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_37` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_38` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_39` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_40` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_41` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_42` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_43` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_44` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_45` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_46` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_47` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_48` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_49` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_50` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_51` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_52` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_53` })))
+  .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_54` })))
+
   .map<Node>(({ id, type }) => ({
     id,
     // label,
@@ -102,6 +118,32 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_21`, { ...edge, source: `${edge.source}_21`, target: `${edge.target}_21` }]))
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_22`, { ...edge, source: `${edge.source}_22`, target: `${edge.target}_22` }]))
   .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_23`, { ...edge, source: `${edge.source}_23`, target: `${edge.target}_23` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_24`, { ...edge, source: `${edge.source}_24`, target: `${edge.target}_24` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_25`, { ...edge, source: `${edge.source}_25`, target: `${edge.target}_25` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_26`, { ...edge, source: `${edge.source}_26`, target: `${edge.target}_26` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_27`, { ...edge, source: `${edge.source}_27`, target: `${edge.target}_27` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_28`, { ...edge, source: `${edge.source}_28`, target: `${edge.target}_28` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_29`, { ...edge, source: `${edge.source}_29`, target: `${edge.target}_29` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_30`, { ...edge, source: `${edge.source}_30`, target: `${edge.target}_30` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_31`, { ...edge, source: `${edge.source}_31`, target: `${edge.target}_31` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_32`, { ...edge, source: `${edge.source}_32`, target: `${edge.target}_32` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_33`, { ...edge, source: `${edge.source}_33`, target: `${edge.target}_33` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_34`, { ...edge, source: `${edge.source}_34`, target: `${edge.target}_34` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_35`, { ...edge, source: `${edge.source}_35`, target: `${edge.target}_35` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_36`, { ...edge, source: `${edge.source}_36`, target: `${edge.target}_36` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_37`, { ...edge, source: `${edge.source}_37`, target: `${edge.target}_37` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_38`, { ...edge, source: `${edge.source}_38`, target: `${edge.target}_38` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_39`, { ...edge, source: `${edge.source}_39`, target: `${edge.target}_39` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_40`, { ...edge, source: `${edge.source}_40`, target: `${edge.target}_40` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_41`, { ...edge, source: `${edge.source}_41`, target: `${edge.target}_41` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_42`, { ...edge, source: `${edge.source}_42`, target: `${edge.target}_42` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_43`, { ...edge, source: `${edge.source}_43`, target: `${edge.target}_43` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_44`, { ...edge, source: `${edge.source}_44`, target: `${edge.target}_44` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_45`, { ...edge, source: `${edge.source}_45`, target: `${edge.target}_45` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_46`, { ...edge, source: `${edge.source}_46`, target: `${edge.target}_46` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_47`, { ...edge, source: `${edge.source}_47`, target: `${edge.target}_47` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_48`, { ...edge, source: `${edge.source}_48`, target: `${edge.target}_48` }]))
+  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_49`, { ...edge, source: `${edge.source}_49`, target: `${edge.target}_49` }]))
   // .concat([
   //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
   //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
@@ -133,6 +175,7 @@ const zoomControl = Zoom.Control({ container })
 const render = throttleAnimationFrame(WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
+  // debug: { stats, logPerformance: true }
 }))
 
 
@@ -143,21 +186,21 @@ const layoutOptions: Force.Options = {
   nodeStrength: -600,
   tick: 50,
 }
-const renderOptions: WebGL.Options = {
+const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
   y: 0,
-  zoom: 1,
-  minZoom: 0.1,
+  zoom: 0.1,
+  minZoom: 0.05,
   maxZoom: 2.5,
-  nodesEqual: () => false,
-  edgesEqual: () => false,
   onNodeDrag: throttleAnimationFrame((_, { id }, x, y) => {
     nodesById[id].x = x
     nodesById[id].y = y
     renderOptions.nodesEqual = () => false
     renderOptions.edgesEqual = () => false
+    renderOptions.nodeIsEqual = (_: Node, next: Node) => next.id !== id
+    // renderOptions.edgeIsEqual = () => true,
     render({ nodes, edges, options: renderOptions })
   }),
   onContainerDrag: (_, x, y) => {
@@ -165,6 +208,8 @@ const renderOptions: WebGL.Options = {
     renderOptions.y = y
     renderOptions.nodesEqual = () => true
     renderOptions.edgesEqual = () => true
+    // renderOptions.nodeIsEqual = () => true
+    // renderOptions.edgeIsEqual = () => true,
     render({ nodes, edges, options: renderOptions })
   },
   onWheel: (_, x, y, zoom) => {
@@ -173,6 +218,8 @@ const renderOptions: WebGL.Options = {
     renderOptions.zoom = zoom
     renderOptions.nodesEqual = () => true
     renderOptions.edgesEqual = () => true
+    // renderOptions.nodeIsEqual = () => true
+    // renderOptions.edgeIsEqual = () => true,
     render({ nodes, edges, options: renderOptions })
   }
 }
