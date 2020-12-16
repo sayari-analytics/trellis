@@ -63,8 +63,9 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     zoom?: number;
     minZoom?: number;
     maxZoom?: number;
-    animateGraph?: boolean;
-    animateViewport?: boolean;
+    animatePosition?: number | false;
+    animateRadius?: number | false;
+    animateViewport?: number | false;
     nodesEqual?: (previous: N[], current: N[]) => boolean;
     edgesEqual?: (previous: E[], current: E[]) => boolean;
     nodeIsEqual?: (previous: N, current: N) => boolean;
@@ -97,8 +98,9 @@ export declare const RENDERER_OPTIONS: {
     zoom: number;
     minZoom: number;
     maxZoom: number;
-    animateGraph: boolean;
-    animateViewport: boolean;
+    animateViewport: number;
+    animatePosition: number;
+    animateRadius: number;
     nodesEqual: () => boolean;
     edgesEqual: () => boolean;
     nodeIsEqual: () => boolean;
@@ -115,8 +117,9 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     expectedViewportYPosition?: number;
     zoom: number;
     expectedViewportZoom?: number;
-    animateGraph: boolean;
-    animateViewport: boolean;
+    animatePosition: number | false;
+    animateRadius: number | false;
+    animateViewport: number | false;
     hoveredNode?: NodeRenderer<N, E>;
     clickedNode?: NodeRenderer<N, E>;
     hoveredEdge?: EdgeRenderer<N, E>;

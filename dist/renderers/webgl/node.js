@@ -219,36 +219,36 @@ var NodeRenderer = /** @class */ (function () {
         this.dirty = true;
         var x = (_e = this.node.x) !== null && _e !== void 0 ? _e : 0;
         if (x !== this.targetX) {
-            if (x === this.expectedNodeXPosition || !this.renderer.animateGraph) {
+            if (x === this.expectedNodeXPosition || !this.renderer.animatePosition) {
                 this.interpolateX = undefined;
                 this.x = x;
             }
             else {
-                this.interpolateX = utils_2.interpolate(this.x, x, 800);
+                this.interpolateX = utils_2.interpolate(this.x, x, this.renderer.animatePosition);
             }
             this.expectedNodeXPosition = undefined;
             this.targetX = x;
         }
         var y = (_f = this.node.y) !== null && _f !== void 0 ? _f : 0;
         if (y !== this.targetY) {
-            if (y === this.expectedNodeYPosition || !this.renderer.animateGraph) {
+            if (y === this.expectedNodeYPosition || !this.renderer.animatePosition) {
                 this.interpolateY = undefined;
                 this.y = y;
             }
             else {
-                this.interpolateY = utils_2.interpolate(this.y, y, 800);
+                this.interpolateY = utils_2.interpolate(this.y, y, this.renderer.animatePosition);
             }
             this.expectedNodeYPosition = undefined;
             this.targetY = y;
         }
         var radius = this.node.radius;
         if (radius !== this.targetRadius) {
-            if (!this.renderer.animateGraph) { // TODO - animateRadius
+            if (!this.renderer.animateRadius) {
                 this.interpolateRadius = undefined;
                 this.radius = radius;
             }
             else {
-                this.interpolateRadius = utils_2.interpolate(this.radius, radius, 800);
+                this.interpolateRadius = utils_2.interpolate(this.radius, radius, this.renderer.animateRadius);
             }
             this.targetRadius = radius;
         }

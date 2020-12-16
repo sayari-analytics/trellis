@@ -36,7 +36,7 @@ exports.Renderer = function () {
     return function (graph) {
         var _a, _b;
         var pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div') });
-        pixiRenderer.update(__assign(__assign({}, graph), { options: __assign(__assign({}, graph.options), { animateGraph: false, animateViewport: false }) }));
+        pixiRenderer.update(__assign(__assign({}, graph), { options: __assign(__assign({}, graph.options), { animatePosition: false, animateRadius: false, animateViewport: false }) }));
         return pixiRenderer
             .base64((_a = graph.options) === null || _a === void 0 ? void 0 : _a.resolution, (_b = graph.options) === null || _b === void 0 ? void 0 : _b.mimetype)
             .then(function (dataURL) {

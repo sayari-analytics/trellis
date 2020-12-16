@@ -73,8 +73,9 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   zoom?: number
   minZoom?: number
   maxZoom?: number
-  animateGraph?: boolean
-  animateViewport?: boolean
+  animatePosition?: number | false
+  animateRadius?: number | false
+  animateViewport?: number | false
   nodesEqual?: (previous: N[], current: N[]) => boolean
   edgesEqual?: (previous: E[], current: E[]) => boolean
   nodeIsEqual?: (previous: N, current: N) => boolean
@@ -103,7 +104,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
 
 export const RENDERER_OPTIONS = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animateGraph: true, animateViewport: true,
+  animateViewport: 600, animatePosition: 800, animateRadius: 800,
   nodesEqual: () => false, edgesEqual: () => false, nodeIsEqual: () => false, edgeIsEqual: () => false,
 }
 
@@ -122,8 +123,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   expectedViewportYPosition?: number
   zoom = RENDERER_OPTIONS.zoom
   expectedViewportZoom?: number
-  animateGraph = RENDERER_OPTIONS.animateGraph
-  animateViewport = RENDERER_OPTIONS.animateViewport
+  animatePosition: number | false = RENDERER_OPTIONS.animatePosition
+  animateRadius: number | false = RENDERER_OPTIONS.animateRadius
+  animateViewport: number | false = RENDERER_OPTIONS.animateViewport
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
   hoveredEdge?: EdgeRenderer<N, E>
@@ -294,7 +296,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     edges,
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
-      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, animateGraph = RENDERER_OPTIONS.animateGraph, animateViewport = RENDERER_OPTIONS.animateViewport,
+      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
+      animatePosition = RENDERER_OPTIONS.animatePosition, animateRadius = RENDERER_OPTIONS.animateRadius, animateViewport = RENDERER_OPTIONS.animateViewport,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onNodeDragEnd, onNodeDragStart,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
@@ -320,8 +323,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
     this.onWheel = onWheel
-    this.animateGraph = animateGraph
     this.animateViewport = animateViewport
+    this.animatePosition = animatePosition
+    this.animateRadius = animateRadius
     this.minZoom = minZoom
     this.maxZoom = maxZoom
 
@@ -339,7 +343,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.zoom = zoom
         this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
       } else {
-        this.interpolateZoom = interpolate(this.zoom, zoom, 600)
+        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
       }
 
       this.expectedViewportZoom = undefined
@@ -352,7 +356,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.interpolateX = undefined
         this.x = x
       } else {
-        this.interpolateX = interpolate(this.x, x, 600)
+        this.interpolateX = interpolate(this.x, x, this.animateViewport)
       }
 
       this.expectedViewportXPosition = undefined
@@ -365,7 +369,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.interpolateY = undefined
         this.y = y
       } else {
-        this.interpolateY = interpolate(this.y, y, 600)
+        this.interpolateY = interpolate(this.y, y, this.animateViewport)
       }
 
       this.expectedViewportYPosition = undefined

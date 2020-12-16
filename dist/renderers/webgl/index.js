@@ -47,7 +47,7 @@ var Loader_1 = require("./Loader");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-    animateGraph: true, animateViewport: true,
+    animateViewport: 600, animatePosition: 800, animateRadius: 800,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; }, nodeIsEqual: function () { return false; }, edgeIsEqual: function () { return false; },
 };
 PIXI.utils.skipHello();
@@ -61,7 +61,8 @@ var InternalRenderer = /** @class */ (function () {
         this.x = exports.RENDERER_OPTIONS.x;
         this.y = exports.RENDERER_OPTIONS.y;
         this.zoom = exports.RENDERER_OPTIONS.zoom;
-        this.animateGraph = exports.RENDERER_OPTIONS.animateGraph;
+        this.animatePosition = exports.RENDERER_OPTIONS.animatePosition;
+        this.animateRadius = exports.RENDERER_OPTIONS.animateRadius;
         this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
         this.dragging = false;
         this.dirty = false;
@@ -89,7 +90,7 @@ var InternalRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animateGraph, animateGraph = _t === void 0 ? exports.RENDERER_OPTIONS.animateGraph : _t, _u = _k.animateViewport, animateViewport = _u === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _u, _v = _k.nodesEqual, nodesEqual = _v === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _v, _w = _k.edgesEqual, edgesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _w, _x = _k.nodeIsEqual, nodeIsEqual = _x === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _x, _y = _k.edgeIsEqual, edgeIsEqual = _y === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _y, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onNodeDragEnd = _k.onNodeDragEnd, onNodeDragStart = _k.onNodeDragStart, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animatePosition, animatePosition = _t === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _t, _u = _k.animateRadius, animateRadius = _u === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _u, _v = _k.animateViewport, animateViewport = _v === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _v, _w = _k.nodesEqual, nodesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _w, _x = _k.edgesEqual, edgesEqual = _x === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _x, _y = _k.nodeIsEqual, nodeIsEqual = _y === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _y, _z = _k.edgeIsEqual, edgeIsEqual = _z === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _z, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onNodeDragEnd = _k.onNodeDragEnd, onNodeDragStart = _k.onNodeDragStart, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -109,8 +110,9 @@ var InternalRenderer = /** @class */ (function () {
             _this.onEdgePointerUp = onEdgePointerUp;
             _this.onEdgePointerLeave = onEdgePointerLeave;
             _this.onWheel = onWheel;
-            _this.animateGraph = animateGraph;
             _this.animateViewport = animateViewport;
+            _this.animatePosition = animatePosition;
+            _this.animateRadius = animateRadius;
             _this.minZoom = minZoom;
             _this.maxZoom = maxZoom;
             if (width !== _this.width || height !== _this.height) {
@@ -126,7 +128,7 @@ var InternalRenderer = /** @class */ (function () {
                     _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 }
                 else {
-                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, 600);
+                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, _this.animateViewport);
                 }
                 _this.expectedViewportZoom = undefined;
                 _this.targetZoom = zoom;
@@ -138,7 +140,7 @@ var InternalRenderer = /** @class */ (function () {
                     _this.x = x;
                 }
                 else {
-                    _this.interpolateX = utils_1.interpolate(_this.x, x, 600);
+                    _this.interpolateX = utils_1.interpolate(_this.x, x, _this.animateViewport);
                 }
                 _this.expectedViewportXPosition = undefined;
                 _this.targetX = x;
@@ -150,7 +152,7 @@ var InternalRenderer = /** @class */ (function () {
                     _this.y = y;
                 }
                 else {
-                    _this.interpolateY = utils_1.interpolate(_this.y, y, 600);
+                    _this.interpolateY = utils_1.interpolate(_this.y, y, _this.animateViewport);
                 }
                 _this.expectedViewportYPosition = undefined;
                 _this.targetY = y;
