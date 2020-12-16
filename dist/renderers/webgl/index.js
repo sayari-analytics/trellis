@@ -502,6 +502,7 @@ var InternalRenderer = /** @class */ (function () {
             throw new Error('container must be an instance of HTMLDivElement');
         }
         var view = document.createElement('canvas');
+        view.onselectstart = function () { return false; };
         options.container.appendChild(view);
         options.container.style.position = 'relative';
         this.app = new PIXI.Application({
