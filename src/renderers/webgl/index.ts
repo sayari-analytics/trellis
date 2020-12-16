@@ -164,6 +164,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private targetY = RENDERER_OPTIONS.y
   private interpolateZoom?: () => { value: number, done: boolean }
   private targetZoom = RENDERER_OPTIONS.zoom
+  private firstRender = true
 
   onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void
   onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void
@@ -333,7 +334,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (zoom !== this.targetZoom) {
-      if (zoom === this.expectedViewportZoom || !this.animateViewport) {
+      if (zoom === this.expectedViewportZoom || !this.animateViewport || this.firstRender) {
         this.interpolateZoom = undefined
         this.zoom = zoom
         this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
@@ -347,7 +348,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (x !== this.targetX) {
-      if (x === this.expectedViewportXPosition || !this.animateViewport) {
+      if (x === this.expectedViewportXPosition || !this.animateViewport || this.firstRender) {
         this.interpolateX = undefined
         this.x = x
       } else {
@@ -360,7 +361,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (y !== this.targetY) {
-      if (y === this.expectedViewportYPosition || !this.animateViewport) {
+      if (y === this.expectedViewportYPosition || !this.animateViewport || this.firstRender) {
         this.interpolateY = undefined
         this.y = y
       } else {
@@ -510,6 +511,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     // viewportBbox.name = 'viewportBbox'
     // this.root.addChild(viewportBbox)
 
+    this.firstRender = false
 
     return this
   }

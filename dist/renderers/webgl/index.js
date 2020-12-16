@@ -85,6 +85,7 @@ var InternalRenderer = /** @class */ (function () {
         this.targetX = exports.RENDERER_OPTIONS.x;
         this.targetY = exports.RENDERER_OPTIONS.y;
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
+        this.firstRender = true;
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d;
             var _e, _f, _g, _h;
@@ -119,7 +120,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (zoom !== _this.targetZoom) {
-                if (zoom === _this.expectedViewportZoom || !_this.animateViewport) {
+                if (zoom === _this.expectedViewportZoom || !_this.animateViewport || _this.firstRender) {
                     _this.interpolateZoom = undefined;
                     _this.zoom = zoom;
                     _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
@@ -132,7 +133,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (x !== _this.targetX) {
-                if (x === _this.expectedViewportXPosition || !_this.animateViewport) {
+                if (x === _this.expectedViewportXPosition || !_this.animateViewport || _this.firstRender) {
                     _this.interpolateX = undefined;
                     _this.x = x;
                 }
@@ -144,7 +145,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (y !== _this.targetY) {
-                if (y === _this.expectedViewportYPosition || !_this.animateViewport) {
+                if (y === _this.expectedViewportYPosition || !_this.animateViewport || _this.firstRender) {
                     _this.interpolateY = undefined;
                     _this.y = y;
                 }
@@ -305,6 +306,7 @@ var InternalRenderer = /** @class */ (function () {
             //   .drawPolygon(new PIXI.Polygon([viewPortBounds.left, viewPortBounds.top, viewPortBounds.right, viewPortBounds.top, viewPortBounds.right, viewPortBounds.bottom, viewPortBounds.left, viewPortBounds.bottom]))
             // viewportBbox.name = 'viewportBbox'
             // this.root.addChild(viewportBbox)
+            _this.firstRender = false;
             return _this;
         };
         this.render = function (time) {

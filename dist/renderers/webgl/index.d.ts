@@ -170,6 +170,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     private targetY;
     private interpolateZoom?;
     private targetZoom;
+    private firstRender;
     onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void;
     onContainerDrag?: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;
