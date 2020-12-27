@@ -102,7 +102,7 @@ let edges: Graph.Edge[] = [
  */
 const container = document.querySelector('#graph') as HTMLDivElement
 const imageRenderer = Png.Renderer()
-const renderer = WebGL.Renderer({
+const render = WebGL.Renderer({
   container,
   // debug: { stats, logPerformance: true }
 })
@@ -125,11 +125,11 @@ zoomControl({
   top: 80,
   onZoomIn: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.5)
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.5)
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
 })
 
@@ -151,12 +151,12 @@ const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = select
       } : node))
     )
 
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onContainerDrag: (_, x, y) => {
     renderOptions.x = x
     renderOptions.y = y
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
 })
 
@@ -204,11 +204,11 @@ const renderOptions: WebGL.Options = {
     // renderOptions.x = -x
     // renderOptions.y = -y
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -220,7 +220,7 @@ const renderOptions: WebGL.Options = {
           node.style?.stroke?.map((stroke) => ({ ...stroke, color: '#CCC' }))
       }
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -232,15 +232,15 @@ const renderOptions: WebGL.Options = {
           createPersonStyle(48).stroke
       }
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDoubleClick: (_, clickedNode) => {
     const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
@@ -264,7 +264,7 @@ const renderOptions: WebGL.Options = {
       } : node))
     )
 
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onContainerPointerDown,
   onContainerDrag,
@@ -273,7 +273,7 @@ const renderOptions: WebGL.Options = {
     renderOptions.x = x
     renderOptions.y = y
     renderOptions.zoom = zoom
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   }
 }
 
@@ -293,5 +293,5 @@ force({ nodes, edges, options: layoutOptions }).then((graph) => {
   renderOptions.y = y
   renderOptions.zoom = zoom
 
-  renderer({ nodes, edges, options: renderOptions })
+  render({ nodes, edges, options: renderOptions })
 })

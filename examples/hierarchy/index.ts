@@ -113,7 +113,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const hierarchy = Hierarchy.Layout()
 const force = Force.Layout()
 const zoomControl = Zoom.Control({ container })
-const renderer = WebGL.Renderer({
+const render = WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -136,11 +136,11 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   maxZoom: 2.5,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -152,7 +152,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
           [{ color: '#CCC' }]
       }
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -161,15 +161,15 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
         createCompanyStyle(18) :
         createPersonStyle(18)
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onContainerPointerDown: () => {
     if (layout === 'hierarchy') {
@@ -184,7 +184,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
       // renderOptions.y = y
       // renderOptions.zoom = zoom
 
-      renderer({ nodes, edges, options: renderOptions })
+      render({ nodes, edges, options: renderOptions })
     } else {
       layout = 'hierarchy'
       nodes = hierarchyNodes
@@ -197,19 +197,19 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
       // renderOptions.y = y
       // renderOptions.zoom = zoom
 
-      renderer({ nodes, edges, options: renderOptions })
+      render({ nodes, edges, options: renderOptions })
     }
   },
   onContainerDrag: (_, x, y) => {
     renderOptions.x = x
     renderOptions.y = y
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onWheel: (_, x, y, zoom) => {
     renderOptions.x = x
     renderOptions.y = y
     renderOptions.zoom = zoom
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   }
 }
 
@@ -221,11 +221,11 @@ zoomControl({
   top: 80,
   onZoomIn: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
 })
 
@@ -245,5 +245,5 @@ force({ nodes, edges }).then((forceData) => {
   renderOptions.y = y
   renderOptions.zoom = zoom
 
-  renderer({ nodes, edges, options: renderOptions })
+  render({ nodes, edges, options: renderOptions })
 })

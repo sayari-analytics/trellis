@@ -136,11 +136,11 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   height: container.offsetHeight,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -152,7 +152,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
           [{ color: '#CCC' }]
       }
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? {
@@ -161,15 +161,15 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
         createCompanyStyle(32) :
         createPersonStyle(32)
     } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
 }
 
@@ -178,7 +178,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
  * Initialize Layout and Renderer
  */
 const radial = Radial.Layout()
-const renderer = WebGL.Renderer({
+const render = WebGL.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -190,4 +190,4 @@ const renderer = WebGL.Renderer({
 const positionedGraph = radial(nodes[0].id, { nodes, edges, options: layoutOptions })
 nodes = positionedGraph.nodes
 edges = positionedGraph.edges
-renderer({ nodes, edges, options: renderOptions })
+render({ nodes, edges, options: renderOptions })

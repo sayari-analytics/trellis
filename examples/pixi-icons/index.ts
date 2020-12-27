@@ -57,7 +57,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
-const renderer = WebGL.Renderer({
+const render = WebGL.Renderer({
   container,
   // debug: { stats, logPerformance: true }
 })
@@ -72,30 +72,30 @@ const renderOptions: WebGL.Options = {
   zoom: 0.8,
   onNodePointerDown: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDrag: (_, { id }, x, y) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerEnter: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: [{ color: '#ddd', width: 6 }] } } : node))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodePointerLeave: (_, { id }) => {
     nodes = nodes.map((node) => (node.id === id ?
       { ...node, style: { ...node.style, stroke: [{ color: id === 'a' ? '#F7CA4D' : '#90D7FB', width: 6 }] } } :
       node
     ))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: (_, { id }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onNodeDoubleClick: (_, clickedNode) => {
     const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
@@ -127,7 +127,7 @@ const renderOptions: WebGL.Options = {
       })
     )
 
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
   onContainerPointerUp: () => {
     nodes = subgraph(
@@ -140,7 +140,7 @@ const renderOptions: WebGL.Options = {
       }))
     )
 
-    renderer({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions })
   },
 }
 
@@ -150,5 +150,5 @@ const renderOptions: WebGL.Options = {
  */
 force({ nodes, edges, options: { nodeStrength: -800 } }).then((graph) => {
   nodes = graph.nodes
-  renderer({ nodes, edges, options: renderOptions })
+  render({ nodes, edges, options: renderOptions })
 })
