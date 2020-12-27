@@ -86,7 +86,6 @@ let nodes = Object.values(graphData.nodes)
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_52` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_53` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_54` })))
-
   .map<Node>(({ id, type }) => ({
     id,
     // label,
@@ -177,6 +176,11 @@ const render = throttleAnimationFrame(WebGL.Renderer({
   debug: { stats, logPerformance: false }
   // debug: { stats, logPerformance: true }
 }))
+// const render = WebGL.Renderer({
+//   container,
+//   debug: { stats, logPerformance: false }
+//   // debug: { stats, logPerformance: true }
+// })
 
 
 /**
@@ -194,22 +198,32 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   zoom: 0.1,
   minZoom: 0.05,
   maxZoom: 2.5,
-  onNodeDrag: throttleAnimationFrame((_, { id }, x, y) => {
+  /**
+   * throttling both onNodeDrag and render breaks node position interpolation...
+   * dragging a node will interpolate it's new position unnecessarily on large graphs
+   */
+  // onNodeDrag: throttleAnimationFrame((_, { id }, x, y) => {
+  //   nodesById[id].x = x
+  //   nodesById[id].y = y
+  //   renderOptions.nodesEqual = () => false
+  //   renderOptions.edgesEqual = () => true
+  //   renderOptions.nodeIsEqual = (_: Node, next: Node) => next.id !== id
+  //   render({ nodes, edges, options: renderOptions })
+  // }),
+  onNodeDrag: (_, { id }, x, y) => {
     nodesById[id].x = x
     nodesById[id].y = y
     renderOptions.nodesEqual = () => false
-    renderOptions.edgesEqual = () => false
+    renderOptions.edgesEqual = () => true
     renderOptions.nodeIsEqual = (_: Node, next: Node) => next.id !== id
-    // renderOptions.edgeIsEqual = () => true,
     render({ nodes, edges, options: renderOptions })
-  }),
+  },
   onContainerDrag: (_, x, y) => {
     renderOptions.x = x
     renderOptions.y = y
     renderOptions.nodesEqual = () => true
     renderOptions.edgesEqual = () => true
     // renderOptions.nodeIsEqual = () => true
-    // renderOptions.edgeIsEqual = () => true,
     render({ nodes, edges, options: renderOptions })
   },
   onWheel: (_, x, y, zoom) => {
@@ -219,7 +233,6 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     renderOptions.nodesEqual = () => true
     renderOptions.edgesEqual = () => true
     // renderOptions.nodeIsEqual = () => true
-    // renderOptions.edgeIsEqual = () => true,
     render({ nodes, edges, options: renderOptions })
   }
 }
