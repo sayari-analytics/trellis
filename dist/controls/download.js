@@ -25,7 +25,7 @@ var styleButton = function (button) {
     button.style.color = DEFAULT_COLOR;
     return button;
 };
-exports.Control = function (_a) {
+var Control = function (_a) {
     var container = _a.container;
     var controlContainer = document.createElement('div');
     controlContainer.style.position = 'absolute';
@@ -81,4 +81,5 @@ exports.Control = function (_a) {
         };
     };
 };
+exports.Control = Control;
 //# sourceMappingURL=download.js.map

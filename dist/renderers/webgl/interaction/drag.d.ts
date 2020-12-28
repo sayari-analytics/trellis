@@ -1,18 +1,18 @@
 import * as PIXI from 'pixi.js-legacy';
-import { InternalRenderer } from '..';
+import { InternalRenderer, ViewportDragEvent } from '..';
 import { Node, Edge } from '../../..';
 /**
- * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
 export declare class Drag<N extends Node, E extends Edge> {
     private renderer;
-    private onContainerDrag;
+    private onViewportDrag;
     private paused;
     private last?;
     private current?;
     private moved;
-    constructor(renderer: InternalRenderer<N, E>, onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void);
+    constructor(renderer: InternalRenderer<N, E>, onViewportDrag: (event: ViewportDragEvent) => void);
     down: (event: PIXI.InteractionEvent) => void;
     move: (event: PIXI.InteractionEvent) => void;
     up: () => void;

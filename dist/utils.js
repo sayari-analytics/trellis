@@ -22,8 +22,9 @@ var __spread = (this && this.__spread) || function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.interpolate = exports.equals = exports.interpolateDuration = exports.interpolateInterval = exports.identity = exports.throttleAnimationFrame = exports.animationFrameLoop = exports.batch = exports.throttle = exports.noop = void 0;
 var d3_interpolate_1 = require("d3-interpolate");
-exports.noop = function () { };
-exports.throttle = function (cb, duration) {
+var noop = function () { };
+exports.noop = noop;
+var throttle = function (cb, duration) {
     var clear = true;
     return function () {
         var args = [];
@@ -39,7 +40,8 @@ exports.throttle = function (cb, duration) {
         }
     };
 };
-exports.batch = function (cb, duration) {
+exports.throttle = throttle;
+var batch = function (cb, duration) {
     var values = [];
     var clear = true;
     return function (arg) {
@@ -54,7 +56,8 @@ exports.batch = function (cb, duration) {
         values.push(arg);
     };
 };
-exports.animationFrameLoop = function (cb) {
+exports.batch = batch;
+var animationFrameLoop = function (cb) {
     var frame;
     var tick = function (time) {
         frame = requestAnimationFrame(tick);
@@ -63,7 +66,8 @@ exports.animationFrameLoop = function (cb) {
     frame = requestAnimationFrame(tick);
     return function () { return cancelAnimationFrame(frame); };
 };
-exports.throttleAnimationFrame = function (cb) {
+exports.animationFrameLoop = animationFrameLoop;
+var throttleAnimationFrame = function (cb) {
     var tailArgs;
     var clear = true;
     return function () {
@@ -87,8 +91,10 @@ exports.throttleAnimationFrame = function (cb) {
         }
     };
 };
-exports.identity = function (value) { return value; };
-exports.interpolateInterval = function (count, duration) {
+exports.throttleAnimationFrame = throttleAnimationFrame;
+var identity = function (value) { return value; };
+exports.identity = identity;
+var interpolateInterval = function (count, duration) {
     var i = 0;
     var interval = undefined;
     return function (cb) {
@@ -105,7 +111,8 @@ exports.interpolateInterval = function (count, duration) {
         }, duration / count);
     };
 };
-exports.interpolateDuration = function (duration) {
+exports.interpolateInterval = interpolateInterval;
+var interpolateDuration = function (duration) {
     var start;
     var end;
     var frame;
@@ -129,7 +136,8 @@ exports.interpolateDuration = function (duration) {
         frame = requestAnimationFrame(rafCallback);
     };
 };
-exports.equals = function (a, b) {
+exports.interpolateDuration = interpolateDuration;
+var equals = function (a, b) {
     if (a === b) {
         return true;
     }
@@ -157,7 +165,8 @@ exports.equals = function (a, b) {
     }
     return false;
 };
-exports.interpolate = function (from, to, duration) {
+exports.equals = equals;
+var interpolate = function (from, to, duration) {
     var elapsed = 0;
     var t1 = performance.now();
     var interpolator = d3_interpolate_1.interpolateNumber(from, to);
@@ -173,4 +182,5 @@ exports.interpolate = function (from, to, duration) {
         return { done: false, value: ease(elapsed / duration) };
     };
 };
+exports.interpolate = interpolate;
 //# sourceMappingURL=utils.js.map

@@ -44,7 +44,7 @@ var warn = utils_1.throttle(function (err) { return console.warn(err); }, 0);
  * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
  * delay.then((message) => console.log(message))
  */
-exports.Async = function (executor) { return function (onfulfilled) {
+var Async = function (executor) { return function (onfulfilled) {
     var cancelled = false;
     executor(function (result) {
         if (!cancelled) {
@@ -55,7 +55,8 @@ exports.Async = function (executor) { return function (onfulfilled) {
         cancelled = true;
     };
 }; };
-exports.FontLoader = function () {
+exports.Async = Async;
+var FontLoader = function () {
     var fontCache = {};
     var loadId = 0;
     var loading = new Set();
@@ -99,7 +100,8 @@ exports.FontLoader = function () {
         loading: function () { return loading.size > 0; }
     };
 };
-exports.ImageLoader = function () {
+exports.FontLoader = FontLoader;
+var ImageLoader = function () {
     var image_cache = {};
     var loadId = 0;
     var loading = new Set();
@@ -120,4 +122,5 @@ exports.ImageLoader = function () {
         loading: function () { return loading.size > 0; }
     };
 };
+exports.ImageLoader = ImageLoader;
 //# sourceMappingURL=Loader.js.map

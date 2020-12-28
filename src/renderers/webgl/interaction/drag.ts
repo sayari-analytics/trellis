@@ -1,24 +1,25 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '..'
+import { InternalRenderer, ViewportDragEvent } from '..'
 import { Node, Edge } from '../../..'
+import { clientPositionFromEvent } from '../utils'
 
 
 /**
- * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
 export class Drag <N extends Node, E extends Edge>{
 
   private renderer: InternalRenderer<N, E>
-  private onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void
+  private onViewportDrag: (event: ViewportDragEvent) => void
   private paused = false
   private last?: { x: number, y: number }
   private current?: number
   private moved = false
 
-  constructor(renderer: InternalRenderer<N, E>, onContainerDrag: (event: PIXI.InteractionEvent, x: number, y: number) => void) {
+  constructor(renderer: InternalRenderer<N, E>, onViewportDrag: (event: ViewportDragEvent) => void) {
     this.renderer = renderer
-    this.onContainerDrag = onContainerDrag
+    this.onViewportDrag = onViewportDrag
   }
 
   down = (event: PIXI.InteractionEvent) => {
@@ -26,7 +27,6 @@ export class Drag <N extends Node, E extends Edge>{
       return
     }
 
-    // this.renderer.app.view.style.cursor = 'move'
     this.last = { x: event.data.global.x, y: event.data.global.y }
     this.current = event.data.pointerId
   }
@@ -40,17 +40,30 @@ export class Drag <N extends Node, E extends Edge>{
       const x = event.data.global.x
       const y = event.data.global.y
 
-      const distX = x - this.last.x
-      const distY = y - this.last.y
-      if (this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-        const centerX = this.renderer.x + (distX / this.renderer.zoom)
-        const centerY = this.renderer.y + (distY / this.renderer.zoom)
+      const dx = x - this.last.x
+      const dy = y - this.last.y
+      if (this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
+        const viewportX = this.renderer.x + (dx / this.renderer.zoom)
+        const viewportY = this.renderer.y + (dy / this.renderer.zoom)
         this.last = { x, y }
         this.moved = true
 
-        this.renderer.expectedViewportXPosition = centerX
-        this.renderer.expectedViewportYPosition = centerY
-        this.onContainerDrag(event, centerX, centerY)
+        this.renderer.expectedViewportXPosition = viewportX
+        this.renderer.expectedViewportYPosition = viewportY
+
+        const local = this.renderer.root.toLocal(event.data.global)
+        const client = clientPositionFromEvent(event.data.originalEvent)
+
+        this.onViewportDrag({
+          type: 'viewportDrag',
+          x: local.x,
+          y: local.y,
+          clientX: client.x,
+          clientY: client.y,
+          viewportX,
+          viewportY,
+          target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+        })
       }
     }
   }
@@ -59,8 +72,6 @@ export class Drag <N extends Node, E extends Edge>{
     if (this.paused) {
       return
     }
-
-    // this.renderer.app.view.style.cursor = 'auto'
 
     this.last = undefined
     this.moved = false

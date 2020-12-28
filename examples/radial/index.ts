@@ -31,7 +31,7 @@ const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
     icon: {
       type: 'textIcon',
       family: 'Helvetica',
-      size: 18,
+      size: 12,
       color: '#FFF',
       text: '15',
     }
@@ -42,7 +42,7 @@ const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
     icon: {
       type: 'textIcon',
       family: 'Helvetica',
-      size: 18,
+      size: 12,
       color: '#FFF',
       text: '!',
     }
@@ -60,7 +60,7 @@ const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
     icon: {
       type: 'textIcon',
       family: 'Helvetica',
-      size: 18,
+      size: 12,
       color: '#FFF',
       text: '8',
     }
@@ -134,15 +134,11 @@ const layoutOptions: Radial.Options = {
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodePointerDown: (_, { id }, x, y) => {
+  onNodeDrag: ({ nodeX: x, nodeY: y, target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_, { id }, x, y) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    render({ nodes, edges, options: renderOptions })
-  },
-  onNodePointerEnter: (_, { id }) => {
+  onNodePointerEnter: ({ target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       style: {
@@ -154,7 +150,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_, { id }) => {
+  onNodePointerLeave: ({ target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       style: node.type === 'company' ?
@@ -163,11 +159,11 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_, { id }) => {
+  onEdgePointerEnter: ({ target: { id } }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_, { id }) => {
+  onEdgePointerLeave: ({ target: { id } }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },

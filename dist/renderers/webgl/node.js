@@ -94,8 +94,9 @@ var NodeRenderer = /** @class */ (function () {
                     _this.renderer.frontLabelLayer.addChild(_this.subgraphNodes[subgraphNodeId].labelContainer);
                 }
             }
-            var position = _this.renderer.root.toLocal(event.data.global);
-            (_b = (_a = _this.renderer).onNodePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x, position.y);
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            (_b = (_a = _this.renderer).onNodePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
         };
         this.pointerLeave = function (event) {
             var _a, _b;
@@ -115,8 +116,9 @@ var NodeRenderer = /** @class */ (function () {
                     _this.renderer.labelsLayer.addChild(_this.subgraphNodes[subgraphNodeId].labelContainer);
                 }
             }
-            var position = _this.renderer.root.toLocal(event.data.global);
-            (_b = (_a = _this.renderer).onNodePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, position.x, position.y);
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            (_b = (_a = _this.renderer).onNodePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
         };
         this.pointerDown = function (event) {
             var _a, _b;
@@ -131,13 +133,14 @@ var NodeRenderer = /** @class */ (function () {
             _this.renderer.zoomInteraction.pause();
             _this.renderer.dragInteraction.pause();
             _this.renderer.decelerateInteraction.pause();
-            var position = _this.renderer.root.toLocal(event.data.global);
-            _this.nodeMoveXOffset = position.x - _this.x;
-            _this.nodeMoveYOffset = position.y - _this.y;
-            (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            _this.nodeMoveXOffset = x - _this.x;
+            _this.nodeMoveYOffset = y - _this.y;
+            (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
         };
         this.pointerUp = function (event) {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             if (_this.renderer.clickedNode === undefined)
                 return;
             _this.renderer.clickedNode = undefined;
@@ -147,15 +150,17 @@ var NodeRenderer = /** @class */ (function () {
             _this.renderer.decelerateInteraction.resume();
             _this.nodeMoveXOffset = 0;
             _this.nodeMoveYOffset = 0;
+            var _j = _this.renderer.root.toLocal(event.data.global), x = _j.x, y = _j.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
             if (_this.renderer.dragging) {
                 _this.renderer.dragging = false;
-                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, _this.x, _this.y);
+                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: (_c = _this.node.x) !== null && _c !== void 0 ? _c : 0, nodeY: (_d = _this.node.y) !== null && _d !== void 0 ? _d : 0, target: _this.node });
             }
             else {
-                (_d = (_c = _this.renderer).onNodePointerUp) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, _this.x, _this.y);
+                (_f = (_e = _this.renderer).onNodePointerUp) === null || _f === void 0 ? void 0 : _f.call(_e, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
                 if (_this.doubleClick) {
                     _this.doubleClick = false;
-                    (_f = (_e = _this.renderer).onNodeDoubleClick) === null || _f === void 0 ? void 0 : _f.call(_e, event, _this.node, _this.x, _this.y);
+                    (_h = (_g = _this.renderer).onNodeDoubleClick) === null || _h === void 0 ? void 0 : _h.call(_g, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
                 }
             }
         };
@@ -163,16 +168,17 @@ var NodeRenderer = /** @class */ (function () {
             var _a, _b, _c, _d;
             if (_this.renderer.clickedNode === undefined)
                 return;
-            var position = _this.renderer.root.toLocal(event.data.global);
-            var x = position.x - _this.nodeMoveXOffset;
-            var y = position.y - _this.nodeMoveYOffset;
-            _this.expectedNodeXPosition = x;
-            _this.expectedNodeYPosition = y;
+            var _e = _this.renderer.root.toLocal(event.data.global), x = _e.x, y = _e.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            var nodeX = x - _this.nodeMoveXOffset;
+            var nodeY = y - _this.nodeMoveYOffset;
+            _this.expectedNodeXPosition = nodeX;
+            _this.expectedNodeYPosition = nodeY;
             if (!_this.renderer.dragging) {
                 _this.renderer.dragging = true;
-                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.node, x, y);
+                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
             }
-            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.node, x, y);
+            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
@@ -289,7 +295,7 @@ var NodeRenderer = /** @class */ (function () {
                     _this.renderer.dirty = true;
                     _this.labelSprite = new PIXI.Text(_this.label, {
                         fontFamily: _this.labelFamily,
-                        fontSize: ((_a = _this.labelSize) !== null && _a !== void 0 ? _a : labelSize) * 2.5,
+                        fontSize: ((_a = _this.labelSize) !== null && _a !== void 0 ? _a : DEFAULT_LABEL_SIZE) * 2.5,
                         fill: _this.labelColor,
                         lineJoin: 'round',
                         stroke: _this.labelBackground === undefined ? '#fff' : undefined,
@@ -440,6 +446,14 @@ var NodeRenderer = /** @class */ (function () {
                 this.iconSprite = undefined;
                 (_6 = this.iconLoader) === null || _6 === void 0 ? void 0 : _6.call(this);
             }
+            /**
+             * TODO - ensure that icons are added below badges
+             * if (this.badgeSpriteContainer === undefined) {
+             *   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
+             * } else {
+             *   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
+             * }
+             */
             if (((_7 = this.icon) === null || _7 === void 0 ? void 0 : _7.type) === 'textIcon') {
                 this.iconLoader = this.renderer.fontLoader.load(this.icon.family)(function (family) {
                     var _a;
@@ -447,14 +461,6 @@ var NodeRenderer = /** @class */ (function () {
                         return;
                     _this.renderer.dirty = true;
                     _this.iconSprite = _this.renderer.fontIcon.create(_this.icon.text, _this.icon.family, _this.icon.size, 'normal', _this.icon.color);
-                    /**
-                     * TODO - ensure that icons are added below badges
-                     */
-                    // if (this.badgeSpriteContainer === undefined) {
-                    //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
-                    // } else {
-                    //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
-                    // }
                     _this.nodeContainer.addChild(_this.iconSprite);
                 });
             }
@@ -465,14 +471,6 @@ var NodeRenderer = /** @class */ (function () {
                         return;
                     _this.renderer.dirty = true;
                     _this.iconSprite = _this.renderer.image.create(_this.icon.url, _this.icon.scale, _this.icon.offsetX, _this.icon.offsetY);
-                    /**
-                     * TODO - ensure that icons are added below badges
-                     */
-                    // if (this.badgeSpriteContainer === undefined) {
-                    //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
-                    // } else {
-                    //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
-                    // }
                     _this.nodeContainer.addChild(_this.iconSprite);
                 });
             }

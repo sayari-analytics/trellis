@@ -1,4 +1,4 @@
-import * as PIXI from 'pixi.js-legacy'
+import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../renderers/webgl'
 
 
 const DEFAULT_TOP = '100px'
@@ -21,10 +21,10 @@ export type Options = Partial<{
   left: number
   right: number
   bottom: number
-  onSelection: (event: PIXI.InteractionEvent, x: number, y: number) => void // TODO - (event: PIXI.InteractionEvent, x: number, y: number, selected: string[], annotation: Circle) => void
-  onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void
-  onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => void
+  onSelection: (event: ViewportDragEvent) => void // TODO - (event: ViewportDragEvent, selected: Node[]) => void
+  onViewportPointerDown: (event: ViewportPointerEvent) => void
+  onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportPointerUp: (event: ViewportPointerEvent) => void
 }>
 
 
@@ -102,33 +102,33 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
     }
 
     return {
-      onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => {
+      onViewportPointerDown: (event: ViewportPointerEvent) => {
         if (selected) {
           container.style.cursor = 'copy'
-          selectionStartX = x
-          selectionStartY = y
+          selectionStartX = event.x
+          selectionStartY = event.y
         } else {
           container.style.cursor = 'move'
         }
 
-        options.onContainerPointerDown?.(event, x, y)
+        options.onViewportPointerDown?.(event)
       },
-      onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => {
-        if (selected && selectionStartX !== undefined && selectionStartY !== undefined && event) {
-          console.log(`x0: ${selectionStartX.toFixed(2)} y0: ${selectionStartY.toFixed(2)} x1: ${x.toFixed(2)} y1: ${y.toFixed(2)} radius: ${Math.hypot(x - selectionStartX, y - selectionStartY).toFixed(2)}`)
+      onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
+        if (selected && selectionStartX !== undefined && selectionStartY !== undefined && event.type === 'viewportDrag') {
+          console.log(`x0: ${selectionStartX.toFixed(2)} y0: ${selectionStartY.toFixed(2)} x1: ${event.x.toFixed(2)} y1: ${event.y.toFixed(2)} radius: ${Math.hypot(event.x - selectionStartX, event.y - selectionStartY).toFixed(2)}`)
           /**
            * TODO -
            * - calculate selected nodes
            * - inject circle annotation
            */
-          options.onSelection?.(event, x, y)
+          options.onSelection?.(event)
         } else {
-          options.onContainerDrag?.(event, x, y)
+          options.onViewportDrag?.(event)
         }
       },
-      onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => {
+      onViewportPointerUp: (event: ViewportPointerEvent) => {
         container.style.cursor = 'auto'
-        options.onContainerPointerUp?.(event, x, y)
+        options.onViewportPointerUp?.(event)
       },
     }
   }

@@ -16,7 +16,7 @@ var react_1 = require("react");
 var __1 = require("../..");
 var defaultNodesEqual = function (prev, current) { return prev === current; };
 var defaultEdgesEqual = function (prev, current) { return prev === current; };
-exports.Renderer = function (props) {
+var Renderer = function (props) {
     var ref = react_1.useRef(null);
     var renderer = react_1.useRef();
     react_1.useEffect(function () {
@@ -33,4 +33,5 @@ exports.Renderer = function (props) {
     }, [props]);
     return (react_1.createElement('div', { ref: ref }));
 };
+exports.Renderer = Renderer;
 //# sourceMappingURL=renderer.js.map

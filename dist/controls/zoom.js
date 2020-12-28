@@ -32,7 +32,7 @@ var styleButton = function (button) {
     button.onblur = function () { return button.style.boxShadow = 'none'; };
     return button;
 };
-exports.zoomTo = function (nodes, options) {
+var zoomTo = function (nodes, options) {
     var e_1, _a;
     var result = {
         zoom: 1,
@@ -52,7 +52,8 @@ exports.zoomTo = function (nodes, options) {
     }
     return result;
 };
-exports.fit = function (zoom, position, nodes, options) {
+exports.zoomTo = zoomTo;
+var fit = function (zoom, position, nodes, options) {
     var e_2, _a;
     var result = {
         zoom: 1,
@@ -72,13 +73,15 @@ exports.fit = function (zoom, position, nodes, options) {
     }
     return result;
 };
-exports.clampZoom = function (min, max, zoom) { return Math.max(min, Math.min(max, zoom)); };
+exports.fit = fit;
+var clampZoom = function (min, max, zoom) { return Math.max(min, Math.min(max, zoom)); };
+exports.clampZoom = clampZoom;
 /**
  * TODO
  * - disable on min/max zoom
  * - tooltips
  */
-exports.Control = function (_a) {
+var Control = function (_a) {
     var container = _a.container;
     var controlContainer = document.createElement('div');
     controlContainer.style.position = 'absolute';
@@ -126,4 +129,5 @@ exports.Control = function (_a) {
         zoomOut.onpointerdown = (_c = options.onZoomOut) !== null && _c !== void 0 ? _c : null;
     };
 };
+exports.Control = Control;
 //# sourceMappingURL=zoom.js.map

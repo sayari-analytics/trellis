@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '..'
+import { InternalRenderer, ViewportWheelEvent } from '..'
 import { Node, Edge } from '../../..'
 
 
@@ -10,22 +10,22 @@ import { Node, Edge } from '../../..'
 export class Zoom <N extends Node, E extends Edge>{
 
   private renderer: InternalRenderer<N, E>
-  private onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void
+  private onViewportWheel: (event: ViewportWheelEvent) => void
   private paused = false
 
-  constructor(renderer: InternalRenderer<N, E>, onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void) {
+  constructor(renderer: InternalRenderer<N, E>, onViewportWheel: (event: ViewportWheelEvent) => void) {
     this.renderer = renderer
-    this.onContainerWheel = onContainerWheel
+    this.onViewportWheel = onViewportWheel
   }
 
-  wheel = (e: WheelEvent) => {
-    e.preventDefault()
+  wheel = (event: WheelEvent) => {
+    event.preventDefault()
 
     if (this.paused) {
       return
     }
 
-    const step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500
+    const step = -event.deltaY * (event.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
     const zoomStart = this.renderer.zoom
     const zoomEnd = Math.max(this.renderer.minZoom, Math.min(this.renderer.maxZoom, zoomStart * change))
@@ -38,7 +38,7 @@ export class Zoom <N extends Node, E extends Edge>{
     }
 
     const globalStart = new PIXI.Point()
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(globalStart, e.clientX, e.clientY)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(globalStart, event.clientX, event.clientY)
     const localStart = this.renderer.root.toLocal(globalStart)
 
     this.renderer.root.scale.set(zoomEnd)
@@ -47,13 +47,24 @@ export class Zoom <N extends Node, E extends Edge>{
     const rootY = this.renderer.root.y + globalStart.y - globalEnd.y
     this.renderer.root.scale.set(zoomStart)
 
-    const x = (rootX - (this.renderer.width / 2)) / zoomEnd
-    const y = (rootY - (this.renderer.height / 2)) / zoomEnd
+    const viewportX = (rootX - (this.renderer.width / 2)) / zoomEnd
+    const viewportY = (rootY - (this.renderer.height / 2)) / zoomEnd
 
-    this.renderer.expectedViewportXPosition = x
-    this.renderer.expectedViewportYPosition = y
+    this.renderer.expectedViewportXPosition = viewportX
+    this.renderer.expectedViewportYPosition = viewportY
     this.renderer.expectedViewportZoom = zoomEnd
-    this.onContainerWheel(e, x, y, zoomEnd)
+
+    this.onViewportWheel({
+      type: 'viewportWheel',
+      x: localStart.x,
+      y: localStart.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      viewportX,
+      viewportY,
+      viewportZoom: zoomEnd,
+      target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+    })
   }
 
   pause() {

@@ -80,7 +80,8 @@ var EdgeRenderer = /** @class */ (function () {
                 return;
             _this.renderer.hoveredEdge = _this;
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
-            (_b = (_a = _this.renderer).onEdgePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            (_b = (_a = _this.renderer).onEdgePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
         };
         this.pointerLeave = function (event) {
             var _a, _b;
@@ -88,7 +89,8 @@ var EdgeRenderer = /** @class */ (function () {
                 return;
             _this.renderer.hoveredEdge = undefined;
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
-            (_b = (_a = _this.renderer).onEdgePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            (_b = (_a = _this.renderer).onEdgePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
@@ -107,7 +109,8 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.dragInteraction.pause();
             _this.renderer.decelerateInteraction.pause();
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
-            (_b = (_a = _this.renderer).onEdgePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            (_b = (_a = _this.renderer).onEdgePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
         };
         this.pointerUp = function (event) {
             var _a, _b, _c, _d;
@@ -118,10 +121,11 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.dragInteraction.resume();
             _this.renderer.decelerateInteraction.resume();
             var _e = _this.renderer.root.toLocal(event.data.global), x = _e.x, y = _e.y;
-            (_b = (_a = _this.renderer).onEdgePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, event, _this.edge, x, y);
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            (_b = (_a = _this.renderer).onEdgePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
             if (_this.doubleClick) {
                 _this.doubleClick = false;
-                (_d = (_c = _this.renderer).onEdgeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, event, _this.edge, x, y);
+                (_d = (_c = _this.renderer).onEdgeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
             }
         };
         this.renderer = renderer;
@@ -250,7 +254,7 @@ var EdgeRenderer = /** @class */ (function () {
                     _this.renderer.dirty = true;
                     _this.labelSprite = new PIXI.Text(_this.label, {
                         fontFamily: _this.labelFamily,
-                        fontSize: ((_a = _this.labelSize) !== null && _a !== void 0 ? _a : labelSize) * 2.5,
+                        fontSize: ((_a = _this.labelSize) !== null && _a !== void 0 ? _a : DEFAULT_LABEL_SIZE) * 2.5,
                         fill: _this.labelColor,
                         lineJoin: 'round',
                         stroke: '#fafafa',

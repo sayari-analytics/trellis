@@ -1,19 +1,19 @@
-import * as PIXI from 'pixi.js-legacy';
+import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../renderers/webgl';
 export declare type Options = Partial<{
     className: string;
     top: number;
     left: number;
     right: number;
     bottom: number;
-    onSelection: (event: PIXI.InteractionEvent, x: number, y: number) => void;
-    onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => void;
-    onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;
-    onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => void;
+    onSelection: (event: ViewportDragEvent) => void;
+    onViewportPointerDown: (event: ViewportPointerEvent) => void;
+    onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
+    onViewportPointerUp: (event: ViewportPointerEvent) => void;
 }>;
 export declare const Control: ({ container }: {
     container: HTMLDivElement;
 }) => (options: Options) => {
-    onContainerPointerDown: (event: PIXI.InteractionEvent, x: number, y: number) => void;
-    onContainerDrag: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void;
-    onContainerPointerUp: (event: PIXI.InteractionEvent, x: number, y: number) => void;
+    onViewportPointerDown: (event: ViewportPointerEvent) => void;
+    onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
+    onViewportPointerUp: (event: ViewportPointerEvent) => void;
 };

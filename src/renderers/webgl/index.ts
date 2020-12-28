@@ -13,9 +13,11 @@ import { ImageSprite } from './sprites/ImageSprite'
 import { FontIconSprite } from './sprites/FontIconSprite'
 import { FontLoader, ImageLoader } from './Loader'
 import { CircleAnnotationRenderer } from './annotations/circle'
+import { clientPositionFromEvent } from './utils'
 
 
 install(PIXI)
+
 
 export type TextIcon = {
   type: 'textIcon'
@@ -25,6 +27,7 @@ export type TextIcon = {
   size: number
 }
 
+
 export type ImageIcon = {
   type: 'imageIcon'
   url: string
@@ -32,6 +35,7 @@ export type ImageIcon = {
   offsetX?: number;
   offsetY?: number;
 }
+
 
 export type NodeStyle = {
   color?: string
@@ -55,6 +59,7 @@ export type NodeStyle = {
   labelBackground?: string
 }
 
+
 export type EdgeStyle = {
   width?: number
   stroke?: string
@@ -65,6 +70,28 @@ export type EdgeStyle = {
   labelWordWrap?: number
   arrow?: 'forward' | 'reverse' | 'both' | 'none'
 }
+
+
+export type NodePointerEvent = { type: 'nodePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Node }
+
+
+export type NodeDragEvent = { type: 'nodeDrag', x: number, y: number, clientX: number, clientY: number, nodeX: number, nodeY: number, target: Graph.Node }
+
+
+export type EdgePointerEvent = { type: 'edgePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Edge }
+
+
+export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Viewport }
+
+
+export type ViewportDragEvent = { type: 'viewportDrag', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, target: Graph.Viewport }
+
+
+export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', viewportX: number, viewportY: number, target: Graph.Viewport }
+
+
+export type ViewportWheelEvent = { type: 'viewportWheel', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, viewportZoom: number, target: Graph.Viewport }
+
 
 export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> = {
   width?: number
@@ -81,25 +108,26 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   edgesEqual?: (previous: E[], current: E[]) => boolean
   nodeIsEqual?: (previous: N, current: N) => boolean
   edgeIsEqual?: (previous: E, current: E) => boolean
-  onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDragEnd?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDragStart?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodePointerUp?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodePointerLeave?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDoubleClick?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onEdgePointerEnter?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgePointerDown?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerPointerMove?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerDrag?: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void
-  onContainerPointerUp?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerPointerLeave?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void
+  onNodePointerEnter?: (event: NodePointerEvent) => void
+  onNodePointerDown?: (event: NodePointerEvent) => void
+  onNodeDragStart?: (event: NodeDragEvent) => void
+  onNodeDrag?: (event: NodeDragEvent) => void
+  onNodeDragEnd?: (event: NodeDragEvent) => void
+  onNodePointerUp?: (event: NodePointerEvent) => void
+  onNodePointerLeave?: (event: NodePointerEvent) => void
+  onNodeDoubleClick?: (event: NodePointerEvent) => void
+  onEdgePointerEnter?: (event: EdgePointerEvent) => void
+  onEdgePointerDown?: (event: EdgePointerEvent) => void
+  onEdgePointerUp?: (event: EdgePointerEvent) => void
+  onEdgePointerLeave?: (event: EdgePointerEvent) => void
+  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
+  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
+  onViewportPointerDown?: (event: ViewportPointerEvent) => void
+  onViewportPointerMove?: (event: ViewportPointerEvent) => void
+  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportPointerUp?: (event: ViewportPointerEvent) => void
+  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
+  onViewportWheel?: (event: ViewportWheelEvent) => void
 }
 
 
@@ -172,26 +200,26 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private targetZoom = RENDERER_OPTIONS.zoom
   private firstRender = true
 
-  onContainerPointerEnter?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerPointerDown?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerDrag?: (event: PIXI.InteractionEvent | undefined, x: number, y: number) => void
-  onContainerPointerMove?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerPointerUp?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onContainerPointerLeave?: (event: PIXI.InteractionEvent, x: number, y: number) => void
-  onWheel?: (e: WheelEvent, x: number, y: number, scale: number) => void
-  onNodePointerEnter?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodePointerDown?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDrag?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDragEnd?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDragStart?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodePointerUp?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodePointerLeave?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onNodeDoubleClick?: (event: PIXI.InteractionEvent, node: N, x: number, y: number) => void
-  onEdgePointerEnter?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgePointerDown?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
+  onNodePointerEnter?: (event: NodePointerEvent) => void
+  onNodePointerDown?: (event: NodePointerEvent) => void
+  onNodeDragStart?: (event: NodeDragEvent) => void
+  onNodeDrag?: (event: NodeDragEvent) => void
+  onNodeDragEnd?: (event: NodeDragEvent) => void
+  onNodePointerUp?: (event: NodePointerEvent) => void
+  onNodePointerLeave?: (event: NodePointerEvent) => void
+  onNodeDoubleClick?: (event: NodePointerEvent) => void
+  onEdgePointerEnter?: (event: EdgePointerEvent) => void
+  onEdgePointerDown?: (event: EdgePointerEvent) => void
+  onEdgePointerUp?: (event: EdgePointerEvent) => void
+  onEdgePointerLeave?: (event: EdgePointerEvent) => void
+  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
+  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
+  onViewportPointerDown?: (event: ViewportPointerEvent) => void
+  onViewportPointerMove?: (event: ViewportPointerEvent) => void
+  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportPointerUp?: (event: ViewportPointerEvent) => void
+  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
+  onViewportWheel?: (event: ViewportWheelEvent) => void
   update: (graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => void
 
   constructor(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
@@ -229,13 +257,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.root.addChild(this.frontNodeLayer)
     this.root.addChild(this.frontLabelLayer)
 
-    this.zoomInteraction = new Zoom(this, (e, x, y, zoom) => this.onWheel?.(e, x, y, zoom))
-    this.dragInteraction = new Drag(this, (e, x, y) => this.onContainerDrag?.(e, x, y))
-    this.decelerateInteraction = new Decelerate(this, (x, y) => this.onContainerDrag?.(undefined, x, y))
+    this.zoomInteraction = new Zoom(this, (event) => this.onViewportWheel?.(event))
+    this.dragInteraction = new Drag(this, (event) => this.onViewportDrag?.(event))
+    this.decelerateInteraction = new Decelerate(this, (event) => this.onViewportDrag?.(event))
 
     const pointerEnter = (event: PIXI.InteractionEvent) => {
       const { x, y } = this.root.toLocal(event.data.global)
-      this.onContainerPointerEnter?.(event, x, y)
+      const client = clientPositionFromEvent(event.data.originalEvent)
+      this.onViewportPointerEnter?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom } })
     }
     const pointerDown = (event: PIXI.InteractionEvent) => {
       this.dragInteraction.down(event)
@@ -244,17 +273,17 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       if (this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined) {
         this.clickedContainer = true
         const { x, y } = this.root.toLocal(event.data.global)
-        this.onContainerPointerDown?.(event, x, y)
+        const client = clientPositionFromEvent(event.data.originalEvent)
+        this.onViewportPointerDown?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom } })
       }
     }
     const pointerMove = (event: PIXI.InteractionEvent) => {
       this.dragInteraction.move(event)
       this.decelerateInteraction.move()
 
-      if (this.onContainerPointerMove) {
-        const { x, y } = this.root.toLocal(event.data.global)
-        this.onContainerPointerMove(event, x, y)
-      }
+      const { x, y } = this.root.toLocal(event.data.global)
+      const client = clientPositionFromEvent(event.data.originalEvent)
+      this.onViewportPointerMove?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom } })
     }
     const pointerUp = (event: PIXI.InteractionEvent) => {
       this.dragInteraction.up()
@@ -263,12 +292,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       if (this.clickedContainer) {
         this.clickedContainer = false
         const { x, y } = this.root.toLocal(event.data.global)
-        this.onContainerPointerUp?.(event, x, y)
+        const client = clientPositionFromEvent(event.data.originalEvent)
+        this.onViewportPointerUp?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom } })
       }
     }
     const pointerLeave = (event: PIXI.InteractionEvent) => {
       const { x, y } = this.root.toLocal(event.data.global)
-      this.onContainerPointerLeave?.(event, x, y)
+      const client = clientPositionFromEvent(event.data.originalEvent)
+      this.onViewportPointerLeave?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom } })
     }
 
     ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerenter', pointerEnter)
@@ -305,17 +336,17 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       animatePosition = RENDERER_OPTIONS.animatePosition, animateRadius = RENDERER_OPTIONS.animateRadius, animateViewport = RENDERER_OPTIONS.animateViewport,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onNodeDragEnd, onNodeDragStart,
-      onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
-      onContainerPointerEnter, onContainerPointerDown, onContainerDrag, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, onWheel,
+      onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave, onEdgeDoubleClick,
+      onViewportPointerEnter, onViewportPointerDown, onViewportDrag, onViewportPointerMove, onViewportPointerUp, onViewportPointerLeave, onViewportWheel,
     } = RENDERER_OPTIONS,
     annotations
   }: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
-    this.onContainerPointerEnter = onContainerPointerEnter
-    this.onContainerPointerDown = onContainerPointerDown
-    this.onContainerDrag = onContainerDrag
-    this.onContainerPointerMove = onContainerPointerMove
-    this.onContainerPointerUp = onContainerPointerUp
-    this.onContainerPointerLeave = onContainerPointerLeave
+    this.onViewportPointerEnter = onViewportPointerEnter
+    this.onViewportPointerDown = onViewportPointerDown
+    this.onViewportDrag = onViewportDrag
+    this.onViewportPointerMove = onViewportPointerMove
+    this.onViewportPointerUp = onViewportPointerUp
+    this.onViewportPointerLeave = onViewportPointerLeave
     this.onNodePointerEnter = onNodePointerEnter
     this.onNodePointerDown = onNodePointerDown
     this.onNodeDrag = onNodeDrag
@@ -328,7 +359,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onEdgePointerDown = onEdgePointerDown
     this.onEdgePointerUp = onEdgePointerUp
     this.onEdgePointerLeave = onEdgePointerLeave
-    this.onWheel = onWheel
+    this.onEdgeDoubleClick = onEdgeDoubleClick
+    this.onViewportWheel = onViewportWheel
     this.animateViewport = animateViewport
     this.animatePosition = animatePosition
     this.animateRadius = animateRadius

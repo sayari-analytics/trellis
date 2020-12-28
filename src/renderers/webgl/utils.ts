@@ -41,6 +41,13 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 }
 
 
+export const clientPositionFromEvent = (event: MouseEvent | TouchEvent | PointerEvent) => (
+  event instanceof TouchEvent ?
+    { x: event.touches[0].clientX, y: event.touches[0].clientY } :
+    { x: event.clientX, y: event.clientY }
+)
+
+
 export const HALF_PI = Math.PI / 2
 
 

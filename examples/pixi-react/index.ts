@@ -83,12 +83,6 @@ const App: FunctionComponent = () => {
     force({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => setGraph((graph) => ({ ...graph, nodes, edges })))
   }, [])
 
-  const onContainerDrag = useCallback((_, x: number, y: number) => {
-    setGraph((graph) => ({ ...graph, x, y }))
-  }, [])
-  const onWheel = useCallback((_, x: number, y: number, zoom: number) => {
-    setGraph((graph) => ({ ...graph, x, y, zoom }))
-  }, [])
   const onZoomIn = useCallback(() => {
     setGraph((graph) => ({
       ...graph,
@@ -101,19 +95,13 @@ const App: FunctionComponent = () => {
       zoom: clampZoom(graph.minZoom, graph.maxZoom, graph.zoom * 0.6)
     }))
   }, [])
-  const onNodePointerDown = useCallback((_, { id }: Node, x: number, y: number) => {
-    setGraph((graph) => ({
-      ...graph,
-      nodes: graph.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
-    }))
-  }, [])
-  const onNodeDrag = useCallback((_, { id }: Node, x: number, y: number) => {
+  const onNodeDrag = useCallback(({ nodeX: x, nodeY: y, target: { id } }: WebGL.NodeDragEvent) => {
     setGraph((graph) => ({
       ...graph,
       nodes: graph.nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     }))
   }, [])
-  const onNodePointerEnter = useCallback((_, { id }: Node) => {
+  const onNodePointerEnter = useCallback(({ target: { id } }: WebGL.NodePointerEvent) => {
     setGraph((graph) => ({
       ...graph,
       nodes: graph.nodes.map((node) => (node.id === id ?
@@ -122,7 +110,7 @@ const App: FunctionComponent = () => {
       )),
     }))
   }, [])
-  const onNodePointerLeave = useCallback((_, { id }: Node) => {
+  const onNodePointerLeave = useCallback(({ target: { id } }: WebGL.NodePointerEvent) => {
     setGraph((graph) => ({
       ...graph,
       nodes: graph.nodes.map((node) => (node.id === id ? {
@@ -134,35 +122,35 @@ const App: FunctionComponent = () => {
       } : node))
     }))
   }, [])
-  const onEdgePointerEnter = useCallback((_, { id }: Edge) => {
+  const onEdgePointerEnter = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
     setGraph((graph) => ({
       ...graph,
       edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     }))
   }, [])
-  const onEdgePointerLeave = useCallback((_, { id }: Edge) => {
+  const onEdgePointerLeave = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
     setGraph((graph) => ({
       ...graph,
       edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     }))
   }, [])
-  const onNodeDoubleClick = useCallback((_, clickedNode) => {
-    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: COMPANY_STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: COMPANY_STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: COMPANY_STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: COMPANY_STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: COMPANY_STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: COMPANY_STYLE },
+  const onNodeDoubleClick = useCallback(({ target }: WebGL.NodePointerEvent) => {
+    const subgraphNodes = cluster((target.subgraph?.nodes ?? []).concat([
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`, style: COMPANY_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`, style: COMPANY_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: COMPANY_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: COMPANY_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: COMPANY_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: COMPANY_STYLE },
     ]))
-    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
+    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
 
     setGraph((graph) => ({
       ...graph,
       nodes: subgraph(
         graph.nodes,
         graph.nodes.map((node) => {
-          if (node.id === clickedNode.id) {
+          if (node.id === target.id) {
             return {
               ...node,
               radius,
@@ -179,7 +167,7 @@ const App: FunctionComponent = () => {
       )
     }))
   }, [graph])
-  const onContainerPointerUp = useCallback(() => {
+  const onViewportPointerUp = useCallback(() => {
     setGraph((graph) => ({
       ...graph,
       nodes: subgraph(
@@ -193,6 +181,12 @@ const App: FunctionComponent = () => {
       )
     }))
   }, [graph])
+  const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: WebGL.ViewportDragEvent | WebGL.ViewportDragDecelerateEvent) => {
+    setGraph((graph) => ({ ...graph, x, y }))
+  }, [])
+  const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: WebGL.ViewportWheelEvent) => {
+    setGraph((graph) => ({ ...graph, x, y, zoom }))
+  }, [])
 
   return (
     createElement(ReactResizeDetector, {},
@@ -213,16 +207,16 @@ const App: FunctionComponent = () => {
               zoom: graph.zoom,
               minZoom: graph.minZoom,
               maxZoom: graph.maxZoom,
-              onNodePointerDown,
               onNodeDrag,
               onNodePointerEnter,
               onNodePointerLeave,
               onEdgePointerEnter,
               onEdgePointerLeave,
               onNodeDoubleClick,
-              onContainerPointerUp,
-              onWheel,
-              onContainerDrag,
+              onViewportPointerUp,
+              onViewportWheel,
+              onViewportDrag,
+              debug: { stats }
             })
           ))
         ))

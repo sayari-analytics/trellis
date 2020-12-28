@@ -1,4 +1,4 @@
-import { InternalRenderer } from '..'
+import { InternalRenderer, ViewportDragDecelerateEvent } from '..'
 import { Node, Edge } from '../../..'
 
 
@@ -9,7 +9,7 @@ import { Node, Edge } from '../../..'
 export class Decelerate <N extends Node, E extends Edge>{
 
   private renderer: InternalRenderer<N, E>
-  onContainerDecelerate: (x: number, y: number) => void
+  onViewportDecelerate: (event: ViewportDragDecelerateEvent) => void
   private paused = false
   private saved: { x: number, y: number, time: number }[] = []
   private x?: number
@@ -19,9 +19,9 @@ export class Decelerate <N extends Node, E extends Edge>{
   private percentChangeX = this.friction
   private percentChangeY = this.friction
 
-  constructor(renderer: InternalRenderer<N, E>, onContainerDecelerate: (x: number, y: number) => void) {
+  constructor(renderer: InternalRenderer<N, E>, onViewportDecelerate: (event: ViewportDragDecelerateEvent) => void) {
     this.renderer = renderer
-    this.onContainerDecelerate = onContainerDecelerate
+    this.onViewportDecelerate = onViewportDecelerate
   }
 
   down = () => {
@@ -82,7 +82,12 @@ export class Decelerate <N extends Node, E extends Edge>{
     if (x || y) {
       this.renderer.expectedViewportXPosition = x ?? this.renderer.x
       this.renderer.expectedViewportYPosition = y ?? this.renderer.y
-      this.onContainerDecelerate(x ?? this.renderer.x, y ?? this.renderer.y) // TODO - expose this as a more generic function
+      this.onViewportDecelerate({
+        type: 'viewportDragDecelarate',
+        viewportX: x ?? this.renderer.x,
+        viewportY: y ?? this.renderer.y,
+        target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+      })
     }
   }
 

@@ -104,17 +104,12 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const imageRenderer = Png.Renderer()
 const render = WebGL.Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: false }
 })
+let selection: Graph.Annotation | undefined
 const force = Force.Layout()
 const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
-
-
-/**
- * Create Handlers
- */
-// TODO
 
 
 /**
@@ -125,11 +120,11 @@ zoomControl({
   top: 80,
   onZoomIn: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.5)
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
   onZoomOut: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.5)
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
 })
 
@@ -137,10 +132,20 @@ zoomControl({
 /**
  * Create Selection Controls
  */
+let selectionStartX: number | undefined
+let selectionStartY: number | undefined
 const selectionControl = Selection.Control({ container })
-const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = selectionControl({
+const { onViewportPointerDown, onViewportDrag, onViewportPointerUp } = selectionControl({
   top: 160,
-  onContainerPointerUp: () => {
+  onViewportPointerDown: ({ x, y }) => {
+    selectionStartX = x
+    selectionStartY = y
+  },
+  onViewportPointerUp: () => {
+    selectionStartX = undefined
+    selectionStartY = undefined
+    selection = undefined
+
     nodes = subgraph(
       nodes,
       nodes.map((node) => (node.subgraph ? {
@@ -151,13 +156,30 @@ const { onContainerPointerDown, onContainerDrag, onContainerPointerUp } = select
       } : node))
     )
 
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onContainerDrag: (_, x, y) => {
-    renderOptions.x = x
-    renderOptions.y = y
-    render({ nodes, edges, options: renderOptions })
+  onViewportDrag: ({ viewportX, viewportY }) => {
+    renderOptions.x = viewportX
+    renderOptions.y = viewportY
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
+  onSelection: ({ x, y }) => {
+    // console.log(Math.hypot(x - selectionStartX!, y - selectionStartY!))
+    selection = {
+      type: 'circle',
+      id: 'selection',
+      x: selectionStartX!,
+      y: selectionStartY!,
+      radius: Math.hypot(x - selectionStartX!, y - selectionStartY!),
+      style: {
+        color: '#eee',
+        stroke: {
+          width: 2,
+          color: '#ccc'
+        }
+      }
+    }
+  }
 })
 
 
@@ -200,17 +222,11 @@ const renderOptions: WebGL.Options = {
   maxZoom: 2.5,
   nodesEqual: (prev, current) => prev === current,
   edgesEqual: (prev, current) => prev === current,
-  onNodePointerDown: (_, { id }, x, y) => {
-    // renderOptions.x = -x
-    // renderOptions.y = -y
+  onNodeDrag: ({ nodeX: x, nodeY: y, target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onNodeDrag: (_, { id }, x, y) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    render({ nodes, edges, options: renderOptions })
-  },
-  onNodePointerEnter: (_, { id }) => {
+  onNodePointerEnter: ({ target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       style: {
@@ -220,9 +236,9 @@ const renderOptions: WebGL.Options = {
           node.style?.stroke?.map((stroke) => ({ ...stroke, color: '#CCC' }))
       }
     } : node))
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onNodePointerLeave: (_, { id }) => {
+  onNodePointerLeave: ({ target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? {
       ...node,
       style: {
@@ -232,28 +248,28 @@ const renderOptions: WebGL.Options = {
           createPersonStyle(48).stroke
       }
     } : node))
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onEdgePointerEnter: (_, { id }) => {
+  onEdgePointerEnter: ({ target: { id } }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onEdgePointerLeave: (_, { id }) => {
+  onEdgePointerLeave: ({ target: { id } }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onNodeDoubleClick: (_, clickedNode) => {
-    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 10, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: createSubgraphStyle(10) },
+  onNodeDoubleClick: ({ target }) => {
+    const subgraphNodes = cluster((target.subgraph?.nodes ?? []).concat([
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`, radius: 10, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`, style: createSubgraphStyle(10) },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`, radius: 10, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`, style: createSubgraphStyle(10) },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 10, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 10, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: createSubgraphStyle(10) },
     ]))
-    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
+    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
 
     nodes = subgraph(
       nodes,
-      nodes.map((node) => (node.id === clickedNode.id ? {
+      nodes.map((node) => (node.id === target.id ? {
         ...node,
         radius,
         style: { ...node.style, color: '#EFEFEF', icon: undefined },
@@ -264,16 +280,16 @@ const renderOptions: WebGL.Options = {
       } : node))
     )
 
-    render({ nodes, edges, options: renderOptions })
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   },
-  onContainerPointerDown,
-  onContainerDrag,
-  onContainerPointerUp,
-  onWheel: (_, x, y, zoom) => {
-    renderOptions.x = x
-    renderOptions.y = y
-    renderOptions.zoom = zoom
-    render({ nodes, edges, options: renderOptions })
+  onViewportPointerDown,
+  onViewportDrag,
+  onViewportPointerUp,
+  onViewportWheel: ({ viewportX, viewportY, viewportZoom }) => {
+    renderOptions.x = viewportX
+    renderOptions.y = viewportY
+    renderOptions.zoom = viewportZoom
+    render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
   }
 }
 
@@ -293,5 +309,5 @@ force({ nodes, edges, options: layoutOptions }).then((graph) => {
   renderOptions.y = y
   renderOptions.zoom = zoom
 
-  render({ nodes, edges, options: renderOptions })
+  render({ nodes, edges, options: renderOptions, annotations: selection ? [selection] : undefined })
 })

@@ -62,7 +62,7 @@ var workerScript = function (DEFAULT_OPTIONS) {
 };
 var blob = new Blob([d3ForceScript + "(" + workerScript + ")(" + JSON.stringify(exports.LAYOUT_OPTIONS) + ")"], { type: 'application/javascript' });
 // TODO - add debugging perf logs
-exports.Layout = function () {
+var Layout = function () {
     var workerUrl = URL.createObjectURL(blob);
     var worker = new Worker(workerUrl);
     var v = 0;
@@ -86,4 +86,5 @@ exports.Layout = function () {
     };
     return layout;
 };
+exports.Layout = Layout;
 //# sourceMappingURL=index.js.map

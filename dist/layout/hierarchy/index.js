@@ -118,7 +118,7 @@ var _hierarchyToGraph = function (hierarchy, nodesById) {
     return nodesById;
 };
 var hierarchyToGraph = function (hierarchy) { return _hierarchyToGraph(hierarchy, {}); };
-exports.Layout = function () {
+var Layout = function () {
     return function (root, graph) {
         var _a, _b, _c, _d, _e;
         var edgeIndex = graph.edges.reduce(function (edgeIndex, edge) {
@@ -160,4 +160,5 @@ exports.Layout = function () {
             }) });
     };
 };
+exports.Layout = Layout;
 //# sourceMappingURL=index.js.map

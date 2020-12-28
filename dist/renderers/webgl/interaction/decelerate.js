@@ -17,7 +17,7 @@ exports.Decelerate = void 0;
  * specificially, the [Decelerate Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/decelerate.js)
  */
 var Decelerate = /** @class */ (function () {
-    function Decelerate(renderer, onContainerDecelerate) {
+    function Decelerate(renderer, onViewportDecelerate) {
         var _this = this;
         this.paused = false;
         this.saved = [];
@@ -86,11 +86,16 @@ var Decelerate = /** @class */ (function () {
             if (x || y) {
                 _this.renderer.expectedViewportXPosition = x !== null && x !== void 0 ? x : _this.renderer.x;
                 _this.renderer.expectedViewportYPosition = y !== null && y !== void 0 ? y : _this.renderer.y;
-                _this.onContainerDecelerate(x !== null && x !== void 0 ? x : _this.renderer.x, y !== null && y !== void 0 ? y : _this.renderer.y); // TODO - expose this as a more generic function
+                _this.onViewportDecelerate({
+                    type: 'viewportDragDecelarate',
+                    viewportX: x !== null && x !== void 0 ? x : _this.renderer.x,
+                    viewportY: y !== null && y !== void 0 ? y : _this.renderer.y,
+                    target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom }
+                });
             }
         };
         this.renderer = renderer;
-        this.onContainerDecelerate = onContainerDecelerate;
+        this.onViewportDecelerate = onViewportDecelerate;
     }
     Decelerate.prototype.pause = function () {
         this.paused = true;

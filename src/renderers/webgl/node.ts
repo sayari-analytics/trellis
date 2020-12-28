@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer, NodeStyle } from '.'
-import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront } from './utils'
+import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront, clientPositionFromEvent } from './utils'
 import { Node, Edge } from '../..'
 import { equals, interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
@@ -191,7 +191,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
-            fontSize: (this.labelSize ?? labelSize) * 2.5, // TODO: is there a way to avoid this?
+            fontSize: (this.labelSize ?? DEFAULT_LABEL_SIZE) * 2.5,
             fill: this.labelColor,
             lineJoin: 'round',
             stroke: this.labelBackground === undefined ? '#fff' : undefined,
@@ -323,6 +323,14 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.iconLoader?.()
       }
 
+      /**
+       * TODO - ensure that icons are added below badges
+       * if (this.badgeSpriteContainer === undefined) {
+       *   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
+       * } else {
+       *   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
+       * }
+       */
       if (this.icon?.type === 'textIcon') {
         this.iconLoader = this.renderer.fontLoader.load(this.icon.family)((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
@@ -331,14 +339,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
           this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
 
-          /**
-           * TODO - ensure that icons are added below badges
-           */
-          // if (this.badgeSpriteContainer === undefined) {
-          //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
-          // } else {
-          //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
-          // }
           this.nodeContainer.addChild(this.iconSprite)
         })
       } else if (this.icon?.type === 'imageIcon') {
@@ -349,14 +349,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
           this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offsetX, this.icon.offsetY)
 
-          /**
-           * TODO - ensure that icons are added below badges
-           */
-          // if (this.badgeSpriteContainer === undefined) {
-          //   this.nodeContainer.addChild(this.iconSprite) // no badges - add to top of nodeContainer
-          // } else {
-          //   this.nodeContainer.addChildAt(this.iconSprite, this.nodeContainer.children.length - 1) // badges - add below badges
-          // }
           this.nodeContainer.addChild(this.iconSprite)
         })
       }
@@ -505,8 +497,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
     }
 
-    const position = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onNodePointerEnter?.(event, this.node, position.x, position.y)
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.renderer.onNodePointerEnter?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
@@ -529,8 +522,9 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       }
     }
 
-    const position = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onNodePointerLeave?.(event, this.node, position.x, position.y)
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.renderer.onNodePointerLeave?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
@@ -545,10 +539,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.zoomInteraction.pause()
     this.renderer.dragInteraction.pause()
     this.renderer.decelerateInteraction.pause()
-    const position = this.renderer.root.toLocal(event.data.global)
-    this.nodeMoveXOffset = position.x - this.x
-    this.nodeMoveYOffset = position.y - this.y
-    this.renderer.onNodePointerDown?.(event, this.node, this.x, this.y)
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.nodeMoveXOffset = x - this.x
+    this.nodeMoveYOffset = y - this.y
+    this.renderer.onNodePointerDown?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -562,15 +557,18 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.nodeMoveXOffset = 0
     this.nodeMoveYOffset = 0
 
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+
     if (this.renderer.dragging) {
       this.renderer.dragging = false
-      this.renderer.onNodeDragEnd?.(event, this.node, this.x, this.y)
+      this.renderer.onNodeDragEnd?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX: this.node.x ?? 0, nodeY: this.node.y ?? 0, target: this.node })
     } else {
-      this.renderer.onNodePointerUp?.(event, this.node, this.x, this.y)
+      this.renderer.onNodePointerUp?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
 
       if (this.doubleClick) {
         this.doubleClick = false
-        this.renderer.onNodeDoubleClick?.(event, this.node, this.x, this.y)
+        this.renderer.onNodeDoubleClick?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
       }
     }
   }
@@ -578,19 +576,20 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private nodeMove = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode === undefined) return
 
-    const position = this.renderer.root.toLocal(event.data.global)
-    const x = position.x - this.nodeMoveXOffset
-    const y = position.y - this.nodeMoveYOffset
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    const nodeX = x - this.nodeMoveXOffset
+    const nodeY = y - this.nodeMoveYOffset
 
-    this.expectedNodeXPosition = x
-    this.expectedNodeYPosition = y
+    this.expectedNodeXPosition = nodeX
+    this.expectedNodeYPosition = nodeY
 
     if (!this.renderer.dragging) {
       this.renderer.dragging = true
-      this.renderer.onNodeDragStart?.(event, this.node, x, y)
+      this.renderer.onNodeDragStart?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
     }
 
-    this.renderer.onNodeDrag?.(event, this.node, x, y)
+    this.renderer.onNodeDrag?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
   }
 
 

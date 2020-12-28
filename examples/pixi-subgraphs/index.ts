@@ -61,21 +61,21 @@ const render = WebGL.Renderer({
 const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
-  onNodeDoubleClick: (_, clickedNode) => {
-    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: STYLE },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: STYLE },
+  onNodeDoubleClick: ({ target }) => {
+    const subgraphNodes = cluster((target.subgraph?.nodes ?? []).concat([
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`, style: STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`, style: STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: STYLE },
     ]))
-    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
+    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
 
     nodes = subgraph(
       nodes,
       nodes.map((node) => {
-        if (node.id === clickedNode.id) {
+        if (node.id === target.id) {
           return {
             ...node,
             radius,
@@ -93,7 +93,7 @@ const renderOptions: WebGL.Options = {
 
     render({ nodes, edges, options: renderOptions })
   },
-  onContainerPointerUp: () => {
+  onViewportPointerUp: () => {
     nodes = subgraph(
       nodes,
       nodes.map((node) => ({

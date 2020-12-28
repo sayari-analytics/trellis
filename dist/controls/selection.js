@@ -26,7 +26,7 @@ var styleButton = function (button) {
     button.style.color = DEFAULT_COLOR;
     return button;
 };
-exports.Control = function (_a) {
+var Control = function (_a) {
     var container = _a.container;
     var selected = false;
     var selectionStartX;
@@ -82,39 +82,40 @@ exports.Control = function (_a) {
             controlContainer.style.left = DEFAULT_LEFT;
         }
         return {
-            onContainerPointerDown: function (event, x, y) {
+            onViewportPointerDown: function (event) {
                 var _a;
                 if (selected) {
                     container.style.cursor = 'copy';
-                    selectionStartX = x;
-                    selectionStartY = y;
+                    selectionStartX = event.x;
+                    selectionStartY = event.y;
                 }
                 else {
                     container.style.cursor = 'move';
                 }
-                (_a = options.onContainerPointerDown) === null || _a === void 0 ? void 0 : _a.call(options, event, x, y);
+                (_a = options.onViewportPointerDown) === null || _a === void 0 ? void 0 : _a.call(options, event);
             },
-            onContainerDrag: function (event, x, y) {
+            onViewportDrag: function (event) {
                 var _a, _b;
-                if (selected && selectionStartX !== undefined && selectionStartY !== undefined && event) {
-                    console.log("x0: " + selectionStartX.toFixed(2) + " y0: " + selectionStartY.toFixed(2) + " x1: " + x.toFixed(2) + " y1: " + y.toFixed(2) + " radius: " + Math.hypot(x - selectionStartX, y - selectionStartY).toFixed(2));
+                if (selected && selectionStartX !== undefined && selectionStartY !== undefined && event.type === 'viewportDrag') {
+                    console.log("x0: " + selectionStartX.toFixed(2) + " y0: " + selectionStartY.toFixed(2) + " x1: " + event.x.toFixed(2) + " y1: " + event.y.toFixed(2) + " radius: " + Math.hypot(event.x - selectionStartX, event.y - selectionStartY).toFixed(2));
                     /**
                      * TODO -
                      * - calculate selected nodes
                      * - inject circle annotation
                      */
-                    (_a = options.onSelection) === null || _a === void 0 ? void 0 : _a.call(options, event, x, y);
+                    (_a = options.onSelection) === null || _a === void 0 ? void 0 : _a.call(options, event);
                 }
                 else {
-                    (_b = options.onContainerDrag) === null || _b === void 0 ? void 0 : _b.call(options, event, x, y);
+                    (_b = options.onViewportDrag) === null || _b === void 0 ? void 0 : _b.call(options, event);
                 }
             },
-            onContainerPointerUp: function (event, x, y) {
+            onViewportPointerUp: function (event) {
                 var _a;
                 container.style.cursor = 'auto';
-                (_a = options.onContainerPointerUp) === null || _a === void 0 ? void 0 : _a.call(options, event, x, y);
+                (_a = options.onViewportPointerUp) === null || _a === void 0 ? void 0 : _a.call(options, event);
             },
         };
     };
 };
+exports.Control = Control;
 //# sourceMappingURL=selection.js.map

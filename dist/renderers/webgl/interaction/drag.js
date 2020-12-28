@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Drag = void 0;
+var utils_1 = require("../utils");
 /**
- * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
 var Drag = /** @class */ (function () {
-    function Drag(renderer, onContainerDrag) {
+    function Drag(renderer, onViewportDrag) {
         var _this = this;
         this.paused = false;
         this.moved = false;
@@ -14,7 +15,6 @@ var Drag = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
-            // this.renderer.app.view.style.cursor = 'move'
             _this.last = { x: event.data.global.x, y: event.data.global.y };
             _this.current = event.data.pointerId;
         };
@@ -25,16 +25,27 @@ var Drag = /** @class */ (function () {
             if (_this.last && _this.current === event.data.pointerId) {
                 var x = event.data.global.x;
                 var y = event.data.global.y;
-                var distX = x - _this.last.x;
-                var distY = y - _this.last.y;
-                if (_this.moved || Math.abs(distX) >= 5 || Math.abs(distY) >= 5) {
-                    var centerX = _this.renderer.x + (distX / _this.renderer.zoom);
-                    var centerY = _this.renderer.y + (distY / _this.renderer.zoom);
+                var dx = x - _this.last.x;
+                var dy = y - _this.last.y;
+                if (_this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
+                    var viewportX = _this.renderer.x + (dx / _this.renderer.zoom);
+                    var viewportY = _this.renderer.y + (dy / _this.renderer.zoom);
                     _this.last = { x: x, y: y };
                     _this.moved = true;
-                    _this.renderer.expectedViewportXPosition = centerX;
-                    _this.renderer.expectedViewportYPosition = centerY;
-                    _this.onContainerDrag(event, centerX, centerY);
+                    _this.renderer.expectedViewportXPosition = viewportX;
+                    _this.renderer.expectedViewportYPosition = viewportY;
+                    var local = _this.renderer.root.toLocal(event.data.global);
+                    var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+                    _this.onViewportDrag({
+                        type: 'viewportDrag',
+                        x: local.x,
+                        y: local.y,
+                        clientX: client.x,
+                        clientY: client.y,
+                        viewportX: viewportX,
+                        viewportY: viewportY,
+                        target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom }
+                    });
                 }
             }
         };
@@ -42,12 +53,11 @@ var Drag = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
-            // this.renderer.app.view.style.cursor = 'auto'
             _this.last = undefined;
             _this.moved = false;
         };
         this.renderer = renderer;
-        this.onContainerDrag = onContainerDrag;
+        this.onViewportDrag = onViewportDrag;
     }
     Drag.prototype.pause = function () {
         this.paused = true;

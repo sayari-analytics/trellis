@@ -12,7 +12,7 @@ var __values = (this && this.__values) || function(o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clamp = exports.boundsToDimenions = exports.boundsToViewport = exports.viewportToBounds = exports.mergeBounds = exports.getSelectionBounds = void 0;
-exports.getSelectionBounds = function (nodes, padding) {
+var getSelectionBounds = function (nodes, padding) {
     var e_1, _a;
     var _b, _c, _d, _e;
     if (padding === void 0) { padding = 0; }
@@ -46,7 +46,8 @@ exports.getSelectionBounds = function (nodes, padding) {
     }
     return { left: left - padding, top: top - padding, right: right + padding, bottom: bottom + padding };
 };
-exports.mergeBounds = function (a, b, padding) {
+exports.getSelectionBounds = getSelectionBounds;
+var mergeBounds = function (a, b, padding) {
     if (padding === void 0) { padding = 0; }
     return {
         left: Math.min(a.left, b.left) - padding,
@@ -55,7 +56,8 @@ exports.mergeBounds = function (a, b, padding) {
         bottom: Math.max(a.bottom, b.bottom) + padding,
     };
 };
-exports.viewportToBounds = function (_a, _b) {
+exports.mergeBounds = mergeBounds;
+var viewportToBounds = function (_a, _b) {
     var x = _a.x, y = _a.y, zoom = _a.zoom;
     var width = _b.width, height = _b.height;
     var xOffset = width / 2 / zoom;
@@ -67,7 +69,8 @@ exports.viewportToBounds = function (_a, _b) {
         bottom: -(y - yOffset),
     };
 };
-exports.boundsToViewport = function (_a, _b) {
+exports.viewportToBounds = viewportToBounds;
+var boundsToViewport = function (_a, _b) {
     var left = _a.left, top = _a.top, right = _a.right, bottom = _a.bottom;
     var width = _b.width, height = _b.height;
     var targetWidth = right - left;
@@ -83,12 +86,15 @@ exports.boundsToViewport = function (_a, _b) {
         return { x: x, y: y, zoom: height / targetHeight };
     }
 };
-exports.boundsToDimenions = function (_a, zoom) {
+exports.boundsToViewport = boundsToViewport;
+var boundsToDimenions = function (_a, zoom) {
     var left = _a.left, top = _a.top, right = _a.right, bottom = _a.bottom;
     return {
         width: (right - left) / zoom,
         height: (bottom - top) / zoom,
     };
 };
-exports.clamp = function (min, max, value) { return Math.max(min, Math.min(max, value)); };
+exports.boundsToDimenions = boundsToDimenions;
+var clamp = function (min, max, value) { return Math.max(min, Math.min(max, value)); };
+exports.clamp = clamp;
 //# sourceMappingURL=index.js.map

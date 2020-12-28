@@ -59,59 +59,55 @@ const subgraph = Subgraph.Layout()
 const cluster = Cluster.Layout()
 const render = WebGL.Renderer({
   container,
-  // debug: { stats, logPerformance: true }
+  debug: { stats, logPerformance: false }
 })
 
 
 /**
- * Initialize Layout and Renderer Options
+ * Initialize Renderer Options
  */
 const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   zoom: 0.8,
-  onNodePointerDown: (_, { id }, x, y) => {
+  onNodeDrag: ({ nodeX: x, nodeY: y, target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDrag: (_, { id }, x, y) => {
-    nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    render({ nodes, edges, options: renderOptions })
-  },
-  onNodePointerEnter: (_, { id }) => {
+  onNodePointerEnter: ({ target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, style: { ...node.style, stroke: [{ color: '#ddd', width: 6 }] } } : node))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodePointerLeave: (_, { id }) => {
+  onNodePointerLeave: ({ target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ?
       { ...node, style: { ...node.style, stroke: [{ color: id === 'a' ? '#F7CA4D' : '#90D7FB', width: 6 }] } } :
       node
     ))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerEnter: (_, { id }) => {
+  onEdgePointerEnter: ({ target: { id } }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
-  onEdgePointerLeave: (_, { id }) => {
+  onEdgePointerLeave: ({ target: { id } }) => {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
-  onNodeDoubleClick: (_, clickedNode) => {
-    const subgraphNodes = cluster((clickedNode.subgraph?.nodes ?? []).concat([
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle() },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle() },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle() },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 4}`, style: createCompanyStyle() },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 5}`, style: createCompanyStyle() },
-      { id: `${clickedNode.id}_${(clickedNode.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${clickedNode.id.toUpperCase()} ${clickedNode.subgraph?.nodes.length ?? 0 + 6}`, style: createCompanyStyle() },
+  onNodeDoubleClick: ({ target }) => {
+    const subgraphNodes = cluster((target.subgraph?.nodes ?? []).concat([
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`, style: createCompanyStyle() },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`, style: createCompanyStyle() },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: createCompanyStyle() },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: createCompanyStyle() },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: createCompanyStyle() },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: createCompanyStyle() },
     ]))
-    const radius = Subgraph.subgraphRadius(clickedNode.radius, subgraphNodes) + 20
+    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
 
     nodes = subgraph(
       nodes,
       nodes.map((node) => {
-        if (node.id === clickedNode.id) {
+        if (node.id === target.id) {
           return {
             ...node,
             radius,
@@ -129,7 +125,7 @@ const renderOptions: WebGL.Options = {
 
     render({ nodes, edges, options: renderOptions })
   },
-  onContainerPointerUp: () => {
+  onViewportPointerUp: () => {
     nodes = subgraph(
       nodes,
       nodes.map((node, idx) => ({
@@ -142,6 +138,17 @@ const renderOptions: WebGL.Options = {
 
     render({ nodes, edges, options: renderOptions })
   },
+  onViewportDrag: ({ viewportX, viewportY }) => {
+    renderOptions.x = viewportX
+    renderOptions.y = viewportY
+    render({ nodes, edges, options: renderOptions })
+  },
+  onViewportWheel: ({ viewportX, viewportY, viewportZoom }) => {
+    renderOptions.x = viewportX
+    renderOptions.y = viewportY
+    renderOptions.zoom = viewportZoom
+    render({ nodes, edges, options: renderOptions })
+  }
 }
 
 

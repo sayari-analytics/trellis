@@ -32,7 +32,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Renderer = void 0;
 var WebGL = __importStar(require("../webgl"));
-exports.Renderer = function () {
+var Renderer = function () {
     return function (graph) {
         var _a, _b;
         var pixiRenderer = new WebGL.InternalRenderer({ container: document.createElement('div') });
@@ -45,4 +45,5 @@ exports.Renderer = function () {
         });
     };
 };
+exports.Renderer = Renderer;
 //# sourceMappingURL=index.js.map

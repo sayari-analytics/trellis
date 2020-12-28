@@ -33,7 +33,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Layout = void 0;
 var Hierarchy = __importStar(require("../hierarchy"));
 var TWO_PI = Math.PI * 2;
-exports.Layout = function () {
+var Layout = function () {
     var layout = Hierarchy.Layout();
     return function (root, graph) {
         var _a, _b, _c;
@@ -58,4 +58,5 @@ exports.Layout = function () {
         };
     };
 };
+exports.Layout = Layout;
 //# sourceMappingURL=index.js.map

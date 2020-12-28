@@ -23,7 +23,7 @@ var __values = (this && this.__values) || function(o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Layout = exports.subgraphRadius = void 0;
-exports.subgraphRadius = function (radius, nodes) {
+var subgraphRadius = function (radius, nodes) {
     var e_1, _a;
     var _b, _c;
     var _radius = radius;
@@ -43,7 +43,8 @@ exports.subgraphRadius = function (radius, nodes) {
     }
     return _radius;
 };
-exports.Layout = function () {
+exports.subgraphRadius = subgraphRadius;
+var Layout = function () {
     return function (previousNodes, nextNodes) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         var result = nextNodes.map(function (node) { return (__assign({}, node)); }), collapseNode, collapseNodeX, collapseNodeY, expandNode, expandNodeX, expandNodeY, node, theta, radius, nodeX, nodeY;
@@ -98,4 +99,5 @@ exports.Layout = function () {
         return result;
     };
 };
+exports.Layout = Layout;
 //# sourceMappingURL=index.js.map

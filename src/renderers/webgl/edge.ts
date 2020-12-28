@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { EdgeStyle, InternalRenderer } from '.'
-import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI } from './utils'
+import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI, clientPositionFromEvent } from './utils'
 import { Node, Edge } from '../..'
 import { ArrowSprite } from './sprites/arrowSprite'
 
@@ -179,7 +179,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
-            fontSize: (this.labelSize ?? labelSize) * 2.5, //TODO: is there a way to avoid this?
+            fontSize: (this.labelSize ?? DEFAULT_LABEL_SIZE) * 2.5,
             fill: this.labelColor,
             lineJoin: 'round',
             stroke: '#fafafa',
@@ -405,7 +405,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredEdge = this
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerEnter?.(event, this.edge, x, y)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.renderer.onEdgePointerEnter?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
@@ -414,7 +415,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredEdge = undefined
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerLeave?.(event, this.edge, x, y)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.renderer.onEdgePointerLeave?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
   }
 
   private clearDoubleClick = () => {
@@ -435,7 +437,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.decelerateInteraction.pause()
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerDown?.(event, this.edge, x, y)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.renderer.onEdgePointerDown?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -447,11 +450,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     this.renderer.decelerateInteraction.resume()
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
-    this.renderer.onEdgePointerUp?.(event, this.edge, x, y)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.renderer.onEdgePointerUp?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
 
     if (this.doubleClick) {
       this.doubleClick = false
-      this.renderer.onEdgeDoubleClick?.(event, this.edge, x, y)
+      this.renderer.onEdgeDoubleClick?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
     }
   }
 }

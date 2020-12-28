@@ -210,7 +210,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   //   renderOptions.nodeIsEqual = (_: Node, next: Node) => next.id !== id
   //   render({ nodes, edges, options: renderOptions })
   // }),
-  onNodeDrag: (_, { id }, x, y) => {
+  onNodeDrag: ({ nodeX: x, nodeY: y, target: { id } }) => {
     nodesById[id].x = x
     nodesById[id].y = y
     renderOptions.nodesEqual = () => false
@@ -218,18 +218,18 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     renderOptions.nodeIsEqual = (_: Node, next: Node) => next.id !== id
     render({ nodes, edges, options: renderOptions })
   },
-  onContainerDrag: (_, x, y) => {
-    renderOptions.x = x
-    renderOptions.y = y
+  onViewportDrag: ({ viewportX, viewportY }) => {
+    renderOptions.x = viewportX
+    renderOptions.y = viewportY
     renderOptions.nodesEqual = () => true
     renderOptions.edgesEqual = () => true
     // renderOptions.nodeIsEqual = () => true
     render({ nodes, edges, options: renderOptions })
   },
-  onWheel: (_, x, y, zoom) => {
-    renderOptions.x = x
-    renderOptions.y = y
-    renderOptions.zoom = zoom
+  onViewportWheel: ({ viewportX, viewportY, viewportZoom }) => {
+    renderOptions.x = viewportX
+    renderOptions.y = viewportY
+    renderOptions.zoom = viewportZoom
     renderOptions.nodesEqual = () => true
     renderOptions.edgesEqual = () => true
     // renderOptions.nodeIsEqual = () => true

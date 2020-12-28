@@ -26,15 +26,15 @@ var PIXI = __importStar(require("pixi.js-legacy"));
  * specificially, the [Wheel Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/wheel.js)
  */
 var Zoom = /** @class */ (function () {
-    function Zoom(renderer, onContainerWheel) {
+    function Zoom(renderer, onViewportWheel) {
         var _this = this;
         this.paused = false;
-        this.wheel = function (e) {
-            e.preventDefault();
+        this.wheel = function (event) {
+            event.preventDefault();
             if (_this.paused) {
                 return;
             }
-            var step = -e.deltaY * (e.deltaMode ? 20 : 1) / 500;
+            var step = -event.deltaY * (event.deltaMode ? 20 : 1) / 500;
             var change = Math.pow(2, 1.1 * step);
             var zoomStart = _this.renderer.zoom;
             var zoomEnd = Math.max(_this.renderer.minZoom, Math.min(_this.renderer.maxZoom, zoomStart * change));
@@ -43,22 +43,32 @@ var Zoom = /** @class */ (function () {
                 return;
             }
             var globalStart = new PIXI.Point();
-            _this.renderer.app.renderer.plugins.interaction.mapPositionToPoint(globalStart, e.clientX, e.clientY);
+            _this.renderer.app.renderer.plugins.interaction.mapPositionToPoint(globalStart, event.clientX, event.clientY);
             var localStart = _this.renderer.root.toLocal(globalStart);
             _this.renderer.root.scale.set(zoomEnd);
             var globalEnd = _this.renderer.root.toGlobal(localStart);
             var rootX = _this.renderer.root.x + globalStart.x - globalEnd.x;
             var rootY = _this.renderer.root.y + globalStart.y - globalEnd.y;
             _this.renderer.root.scale.set(zoomStart);
-            var x = (rootX - (_this.renderer.width / 2)) / zoomEnd;
-            var y = (rootY - (_this.renderer.height / 2)) / zoomEnd;
-            _this.renderer.expectedViewportXPosition = x;
-            _this.renderer.expectedViewportYPosition = y;
+            var viewportX = (rootX - (_this.renderer.width / 2)) / zoomEnd;
+            var viewportY = (rootY - (_this.renderer.height / 2)) / zoomEnd;
+            _this.renderer.expectedViewportXPosition = viewportX;
+            _this.renderer.expectedViewportYPosition = viewportY;
             _this.renderer.expectedViewportZoom = zoomEnd;
-            _this.onContainerWheel(e, x, y, zoomEnd);
+            _this.onViewportWheel({
+                type: 'viewportWheel',
+                x: localStart.x,
+                y: localStart.y,
+                clientX: event.clientX,
+                clientY: event.clientY,
+                viewportX: viewportX,
+                viewportY: viewportY,
+                viewportZoom: zoomEnd,
+                target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom }
+            });
         };
         this.renderer = renderer;
-        this.onContainerWheel = onContainerWheel;
+        this.onViewportWheel = onViewportWheel;
     }
     Zoom.prototype.pause = function () {
         this.paused = true;

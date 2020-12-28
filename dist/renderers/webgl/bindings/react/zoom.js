@@ -7,7 +7,7 @@ var zoom_2 = require("../../../../controls/zoom");
 Object.defineProperty(exports, "clampZoom", { enumerable: true, get: function () { return zoom_2.clampZoom; } });
 Object.defineProperty(exports, "fit", { enumerable: true, get: function () { return zoom_2.fit; } });
 Object.defineProperty(exports, "zoomTo", { enumerable: true, get: function () { return zoom_2.zoomTo; } });
-exports.Zoom = function (props) {
+var Zoom = function (props) {
     var ref = react_1.useRef(null);
     var control = react_1.useRef();
     react_1.useEffect(function () {
@@ -18,6 +18,7 @@ exports.Zoom = function (props) {
     }, [props]);
     return (react_1.createElement('div', { ref: ref }, props.children));
 };
+exports.Zoom = Zoom;
 // export const Zoom = forwardRef<HTMLDivElement, Props>((props, ref) => {
 //   // const ref = useRef<HTMLDivElement>(null)
 //   const control = useRef<(options: Partial<Options>) => void>()

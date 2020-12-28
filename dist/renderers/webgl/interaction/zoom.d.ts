@@ -1,4 +1,4 @@
-import { InternalRenderer } from '..';
+import { InternalRenderer, ViewportWheelEvent } from '..';
 import { Node, Edge } from '../../..';
 /**
  * zoom logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
@@ -6,10 +6,10 @@ import { Node, Edge } from '../../..';
  */
 export declare class Zoom<N extends Node, E extends Edge> {
     private renderer;
-    private onContainerWheel;
+    private onViewportWheel;
     private paused;
-    constructor(renderer: InternalRenderer<N, E>, onContainerWheel: (e: WheelEvent, x: number, y: number, zoom: number) => void);
-    wheel: (e: WheelEvent) => void;
+    constructor(renderer: InternalRenderer<N, E>, onViewportWheel: (event: ViewportWheelEvent) => void);
+    wheel: (event: WheelEvent) => void;
     pause(): void;
     resume(): void;
 }

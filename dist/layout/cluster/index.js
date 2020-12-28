@@ -13,7 +13,7 @@ var __assign = (this && this.__assign) || function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Layout = void 0;
 var d3_hierarchy_1 = require("d3-hierarchy");
-exports.Layout = function () {
+var Layout = function () {
     return function (nodes) {
         var _a;
         var positions = {};
@@ -30,4 +30,5 @@ exports.Layout = function () {
         return nodes.map(function (node) { return (__assign(__assign({}, node), { x: positions[node.id][0], y: positions[node.id][1] })); });
     };
 };
+exports.Layout = Layout;
 //# sourceMappingURL=index.js.map
