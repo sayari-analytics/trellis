@@ -10,6 +10,7 @@ import { ArrowSprite } from './sprites/arrowSprite';
 import { CircleSprite } from './sprites/circleSprite';
 import { ImageSprite } from './sprites/ImageSprite';
 import { FontIconSprite } from './sprites/FontIconSprite';
+import { CircleAnnotationRenderer } from './annotations/circle';
 export declare type TextIcon = {
     type: 'textIcon';
     family: string;
@@ -127,6 +128,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     dragging: boolean;
     dirty: boolean;
     viewportDirty: boolean;
+    annotationsBottomLayer: PIXI.Container;
     edgesLayer: PIXI.Container;
     nodesLayer: PIXI.Container;
     labelsLayer: PIXI.Container;
@@ -135,11 +137,15 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     edgesGraphic: PIXI.Graphics;
     nodes: N[];
     edges: E[];
+    annotations?: Graph.Annotation[];
     nodesById: {
         [id: string]: NodeRenderer<N, E>;
     };
     edgesById: {
         [id: string]: EdgeRenderer<N, E>;
+    };
+    annotationsById: {
+        [id: string]: CircleAnnotationRenderer<N, E>;
     };
     edgeIndex: {
         [edgeA: string]: {
@@ -198,6 +204,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
         nodes: N[];
         edges: E[];
         options?: Options<N, E>;
+        annotations?: Graph.Annotation[];
     }) => void;
     constructor(options: {
         container: HTMLDivElement;
@@ -225,6 +232,7 @@ export declare const Renderer: (options: {
         nodes: N[];
         edges: E[];
         options?: Options<N, E> | undefined;
+        annotations?: Graph.CircleAnnotation[] | undefined;
     }): void;
     delete: () => void;
 };

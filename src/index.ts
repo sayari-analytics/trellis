@@ -9,8 +9,8 @@ export type Node = {
   label?: string | undefined
   style?: NodeStyle
   subgraph?: {
-    nodes: Node[],
-    edges: Edge[],
+    nodes: Node[]
+    edges: Edge[]
     options?: {}
   } | undefined
 }
@@ -23,6 +23,25 @@ export type Edge = {
   label?: string
   style?: EdgeStyle
 }
+
+
+export type CircleAnnotation = {
+  type: 'circle'
+  id: string
+  x: number
+  y: number
+  radius: number
+  style: {
+    color: string
+    stroke: {
+      color: string
+      width: number
+    }
+  }
+}
+
+
+export type Annotation = CircleAnnotation
 
 
 export type Bounds = { left: number, top: number, right: number, bottom: number }

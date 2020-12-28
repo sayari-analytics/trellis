@@ -12,6 +12,7 @@ import { CircleSprite } from './sprites/circleSprite'
 import { ImageSprite } from './sprites/ImageSprite'
 import { FontIconSprite } from './sprites/FontIconSprite'
 import { FontLoader, ImageLoader } from './Loader'
+import { CircleAnnotationRenderer } from './annotations/circle'
 
 
 install(PIXI)
@@ -133,6 +134,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   dragging = false
   dirty = false
   viewportDirty = false
+  annotationsBottomLayer = new PIXI.Container()
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -141,8 +143,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   edgesGraphic = new PIXI.Graphics()
   nodes: N[] = []
   edges: E[] = []
+  annotations?: Graph.Annotation[]
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
+  annotationsById: { [id: string]: CircleAnnotationRenderer<N, E> } = {}
   edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
   arrow: ArrowSprite<N, E>
   circle: CircleSprite<N, E>
@@ -188,7 +192,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onEdgePointerUp?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgePointerLeave?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
   onEdgeDoubleClick?: (event: PIXI.InteractionEvent, edge: E, x: number, y: number) => void
-  update: (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => void
+  update: (graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => void
 
   constructor(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
     if (!(options.container instanceof HTMLDivElement)) {
@@ -217,6 +221,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.nodesLayer.sortableChildren = true // TODO - perf test
 
     this.app.stage.addChild(this.root)
+    this.root.addChild(this.annotationsBottomLayer)
     this.root.addChild(this.edgesGraphic)
     this.root.addChild(this.edgesLayer)
     this.root.addChild(this.nodesLayer)
@@ -302,8 +307,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onNodeDragEnd, onNodeDragStart,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgePointerLeave,
       onContainerPointerEnter, onContainerPointerDown, onContainerDrag, onContainerPointerMove, onContainerPointerUp, onContainerPointerLeave, onWheel,
-    } = RENDERER_OPTIONS
-  }: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
+    } = RENDERER_OPTIONS,
+    annotations
+  }: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
     this.onContainerPointerEnter = onContainerPointerEnter
     this.onContainerPointerDown = onContainerPointerDown
     this.onContainerDrag = onContainerDrag
@@ -483,6 +489,34 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.edgesById = edgesById
     }
 
+
+    /**
+     * Annotation enter/update/exit
+     */
+    this.annotations = annotations
+
+    const annotationsById: { [id: string]: CircleAnnotationRenderer<N, E> } = {}
+
+    for (const annotation of this.annotations ?? []) {
+      if (this.annotationsById[annotation.id] === undefined) {
+        // annotation enter
+        annotationsById[annotation.id] = new CircleAnnotationRenderer(this, annotation)
+      } else {
+        // annotation update
+        annotationsById[annotation.id] = this.annotationsById[annotation.id].update(annotation)
+      }
+    }
+
+    for (const annotationId in this.annotationsById) {
+      if (annotationsById[annotationId] === undefined) {
+        // annotation exit
+        this.annotationsById[annotationId].delete()
+        this.dirty = true
+      }
+    }
+
+    this.annotationsById = annotationsById
+
     // this.root.getChildByName('bbox')?.destroy()
     // const bounds = Graph.getSelectionBounds(this.nodes, 0)
     // const bbox = new PIXI.Graphics()
@@ -573,6 +607,16 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
       this.edgesGraphic.clear()
       for (const edgeId in this.edgesById) {
+        /**
+         * TODO - only render dirty edges [this is a harder thing to check than a node's dirty status]
+         * an edge is dirty if:
+         * - it has been added/updated
+         * - any multiedge (edge that shares source/target) has been added/updated/deleted
+         * - the position or radius of its source/target node has been updated
+         * additionally, the way edges are drawn will need to change:
+         * rather than clearing all edges via `this.edgesGraphic.clear()` and rerendering each,
+         * each edge might need to be its own PIXI.Graphics object
+         */
         this.edgesById[edgeId].render()
       }
     }
@@ -588,7 +632,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   }
 
   private _measurePerformance?: true
-  private _debugUpdate = (graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
+  private _debugUpdate = (graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
     if (this._measurePerformance) {
       performance.measure('external', 'external')
     }
@@ -762,7 +806,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 export const Renderer = (options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
   const pixiRenderer = new InternalRenderer(options)
 
-  const render = <N extends Graph.Node, E extends Graph.Edge>(graph: { nodes: N[], edges: E[], options?: Options<N, E> }) => {
+  const render = <N extends Graph.Node, E extends Graph.Edge>(graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
     (pixiRenderer as unknown as InternalRenderer<N, E>).update(graph)
   }
 

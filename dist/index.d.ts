@@ -19,6 +19,21 @@ export declare type Edge = {
     label?: string;
     style?: EdgeStyle;
 };
+export declare type CircleAnnotation = {
+    type: 'circle';
+    id: string;
+    x: number;
+    y: number;
+    radius: number;
+    style: {
+        color: string;
+        stroke: {
+            color: string;
+            width: number;
+        };
+    };
+};
+export declare type Annotation = CircleAnnotation;
 export declare type Bounds = {
     left: number;
     top: number;

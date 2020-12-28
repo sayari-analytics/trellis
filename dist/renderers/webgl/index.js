@@ -44,6 +44,7 @@ var circleSprite_1 = require("./sprites/circleSprite");
 var ImageSprite_1 = require("./sprites/ImageSprite");
 var FontIconSprite_1 = require("./sprites/FontIconSprite");
 var Loader_1 = require("./Loader");
+var circle_1 = require("./annotations/circle");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
@@ -67,6 +68,7 @@ var InternalRenderer = /** @class */ (function () {
         this.dragging = false;
         this.dirty = false;
         this.viewportDirty = false;
+        this.annotationsBottomLayer = new PIXI.Container();
         this.edgesLayer = new PIXI.Container();
         this.nodesLayer = new PIXI.Container();
         this.labelsLayer = new PIXI.Container();
@@ -77,6 +79,7 @@ var InternalRenderer = /** @class */ (function () {
         this.edges = [];
         this.nodesById = {};
         this.edgesById = {};
+        this.annotationsById = {};
         this.edgeIndex = {};
         this.root = new PIXI.Container();
         this.fontLoader = Loader_1.FontLoader();
@@ -88,9 +91,9 @@ var InternalRenderer = /** @class */ (function () {
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
         this.firstRender = true;
         this._update = function (_a) {
-            var e_1, _b, e_2, _c, e_3, _d;
-            var _e, _f, _g, _h;
-            var nodes = _a.nodes, edges = _a.edges, _j = _a.options, _k = _j === void 0 ? exports.RENDERER_OPTIONS : _j, _l = _k.width, width = _l === void 0 ? exports.RENDERER_OPTIONS.width : _l, _m = _k.height, height = _m === void 0 ? exports.RENDERER_OPTIONS.height : _m, _o = _k.x, x = _o === void 0 ? exports.RENDERER_OPTIONS.x : _o, _p = _k.y, y = _p === void 0 ? exports.RENDERER_OPTIONS.y : _p, _q = _k.zoom, zoom = _q === void 0 ? exports.RENDERER_OPTIONS.zoom : _q, _r = _k.minZoom, minZoom = _r === void 0 ? exports.RENDERER_OPTIONS.minZoom : _r, _s = _k.maxZoom, maxZoom = _s === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _s, _t = _k.animatePosition, animatePosition = _t === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _t, _u = _k.animateRadius, animateRadius = _u === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _u, _v = _k.animateViewport, animateViewport = _v === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _v, _w = _k.nodesEqual, nodesEqual = _w === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _w, _x = _k.edgesEqual, edgesEqual = _x === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _x, _y = _k.nodeIsEqual, nodeIsEqual = _y === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _y, _z = _k.edgeIsEqual, edgeIsEqual = _z === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _z, onNodePointerEnter = _k.onNodePointerEnter, onNodePointerDown = _k.onNodePointerDown, onNodeDrag = _k.onNodeDrag, onNodePointerUp = _k.onNodePointerUp, onNodePointerLeave = _k.onNodePointerLeave, onNodeDoubleClick = _k.onNodeDoubleClick, onNodeDragEnd = _k.onNodeDragEnd, onNodeDragStart = _k.onNodeDragStart, onEdgePointerEnter = _k.onEdgePointerEnter, onEdgePointerDown = _k.onEdgePointerDown, onEdgePointerUp = _k.onEdgePointerUp, onEdgePointerLeave = _k.onEdgePointerLeave, onContainerPointerEnter = _k.onContainerPointerEnter, onContainerPointerDown = _k.onContainerPointerDown, onContainerDrag = _k.onContainerDrag, onContainerPointerMove = _k.onContainerPointerMove, onContainerPointerUp = _k.onContainerPointerUp, onContainerPointerLeave = _k.onContainerPointerLeave, onWheel = _k.onWheel;
+            var e_1, _b, e_2, _c, e_3, _d, e_4, _e;
+            var _f, _g, _h, _j, _k;
+            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, _v = _m.animatePosition, animatePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _v, _w = _m.animateRadius, animateRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _w, _x = _m.animateViewport, animateViewport = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _x, _y = _m.nodesEqual, nodesEqual = _y === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _y, _z = _m.edgesEqual, edgesEqual = _z === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _z, _0 = _m.nodeIsEqual, nodeIsEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _0, _1 = _m.edgeIsEqual, edgeIsEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _1, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDrag = _m.onNodeDrag, onNodePointerUp = _m.onNodePointerUp, onNodePointerLeave = _m.onNodePointerLeave, onNodeDoubleClick = _m.onNodeDoubleClick, onNodeDragEnd = _m.onNodeDragEnd, onNodeDragStart = _m.onNodeDragStart, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgePointerLeave = _m.onEdgePointerLeave, onContainerPointerEnter = _m.onContainerPointerEnter, onContainerPointerDown = _m.onContainerPointerDown, onContainerDrag = _m.onContainerDrag, onContainerPointerMove = _m.onContainerPointerMove, onContainerPointerUp = _m.onContainerPointerUp, onContainerPointerLeave = _m.onContainerPointerLeave, onWheel = _m.onWheel, annotations = _a.annotations;
             _this.onContainerPointerEnter = onContainerPointerEnter;
             _this.onContainerPointerDown = onContainerPointerDown;
             _this.onContainerDrag = onContainerDrag;
@@ -212,7 +215,7 @@ var InternalRenderer = /** @class */ (function () {
                                     return (((_a = _this.nodesById[adjacentNodeId]) === null || _a === void 0 ? void 0 : _a.node.x) !== undefined && ((_b = _this.nodesById[adjacentNodeId]) === null || _b === void 0 ? void 0 : _b.node.y) !== undefined);
                                 });
                             }
-                            nodesById[node.id] = new node_1.NodeRenderer(_this, node, (_f = (_e = _this.nodesById[adjacentNode !== null && adjacentNode !== void 0 ? adjacentNode : '']) === null || _e === void 0 ? void 0 : _e.x) !== null && _f !== void 0 ? _f : 0, (_h = (_g = _this.nodesById[adjacentNode !== null && adjacentNode !== void 0 ? adjacentNode : '']) === null || _g === void 0 ? void 0 : _g.y) !== null && _h !== void 0 ? _h : 0, node.radius);
+                            nodesById[node.id] = new node_1.NodeRenderer(_this, node, (_g = (_f = _this.nodesById[adjacentNode !== null && adjacentNode !== void 0 ? adjacentNode : '']) === null || _f === void 0 ? void 0 : _f.x) !== null && _g !== void 0 ? _g : 0, (_j = (_h = _this.nodesById[adjacentNode !== null && adjacentNode !== void 0 ? adjacentNode : '']) === null || _h === void 0 ? void 0 : _h.y) !== null && _j !== void 0 ? _j : 0, node.radius);
                             _this.dirty = true;
                         }
                         else if (!nodeIsEqual(_this.nodesById[node.id].node, node)) {
@@ -281,6 +284,39 @@ var InternalRenderer = /** @class */ (function () {
                 }
                 _this.edgesById = edgesById;
             }
+            /**
+             * Annotation enter/update/exit
+             */
+            _this.annotations = annotations;
+            var annotationsById = {};
+            try {
+                for (var _2 = __values((_k = _this.annotations) !== null && _k !== void 0 ? _k : []), _3 = _2.next(); !_3.done; _3 = _2.next()) {
+                    var annotation = _3.value;
+                    if (_this.annotationsById[annotation.id] === undefined) {
+                        // annotation enter
+                        annotationsById[annotation.id] = new circle_1.CircleAnnotationRenderer(_this, annotation);
+                    }
+                    else {
+                        // annotation update
+                        annotationsById[annotation.id] = _this.annotationsById[annotation.id].update(annotation);
+                    }
+                }
+            }
+            catch (e_4_1) { e_4 = { error: e_4_1 }; }
+            finally {
+                try {
+                    if (_3 && !_3.done && (_e = _2.return)) _e.call(_2);
+                }
+                finally { if (e_4) throw e_4.error; }
+            }
+            for (var annotationId in _this.annotationsById) {
+                if (annotationsById[annotationId] === undefined) {
+                    // annotation exit
+                    _this.annotationsById[annotationId].delete();
+                    _this.dirty = true;
+                }
+            }
+            _this.annotationsById = annotationsById;
             // this.root.getChildByName('bbox')?.destroy()
             // const bounds = Graph.getSelectionBounds(this.nodes, 0)
             // const bbox = new PIXI.Graphics()
@@ -350,6 +386,16 @@ var InternalRenderer = /** @class */ (function () {
                 }
                 _this.edgesGraphic.clear();
                 for (var edgeId in _this.edgesById) {
+                    /**
+                     * TODO - only render dirty edges [this is a harder thing to check than a node's dirty status]
+                     * an edge is dirty if:
+                     * - it has been added/updated
+                     * - any multiedge (edge that shares source/target) has been added/updated/deleted
+                     * - the position or radius of its source/target node has been updated
+                     * additionally, the way edges are drawn will need to change:
+                     * rather than clearing all edges via `this.edgesGraphic.clear()` and rerendering each,
+                     * each edge might need to be its own PIXI.Graphics object
+                     */
                     _this.edgesById[edgeId].render();
                 }
             }
@@ -370,7 +416,7 @@ var InternalRenderer = /** @class */ (function () {
             performance.measure('update', 'update');
         };
         this.debugRender = function (time) {
-            var e_4, _a;
+            var e_5, _a;
             var _b, _c, _d;
             (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
             var elapsedTime = time - _this.previousTime;
@@ -452,12 +498,12 @@ var InternalRenderer = /** @class */ (function () {
                         }
                     }
                 }
-                catch (e_4_1) { e_4 = { error: e_4_1 }; }
+                catch (e_5_1) { e_5 = { error: e_5_1 }; }
                 finally {
                     try {
                         if (_j && !_j.done && (_a = _h.return)) _a.call(_h);
                     }
-                    finally { if (e_4) throw e_4.error; }
+                    finally { if (e_5) throw e_5.error; }
                 }
                 // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
                 console.log("%c" + total.toFixed(1) + "ms%c (update: %c" + update.toFixed(1) + "%c, render: %c" + render.toFixed(1) + "%c, draw: %c" + draw.toFixed(1) + "%c, external: %c" + external_1.toFixed(1) + "%c)", "color: " + (total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'), 'color: #666', "color: " + (update <= 5 ? '#6c6' : update <= 10 ? '#f88' : update <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (render <= 5 ? '#6c6' : render <= 10 ? '#f88' : render <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (draw <= 5 ? '#6c6' : draw <= 10 ? '#f88' : draw <= 20 ? '#e22' : '#a00'), 'color: #666', "color: " + (external_1 <= 5 ? '#6c6' : external_1 <= 10 ? '#f88' : external_1 <= 20 ? '#e22' : '#a00'), 'color: #666');
@@ -524,6 +570,7 @@ var InternalRenderer = /** @class */ (function () {
         this.labelsLayer.interactiveChildren = false;
         this.nodesLayer.sortableChildren = true; // TODO - perf test
         this.app.stage.addChild(this.root);
+        this.root.addChild(this.annotationsBottomLayer);
         this.root.addChild(this.edgesGraphic);
         this.root.addChild(this.edgesLayer);
         this.root.addChild(this.nodesLayer);
