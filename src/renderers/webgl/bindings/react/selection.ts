@@ -18,6 +18,7 @@ export type Props = {
 export type ChildProps = {
   select: boolean
   annotation?: Annotation
+  cursor?: string
   toggleSelect: () => void
   onViewportPointerDown: (event: ViewportPointerEvent) => void;
   onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
@@ -27,7 +28,9 @@ export type ChildProps = {
 
 export const Selection: FunctionComponent<Props> = (props) => {
 
-  const [state, setState] = useState<{ select: boolean, circle?: { x: number, y: number, radius: number } }>({ select: false })
+  const [state, setState] = useState<{
+    select: boolean, cursor?: string, circle?: { x: number, y: number, radius: number }
+  }>({ select: false })
   const _state = useRef(state)
   _state.current = state
 
@@ -35,7 +38,7 @@ export const Selection: FunctionComponent<Props> = (props) => {
 
   const onViewportPointerDown = useCallback((event: ViewportPointerEvent) => {
     if (_state.current.select) {
-      setState({ select: true, circle: { x: event.x, y: event.y, radius: 0 }})
+      setState({ select: true, cursor: 'copy', circle: { x: event.x, y: event.y, radius: 0 }})
     }
 
     props.onViewportPointerDown?.(event)
@@ -45,6 +48,7 @@ export const Selection: FunctionComponent<Props> = (props) => {
     if (_state.current.select && _state.current.circle && event.type === 'viewportDrag') {
       setState({
         select: true,
+        cursor: 'copy',
         circle: {
           x: _state.current.circle.x,
           y: _state.current.circle.y,
@@ -69,6 +73,7 @@ export const Selection: FunctionComponent<Props> = (props) => {
     onViewportPointerDown,
     onViewportDrag,
     onViewportPointerUp,
+    cursor: state.cursor,
     annotation: state.circle && state.circle.radius > 0 ? {
       type: 'circle',
       id: 'selection',

@@ -197,7 +197,7 @@ const App: FunctionComponent = () => {
           createElement(Selection, {
             onViewportPointerUp,
             onViewportDrag,
-            children: ({ select, toggleSelect, annotation, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
+            children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
               createElement(Fragment, {},
                 createElement('div', { style: { position: 'absolute', top: 60, left: 12 } }, (
                   createElement(Button, { selected: select, onClick: toggleSelect }, '●')
@@ -213,6 +213,7 @@ const App: FunctionComponent = () => {
                   zoom: graph.zoom,
                   minZoom: graph.minZoom,
                   maxZoom: graph.maxZoom,
+                  cursor,
                   onNodeDrag,
                   onNodePointerEnter,
                   onNodePointerLeave,

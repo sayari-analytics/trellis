@@ -104,6 +104,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   animatePosition?: number | false
   animateRadius?: number | false
   animateViewport?: number | false
+  cursor?: string
   nodesEqual?: (previous: N[], current: N[]) => boolean
   edgesEqual?: (previous: E[], current: E[]) => boolean
   nodeIsEqual?: (previous: N, current: N) => boolean
@@ -187,6 +188,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   decelerateInteraction: Decelerate<N, E>
   fontLoader = FontLoader()
   imageLoader = ImageLoader()
+  container: HTMLDivElement
 
   private clickedContainer = false
   private previousTime = performance.now()
@@ -230,6 +232,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     const view = document.createElement('canvas')
     view.onselectstart = () => false
     options.container.appendChild(view)
+    this.container = options.container
 
     this.app = new PIXI.Application({
       view,
@@ -331,7 +334,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     edges,
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
-      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
+      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, cursor,
       animatePosition = RENDERER_OPTIONS.animatePosition, animateRadius = RENDERER_OPTIONS.animateRadius, animateViewport = RENDERER_OPTIONS.animateViewport,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDrag, onNodePointerUp, onNodePointerLeave, onNodeDoubleClick, onNodeDragEnd, onNodeDragStart,
@@ -366,6 +369,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.minZoom = minZoom
     this.maxZoom = maxZoom
 
+    if (cursor !== undefined) {
+      this.container.style.cursor = cursor
+    }
 
     if (width !== this.width || height !== this.height) {
       this.width = width

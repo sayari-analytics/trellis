@@ -27,6 +27,7 @@ export class Drag <N extends Node, E extends Edge>{
       return
     }
 
+    this.renderer.container.style.cursor = 'move'
     this.last = { x: event.data.global.x, y: event.data.global.y }
     this.current = event.data.pointerId
   }
@@ -73,6 +74,7 @@ export class Drag <N extends Node, E extends Edge>{
       return
     }
 
+    this.renderer.container.style.cursor = 'auto'
     this.last = undefined
     this.moved = false
   }
