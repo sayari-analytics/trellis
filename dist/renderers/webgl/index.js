@@ -297,10 +297,12 @@ var InternalRenderer = /** @class */ (function () {
                     if (_this.annotationsById[annotation.id] === undefined) {
                         // annotation enter
                         annotationsById[annotation.id] = new circle_1.CircleAnnotationRenderer(_this, annotation);
+                        _this.dirty = true;
                     }
                     else {
                         // annotation update
                         annotationsById[annotation.id] = _this.annotationsById[annotation.id].update(annotation);
+                        _this.dirty = true;
                     }
                 }
             }

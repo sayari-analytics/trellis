@@ -21,8 +21,8 @@ export class CircleAnnotationRenderer<N extends Node, E extends Edge>{
   update(circle: CircleAnnotation) {
     this.circle = circle
 
-    this.circleGraphic.clear()
     this.circleGraphic
+      .clear()
       .beginFill(colorToNumber(this.circle.style.color))
       .lineStyle(this.circle.style.stroke.width, colorToNumber(this.circle.style.stroke.color))
       .drawCircle(this.circle.x, this.circle.y, this.circle.radius)

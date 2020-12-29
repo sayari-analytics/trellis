@@ -533,9 +533,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       if (this.annotationsById[annotation.id] === undefined) {
         // annotation enter
         annotationsById[annotation.id] = new CircleAnnotationRenderer(this, annotation)
+        this.dirty = true
       } else {
         // annotation update
         annotationsById[annotation.id] = this.annotationsById[annotation.id].update(annotation)
+        this.dirty = true
       }
     }
 

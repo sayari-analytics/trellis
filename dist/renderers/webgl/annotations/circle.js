@@ -32,8 +32,8 @@ var CircleAnnotationRenderer = /** @class */ (function () {
     }
     CircleAnnotationRenderer.prototype.update = function (circle) {
         this.circle = circle;
-        this.circleGraphic.clear();
         this.circleGraphic
+            .clear()
             .beginFill(utils_1.colorToNumber(this.circle.style.color))
             .lineStyle(this.circle.style.stroke.width, utils_1.colorToNumber(this.circle.style.stroke.color))
             .drawCircle(this.circle.x, this.circle.y, this.circle.radius)
