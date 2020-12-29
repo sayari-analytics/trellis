@@ -230,7 +230,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     const view = document.createElement('canvas')
     view.onselectstart = () => false
     options.container.appendChild(view)
-    options.container.style.position = 'relative'
 
     this.app = new PIXI.Application({
       view,

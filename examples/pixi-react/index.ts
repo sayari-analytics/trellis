@@ -1,9 +1,11 @@
-import { createElement, FunctionComponent, useState, useCallback, useEffect } from 'react'
+import { createElement, FunctionComponent, useState, useCallback, useEffect, Fragment } from 'react'
 import { render } from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
 import * as Graph from '../../src'
 import { Zoom, clampZoom } from '../../src/renderers/webgl/bindings/react/zoom'
+import { Selection } from '../../src/renderers/webgl/bindings/react/selection'
+import { Button } from '../../src/renderers/webgl/bindings/react/button'
 import { Renderer, Props } from '../../src/renderers/webgl/bindings/react/renderer'
 import * as Force from '../../src/layout/force'
 import * as Cluster from '../../src/layout/cluster'
@@ -192,33 +194,40 @@ const App: FunctionComponent = () => {
     createElement(ReactResizeDetector, {},
       ({ width, height }: { width?: number, height?: number }) => (
         createElement('div', { style: { width: '100%', height: '100%' } }, (
-          createElement(Zoom, {
-            top: 80,
-            onZoomIn,
-            onZoomOut,
-          }, (
-            createElement<Props<Node, Edge>>(Renderer, {
-              width,
-              height,
-              nodes: graph.nodes,
-              edges: graph.edges,
-              x: graph.x,
-              y: graph.y,
-              zoom: graph.zoom,
-              minZoom: graph.minZoom,
-              maxZoom: graph.maxZoom,
-              onNodeDrag,
-              onNodePointerEnter,
-              onNodePointerLeave,
-              onEdgePointerEnter,
-              onEdgePointerLeave,
-              onNodeDoubleClick,
-              onViewportPointerUp,
-              onViewportWheel,
-              onViewportDrag,
-              debug: { stats }
-            })
-          ))
+          createElement(Selection, {
+            onViewportPointerUp,
+            onViewportDrag,
+            children: ({ select, toggleSelect, annotation, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
+              createElement(Fragment, {},
+                createElement('div', { style: { position: 'absolute', top: 60, left: 12 } }, (
+                  createElement(Button, { selected: select, onClick: toggleSelect }, '●')
+                )),
+                createElement<Props<Node, Edge>>(Renderer, {
+                  width,
+                  height,
+                  nodes: graph.nodes,
+                  edges: graph.edges,
+                  annotations: annotation ? [annotation] : undefined,
+                  x: graph.x,
+                  y: graph.y,
+                  zoom: graph.zoom,
+                  minZoom: graph.minZoom,
+                  maxZoom: graph.maxZoom,
+                  onNodeDrag,
+                  onNodePointerEnter,
+                  onNodePointerLeave,
+                  onEdgePointerEnter,
+                  onEdgePointerLeave,
+                  onNodeDoubleClick,
+                  onViewportPointerDown,
+                  onViewportDrag,
+                  onViewportPointerUp,
+                  onViewportWheel,
+                  debug: { stats }
+                })
+              )
+            )
+          })
         ))
       )
     )

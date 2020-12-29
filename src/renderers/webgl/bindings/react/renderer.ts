@@ -1,6 +1,6 @@
 import { createElement, useRef, useEffect } from 'react'
 import { Renderer as PixiRenderer, Options } from '../..'
-import { Node, Edge } from '../../../..'
+import { Node, Edge, Annotation } from '../../../..'
 
 
 export type Props<N extends Node = Node, E extends Edge = Edge> =
@@ -8,6 +8,7 @@ export type Props<N extends Node = Node, E extends Edge = Edge> =
   {
     nodes: N[]
     edges: E[]
+    annotations?: Annotation[],
     debug?: { logPerformance?: boolean, stats?: Stats }
   }
 
@@ -19,7 +20,7 @@ const defaultEdgesEqual = <E extends Edge>(prev: E[], current: E[]) => prev === 
 export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
 
   const ref = useRef<HTMLDivElement>(null)
-  const renderer = useRef<(graph: { nodes: N[], edges: E[], options?: Partial<Options<N, E>> }) => void>()
+  const renderer = useRef<(graph: { nodes: N[], edges: E[], annotations?: Annotation[], options?: Partial<Options<N, E>> }) => void>()
 
   useEffect(() => {
     const _renderer = PixiRenderer({ container: ref.current!, debug: props.debug })
@@ -29,15 +30,13 @@ export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Pr
   }, [])
 
   useEffect(() => {
-    const { nodes, edges, ...options } = props
+    const { nodes, edges, annotations, ...options } = props
     options.nodesEqual = options.nodesEqual ?? defaultNodesEqual
     options.edgesEqual = options.edgesEqual ?? defaultEdgesEqual
 
-    renderer.current!({ nodes, edges, options })
+    renderer.current!({ nodes, edges, annotations, options })
   }, [props])
 
 
-  return (
-    createElement('div', { ref: ref })
-  )
+  return createElement('div', { ref: ref })
 }
