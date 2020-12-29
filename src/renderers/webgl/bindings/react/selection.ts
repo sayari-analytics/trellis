@@ -1,7 +1,7 @@
 import { createElement, Fragment, FunctionComponent, ReactNode, useCallback, useRef, useState } from 'react'
 import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../..'
 import { Annotation } from '../../../..'
-import { SelectionChangeEvent } from '../../../../controls/selection2'
+import { SelectionChangeEvent } from '../../../../controls/selection'
 
 
 export type Props = {
@@ -26,6 +26,7 @@ export type ChildProps = {
 }
 
 
+// TODO - memoize
 export const Selection: FunctionComponent<Props> = (props) => {
 
   const [state, setState] = useState<{

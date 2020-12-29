@@ -2,15 +2,16 @@ import { createElement, FunctionComponent, useState, useCallback, useEffect, Fra
 import { render } from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
-import * as Graph from '../../src'
-import { Zoom, clampZoom } from '../../src/renderers/webgl/bindings/react/zoom'
 import { Selection } from '../../src/renderers/webgl/bindings/react/selection'
 import { Button } from '../../src/renderers/webgl/bindings/react/button'
 import { Renderer, Props } from '../../src/renderers/webgl/bindings/react/renderer'
+import { Zoom } from '../../src/renderers/webgl/bindings/react/zoom'
+import * as Graph from '../../src'
 import * as Force from '../../src/layout/force'
 import * as Cluster from '../../src/layout/cluster'
 import * as Subgraph from '../../src/layout/subgraph'
 import * as WebGL from '../../src/renderers/webgl'
+import { clampZoom } from '../../src/controls/zoom'
 
 
 const stats = new Stats()
@@ -199,9 +200,10 @@ const App: FunctionComponent = () => {
             onViewportDrag,
             children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
               createElement(Fragment, {},
-                createElement('div', { style: { position: 'absolute', top: 60, left: 12 } }, (
-                  createElement(Button, { selected: select, onClick: toggleSelect }, '●')
-                )),
+                createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },
+                  createElement(Button, { selected: select, onClick: toggleSelect }, '●'),
+                  createElement(Zoom, { onZoomIn, onZoomOut })
+                ),
                 createElement<Props<Node, Edge>>(Renderer, {
                   width,
                   height,

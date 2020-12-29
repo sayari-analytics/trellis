@@ -1,45 +1,30 @@
-import { createElement, FunctionComponent, useEffect, useRef } from 'react'
-import { Control, Options } from '../../../../controls/zoom'
+import { createElement, FunctionComponent } from 'react'
+import { ButtonGroup } from './buttonGroup'
 
 
-export { clampZoom, fit, zoomTo } from '../../../../controls/zoom'
-
-export type Props = Partial<Options>
+export { clampZoom } from '../../../../controls/zoom'
 
 
-export const Zoom: FunctionComponent<Props> = (props) => {
-
-  const ref = useRef<HTMLDivElement>(null)
-  const control = useRef<(options: Partial<Options>) => void>()
-
-  useEffect(() => {
-    control.current = Control({ container: ref.current! })
-  }, [])
-
-  useEffect(() => {
-    control.current!(props)
-  }, [props])
-
-  return (
-    createElement('div', { ref }, props.children)
-  )
+export type Props = {
+  onZoomIn?: () => void
+  onZoomOut?: () => void
 }
 
 
-// export const Zoom = forwardRef<HTMLDivElement, Props>((props, ref) => {
+// TODO - memoize, disable on min/max zoom
+export const Zoom: FunctionComponent<Props> = (props) => {
 
-//   // const ref = useRef<HTMLDivElement>(null)
-//   const control = useRef<(options: Partial<Options>) => void>()
-
-//   useEffect(() => {
-//     control.current = Control({ container: ref.current! })
-//   }, [ref?.current])
-
-//   useEffect(() => {
-//     control.current!(props)
-//   }, [props])
-
-//   return (
-//     createElement('div', { ref })
-//   )
-// })
+  return (
+    createElement(ButtonGroup, {
+      children: [{
+        body: '＋',
+        title: 'Zoom In',
+        onClick: props.onZoomIn
+      }, {
+        body: '－',
+        title: 'Zoom Out',
+        onClick: props.onZoomOut
+      }]
+    })
+  )
+}
