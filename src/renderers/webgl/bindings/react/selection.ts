@@ -6,7 +6,7 @@ import { Annotation } from '../../../..'
 export type SelectionChangeEvent = { type: 'selectionChange', x: number, y: number, radius: number }
 
 export type Props = {
-  onSelection?: ((event: SelectionChangeEvent) => void) | undefined;
+  onSelection?: ((event: SelectionChangeEvent) => void) | undefined; // TODO - add onSelectionStart, onSelectionEnd
   onViewportPointerDown?: ((event: ViewportPointerEvent) => void) | undefined;
   onViewportDrag?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined;
   onViewportPointerUp?: ((event: ViewportPointerEvent) => void) | undefined;
@@ -48,16 +48,15 @@ export const Selection: FunctionComponent<Props> = (props) => {
 
   const onViewportDrag = useCallback((event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
     if (_state.current.select && _state.current.circle && event.type === 'viewportDrag') {
+      const x = _state.current.circle.x
+      const y = _state.current.circle.y
+      const radius = Math.hypot(event.x - x, event.y - y)
       setState({
         select: true,
         cursor: 'copy',
-        circle: {
-          x: _state.current.circle.x,
-          y: _state.current.circle.y,
-          radius: Math.hypot(event.x - _state.current.circle.x, event.y - _state.current.circle.y)
-        }
+        circle: { x, y, radius }
       })
-      // props.onSelection?.({ type: 'selectionChange' })
+      props.onSelection?.({ type: 'selectionChange', x: x, y: y, radius })
     } else {
       props.onViewportDrag?.(event)
     }

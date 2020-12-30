@@ -2,7 +2,7 @@ import { createElement, FunctionComponent, useState, useCallback, useEffect, Fra
 import { render } from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
-import { Selection } from '../../src/renderers/webgl/bindings/react/selection'
+import { Selection, SelectionChangeEvent } from '../../src/renderers/webgl/bindings/react/selection'
 import { Button } from '../../src/renderers/webgl/bindings/react/button'
 import { Renderer, Props } from '../../src/renderers/webgl/bindings/react/renderer'
 import { Zoom } from '../../src/renderers/webgl/bindings/react/zoom'
@@ -108,7 +108,7 @@ const App: FunctionComponent = () => {
     setGraph((graph) => ({
       ...graph,
       nodes: graph.nodes.map((node) => (node.id === id ?
-        { ...node, style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] } } :
+        { ...node, style: { ...node.style, stroke: [{ ...node?.style?.stroke?.[0], color: '#CCC' }] } } :
         node
       )),
     }))
@@ -120,7 +120,7 @@ const App: FunctionComponent = () => {
         ...node,
         style: {
           ...node.style,
-          stroke: id === 'a' ? [{ color: '#F7CA4D', width: 4 }] : [{ color: '#90D7FB', width: 4 }]
+          stroke: [{ ...node?.style?.stroke?.[0], color: id === 'a' ? '#F7CA4D' : '#90D7FB' }]
         }
       } : node))
     }))
@@ -190,6 +190,21 @@ const App: FunctionComponent = () => {
   const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: WebGL.ViewportWheelEvent) => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
+  const onSelection = useCallback(({ x, y, radius }: SelectionChangeEvent) => {
+    // TODO - add to state { selectedNodes: Set<string>, hoverNode?: string, hoverEdge?: string }
+    setGraph(({ nodes, ...rest }) => ({
+      nodes: nodes.map((node) => {
+        return Math.hypot((node.x ?? 0) - x, (node.y ?? 0) - y) <= radius ? {
+          ...node,
+          style: {
+            ...node.style,
+            stroke: [{ ...node?.style?.stroke?.[0], width: 8 }]
+          }
+        } : node
+      }),
+      ...rest
+    }))
+  }, [])
 
   return (
     createElement(ReactResizeDetector, {},
@@ -198,6 +213,7 @@ const App: FunctionComponent = () => {
           createElement(Selection, {
             onViewportPointerUp,
             onViewportDrag,
+            onSelection,
             children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
               createElement(Fragment, {},
                 createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },

@@ -44,21 +44,20 @@ var Selection = function (props) {
         (_a = props.onViewportPointerDown) === null || _a === void 0 ? void 0 : _a.call(props, event);
     }, [props.onViewportPointerDown]);
     var onViewportDrag = react_1.useCallback(function (event) {
-        var _a;
+        var _a, _b;
         if (_state.current.select && _state.current.circle && event.type === 'viewportDrag') {
+            var x = _state.current.circle.x;
+            var y = _state.current.circle.y;
+            var radius = Math.hypot(event.x - x, event.y - y);
             setState({
                 select: true,
                 cursor: 'copy',
-                circle: {
-                    x: _state.current.circle.x,
-                    y: _state.current.circle.y,
-                    radius: Math.hypot(event.x - _state.current.circle.x, event.y - _state.current.circle.y)
-                }
+                circle: { x: x, y: y, radius: radius }
             });
-            // props.onSelection?.({ type: 'selectionChange' })
+            (_a = props.onSelection) === null || _a === void 0 ? void 0 : _a.call(props, { type: 'selectionChange', x: x, y: y, radius: radius });
         }
         else {
-            (_a = props.onViewportDrag) === null || _a === void 0 ? void 0 : _a.call(props, event);
+            (_b = props.onViewportDrag) === null || _b === void 0 ? void 0 : _b.call(props, event);
         }
     }, [props.onSelection, props.onViewportPointerDown]);
     var onViewportPointerUp = react_1.useCallback(function (event) {
