@@ -94,7 +94,7 @@ var InternalRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d, e_4, _e;
             var _f, _g, _h, _j, _k;
-            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, _v = _m.animatePosition, animatePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _v, _w = _m.animateRadius, animateRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _w, _x = _m.animateViewport, animateViewport = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _x, _y = _m.nodesEqual, nodesEqual = _y === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _y, _z = _m.edgesEqual, edgesEqual = _z === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _z, _0 = _m.nodeIsEqual, nodeIsEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _0, _1 = _m.edgeIsEqual, edgeIsEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _1, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDrag = _m.onNodeDrag, onNodePointerUp = _m.onNodePointerUp, onNodePointerLeave = _m.onNodePointerLeave, onNodeDoubleClick = _m.onNodeDoubleClick, onNodeDragEnd = _m.onNodeDragEnd, onNodeDragStart = _m.onNodeDragStart, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgePointerLeave = _m.onEdgePointerLeave, onEdgeDoubleClick = _m.onEdgeDoubleClick, onViewportPointerEnter = _m.onViewportPointerEnter, onViewportPointerDown = _m.onViewportPointerDown, onViewportDrag = _m.onViewportDrag, onViewportPointerMove = _m.onViewportPointerMove, onViewportPointerUp = _m.onViewportPointerUp, onViewportPointerLeave = _m.onViewportPointerLeave, onViewportWheel = _m.onViewportWheel, annotations = _a.annotations;
+            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, cursor = _m.cursor, _v = _m.animatePosition, animatePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _v, _w = _m.animateRadius, animateRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _w, _x = _m.animateViewport, animateViewport = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _x, _y = _m.nodesEqual, nodesEqual = _y === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _y, _z = _m.edgesEqual, edgesEqual = _z === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _z, _0 = _m.nodeIsEqual, nodeIsEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _0, _1 = _m.edgeIsEqual, edgeIsEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _1, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDrag = _m.onNodeDrag, onNodePointerUp = _m.onNodePointerUp, onNodePointerLeave = _m.onNodePointerLeave, onNodeDoubleClick = _m.onNodeDoubleClick, onNodeDragEnd = _m.onNodeDragEnd, onNodeDragStart = _m.onNodeDragStart, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgePointerLeave = _m.onEdgePointerLeave, onEdgeDoubleClick = _m.onEdgeDoubleClick, onViewportPointerEnter = _m.onViewportPointerEnter, onViewportPointerDown = _m.onViewportPointerDown, onViewportDrag = _m.onViewportDrag, onViewportPointerMove = _m.onViewportPointerMove, onViewportPointerUp = _m.onViewportPointerUp, onViewportPointerLeave = _m.onViewportPointerLeave, onViewportWheel = _m.onViewportWheel, annotations = _a.annotations;
             _this.onViewportPointerEnter = onViewportPointerEnter;
             _this.onViewportPointerDown = onViewportPointerDown;
             _this.onViewportDrag = onViewportDrag;
@@ -120,6 +120,9 @@ var InternalRenderer = /** @class */ (function () {
             _this.animateRadius = animateRadius;
             _this.minZoom = minZoom;
             _this.maxZoom = maxZoom;
+            if (cursor !== undefined) {
+                _this.container.style.cursor = cursor;
+            }
             if (width !== _this.width || height !== _this.height) {
                 _this.width = width;
                 _this.height = height;
@@ -558,7 +561,7 @@ var InternalRenderer = /** @class */ (function () {
         var view = document.createElement('canvas');
         view.onselectstart = function () { return false; };
         options.container.appendChild(view);
-        options.container.style.position = 'relative';
+        this.container = options.container;
         this.app = new PIXI.Application({
             view: view,
             width: this.width,
@@ -632,7 +635,6 @@ var InternalRenderer = /** @class */ (function () {
         this.app.renderer.plugins.interaction.on('pointerup', pointerUp);
         this.app.renderer.plugins.interaction.on('pointerupoutside', pointerUp);
         this.app.renderer.plugins.interaction.on('pointercancel', pointerUp);
-        this.app.renderer.plugins.interaction.on('pointerout', pointerUp);
         this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave);
         this.app.view.addEventListener('wheel', this.zoomInteraction.wheel);
         this.arrow = new arrowSprite_1.ArrowSprite(this);

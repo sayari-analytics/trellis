@@ -26,12 +26,12 @@ var Renderer = function (props) {
     }, []);
     react_1.useEffect(function () {
         var _a, _b;
-        var nodes = props.nodes, edges = props.edges, options = __rest(props, ["nodes", "edges"]);
+        var nodes = props.nodes, edges = props.edges, annotations = props.annotations, options = __rest(props, ["nodes", "edges", "annotations"]);
         options.nodesEqual = (_a = options.nodesEqual) !== null && _a !== void 0 ? _a : defaultNodesEqual;
         options.edgesEqual = (_b = options.edgesEqual) !== null && _b !== void 0 ? _b : defaultEdgesEqual;
-        renderer.current({ nodes: nodes, edges: edges, options: options });
+        renderer.current({ nodes: nodes, edges: edges, annotations: annotations, options: options });
     }, [props]);
-    return (react_1.createElement('div', { ref: ref }));
+    return react_1.createElement('div', { ref: ref });
 };
 exports.Renderer = Renderer;
 //# sourceMappingURL=renderer.js.map

@@ -1,6 +1,3 @@
-import { Node } from '../'
-
-
 export type Options = Partial<{
   className: string
   top: number
@@ -40,32 +37,6 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-
-export const zoomTo = (nodes: Node[], options?: ViewportChangeOptions) => {
-  const result = {
-    zoom: 1,
-    position: [0, 0]
-  }
-
-  for (const node of nodes) {
-
-  }
-
-  return result
-}
-
-export const fit = (zoom: number, position: [number, number], nodes: Node[], options?: ViewportChangeOptions) => {
-  const result = {
-    zoom: 1,
-    position: [0, 0]
-  }
-
-  for (const node of nodes) {
-
-  }
-
-  return result
-}
 
 export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
 

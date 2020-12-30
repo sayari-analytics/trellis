@@ -34,8 +34,8 @@ var Control = function (_a) {
     download.textContent = 'd';
     download.setAttribute('aria-label', 'Download');
     download.setAttribute('title', 'Download');
-    download.onmouseenter = function () { return DEFAULT_BG_HOVER; };
-    download.onmouseleave = function () { return DEFAULT_BG; };
+    download.onmouseenter = function () { return download.style.background = DEFAULT_BG_HOVER; };
+    download.onmouseleave = function () { return download.style.background = DEFAULT_BG; };
     download.onfocus = function () { return download.style.boxShadow = '0px 0px 0px 1px #aaa inset'; };
     download.onblur = function () { return download.style.boxShadow = 'none'; };
     download.onpointerdown = function () {

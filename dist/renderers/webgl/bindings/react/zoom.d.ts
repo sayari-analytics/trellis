@@ -1,5 +1,7 @@
 import { FunctionComponent } from 'react';
-import { Options } from '../../../../controls/zoom';
-export { clampZoom, fit, zoomTo } from '../../../../controls/zoom';
-export declare type Props = Partial<Options>;
+export { clampZoom } from '../../../../controls/zoom';
+export declare type Props = {
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+};
 export declare const Zoom: FunctionComponent<Props>;

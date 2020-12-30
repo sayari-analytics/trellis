@@ -1,4 +1,3 @@
-import { Node } from '../';
 export declare type Options = Partial<{
     className: string;
     top: number;
@@ -11,18 +10,6 @@ export declare type Options = Partial<{
 export declare type ViewportChangeOptions = Partial<{
     padding: number;
 }>;
-export declare const zoomTo: (nodes: Node[], options?: Partial<{
-    padding: number;
-}> | undefined) => {
-    zoom: number;
-    position: number[];
-};
-export declare const fit: (zoom: number, position: [number, number], nodes: Node[], options?: Partial<{
-    padding: number;
-}> | undefined) => {
-    zoom: number;
-    position: number[];
-};
 export declare const clampZoom: (min: number, max: number, zoom: number) => number;
 /**
  * TODO

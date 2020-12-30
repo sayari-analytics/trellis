@@ -1,32 +1,25 @@
-import * as Graph from '../';
-import { Options as RendererOptions, ViewportDragEvent } from '../renderers/webgl';
+import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../renderers/webgl';
+export declare type SelectionChangeEvent = {
+    type: 'selectionChange';
+    x: number;
+    y: number;
+    radius: number;
+};
 export declare type Options = Partial<{
     className: string;
     top: number;
     left: number;
     right: number;
     bottom: number;
-    onSelection: (event: ViewportDragEvent) => void;
+    onSelection: (event: SelectionChangeEvent) => void;
+    onViewportPointerDown: (event: ViewportPointerEvent) => void;
+    onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
+    onViewportPointerUp: (event: ViewportPointerEvent) => void;
 }>;
-export declare const Control: ({ container, render }: {
+export declare const Control: ({ container }: {
     container: HTMLDivElement;
-    render: (graph: {
-        nodes: Graph.Node[];
-        edges: Graph.Edge[];
-        options?: RendererOptions;
-        annotations?: Graph.Annotation[];
-    }) => void;
-}) => <N extends Graph.Node, E extends Graph.Edge>({ controlOptions, ...graph }: {
-    nodes: N[];
-    edges: E[];
-    options?: RendererOptions<N, E> | undefined;
-    annotations?: Graph.CircleAnnotation[] | undefined;
-    controlOptions?: Partial<{
-        className: string;
-        top: number;
-        left: number;
-        right: number;
-        bottom: number;
-        onSelection: (event: ViewportDragEvent) => void;
-    }> | undefined;
-}) => void;
+}) => (options: Options) => {
+    onViewportPointerDown: (event: ViewportPointerEvent) => void;
+    onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
+    onViewportPointerUp: (event: ViewportPointerEvent) => void;
+};

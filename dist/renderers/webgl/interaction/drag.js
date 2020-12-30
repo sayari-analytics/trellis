@@ -15,6 +15,7 @@ var Drag = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
+            _this.renderer.container.style.cursor = 'move';
             _this.last = { x: event.data.global.x, y: event.data.global.y };
             _this.current = event.data.pointerId;
         };
@@ -53,6 +54,7 @@ var Drag = /** @class */ (function () {
             if (_this.paused) {
                 return;
             }
+            _this.renderer.container.style.cursor = 'auto';
             _this.last = undefined;
             _this.moved = false;
         };

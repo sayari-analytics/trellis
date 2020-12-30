@@ -128,6 +128,7 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     animatePosition?: number | false;
     animateRadius?: number | false;
     animateViewport?: number | false;
+    cursor?: string;
     nodesEqual?: (previous: N[], current: N[]) => boolean;
     edgesEqual?: (previous: E[], current: E[]) => boolean;
     nodeIsEqual?: (previous: N, current: N) => boolean;
@@ -231,6 +232,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
         load: (url: string) => (onfulfilled: (result: string) => void) => () => void;
         loading: () => boolean;
     };
+    container: HTMLDivElement;
     private clickedContainer;
     private previousTime;
     private debug?;

@@ -310,7 +310,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerup', pointerUp)
     ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerupoutside', pointerUp)
     ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointercancel', pointerUp)
-    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerout', pointerUp)
+    // ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerout', pointerUp)
     ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointerleave', pointerLeave)
     this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
 

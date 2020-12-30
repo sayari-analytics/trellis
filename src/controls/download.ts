@@ -47,8 +47,8 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
   download.textContent = 'd'
   download.setAttribute('aria-label', 'Download')
   download.setAttribute('title', 'Download')
-  download.onmouseenter = () => DEFAULT_BG_HOVER
-  download.onmouseleave = () => DEFAULT_BG
+  download.onmouseenter = () => download.style.background = DEFAULT_BG_HOVER
+  download.onmouseleave = () => download.style.background = DEFAULT_BG
   download.onfocus = () => download.style.boxShadow = '0px 0px 0px 1px #aaa inset'
   download.onblur = () => download.style.boxShadow = 'none'
   download.onpointerdown = () => {

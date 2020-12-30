@@ -1,8 +1,9 @@
 import { createElement, Fragment, FunctionComponent, ReactNode, useCallback, useRef, useState } from 'react'
 import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../..'
 import { Annotation } from '../../../..'
-import { SelectionChangeEvent } from '../../../../controls/selection'
 
+
+export type SelectionChangeEvent = { type: 'selectionChange', x: number, y: number, radius: number }
 
 export type Props = {
   onSelection?: ((event: SelectionChangeEvent) => void) | undefined;
