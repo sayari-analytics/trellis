@@ -1,4 +1,4 @@
-import { createElement, FunctionComponent, useState, useCallback, useEffect, Fragment } from 'react'
+import { createElement, FunctionComponent, useState, useCallback, useEffect, Fragment, useMemo } from 'react'
 import { render } from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
@@ -33,6 +33,8 @@ const PERSON_STYLE: WebGL.NodeStyle = {
   stroke: [{ color: '#90D7FB', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 22 }
 }
+const PERSON_ICON = { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 22 }
+const COMPANY_ICON = { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
 
 const data: { nodes: Node[], edges: Edge[] } = {
   nodes: [
@@ -46,7 +48,6 @@ const data: { nodes: Node[], edges: Edge[] } = {
       label,
       radius: 18,
       type: id === 'a' ? 'company' : 'person',
-      style: id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
       subgraph: undefined,
     })),
   edges: [
@@ -65,6 +66,8 @@ const data: { nodes: Node[], edges: Edge[] } = {
 const force = Force.Layout()
 const cluster = Cluster.Layout()
 const subgraph = Subgraph.Layout()
+const MIN_ZOOM = 0.1
+const MAX_ZOOM = 2.5
 
 
 /**
@@ -72,14 +75,13 @@ const subgraph = Subgraph.Layout()
  */
 const App: FunctionComponent = () => {
 
-  const [graph, setGraph] = useState<{ nodes: Node[], edges: Edge[], x: number, y: number, zoom: number, minZoom: number, maxZoom: number }>({
+  const [graph, setGraph] = useState<{ nodes: Node[], edges: Edge[], x: number, y: number, zoom: number, selectedNodes: Set<string>, hoverNode?: string, hoverEdge?: string }>({
     nodes: [],
     edges: [],
     x: 0,
     y: 0,
     zoom: 1,
-    minZoom: 0.1,
-    maxZoom: 2.5,
+    selectedNodes: new Set(),
   })
 
   useEffect(() => {
@@ -87,55 +89,25 @@ const App: FunctionComponent = () => {
   }, [])
 
   const onZoomIn = useCallback(() => {
-    setGraph((graph) => ({
-      ...graph,
-      zoom: clampZoom(graph.minZoom, graph.maxZoom, graph.zoom / 0.6)
-    }))
+    setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom / 0.6) }))
   }, [])
   const onZoomOut = useCallback(() => {
-    setGraph((graph) => ({
-      ...graph,
-      zoom: clampZoom(graph.minZoom, graph.maxZoom, graph.zoom * 0.6)
-    }))
+    setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom * 0.6) }))
   }, [])
   const onNodeDrag = useCallback(({ nodeX: x, nodeY: y, target: { id } }: WebGL.NodeDragEvent) => {
-    setGraph((graph) => ({
-      ...graph,
-      nodes: graph.nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
-    }))
+    setGraph((graph) => ({ ...graph, nodes: graph.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)) }))
   }, [])
   const onNodePointerEnter = useCallback(({ target: { id } }: WebGL.NodePointerEvent) => {
-    setGraph((graph) => ({
-      ...graph,
-      nodes: graph.nodes.map((node) => (node.id === id ?
-        { ...node, style: { ...node.style, stroke: [{ ...node?.style?.stroke?.[0], color: '#CCC' }] } } :
-        node
-      )),
-    }))
+    setGraph((graph) => ({ ...graph, hoverNode: id }))
   }, [])
-  const onNodePointerLeave = useCallback(({ target: { id } }: WebGL.NodePointerEvent) => {
-    setGraph((graph) => ({
-      ...graph,
-      nodes: graph.nodes.map((node) => (node.id === id ? {
-        ...node,
-        style: {
-          ...node.style,
-          stroke: [{ ...node?.style?.stroke?.[0], color: id === 'a' ? '#F7CA4D' : '#90D7FB' }]
-        }
-      } : node))
-    }))
+  const onNodePointerLeave = useCallback(() => {
+    setGraph((graph) => ({ ...graph, hoverNode: undefined }))
   }, [])
   const onEdgePointerEnter = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
-    setGraph((graph) => ({
-      ...graph,
-      edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
-    }))
+    setGraph((graph) => ({ ...graph, hoverEdge: id }))
   }, [])
-  const onEdgePointerLeave = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
-    setGraph((graph) => ({
-      ...graph,
-      edges: graph.edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
-    }))
+  const onEdgePointerLeave = useCallback(() => {
+    setGraph((graph) => ({ ...graph, hoverEdge: undefined }))
   }, [])
   const onNodeDoubleClick = useCallback(({ target }: WebGL.NodePointerEvent) => {
     const subgraphNodes = cluster((target.subgraph?.nodes ?? []).concat([
@@ -169,7 +141,10 @@ const App: FunctionComponent = () => {
         })
       )
     }))
-  }, [graph])
+  }, [])
+  const onViewportPointerDown = useCallback(() => {
+    setGraph((graph) => ({ ...graph, selectedNodes: new Set() }))
+  }, [])
   const onViewportPointerUp = useCallback(() => {
     setGraph((graph) => ({
       ...graph,
@@ -181,9 +156,9 @@ const App: FunctionComponent = () => {
           style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
           subgraph: undefined,
         }))
-      )
+      ),
     }))
-  }, [graph])
+  }, [])
   const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: WebGL.ViewportDragEvent | WebGL.ViewportDragDecelerateEvent) => {
     setGraph((graph) => ({ ...graph, x, y }))
   }, [])
@@ -191,20 +166,56 @@ const App: FunctionComponent = () => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
   const onSelection = useCallback(({ x, y, radius }: SelectionChangeEvent) => {
-    // TODO - add to state { selectedNodes: Set<string>, hoverNode?: string, hoverEdge?: string }
-    setGraph(({ nodes, ...rest }) => ({
-      nodes: nodes.map((node) => {
-        return Math.hypot((node.x ?? 0) - x, (node.y ?? 0) - y) <= radius ? {
-          ...node,
-          style: {
-            ...node.style,
-            stroke: [{ ...node?.style?.stroke?.[0], width: 8 }]
-          }
-        } : node
-      }),
-      ...rest
+    // TODO - shift select
+    // - add onClick selection
+    // - multiselect drag
+    setGraph((graph) => ({
+      ...graph,
+      selectedNodes: graph.nodes
+        .filter((node) => Math.hypot((node.x ?? 0) - x, (node.y ?? 0) - y) <= radius)
+        .reduce((selectedNodes, node) => {
+          selectedNodes.add(node.id)
+          return selectedNodes
+        }, new Set<string>())
+        // }, new Set(graph.selectedNodes))
     }))
   }, [])
+
+  const styledNodes = useMemo(() => {
+    return graph.nodes.map((node) => {
+      let style: WebGL.NodeStyle
+
+      if (node.type === 'person') {
+        if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
+          style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#7CBBF3', width: 2 }], icon: PERSON_ICON }
+        } else if (graph.selectedNodes.has(node.id)) {
+          style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }, { color: '#FFF', width: 2 }, { color: '#7CBBF3', width: 2 }], icon: PERSON_ICON }
+        } else if (node.id === graph.hoverNode) {
+          style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }], icon: PERSON_ICON }
+        } else {
+          style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }], icon: PERSON_ICON }
+        }
+      } else {
+        if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
+          style = { color: '#FFAF1D', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#F7CA4D', width: 2 }], icon: COMPANY_ICON }
+        } else if (graph.selectedNodes.has(node.id)) {
+          style = { color: '#FFAF1D', stroke: [{ color: '#F7CA4D', width: 4 }, { color: '#FFF', width: 2 }, { color: '#F7CA4D', width: 2 }], icon: COMPANY_ICON }
+        } else if (node.id === graph.hoverNode) {
+          style = { color: '#FFAF1D', stroke: [{ color: '#CCC', width: 4 }], icon: COMPANY_ICON }
+        } else {
+          style = { color: '#FFAF1D', stroke: [{ color: '#F7CA4D', width: 4 }], icon: COMPANY_ICON }
+        }
+      }
+
+      return { ...node, style }
+    })
+  }, [graph.nodes, graph.selectedNodes, graph.hoverNode])
+
+  const styledEdges = useMemo(() => {
+    return graph.edges.map((edge) => {
+      return { ...edge, style: edge.id === graph.hoverEdge ? { width: 3 } : { width: 1 } }
+    })
+  }, [graph.edges, graph.hoverEdge])
 
   return (
     createElement(ReactResizeDetector, {},
@@ -213,6 +224,7 @@ const App: FunctionComponent = () => {
           createElement(Selection, {
             onViewportPointerUp,
             onViewportDrag,
+            onViewportPointerDown,
             onSelection,
             children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
               createElement(Fragment, {},
@@ -223,14 +235,14 @@ const App: FunctionComponent = () => {
                 createElement<Props<Node, Edge>>(Renderer, {
                   width,
                   height,
-                  nodes: graph.nodes,
-                  edges: graph.edges,
+                  nodes: styledNodes,
+                  edges: styledEdges,
                   annotations: annotation ? [annotation] : undefined,
                   x: graph.x,
                   y: graph.y,
                   zoom: graph.zoom,
-                  minZoom: graph.minZoom,
-                  maxZoom: graph.maxZoom,
+                  minZoom: MIN_ZOOM,
+                  maxZoom: MAX_ZOOM,
                   cursor,
                   onNodeDrag,
                   onNodePointerEnter,
