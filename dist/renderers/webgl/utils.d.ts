@@ -11,6 +11,17 @@ export declare const clientPositionFromEvent: (event: MouseEvent | TouchEvent | 
     x: number;
     y: number;
 };
+export declare const pointerKeysFromEvent: (event: MouseEvent | TouchEvent | PointerEvent) => {
+    altKey?: undefined;
+    ctrlKey?: undefined;
+    metaKey?: undefined;
+    shiftKey?: undefined;
+} | {
+    altKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    shiftKey: boolean;
+};
 export declare const HALF_PI: number;
 export declare const TWO_PI: number;
 export declare const THREE_HALF_PI: number;

@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
@@ -96,7 +107,69 @@ var NodeRenderer = /** @class */ (function () {
             }
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            (_b = (_a = _this.renderer).onNodePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
+            (_b = (_a = _this.renderer).onNodePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
+        };
+        this.pointerDown = function (event) {
+            var _a, _b;
+            if (_this.doubleClickTimeout === undefined) {
+                _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
+            }
+            else {
+                _this.doubleClick = true;
+            }
+            _this.renderer.clickedNode = _this;
+            _this.renderer.app.renderer.plugins.interaction.on('pointermove', _this.pointerMove);
+            _this.renderer.zoomInteraction.pause();
+            _this.renderer.dragInteraction.pause();
+            _this.renderer.decelerateInteraction.pause();
+            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            _this.nodeMoveXOffset = x - _this.x;
+            _this.nodeMoveYOffset = y - _this.y;
+            (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
+        };
+        this.pointerMove = function (event) {
+            var _a, _b, _c, _d;
+            if (_this.renderer.clickedNode === undefined)
+                return;
+            var _e = _this.renderer.root.toLocal(event.data.global), x = _e.x, y = _e.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            var nodeX = x - _this.nodeMoveXOffset;
+            var nodeY = y - _this.nodeMoveYOffset;
+            _this.expectedNodeXPosition = nodeX;
+            _this.expectedNodeYPosition = nodeY;
+            if (!_this.renderer.dragging) {
+                _this.renderer.dragging = true;
+                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
+            }
+            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
+        };
+        this.pointerUp = function (event) {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+            if (_this.renderer.clickedNode === undefined)
+                return;
+            _this.renderer.clickedNode = undefined;
+            _this.renderer.app.renderer.plugins.interaction.off('pointermove', _this.pointerMove);
+            _this.renderer.zoomInteraction.resume();
+            _this.renderer.dragInteraction.resume();
+            _this.renderer.decelerateInteraction.resume();
+            _this.nodeMoveXOffset = 0;
+            _this.nodeMoveYOffset = 0;
+            var _l = _this.renderer.root.toLocal(event.data.global), x = _l.x, y = _l.y;
+            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
+            if (_this.renderer.dragging) {
+                _this.renderer.dragging = false;
+                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: (_c = _this.node.x) !== null && _c !== void 0 ? _c : 0, nodeY: (_d = _this.node.y) !== null && _d !== void 0 ? _d : 0, target: _this.node });
+            }
+            else {
+                (_f = (_e = _this.renderer).onNodePointerUp) === null || _f === void 0 ? void 0 : _f.call(_e, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
+                (_h = (_g = _this.renderer).onNodeClick) === null || _h === void 0 ? void 0 : _h.call(_g, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
+                if (_this.doubleClick) {
+                    _this.doubleClick = false;
+                    _this.doubleClickTimeout = undefined;
+                    (_k = (_j = _this.renderer).onNodeDoubleClick) === null || _k === void 0 ? void 0 : _k.call(_j, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
+                }
+            }
         };
         this.pointerLeave = function (event) {
             var _a, _b;
@@ -118,67 +191,7 @@ var NodeRenderer = /** @class */ (function () {
             }
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            (_b = (_a = _this.renderer).onNodePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
-        };
-        this.pointerDown = function (event) {
-            var _a, _b;
-            if (_this.doubleClickTimeout === undefined) {
-                _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
-            }
-            else {
-                _this.doubleClick = true;
-            }
-            _this.renderer.clickedNode = _this;
-            _this.renderer.app.renderer.plugins.interaction.on('pointermove', _this.nodeMove);
-            _this.renderer.zoomInteraction.pause();
-            _this.renderer.dragInteraction.pause();
-            _this.renderer.decelerateInteraction.pause();
-            var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
-            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            _this.nodeMoveXOffset = x - _this.x;
-            _this.nodeMoveYOffset = y - _this.y;
-            (_b = (_a = _this.renderer).onNodePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
-        };
-        this.pointerUp = function (event) {
-            var _a, _b, _c, _d, _e, _f, _g, _h;
-            if (_this.renderer.clickedNode === undefined)
-                return;
-            _this.renderer.clickedNode = undefined;
-            _this.renderer.app.renderer.plugins.interaction.off('pointermove', _this.nodeMove);
-            _this.renderer.zoomInteraction.resume();
-            _this.renderer.dragInteraction.resume();
-            _this.renderer.decelerateInteraction.resume();
-            _this.nodeMoveXOffset = 0;
-            _this.nodeMoveYOffset = 0;
-            var _j = _this.renderer.root.toLocal(event.data.global), x = _j.x, y = _j.y;
-            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            if (_this.renderer.dragging) {
-                _this.renderer.dragging = false;
-                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: (_c = _this.node.x) !== null && _c !== void 0 ? _c : 0, nodeY: (_d = _this.node.y) !== null && _d !== void 0 ? _d : 0, target: _this.node });
-            }
-            else {
-                (_f = (_e = _this.renderer).onNodePointerUp) === null || _f === void 0 ? void 0 : _f.call(_e, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
-                if (_this.doubleClick) {
-                    _this.doubleClick = false;
-                    (_h = (_g = _this.renderer).onNodeDoubleClick) === null || _h === void 0 ? void 0 : _h.call(_g, { type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node });
-                }
-            }
-        };
-        this.nodeMove = function (event) {
-            var _a, _b, _c, _d;
-            if (_this.renderer.clickedNode === undefined)
-                return;
-            var _e = _this.renderer.root.toLocal(event.data.global), x = _e.x, y = _e.y;
-            var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            var nodeX = x - _this.nodeMoveXOffset;
-            var nodeY = y - _this.nodeMoveYOffset;
-            _this.expectedNodeXPosition = nodeX;
-            _this.expectedNodeYPosition = nodeY;
-            if (!_this.renderer.dragging) {
-                _this.renderer.dragging = true;
-                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
-            }
-            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
+            (_b = (_a = _this.renderer).onNodePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
@@ -600,6 +613,10 @@ var NodeRenderer = /** @class */ (function () {
         return this;
     };
     NodeRenderer.prototype.delete = function () {
+        if (this.doubleClickTimeout) {
+            clearTimeout(this.doubleClickTimeout);
+            this.doubleClickTimeout = undefined;
+        }
         for (var subgraphNodeId in this.subgraphNodes) {
             // exit subgraph node
             this.subgraphNodes[subgraphNodeId].delete();

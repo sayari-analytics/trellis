@@ -7,7 +7,7 @@ var utils_1 = require("../utils");
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
 var Drag = /** @class */ (function () {
-    function Drag(renderer, onViewportDrag) {
+    function Drag(renderer) {
         var _this = this;
         this.paused = false;
         this.moved = false;
@@ -20,6 +20,7 @@ var Drag = /** @class */ (function () {
             _this.current = event.data.pointerId;
         };
         this.move = function (event) {
+            var _a, _b, _c, _d;
             if (_this.paused) {
                 return;
             }
@@ -37,7 +38,20 @@ var Drag = /** @class */ (function () {
                     _this.renderer.expectedViewportYPosition = viewportY;
                     var local = _this.renderer.root.toLocal(event.data.global);
                     var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-                    _this.onViewportDrag({
+                    if (!_this.renderer.dragging) {
+                        _this.renderer.dragging = true;
+                        (_b = (_a = _this.renderer).onViewportDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, {
+                            type: 'viewportDrag',
+                            x: x,
+                            y: y,
+                            clientX: client.x,
+                            clientY: client.y,
+                            viewportX: viewportX,
+                            viewportY: viewportY,
+                            target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom }
+                        });
+                    }
+                    (_d = (_c = _this.renderer).onViewportDrag) === null || _d === void 0 ? void 0 : _d.call(_c, {
                         type: 'viewportDrag',
                         x: local.x,
                         y: local.y,
@@ -59,7 +73,6 @@ var Drag = /** @class */ (function () {
             _this.moved = false;
         };
         this.renderer = renderer;
-        this.onViewportDrag = onViewportDrag;
     }
     Drag.prototype.pause = function () {
         this.paused = true;

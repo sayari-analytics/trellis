@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
@@ -49,7 +60,7 @@ var utils_2 = require("./utils");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-    animateViewport: 600, animatePosition: 800, animateRadius: 800,
+    animateViewport: 600, animatePosition: 800, animateRadius: 800, dragInertia: 0.88,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; }, nodeIsEqual: function () { return false; }, edgeIsEqual: function () { return false; },
 };
 PIXI.utils.skipHello();
@@ -66,6 +77,7 @@ var InternalRenderer = /** @class */ (function () {
         this.animatePosition = exports.RENDERER_OPTIONS.animatePosition;
         this.animateRadius = exports.RENDERER_OPTIONS.animateRadius;
         this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
+        this.dragInertia = exports.RENDERER_OPTIONS.dragInertia;
         this.dragging = false;
         this.dirty = false;
         this.viewportDirty = false;
@@ -91,33 +103,41 @@ var InternalRenderer = /** @class */ (function () {
         this.targetY = exports.RENDERER_OPTIONS.y;
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
         this.firstRender = true;
+        this.doubleClick = false;
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d, e_4, _e;
             var _f, _g, _h, _j, _k;
-            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, cursor = _m.cursor, _v = _m.animatePosition, animatePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _v, _w = _m.animateRadius, animateRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _w, _x = _m.animateViewport, animateViewport = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _x, _y = _m.nodesEqual, nodesEqual = _y === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _y, _z = _m.edgesEqual, edgesEqual = _z === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _z, _0 = _m.nodeIsEqual, nodeIsEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _0, _1 = _m.edgeIsEqual, edgeIsEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _1, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDrag = _m.onNodeDrag, onNodePointerUp = _m.onNodePointerUp, onNodePointerLeave = _m.onNodePointerLeave, onNodeDoubleClick = _m.onNodeDoubleClick, onNodeDragEnd = _m.onNodeDragEnd, onNodeDragStart = _m.onNodeDragStart, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgePointerLeave = _m.onEdgePointerLeave, onEdgeDoubleClick = _m.onEdgeDoubleClick, onViewportPointerEnter = _m.onViewportPointerEnter, onViewportPointerDown = _m.onViewportPointerDown, onViewportDrag = _m.onViewportDrag, onViewportPointerMove = _m.onViewportPointerMove, onViewportPointerUp = _m.onViewportPointerUp, onViewportPointerLeave = _m.onViewportPointerLeave, onViewportWheel = _m.onViewportWheel, annotations = _a.annotations;
-            _this.onViewportPointerEnter = onViewportPointerEnter;
-            _this.onViewportPointerDown = onViewportPointerDown;
-            _this.onViewportDrag = onViewportDrag;
-            _this.onViewportPointerMove = onViewportPointerMove;
-            _this.onViewportPointerUp = onViewportPointerUp;
-            _this.onViewportPointerLeave = onViewportPointerLeave;
+            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, cursor = _m.cursor, _v = _m.animatePosition, animatePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _v, _w = _m.animateRadius, animateRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _w, _x = _m.animateViewport, animateViewport = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _x, _y = _m.dragInertia, dragInertia = _y === void 0 ? exports.RENDERER_OPTIONS.dragInertia : _y, _z = _m.nodesEqual, nodesEqual = _z === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _z, _0 = _m.edgesEqual, edgesEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _0, _1 = _m.nodeIsEqual, nodeIsEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _1, _2 = _m.edgeIsEqual, edgeIsEqual = _2 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _2, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDragStart = _m.onNodeDragStart, onNodeDrag = _m.onNodeDrag, onNodeDragEnd = _m.onNodeDragEnd, onNodePointerUp = _m.onNodePointerUp, onNodeClick = _m.onNodeClick, onNodeDoubleClick = _m.onNodeDoubleClick, onNodePointerLeave = _m.onNodePointerLeave, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgeClick = _m.onEdgeClick, onEdgeDoubleClick = _m.onEdgeDoubleClick, onEdgePointerLeave = _m.onEdgePointerLeave, onViewportPointerEnter = _m.onViewportPointerEnter, onViewportPointerDown = _m.onViewportPointerDown, onViewportDragStart = _m.onViewportDragStart, onViewportDrag = _m.onViewportDrag, onViewportDragEnd = _m.onViewportDragEnd, onViewportPointerMove = _m.onViewportPointerMove, onViewportPointerUp = _m.onViewportPointerUp, onViewportClick = _m.onViewportClick, onViewportDoubleClick = _m.onViewportDoubleClick, onViewportPointerLeave = _m.onViewportPointerLeave, onViewportWheel = _m.onViewportWheel, annotations = _a.annotations;
             _this.onNodePointerEnter = onNodePointerEnter;
             _this.onNodePointerDown = onNodePointerDown;
+            _this.onNodeDragStart = onNodeDragStart;
             _this.onNodeDrag = onNodeDrag;
             _this.onNodeDragEnd = onNodeDragEnd;
-            _this.onNodeDragStart = onNodeDragStart;
             _this.onNodePointerUp = onNodePointerUp;
-            _this.onNodePointerLeave = onNodePointerLeave;
+            _this.onNodeClick = onNodeClick;
             _this.onNodeDoubleClick = onNodeDoubleClick;
+            _this.onNodePointerLeave = onNodePointerLeave;
             _this.onEdgePointerEnter = onEdgePointerEnter;
             _this.onEdgePointerDown = onEdgePointerDown;
             _this.onEdgePointerUp = onEdgePointerUp;
-            _this.onEdgePointerLeave = onEdgePointerLeave;
+            _this.onEdgeClick = onEdgeClick;
             _this.onEdgeDoubleClick = onEdgeDoubleClick;
+            _this.onEdgePointerLeave = onEdgePointerLeave;
+            _this.onViewportPointerEnter = onViewportPointerEnter;
+            _this.onViewportPointerDown = onViewportPointerDown;
+            _this.onViewportDragStart = onViewportDragStart;
+            _this.onViewportDrag = onViewportDrag;
+            _this.onViewportDragEnd = onViewportDragEnd;
+            _this.onViewportPointerMove = onViewportPointerMove;
+            _this.onViewportClick = onViewportClick;
+            _this.onViewportDoubleClick = onViewportDoubleClick;
+            _this.onViewportPointerUp = onViewportPointerUp;
+            _this.onViewportPointerLeave = onViewportPointerLeave;
             _this.onViewportWheel = onViewportWheel;
             _this.animateViewport = animateViewport;
             _this.animatePosition = animatePosition;
             _this.animateRadius = animateRadius;
+            _this.dragInertia = dragInertia;
             _this.minZoom = minZoom;
             _this.maxZoom = maxZoom;
             if (cursor !== undefined) {
@@ -295,8 +315,8 @@ var InternalRenderer = /** @class */ (function () {
             _this.annotations = annotations;
             var annotationsById = {};
             try {
-                for (var _2 = __values((_k = _this.annotations) !== null && _k !== void 0 ? _k : []), _3 = _2.next(); !_3.done; _3 = _2.next()) {
-                    var annotation = _3.value;
+                for (var _3 = __values((_k = _this.annotations) !== null && _k !== void 0 ? _k : []), _4 = _3.next(); !_4.done; _4 = _3.next()) {
+                    var annotation = _4.value;
                     if (_this.annotationsById[annotation.id] === undefined) {
                         // annotation enter
                         annotationsById[annotation.id] = new circle_1.CircleAnnotationRenderer(_this, annotation);
@@ -312,7 +332,7 @@ var InternalRenderer = /** @class */ (function () {
             catch (e_4_1) { e_4 = { error: e_4_1 }; }
             finally {
                 try {
-                    if (_3 && !_3.done && (_e = _2.return)) _e.call(_2);
+                    if (_4 && !_4.done && (_e = _3.return)) _e.call(_3);
                 }
                 finally { if (e_4) throw e_4.error; }
             }
@@ -524,6 +544,10 @@ var InternalRenderer = /** @class */ (function () {
             _this._measurePerformance = true;
         };
         this.delete = function () {
+            if (_this.doubleClickTimeout) {
+                clearTimeout(_this.doubleClickTimeout);
+                _this.doubleClickTimeout = undefined;
+            }
             _this.cancelAnimationLoop();
             _this.app.destroy(true, { children: true, texture: true, baseTexture: true });
             _this.circle.delete();
@@ -555,6 +579,69 @@ var InternalRenderer = /** @class */ (function () {
                 });
             });
         };
+        this.pointerEnter = function (event) {
+            var _a;
+            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
+            (_a = _this.onViewportPointerEnter) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+        };
+        this.pointerDown = function (event) {
+            var _a;
+            if (_this.doubleClickTimeout === undefined) {
+                _this.doubleClickTimeout = setTimeout(_this.clearDoubleClick, 500);
+            }
+            else {
+                _this.doubleClick = true;
+            }
+            _this.dragInteraction.down(event);
+            _this.decelerateInteraction.down();
+            if (_this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined) {
+                _this.clickedContainer = true;
+                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+                var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
+                (_a = _this.onViewportPointerDown) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+            }
+        };
+        this.pointerMove = function (event) {
+            var _a;
+            _this.dragInteraction.move(event);
+            _this.decelerateInteraction.move();
+            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
+            (_a = _this.onViewportPointerMove) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+        };
+        this.pointerUp = function (event) {
+            var _a, _b, _c, _d;
+            _this.dragInteraction.up();
+            _this.decelerateInteraction.up();
+            var _e = _this.root.toLocal(event.data.global), x = _e.x, y = _e.y;
+            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
+            if (_this.dragging) {
+                _this.dragging = false;
+                _this.clickedContainer = false;
+                (_a = _this.onViewportDragEnd) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportDrag', x: x, y: y, clientX: client.x, clientY: client.y, viewportX: _this.x, viewportY: _this.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+            }
+            else if (_this.clickedContainer) {
+                _this.clickedContainer = false;
+                (_b = _this.onViewportPointerUp) === null || _b === void 0 ? void 0 : _b.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+                (_c = _this.onViewportClick) === null || _c === void 0 ? void 0 : _c.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+                if (_this.doubleClick) {
+                    _this.doubleClick = false;
+                    _this.doubleClickTimeout = undefined;
+                    (_d = _this.onViewportDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+                }
+            }
+        };
+        this.pointerLeave = function (event) {
+            var _a;
+            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
+            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
+            (_a = _this.onViewportPointerLeave) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+        };
+        this.clearDoubleClick = function () {
+            _this.doubleClickTimeout = undefined;
+            _this.doubleClick = false;
+        };
         if (!(options.container instanceof HTMLDivElement)) {
             throw new Error('container must be an instance of HTMLDivElement');
         }
@@ -584,58 +671,17 @@ var InternalRenderer = /** @class */ (function () {
         this.root.addChild(this.labelsLayer);
         this.root.addChild(this.frontNodeLayer);
         this.root.addChild(this.frontLabelLayer);
-        this.zoomInteraction = new zoom_1.Zoom(this, function (event) { var _a; return (_a = _this.onViewportWheel) === null || _a === void 0 ? void 0 : _a.call(_this, event); });
-        this.dragInteraction = new drag_1.Drag(this, function (event) { var _a; return (_a = _this.onViewportDrag) === null || _a === void 0 ? void 0 : _a.call(_this, event); });
-        this.decelerateInteraction = new decelerate_1.Decelerate(this, function (event) { var _a; return (_a = _this.onViewportDrag) === null || _a === void 0 ? void 0 : _a.call(_this, event); });
-        var pointerEnter = function (event) {
-            var _a;
-            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
-            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
-            (_a = _this.onViewportPointerEnter) === null || _a === void 0 ? void 0 : _a.call(_this, { type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } });
-        };
-        var pointerDown = function (event) {
-            var _a;
-            _this.dragInteraction.down(event);
-            _this.decelerateInteraction.down();
-            if (_this.hoveredNode === undefined && _this.clickedNode === undefined && _this.hoveredEdge === undefined && _this.clickedEdge === undefined) {
-                _this.clickedContainer = true;
-                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
-                var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
-                (_a = _this.onViewportPointerDown) === null || _a === void 0 ? void 0 : _a.call(_this, { type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } });
-            }
-        };
-        var pointerMove = function (event) {
-            var _a;
-            _this.dragInteraction.move(event);
-            _this.decelerateInteraction.move();
-            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
-            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
-            (_a = _this.onViewportPointerMove) === null || _a === void 0 ? void 0 : _a.call(_this, { type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } });
-        };
-        var pointerUp = function (event) {
-            var _a;
-            _this.dragInteraction.up();
-            _this.decelerateInteraction.up();
-            if (_this.clickedContainer) {
-                _this.clickedContainer = false;
-                var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
-                var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
-                (_a = _this.onViewportPointerUp) === null || _a === void 0 ? void 0 : _a.call(_this, { type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } });
-            }
-        };
-        var pointerLeave = function (event) {
-            var _a;
-            var _b = _this.root.toLocal(event.data.global), x = _b.x, y = _b.y;
-            var client = utils_2.clientPositionFromEvent(event.data.originalEvent);
-            (_a = _this.onViewportPointerLeave) === null || _a === void 0 ? void 0 : _a.call(_this, { type: 'viewportPointer', x: x, y: y, clientX: client.x, clientY: client.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } });
-        };
-        this.app.renderer.plugins.interaction.on('pointerenter', pointerEnter);
-        this.app.renderer.plugins.interaction.on('pointerdown', pointerDown);
-        this.app.renderer.plugins.interaction.on('pointermove', pointerMove);
-        this.app.renderer.plugins.interaction.on('pointerup', pointerUp);
-        this.app.renderer.plugins.interaction.on('pointerupoutside', pointerUp);
-        this.app.renderer.plugins.interaction.on('pointercancel', pointerUp);
-        this.app.renderer.plugins.interaction.on('pointerleave', pointerLeave);
+        this.zoomInteraction = new zoom_1.Zoom(this);
+        this.dragInteraction = new drag_1.Drag(this);
+        this.decelerateInteraction = new decelerate_1.Decelerate(this);
+        this.app.renderer.plugins.interaction
+            .on('pointerenter', this.pointerEnter)
+            .on('pointerdown', this.pointerDown)
+            .on('pointermove', this.pointerMove)
+            .on('pointerup', this.pointerUp)
+            .on('pointerupoutside', this.pointerUp)
+            .on('pointercancel', this.pointerUp)
+            .on('pointerleave', this.pointerLeave);
         this.app.view.addEventListener('wheel', this.zoomInteraction.wheel);
         this.arrow = new arrowSprite_1.ArrowSprite(this);
         this.circle = new circleSprite_1.CircleSprite(this);

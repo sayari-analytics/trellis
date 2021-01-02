@@ -6,6 +6,10 @@ export declare type SelectionChangeEvent = {
     x: number;
     y: number;
     radius: number;
+    altKey?: boolean;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
 };
 export declare type Props = {
     onSelection?: ((event: SelectionChangeEvent) => void) | undefined;

@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer, ViewportWheelEvent } from '..'
+import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 
 
@@ -10,12 +10,10 @@ import { Node, Edge } from '../../..'
 export class Zoom <N extends Node, E extends Edge>{
 
   private renderer: InternalRenderer<N, E>
-  private onViewportWheel: (event: ViewportWheelEvent) => void
   private paused = false
 
-  constructor(renderer: InternalRenderer<N, E>, onViewportWheel: (event: ViewportWheelEvent) => void) {
+  constructor(renderer: InternalRenderer<N, E>) {
     this.renderer = renderer
-    this.onViewportWheel = onViewportWheel
   }
 
   wheel = (event: WheelEvent) => {
@@ -54,7 +52,7 @@ export class Zoom <N extends Node, E extends Edge>{
     this.renderer.expectedViewportYPosition = viewportY
     this.renderer.expectedViewportZoom = zoomEnd
 
-    this.onViewportWheel({
+    this.renderer.onViewportWheel?.({
       type: 'viewportWheel',
       x: localStart.x,
       y: localStart.y,

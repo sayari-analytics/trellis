@@ -3,7 +3,7 @@ import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } 
 import { Annotation } from '../../../..'
 
 
-export type SelectionChangeEvent = { type: 'selectionChange', x: number, y: number, radius: number }
+export type SelectionChangeEvent = { type: 'selectionChange', x: number, y: number, radius: number, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 export type Props = {
   onSelection?: ((event: SelectionChangeEvent) => void) | undefined; // TODO - add onSelectionStart, onSelectionEnd
@@ -31,7 +31,13 @@ export type ChildProps = {
 export const Selection: FunctionComponent<Props> = (props) => {
 
   const [state, setState] = useState<{
-    select: boolean, cursor?: string, circle?: { x: number, y: number, radius: number }
+    select: boolean
+    cursor?: string
+    circle?: { x: number, y: number, radius: number }
+    altKey?: boolean
+    ctrlKey?: boolean
+    metaKey?: boolean
+    shiftKey?: boolean
   }>({ select: false })
   const _state = useRef(state)
   _state.current = state
@@ -40,7 +46,15 @@ export const Selection: FunctionComponent<Props> = (props) => {
 
   const onViewportPointerDown = useCallback((event: ViewportPointerEvent) => {
     if (_state.current.select) {
-      setState({ select: true, cursor: 'copy', circle: { x: event.x, y: event.y, radius: 0 }})
+      setState({
+        select: true,
+        cursor: 'copy',
+        circle: { x: event.x, y: event.y, radius: 0 },
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey,
+      })
     }
 
     props.onViewportPointerDown?.(event)
@@ -54,7 +68,11 @@ export const Selection: FunctionComponent<Props> = (props) => {
       setState({
         select: true,
         cursor: 'copy',
-        circle: { x, y, radius }
+        circle: { x, y, radius },
+        altKey: _state.current.altKey,
+        ctrlKey: _state.current.ctrlKey,
+        metaKey: _state.current.metaKey,
+        shiftKey: _state.current.shiftKey
       })
       props.onSelection?.({ type: 'selectionChange', x: x, y: y, radius })
     } else {

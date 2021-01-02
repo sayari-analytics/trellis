@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js-legacy';
-import { InternalRenderer, ViewportDragEvent } from '..';
+import { InternalRenderer } from '..';
 import { Node, Edge } from '../../..';
 /**
  * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
@@ -7,12 +7,11 @@ import { Node, Edge } from '../../..';
  */
 export declare class Drag<N extends Node, E extends Edge> {
     private renderer;
-    private onViewportDrag;
     private paused;
     private last?;
     private current?;
     private moved;
-    constructor(renderer: InternalRenderer<N, E>, onViewportDrag: (event: ViewportDragEvent) => void);
+    constructor(renderer: InternalRenderer<N, E>);
     down: (event: PIXI.InteractionEvent) => void;
     move: (event: PIXI.InteractionEvent) => void;
     up: () => void;

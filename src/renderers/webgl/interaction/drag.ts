@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer, ViewportDragEvent } from '..'
+import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 import { clientPositionFromEvent } from '../utils'
 
@@ -11,15 +11,13 @@ import { clientPositionFromEvent } from '../utils'
 export class Drag <N extends Node, E extends Edge>{
 
   private renderer: InternalRenderer<N, E>
-  private onViewportDrag: (event: ViewportDragEvent) => void
   private paused = false
   private last?: { x: number, y: number }
   private current?: number
   private moved = false
 
-  constructor(renderer: InternalRenderer<N, E>, onViewportDrag: (event: ViewportDragEvent) => void) {
+  constructor(renderer: InternalRenderer<N, E>) {
     this.renderer = renderer
-    this.onViewportDrag = onViewportDrag
   }
 
   down = (event: PIXI.InteractionEvent) => {
@@ -43,6 +41,7 @@ export class Drag <N extends Node, E extends Edge>{
 
       const dx = x - this.last.x
       const dy = y - this.last.y
+
       if (this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
         const viewportX = this.renderer.x + (dx / this.renderer.zoom)
         const viewportY = this.renderer.y + (dy / this.renderer.zoom)
@@ -55,7 +54,21 @@ export class Drag <N extends Node, E extends Edge>{
         const local = this.renderer.root.toLocal(event.data.global)
         const client = clientPositionFromEvent(event.data.originalEvent)
 
-        this.onViewportDrag({
+        if (!this.renderer.dragging) {
+          this.renderer.dragging = true
+          this.renderer.onViewportDragStart?.({
+            type: 'viewportDrag',
+            x,
+            y,
+            clientX: client.x,
+            clientY: client.y,
+            viewportX,
+            viewportY,
+            target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+          })
+        }
+
+        this.renderer.onViewportDrag?.({
           type: 'viewportDrag',
           x: local.x,
           y: local.y,

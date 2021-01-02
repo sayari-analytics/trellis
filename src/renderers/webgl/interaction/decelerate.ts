@@ -1,4 +1,4 @@
-import { InternalRenderer, ViewportDragDecelerateEvent } from '..'
+import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 
 
@@ -9,19 +9,18 @@ import { Node, Edge } from '../../..'
 export class Decelerate <N extends Node, E extends Edge>{
 
   private renderer: InternalRenderer<N, E>
-  onViewportDecelerate: (event: ViewportDragDecelerateEvent) => void
   private paused = false
   private saved: { x: number, y: number, time: number }[] = []
   private x?: number
   private y?: number
-  private friction = 0.88
   private minSpeed = 0.01
-  private percentChangeX = this.friction
-  private percentChangeY = this.friction
+  private percentChangeX: number
+  private percentChangeY: number
 
-  constructor(renderer: InternalRenderer<N, E>, onViewportDecelerate: (event: ViewportDragDecelerateEvent) => void) {
+  constructor(renderer: InternalRenderer<N, E>) {
     this.renderer = renderer
-    this.onViewportDecelerate = onViewportDecelerate
+    this.percentChangeX = renderer.dragInertia
+    this.percentChangeY = renderer.dragInertia
   }
 
   down = () => {
@@ -48,7 +47,7 @@ export class Decelerate <N extends Node, E extends Edge>{
           const time = now - save.time
           this.x = (this.renderer.x - save.x) / time
           this.y = (this.renderer.y - save.y) / time
-          this.percentChangeX = this.percentChangeY = this.friction
+          this.percentChangeX = this.percentChangeY = this.renderer.dragInertia
           break
         }
       }
@@ -56,7 +55,7 @@ export class Decelerate <N extends Node, E extends Edge>{
   }
 
   update = (elapsed: number) => {
-    if (this.paused) {
+    if (this.paused || this.renderer.dragInertia === 0) {
       return
     }
 
@@ -82,7 +81,7 @@ export class Decelerate <N extends Node, E extends Edge>{
     if (x || y) {
       this.renderer.expectedViewportXPosition = x ?? this.renderer.x
       this.renderer.expectedViewportYPosition = y ?? this.renderer.y
-      this.onViewportDecelerate({
+      this.renderer.onViewportDrag?.({
         type: 'viewportDragDecelarate',
         viewportX: x ?? this.renderer.x,
         viewportY: y ?? this.renderer.y,

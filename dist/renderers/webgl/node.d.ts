@@ -52,9 +52,9 @@ export declare class NodeRenderer<N extends Node, E extends Edge> {
     render(): this;
     delete(): void;
     private pointerEnter;
-    private pointerLeave;
     private pointerDown;
+    private pointerMove;
     private pointerUp;
-    private nodeMove;
+    private pointerLeave;
     private clearDoubleClick;
 }

@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { EdgeStyle, InternalRenderer } from '.'
-import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI, clientPositionFromEvent } from './utils'
+import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI, clientPositionFromEvent, pointerKeysFromEvent } from './utils'
 import { Node, Edge } from '../..'
 import { ArrowSprite } from './sprites/arrowSprite'
 
@@ -390,6 +390,11 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   delete() {
+    if (this.doubleClickTimeout) {
+      clearTimeout(this.doubleClickTimeout)
+      this.doubleClickTimeout = undefined
+    }
+
     this.line.destroy()
     this.arrowContainer.destroy()
     this.labelContainer.destroy()
@@ -406,7 +411,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.renderer.onEdgePointerEnter?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
+    this.renderer.onEdgePointerEnter?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
@@ -416,7 +421,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.renderer.onEdgePointerLeave?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
+    this.renderer.onEdgePointerLeave?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
   private clearDoubleClick = () => {
@@ -438,7 +443,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.renderer.onEdgePointerDown?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
+    this.renderer.onEdgePointerDown?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -451,11 +456,13 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.renderer.onEdgePointerUp?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
+    this.renderer.onEdgePointerUp?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.renderer.onEdgeClick?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge, ...pointerKeysFromEvent(event.data.originalEvent) })
 
     if (this.doubleClick) {
       this.doubleClick = false
-      this.renderer.onEdgeDoubleClick?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge })
+      this.doubleClickTimeout = undefined
+      this.renderer.onEdgeDoubleClick?.({ type: 'edgePointer', x, y, clientX: client.x, clientY: client.y, target: this.edge, ...pointerKeysFromEvent(event.data.originalEvent) })
     }
   }
 }

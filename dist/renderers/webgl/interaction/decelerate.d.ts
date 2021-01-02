@@ -1,4 +1,4 @@
-import { InternalRenderer, ViewportDragDecelerateEvent } from '..';
+import { InternalRenderer } from '..';
 import { Node, Edge } from '../../..';
 /**
  * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
@@ -6,16 +6,14 @@ import { Node, Edge } from '../../..';
  */
 export declare class Decelerate<N extends Node, E extends Edge> {
     private renderer;
-    onViewportDecelerate: (event: ViewportDragDecelerateEvent) => void;
     private paused;
     private saved;
     private x?;
     private y?;
-    private friction;
     private minSpeed;
     private percentChangeX;
     private percentChangeY;
-    constructor(renderer: InternalRenderer<N, E>, onViewportDecelerate: (event: ViewportDragDecelerateEvent) => void);
+    constructor(renderer: InternalRenderer<N, E>);
     down: () => void;
     move: () => void;
     up: () => void;

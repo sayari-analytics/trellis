@@ -48,6 +48,13 @@ export const clientPositionFromEvent = (event: MouseEvent | TouchEvent | Pointer
 )
 
 
+export const pointerKeysFromEvent = (event: MouseEvent | TouchEvent | PointerEvent) => (
+  event instanceof TouchEvent ?
+    {} :
+    { altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey }
+)
+
+
 export const HALF_PI = Math.PI / 2
 
 

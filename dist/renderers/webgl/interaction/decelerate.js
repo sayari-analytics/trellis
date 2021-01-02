@@ -17,14 +17,11 @@ exports.Decelerate = void 0;
  * specificially, the [Decelerate Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/decelerate.js)
  */
 var Decelerate = /** @class */ (function () {
-    function Decelerate(renderer, onViewportDecelerate) {
+    function Decelerate(renderer) {
         var _this = this;
         this.paused = false;
         this.saved = [];
-        this.friction = 0.88;
         this.minSpeed = 0.01;
-        this.percentChangeX = this.friction;
-        this.percentChangeY = this.friction;
         this.down = function () {
             _this.saved = [];
             _this.x = _this.y = undefined;
@@ -49,7 +46,7 @@ var Decelerate = /** @class */ (function () {
                             var time = now - save.time;
                             _this.x = (_this.renderer.x - save.x) / time;
                             _this.y = (_this.renderer.y - save.y) / time;
-                            _this.percentChangeX = _this.percentChangeY = _this.friction;
+                            _this.percentChangeX = _this.percentChangeY = _this.renderer.dragInertia;
                             break;
                         }
                     }
@@ -64,7 +61,8 @@ var Decelerate = /** @class */ (function () {
             }
         };
         this.update = function (elapsed) {
-            if (_this.paused) {
+            var _a, _b;
+            if (_this.paused || _this.renderer.dragInertia === 0) {
                 return;
             }
             var x;
@@ -86,7 +84,7 @@ var Decelerate = /** @class */ (function () {
             if (x || y) {
                 _this.renderer.expectedViewportXPosition = x !== null && x !== void 0 ? x : _this.renderer.x;
                 _this.renderer.expectedViewportYPosition = y !== null && y !== void 0 ? y : _this.renderer.y;
-                _this.onViewportDecelerate({
+                (_b = (_a = _this.renderer).onViewportDrag) === null || _b === void 0 ? void 0 : _b.call(_a, {
                     type: 'viewportDragDecelarate',
                     viewportX: x !== null && x !== void 0 ? x : _this.renderer.x,
                     viewportY: y !== null && y !== void 0 ? y : _this.renderer.y,
@@ -95,7 +93,8 @@ var Decelerate = /** @class */ (function () {
             }
         };
         this.renderer = renderer;
-        this.onViewportDecelerate = onViewportDecelerate;
+        this.percentChangeX = renderer.dragInertia;
+        this.percentChangeY = renderer.dragInertia;
     }
     Decelerate.prototype.pause = function () {
         this.paused = true;

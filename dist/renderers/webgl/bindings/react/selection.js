@@ -39,7 +39,15 @@ var Selection = function (props) {
     var onViewportPointerDown = react_1.useCallback(function (event) {
         var _a;
         if (_state.current.select) {
-            setState({ select: true, cursor: 'copy', circle: { x: event.x, y: event.y, radius: 0 } });
+            setState({
+                select: true,
+                cursor: 'copy',
+                circle: { x: event.x, y: event.y, radius: 0 },
+                altKey: event.altKey,
+                ctrlKey: event.ctrlKey,
+                metaKey: event.metaKey,
+                shiftKey: event.shiftKey,
+            });
         }
         (_a = props.onViewportPointerDown) === null || _a === void 0 ? void 0 : _a.call(props, event);
     }, [props.onViewportPointerDown]);
@@ -52,7 +60,11 @@ var Selection = function (props) {
             setState({
                 select: true,
                 cursor: 'copy',
-                circle: { x: x, y: y, radius: radius }
+                circle: { x: x, y: y, radius: radius },
+                altKey: _state.current.altKey,
+                ctrlKey: _state.current.ctrlKey,
+                metaKey: _state.current.metaKey,
+                shiftKey: _state.current.shiftKey
             });
             (_a = props.onSelection) === null || _a === void 0 ? void 0 : _a.call(props, { type: 'selectionChange', x: x, y: y, radius: radius });
         }

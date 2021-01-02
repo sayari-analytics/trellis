@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer, NodeStyle } from '.'
-import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront, clientPositionFromEvent } from './utils'
+import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront, clientPositionFromEvent, pointerKeysFromEvent } from './utils'
 import { Node, Edge } from '../..'
 import { equals, interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
@@ -467,6 +467,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
   delete() {
+    if (this.doubleClickTimeout) {
+      clearTimeout(this.doubleClickTimeout)
+      this.doubleClickTimeout = undefined
+    }
+
     for (const subgraphNodeId in this.subgraphNodes) {
       // exit subgraph node
       this.subgraphNodes[subgraphNodeId].delete()
@@ -499,7 +504,74 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.renderer.onNodePointerEnter?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
+    this.renderer.onNodePointerEnter?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
+  }
+
+  private pointerDown = (event: PIXI.InteractionEvent) => {
+    if (this.doubleClickTimeout === undefined) {
+      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+    } else {
+      this.doubleClick = true
+    }
+
+    this.renderer.clickedNode = this
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.pointerMove)
+    this.renderer.zoomInteraction.pause()
+    this.renderer.dragInteraction.pause()
+    this.renderer.decelerateInteraction.pause()
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    this.nodeMoveXOffset = x - this.x
+    this.nodeMoveYOffset = y - this.y
+    this.renderer.onNodePointerDown?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
+  }
+
+  private pointerMove = (event: PIXI.InteractionEvent) => {
+    if (this.renderer.clickedNode === undefined) return
+
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+    const nodeX = x - this.nodeMoveXOffset
+    const nodeY = y - this.nodeMoveYOffset
+
+    this.expectedNodeXPosition = nodeX
+    this.expectedNodeYPosition = nodeY
+
+    if (!this.renderer.dragging) {
+      this.renderer.dragging = true
+      this.renderer.onNodeDragStart?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
+    }
+
+    this.renderer.onNodeDrag?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
+  }
+
+  private pointerUp = (event: PIXI.InteractionEvent) => {
+    if (this.renderer.clickedNode === undefined) return
+
+    this.renderer.clickedNode = undefined
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
+    this.renderer.zoomInteraction.resume()
+    this.renderer.dragInteraction.resume()
+    this.renderer.decelerateInteraction.resume()
+    this.nodeMoveXOffset = 0
+    this.nodeMoveYOffset = 0
+
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+
+    if (this.renderer.dragging) {
+      this.renderer.dragging = false
+      this.renderer.onNodeDragEnd?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX: this.node.x ?? 0, nodeY: this.node.y ?? 0, target: this.node })
+    } else {
+      this.renderer.onNodePointerUp?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
+      this.renderer.onNodeClick?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
+
+      if (this.doubleClick) {
+        this.doubleClick = false
+        this.doubleClickTimeout = undefined
+        this.renderer.onNodeDoubleClick?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
+      }
+    }
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
@@ -524,72 +596,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.renderer.onNodePointerLeave?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
-  }
-
-  private pointerDown = (event: PIXI.InteractionEvent) => {
-    if (this.doubleClickTimeout === undefined) {
-      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
-    } else {
-      this.doubleClick = true
-    }
-
-    this.renderer.clickedNode = this
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.nodeMove)
-    this.renderer.zoomInteraction.pause()
-    this.renderer.dragInteraction.pause()
-    this.renderer.decelerateInteraction.pause()
-    const { x, y } = this.renderer.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
-    this.nodeMoveXOffset = x - this.x
-    this.nodeMoveYOffset = y - this.y
-    this.renderer.onNodePointerDown?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
-  }
-
-  private pointerUp = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedNode === undefined) return
-
-    this.renderer.clickedNode = undefined
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.nodeMove)
-    this.renderer.zoomInteraction.resume()
-    this.renderer.dragInteraction.resume()
-    this.renderer.decelerateInteraction.resume()
-    this.nodeMoveXOffset = 0
-    this.nodeMoveYOffset = 0
-
-    const { x, y } = this.renderer.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
-
-    if (this.renderer.dragging) {
-      this.renderer.dragging = false
-      this.renderer.onNodeDragEnd?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX: this.node.x ?? 0, nodeY: this.node.y ?? 0, target: this.node })
-    } else {
-      this.renderer.onNodePointerUp?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
-
-      if (this.doubleClick) {
-        this.doubleClick = false
-        this.renderer.onNodeDoubleClick?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node })
-      }
-    }
-  }
-
-  private nodeMove = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedNode === undefined) return
-
-    const { x, y } = this.renderer.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
-    const nodeX = x - this.nodeMoveXOffset
-    const nodeY = y - this.nodeMoveYOffset
-
-    this.expectedNodeXPosition = nodeX
-    this.expectedNodeYPosition = nodeY
-
-    if (!this.renderer.dragging) {
-      this.renderer.dragging = true
-      this.renderer.onNodeDragStart?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
-    }
-
-    this.renderer.onNodeDrag?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
+    this.renderer.onNodePointerLeave?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
 

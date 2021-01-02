@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RADIANS_PER_DEGREE = exports.THREE_HALF_PI = exports.TWO_PI = exports.HALF_PI = exports.clientPositionFromEvent = exports.angle = exports.length = exports.midPoint = exports.movePoint = exports.parentInFront = exports.colorToNumber = void 0;
+exports.RADIANS_PER_DEGREE = exports.THREE_HALF_PI = exports.TWO_PI = exports.HALF_PI = exports.pointerKeysFromEvent = exports.clientPositionFromEvent = exports.angle = exports.length = exports.midPoint = exports.movePoint = exports.parentInFront = exports.colorToNumber = void 0;
 var d3_color_1 = require("d3-color");
 var colorToNumber = function (colorString) {
     var c = d3_color_1.color(colorString);
@@ -35,6 +35,10 @@ var clientPositionFromEvent = function (event) { return (event instanceof TouchE
     { x: event.touches[0].clientX, y: event.touches[0].clientY } :
     { x: event.clientX, y: event.clientY }); };
 exports.clientPositionFromEvent = clientPositionFromEvent;
+var pointerKeysFromEvent = function (event) { return (event instanceof TouchEvent ?
+    {} :
+    { altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey }); };
+exports.pointerKeysFromEvent = pointerKeysFromEvent;
 exports.HALF_PI = Math.PI / 2;
 exports.TWO_PI = Math.PI * 2;
 exports.THREE_HALF_PI = exports.HALF_PI * 3;

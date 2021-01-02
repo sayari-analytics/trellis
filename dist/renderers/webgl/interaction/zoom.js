@@ -26,10 +26,11 @@ var PIXI = __importStar(require("pixi.js-legacy"));
  * specificially, the [Wheel Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/wheel.js)
  */
 var Zoom = /** @class */ (function () {
-    function Zoom(renderer, onViewportWheel) {
+    function Zoom(renderer) {
         var _this = this;
         this.paused = false;
         this.wheel = function (event) {
+            var _a, _b;
             event.preventDefault();
             if (_this.paused) {
                 return;
@@ -55,7 +56,7 @@ var Zoom = /** @class */ (function () {
             _this.renderer.expectedViewportXPosition = viewportX;
             _this.renderer.expectedViewportYPosition = viewportY;
             _this.renderer.expectedViewportZoom = zoomEnd;
-            _this.onViewportWheel({
+            (_b = (_a = _this.renderer).onViewportWheel) === null || _b === void 0 ? void 0 : _b.call(_a, {
                 type: 'viewportWheel',
                 x: localStart.x,
                 y: localStart.y,
@@ -68,7 +69,6 @@ var Zoom = /** @class */ (function () {
             });
         };
         this.renderer = renderer;
-        this.onViewportWheel = onViewportWheel;
     }
     Zoom.prototype.pause = function () {
         this.paused = true;

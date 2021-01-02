@@ -63,6 +63,10 @@ export declare type NodePointerEvent = {
     clientX: number;
     clientY: number;
     target: Graph.Node;
+    altKey?: boolean;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
 };
 export declare type NodeDragEvent = {
     type: 'nodeDrag';
@@ -81,6 +85,10 @@ export declare type EdgePointerEvent = {
     clientX: number;
     clientY: number;
     target: Graph.Edge;
+    altKey?: boolean;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
 };
 export declare type ViewportPointerEvent = {
     type: 'viewportPointer';
@@ -89,6 +97,10 @@ export declare type ViewportPointerEvent = {
     clientX: number;
     clientY: number;
     target: Graph.Viewport;
+    altKey?: boolean;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
 };
 export declare type ViewportDragEvent = {
     type: 'viewportDrag';
@@ -129,6 +141,7 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     animateRadius?: number | false;
     animateViewport?: number | false;
     cursor?: string;
+    dragInertia?: number;
     nodesEqual?: (previous: N[], current: N[]) => boolean;
     edgesEqual?: (previous: E[], current: E[]) => boolean;
     nodeIsEqual?: (previous: N, current: N) => boolean;
@@ -139,18 +152,24 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     onNodeDrag?: (event: NodeDragEvent) => void;
     onNodeDragEnd?: (event: NodeDragEvent) => void;
     onNodePointerUp?: (event: NodePointerEvent) => void;
-    onNodePointerLeave?: (event: NodePointerEvent) => void;
+    onNodeClick?: (event: NodePointerEvent) => void;
     onNodeDoubleClick?: (event: NodePointerEvent) => void;
+    onNodePointerLeave?: (event: NodePointerEvent) => void;
     onEdgePointerEnter?: (event: EdgePointerEvent) => void;
     onEdgePointerDown?: (event: EdgePointerEvent) => void;
     onEdgePointerUp?: (event: EdgePointerEvent) => void;
     onEdgePointerLeave?: (event: EdgePointerEvent) => void;
+    onEdgeClick?: (event: EdgePointerEvent) => void;
     onEdgeDoubleClick?: (event: EdgePointerEvent) => void;
     onViewportPointerEnter?: (event: ViewportPointerEvent) => void;
     onViewportPointerDown?: (event: ViewportPointerEvent) => void;
     onViewportPointerMove?: (event: ViewportPointerEvent) => void;
+    onViewportDragStart?: (event: ViewportDragEvent) => void;
     onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
+    onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
     onViewportPointerUp?: (event: ViewportPointerEvent) => void;
+    onViewportClick?: (event: ViewportPointerEvent) => void;
+    onViewportDoubleClick?: (event: ViewportPointerEvent) => void;
     onViewportPointerLeave?: (event: ViewportPointerEvent) => void;
     onViewportWheel?: (event: ViewportWheelEvent) => void;
 };
@@ -165,6 +184,7 @@ export declare const RENDERER_OPTIONS: {
     animateViewport: number;
     animatePosition: number;
     animateRadius: number;
+    dragInertia: number;
     nodesEqual: () => boolean;
     edgesEqual: () => boolean;
     nodeIsEqual: () => boolean;
@@ -184,6 +204,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     animatePosition: number | false;
     animateRadius: number | false;
     animateViewport: number | false;
+    dragInertia: number;
     hoveredNode?: NodeRenderer<N, E>;
     clickedNode?: NodeRenderer<N, E>;
     hoveredEdge?: EdgeRenderer<N, E>;
@@ -244,24 +265,32 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     private interpolateZoom?;
     private targetZoom;
     private firstRender;
+    private doubleClickTimeout?;
+    private doubleClick;
     onNodePointerEnter?: (event: NodePointerEvent) => void;
     onNodePointerDown?: (event: NodePointerEvent) => void;
     onNodeDragStart?: (event: NodeDragEvent) => void;
     onNodeDrag?: (event: NodeDragEvent) => void;
     onNodeDragEnd?: (event: NodeDragEvent) => void;
     onNodePointerUp?: (event: NodePointerEvent) => void;
-    onNodePointerLeave?: (event: NodePointerEvent) => void;
+    onNodeClick?: (event: NodePointerEvent) => void;
     onNodeDoubleClick?: (event: NodePointerEvent) => void;
+    onNodePointerLeave?: (event: NodePointerEvent) => void;
     onEdgePointerEnter?: (event: EdgePointerEvent) => void;
     onEdgePointerDown?: (event: EdgePointerEvent) => void;
     onEdgePointerUp?: (event: EdgePointerEvent) => void;
     onEdgePointerLeave?: (event: EdgePointerEvent) => void;
+    onEdgeClick?: (event: EdgePointerEvent) => void;
     onEdgeDoubleClick?: (event: EdgePointerEvent) => void;
     onViewportPointerEnter?: (event: ViewportPointerEvent) => void;
     onViewportPointerDown?: (event: ViewportPointerEvent) => void;
     onViewportPointerMove?: (event: ViewportPointerEvent) => void;
+    onViewportDragStart?: (event: ViewportDragEvent) => void;
     onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
+    onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
     onViewportPointerUp?: (event: ViewportPointerEvent) => void;
+    onViewportClick?: (event: ViewportPointerEvent) => void;
+    onViewportDoubleClick?: (event: ViewportPointerEvent) => void;
     onViewportPointerLeave?: (event: ViewportPointerEvent) => void;
     onViewportWheel?: (event: ViewportWheelEvent) => void;
     update: (graph: {
@@ -284,6 +313,12 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     private debugRender;
     delete: () => void;
     base64: (resolution?: number, mimetype?: string) => Promise<string>;
+    private pointerEnter;
+    private pointerDown;
+    private pointerMove;
+    private pointerUp;
+    private pointerLeave;
+    private clearDoubleClick;
 }
 export declare const Renderer: (options: {
     container: HTMLDivElement;

@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
@@ -81,7 +92,7 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.hoveredEdge = _this;
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            (_b = (_a = _this.renderer).onEdgePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
+            (_b = (_a = _this.renderer).onEdgePointerEnter) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
         };
         this.pointerLeave = function (event) {
             var _a, _b;
@@ -90,7 +101,7 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.hoveredEdge = undefined;
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            (_b = (_a = _this.renderer).onEdgePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
+            (_b = (_a = _this.renderer).onEdgePointerLeave) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
         };
         this.clearDoubleClick = function () {
             _this.doubleClickTimeout = undefined;
@@ -110,22 +121,24 @@ var EdgeRenderer = /** @class */ (function () {
             _this.renderer.decelerateInteraction.pause();
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            (_b = (_a = _this.renderer).onEdgePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
+            (_b = (_a = _this.renderer).onEdgePointerDown) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
         };
         this.pointerUp = function (event) {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f;
             if (_this.renderer.clickedEdge === undefined)
                 return;
             _this.renderer.clickedEdge = undefined;
             _this.renderer.zoomInteraction.resume();
             _this.renderer.dragInteraction.resume();
             _this.renderer.decelerateInteraction.resume();
-            var _e = _this.renderer.root.toLocal(event.data.global), x = _e.x, y = _e.y;
+            var _g = _this.renderer.root.toLocal(event.data.global), x = _g.x, y = _g.y;
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
-            (_b = (_a = _this.renderer).onEdgePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
+            (_b = (_a = _this.renderer).onEdgePointerUp) === null || _b === void 0 ? void 0 : _b.call(_a, __assign({ type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
+            (_d = (_c = _this.renderer).onEdgeClick) === null || _d === void 0 ? void 0 : _d.call(_c, __assign({ type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
             if (_this.doubleClick) {
                 _this.doubleClick = false;
-                (_d = (_c = _this.renderer).onEdgeDoubleClick) === null || _d === void 0 ? void 0 : _d.call(_c, { type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge });
+                _this.doubleClickTimeout = undefined;
+                (_f = (_e = _this.renderer).onEdgeDoubleClick) === null || _f === void 0 ? void 0 : _f.call(_e, __assign({ type: 'edgePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.edge }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));
             }
         };
         this.renderer = renderer;
@@ -442,6 +455,10 @@ var EdgeRenderer = /** @class */ (function () {
         }
     };
     EdgeRenderer.prototype.delete = function () {
+        if (this.doubleClickTimeout) {
+            clearTimeout(this.doubleClickTimeout);
+            this.doubleClickTimeout = undefined;
+        }
         this.line.destroy();
         this.arrowContainer.destroy();
         this.labelContainer.destroy();
