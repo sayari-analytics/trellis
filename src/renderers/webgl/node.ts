@@ -111,7 +111,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const x = this.node.x ?? 0
     if (x !== this.targetX) {
-      if (x === this.expectedNodeXPosition || !this.renderer.animatePosition) {
+      if (x === this.expectedNodeXPosition || !this.renderer.animatePosition || this.renderer.clickedNode) {
         this.interpolateX = undefined
         this.x = x
       } else {
@@ -124,7 +124,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const y = this.node.y ?? 0
     if (y !== this.targetY) {
-      if (y === this.expectedNodeYPosition || !this.renderer.animatePosition) {
+      if (y === this.expectedNodeYPosition || !this.renderer.animatePosition || this.renderer.clickedNode) {
         this.interpolateY = undefined
         this.y = y
       } else {

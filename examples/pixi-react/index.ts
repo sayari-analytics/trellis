@@ -23,15 +23,10 @@ type Node = Graph.Node & { type: string }
 type Edge = Graph.Edge
 
 
-const COMPANY_STYLE: WebGL.NodeStyle = {
+const SUBGRAPH_STYLE: WebGL.NodeStyle = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
-}
-const PERSON_STYLE: WebGL.NodeStyle = {
-  color: '#7CBBF3',
-  stroke: [{ color: '#90D7FB', width: 4 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 22 }
 }
 const PERSON_ICON = { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 22 }
 const COMPANY_ICON = { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
@@ -94,32 +89,46 @@ const App: FunctionComponent = () => {
   const onZoomOut = useCallback(() => {
     setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom * 0.6) }))
   }, [])
-  const onNodeDrag = useCallback(({ nodeX: x, nodeY: y, target: { id } }: WebGL.NodeDragEvent) => {
-    setGraph((graph) => ({ ...graph, nodes: graph.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)) }))
-  }, [])
   const onNodePointerEnter = useCallback(({ target: { id } }: WebGL.NodePointerEvent) => {
     setGraph((graph) => ({ ...graph, hoverNode: id }))
   }, [])
   const onNodePointerLeave = useCallback(() => {
     setGraph((graph) => ({ ...graph, hoverNode: undefined }))
   }, [])
-  const onNodePointerDown = useCallback(({ metaKey, shiftKey, target: { id } }: WebGL.NodePointerEvent) => {
-    setGraph((graph) => ({ ...graph, selectedNodes: metaKey || shiftKey ? new Set([...graph.selectedNodes, id]) : new Set<string>(id) }))
+  const onNodeDrag = useCallback(({ nodeX, nodeY, target: { id, x = 0, y = 0 } }: WebGL.NodeDragEvent) => {
+    const dx = nodeX - x
+    const dy = nodeY - y
+
+    setGraph((graph) => ({
+      ...graph,
+      nodes: graph.nodes.map((node) => (
+        node.id === id ? (
+          { ...node, x: nodeX, y: nodeY }
+        ) : graph.selectedNodes.has(node.id) ? (
+          { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy }
+        ) : node
+      )),
+      selectedNodes: new Set([...graph.selectedNodes, id]),
+    }))
   }, [])
-  const onEdgePointerEnter = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
-    setGraph((graph) => ({ ...graph, hoverEdge: id }))
-  }, [])
-  const onEdgePointerLeave = useCallback(() => {
-    setGraph((graph) => ({ ...graph, hoverEdge: undefined }))
+  const onNodePointerUp = useCallback(({ metaKey, shiftKey, target: { id } }: WebGL.NodePointerEvent) => {
+    setGraph((graph) => ({
+      ...graph,
+      selectedNodes: metaKey || shiftKey && graph.selectedNodes.has(id) ? (
+        new Set(Array.from(graph.selectedNodes).filter((node) => node !== id))
+      ) : metaKey || shiftKey ? (
+        new Set([...graph.selectedNodes, id])
+      ) : new Set<string>(id),
+    }))
   }, [])
   const onNodeDoubleClick = useCallback(({ target }: WebGL.NodePointerEvent) => {
     const subgraphNodes = cluster((target.subgraph?.nodes ?? []).concat([
-      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`, style: COMPANY_STYLE },
-      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`, style: COMPANY_STYLE },
-      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: COMPANY_STYLE },
-      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: COMPANY_STYLE },
-      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: COMPANY_STYLE },
-      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: COMPANY_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`, style: SUBGRAPH_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`, style: SUBGRAPH_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: SUBGRAPH_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: SUBGRAPH_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: SUBGRAPH_STYLE },
+      { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: SUBGRAPH_STYLE },
     ]))
     const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
 
@@ -134,6 +143,12 @@ const App: FunctionComponent = () => {
         } : node)
       )
     }))
+  }, [])
+  const onEdgePointerEnter = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
+    setGraph((graph) => ({ ...graph, hoverEdge: id }))
+  }, [])
+  const onEdgePointerLeave = useCallback(() => {
+    setGraph((graph) => ({ ...graph, hoverEdge: undefined }))
   }, [])
   const onViewportPointerUp = useCallback(() => {
     setGraph((graph) => ({
@@ -156,7 +171,11 @@ const App: FunctionComponent = () => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
   const onSelection = useCallback(({ x, y, radius, metaKey, shiftKey }: SelectionChangeEvent) => {
-    // TODO - multiselect drag
+    /**
+     * TODO - move selection logic inside Selection component
+     * - when shrinking selection area while holding shift/cmd, nodes no longer w/i selection radius should not be selected
+     * - maybe move multiselect node move logic to Selection component as well?
+     */
     setGraph((graph) => ({
       ...graph,
       selectedNodes: graph.nodes
@@ -224,7 +243,7 @@ const App: FunctionComponent = () => {
             children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportDragEnd }) => (
               createElement(Fragment, {},
                 createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },
-                  createElement(Button, { selected: select, onClick: toggleSelect }, '●'),
+                  createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '●'),
                   createElement(Zoom, { onZoomIn, onZoomOut })
                 ),
                 createElement<Props<Node, Edge>>(Renderer, {
@@ -240,7 +259,7 @@ const App: FunctionComponent = () => {
                   maxZoom: MAX_ZOOM,
                   cursor,
                   onNodePointerEnter,
-                  onNodePointerDown,
+                  onNodePointerUp,
                   onNodeDrag,
                   onNodeDoubleClick,
                   onNodePointerLeave,
