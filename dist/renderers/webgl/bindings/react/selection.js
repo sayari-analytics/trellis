@@ -64,25 +64,25 @@ var Selection = function (props) {
                 altKey: _state.current.altKey,
                 ctrlKey: _state.current.ctrlKey,
                 metaKey: _state.current.metaKey,
-                shiftKey: _state.current.shiftKey
+                shiftKey: _state.current.shiftKey,
             });
-            (_a = props.onSelection) === null || _a === void 0 ? void 0 : _a.call(props, { type: 'selectionChange', x: x, y: y, radius: radius });
+            (_a = props.onSelection) === null || _a === void 0 ? void 0 : _a.call(props, { type: 'selectionChange', x: x, y: y, radius: radius, altKey: _state.current.altKey, ctrlKey: _state.current.ctrlKey, metaKey: _state.current.metaKey, shiftKey: _state.current.shiftKey });
         }
         else {
             (_b = props.onViewportDrag) === null || _b === void 0 ? void 0 : _b.call(props, event);
         }
     }, [props.onSelection, props.onViewportPointerDown]);
-    var onViewportPointerUp = react_1.useCallback(function (event) {
+    var onViewportDragEnd = react_1.useCallback(function (event) {
         var _a;
         setState({ select: false });
-        (_a = props.onViewportPointerUp) === null || _a === void 0 ? void 0 : _a.call(props, event);
-    }, [props.onViewportPointerUp]);
+        (_a = props.onViewportDragEnd) === null || _a === void 0 ? void 0 : _a.call(props, event);
+    }, [props.onViewportDragEnd]);
     return react_1.createElement(react_1.Fragment, {}, props.children({
         select: state.select,
         toggleSelect: toggleSelect,
         onViewportPointerDown: onViewportPointerDown,
         onViewportDrag: onViewportDrag,
-        onViewportPointerUp: onViewportPointerUp,
+        onViewportDragEnd: onViewportDragEnd,
         cursor: state.cursor,
         annotation: state.circle && state.circle.radius > 0 ? {
             type: 'circle',

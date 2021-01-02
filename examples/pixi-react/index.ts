@@ -103,6 +103,9 @@ const App: FunctionComponent = () => {
   const onNodePointerLeave = useCallback(() => {
     setGraph((graph) => ({ ...graph, hoverNode: undefined }))
   }, [])
+  const onNodePointerDown = useCallback(({ metaKey, shiftKey, target: { id } }: WebGL.NodePointerEvent) => {
+    setGraph((graph) => ({ ...graph, selectedNodes: metaKey || shiftKey ? new Set([...graph.selectedNodes, id]) : new Set<string>(id) }))
+  }, [])
   const onEdgePointerEnter = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
     setGraph((graph) => ({ ...graph, hoverEdge: id }))
   }, [])
@@ -124,26 +127,13 @@ const App: FunctionComponent = () => {
       ...graph,
       nodes: subgraph(
         graph.nodes,
-        graph.nodes.map((node) => {
-          if (node.id === target.id) {
-            return {
-              ...node,
-              radius,
-              style: { ...node.style, color: '#efefef', icon: undefined },
-              subgraph: {
-                nodes: subgraphNodes,
-                edges: []
-              },
-            }
-          }
-
-          return node
-        })
+        graph.nodes.map((node) => node.id === target.id ? {
+          ...node,
+          radius,
+          subgraph: { nodes: subgraphNodes, edges: [] }
+        } : node)
       )
     }))
-  }, [])
-  const onViewportPointerDown = useCallback(() => {
-    setGraph((graph) => ({ ...graph, selectedNodes: new Set() }))
   }, [])
   const onViewportPointerUp = useCallback(() => {
     setGraph((graph) => ({
@@ -153,10 +143,10 @@ const App: FunctionComponent = () => {
         graph.nodes.map((node) => ({
           ...node,
           radius: 18,
-          style: node.id === 'a' ? COMPANY_STYLE : PERSON_STYLE,
           subgraph: undefined,
         }))
       ),
+      selectedNodes: new Set()
     }))
   }, [])
   const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: WebGL.ViewportDragEvent | WebGL.ViewportDragDecelerateEvent) => {
@@ -165,10 +155,8 @@ const App: FunctionComponent = () => {
   const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: WebGL.ViewportWheelEvent) => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
-  const onSelection = useCallback(({ x, y, radius }: SelectionChangeEvent) => {
-    // TODO - shift select
-    // - add onClick selection
-    // - multiselect drag
+  const onSelection = useCallback(({ x, y, radius, metaKey, shiftKey }: SelectionChangeEvent) => {
+    // TODO - multiselect drag
     setGraph((graph) => ({
       ...graph,
       selectedNodes: graph.nodes
@@ -176,8 +164,7 @@ const App: FunctionComponent = () => {
         .reduce((selectedNodes, node) => {
           selectedNodes.add(node.id)
           return selectedNodes
-        }, new Set<string>())
-        // }, new Set(graph.selectedNodes))
+        }, metaKey || shiftKey ? new Set(graph.selectedNodes) : new Set<string>())
     }))
   }, [])
 
@@ -185,15 +172,25 @@ const App: FunctionComponent = () => {
     return graph.nodes.map((node) => {
       let style: WebGL.NodeStyle
 
-      if (node.type === 'person') {
+      if (node.subgraph !== undefined) {
+        if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
+          style = { color: '#EFEFEF', stroke: [{ color: '#AAA', width: 4 }, { color: '#FFF', width: 2 }, { color: '#CCC', width: 2 }] }
+        } else if (graph.selectedNodes.has(node.id)) {
+          style = { color: '#EFEFEF', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#CCC', width: 2 }] }
+        } else if (node.id === graph.hoverNode) {
+          style = { color: '#EFEFEF', stroke: [{ color: '#AAA', width: 4 }, { color: '#FFF', width: 4 }] }
+        } else {
+          style = { color: '#EFEFEF', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 4 }] }
+        }
+      } else if (node.type === 'person') {
         if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
           style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#7CBBF3', width: 2 }], icon: PERSON_ICON }
         } else if (graph.selectedNodes.has(node.id)) {
           style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }, { color: '#FFF', width: 2 }, { color: '#7CBBF3', width: 2 }], icon: PERSON_ICON }
         } else if (node.id === graph.hoverNode) {
-          style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }], icon: PERSON_ICON }
+          style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 4 }], icon: PERSON_ICON }
         } else {
-          style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }], icon: PERSON_ICON }
+          style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }, { color: '#FFF', width: 4 }], icon: PERSON_ICON }
         }
       } else {
         if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
@@ -201,9 +198,9 @@ const App: FunctionComponent = () => {
         } else if (graph.selectedNodes.has(node.id)) {
           style = { color: '#FFAF1D', stroke: [{ color: '#F7CA4D', width: 4 }, { color: '#FFF', width: 2 }, { color: '#F7CA4D', width: 2 }], icon: COMPANY_ICON }
         } else if (node.id === graph.hoverNode) {
-          style = { color: '#FFAF1D', stroke: [{ color: '#CCC', width: 4 }], icon: COMPANY_ICON }
+          style = { color: '#FFAF1D', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 4 }], icon: COMPANY_ICON }
         } else {
-          style = { color: '#FFAF1D', stroke: [{ color: '#F7CA4D', width: 4 }], icon: COMPANY_ICON }
+          style = { color: '#FFAF1D', stroke: [{ color: '#F7CA4D', width: 4 }, { color: '#FFF', width: 4 }], icon: COMPANY_ICON }
         }
       }
 
@@ -222,11 +219,9 @@ const App: FunctionComponent = () => {
       ({ width, height }: { width?: number, height?: number }) => (
         createElement('div', { style: { width: '100%', height: '100%' } }, (
           createElement(Selection, {
-            onViewportPointerUp,
             onViewportDrag,
-            onViewportPointerDown,
             onSelection,
-            children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportPointerUp }) => (
+            children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportDragEnd }) => (
               createElement(Fragment, {},
                 createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },
                   createElement(Button, { selected: select, onClick: toggleSelect }, '●'),
@@ -244,14 +239,16 @@ const App: FunctionComponent = () => {
                   minZoom: MIN_ZOOM,
                   maxZoom: MAX_ZOOM,
                   cursor,
-                  onNodeDrag,
                   onNodePointerEnter,
+                  onNodePointerDown,
+                  onNodeDrag,
+                  onNodeDoubleClick,
                   onNodePointerLeave,
                   onEdgePointerEnter,
                   onEdgePointerLeave,
-                  onNodeDoubleClick,
                   onViewportPointerDown,
                   onViewportDrag,
+                  onViewportDragEnd,
                   onViewportPointerUp,
                   onViewportWheel,
                   debug: { stats }

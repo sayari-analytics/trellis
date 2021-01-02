@@ -15,7 +15,7 @@ export declare type Props = {
     onSelection?: ((event: SelectionChangeEvent) => void) | undefined;
     onViewportPointerDown?: ((event: ViewportPointerEvent) => void) | undefined;
     onViewportDrag?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined;
-    onViewportPointerUp?: ((event: ViewportPointerEvent) => void) | undefined;
+    onViewportDragEnd?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined;
     children: (childProps: ChildProps) => ReactNode;
     color?: string;
     strokeColor?: string;
@@ -28,6 +28,6 @@ export declare type ChildProps = {
     toggleSelect: () => void;
     onViewportPointerDown: (event: ViewportPointerEvent) => void;
     onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
-    onViewportPointerUp: (event: ViewportPointerEvent) => void;
+    onViewportDragEnd: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
 };
 export declare const Selection: FunctionComponent<Props>;

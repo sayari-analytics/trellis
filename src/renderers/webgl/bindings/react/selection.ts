@@ -9,7 +9,7 @@ export type Props = {
   onSelection?: ((event: SelectionChangeEvent) => void) | undefined; // TODO - add onSelectionStart, onSelectionEnd
   onViewportPointerDown?: ((event: ViewportPointerEvent) => void) | undefined;
   onViewportDrag?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined;
-  onViewportPointerUp?: ((event: ViewportPointerEvent) => void) | undefined;
+  onViewportDragEnd?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined;
   children: (childProps: ChildProps) => ReactNode
   color?: string
   strokeColor?: string
@@ -23,7 +23,7 @@ export type ChildProps = {
   toggleSelect: () => void
   onViewportPointerDown: (event: ViewportPointerEvent) => void;
   onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
-  onViewportPointerUp: (event: ViewportPointerEvent) => void;
+  onViewportDragEnd: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void;
 }
 
 
@@ -72,18 +72,18 @@ export const Selection: FunctionComponent<Props> = (props) => {
         altKey: _state.current.altKey,
         ctrlKey: _state.current.ctrlKey,
         metaKey: _state.current.metaKey,
-        shiftKey: _state.current.shiftKey
+        shiftKey: _state.current.shiftKey,
       })
-      props.onSelection?.({ type: 'selectionChange', x: x, y: y, radius })
+      props.onSelection?.({ type: 'selectionChange', x: x, y: y, radius, altKey: _state.current.altKey, ctrlKey: _state.current.ctrlKey, metaKey: _state.current.metaKey, shiftKey: _state.current.shiftKey })
     } else {
       props.onViewportDrag?.(event)
     }
   }, [props.onSelection, props.onViewportPointerDown])
 
-  const onViewportPointerUp = useCallback((event: ViewportPointerEvent) => {
+  const onViewportDragEnd = useCallback((event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
     setState({ select: false })
-    props.onViewportPointerUp?.(event)
-  }, [props.onViewportPointerUp])
+    props.onViewportDragEnd?.(event)
+  }, [props.onViewportDragEnd])
 
 
   return createElement(Fragment, {}, props.children({
@@ -91,7 +91,7 @@ export const Selection: FunctionComponent<Props> = (props) => {
     toggleSelect,
     onViewportPointerDown,
     onViewportDrag,
-    onViewportPointerUp,
+    onViewportDragEnd,
     cursor: state.cursor,
     annotation: state.circle && state.circle.radius > 0 ? {
       type: 'circle',
