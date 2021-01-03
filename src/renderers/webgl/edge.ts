@@ -230,8 +230,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     if (this.curve === 0) {
       const startArrowOffset = this.reverseArrow ?
         movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - ArrowSprite.ARROW_HEIGHT) :
-        start,
-      endArrowOffset = this.forwardArrow ?
+        start
+      const endArrowOffset = this.forwardArrow ?
         movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + ArrowSprite.ARROW_HEIGHT) :
         end
       /**

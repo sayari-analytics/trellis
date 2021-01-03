@@ -47,6 +47,7 @@ exports.subgraphRadius = subgraphRadius;
 var Layout = function () {
     return function (previousNodes, nextNodes) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        // eslint-disable-next-line prefer-const
         var result = nextNodes.map(function (node) { return (__assign({}, node)); }), collapseNode, collapseNodeX, collapseNodeY, expandNode, expandNodeX, expandNodeY, node, theta, radius, nodeX, nodeY;
         var _loop_1 = function (i) {
             if (previousNodes[i].subgraph !== undefined) {

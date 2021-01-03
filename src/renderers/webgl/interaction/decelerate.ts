@@ -42,7 +42,7 @@ export class Decelerate <N extends Node, E extends Edge>{
   up = () => {
     if (this.saved.length) {
       const now = performance.now()
-      for (let save of this.saved) {
+      for (const save of this.saved) {
         if (save.time >= now - 100) {
           const time = now - save.time
           this.x = (this.renderer.x - save.x) / time

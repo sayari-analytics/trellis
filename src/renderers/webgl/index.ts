@@ -31,9 +31,9 @@ export type TextIcon = {
 export type ImageIcon = {
   type: 'imageIcon'
   url: string
-  scale?: number;
-  offsetX?: number;
-  offsetY?: number;
+  scale?: number
+  offsetX?: number
+  offsetY?: number
 }
 
 

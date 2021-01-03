@@ -77,7 +77,7 @@ var Selection = function (props) {
         setState({ select: false });
         (_a = props.onViewportDragEnd) === null || _a === void 0 ? void 0 : _a.call(props, event);
     }, [props.onViewportDragEnd]);
-    return react_1.createElement(react_1.Fragment, {}, props.children({
+    return props.children({
         select: state.select,
         toggleSelect: toggleSelect,
         onViewportPointerDown: onViewportPointerDown,
@@ -98,7 +98,7 @@ var Selection = function (props) {
                 }
             }
         } : undefined
-    }));
+    });
 };
 exports.Selection = Selection;
 //# sourceMappingURL=selection.js.map

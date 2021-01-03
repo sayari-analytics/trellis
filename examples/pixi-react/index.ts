@@ -4,14 +4,13 @@ import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
 import { Selection, SelectionChangeEvent } from '../../src/renderers/webgl/bindings/react/selection'
 import { Button } from '../../src/renderers/webgl/bindings/react/button'
-import { Renderer, Props } from '../../src/renderers/webgl/bindings/react/renderer'
-import { Zoom } from '../../src/renderers/webgl/bindings/react/zoom'
+import { Renderer } from '../../src/renderers/webgl/bindings/react/renderer'
+import { clampZoom, Zoom } from '../../src/renderers/webgl/bindings/react/zoom'
 import * as Graph from '../../src'
 import * as Force from '../../src/layout/force'
 import * as Cluster from '../../src/layout/cluster'
 import * as Subgraph from '../../src/layout/subgraph'
 import * as WebGL from '../../src/renderers/webgl'
-import { clampZoom } from '../../src/controls/zoom'
 
 
 const stats = new Stats()
@@ -107,8 +106,7 @@ const App: FunctionComponent = () => {
         ) : graph.selectedNodes.has(node.id) ? (
           { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy }
         ) : node
-      )),
-      selectedNodes: new Set([...graph.selectedNodes, id]),
+      ))
     }))
   }, [])
   const onNodePointerUp = useCallback(({ metaKey, shiftKey, target: { id } }: WebGL.NodePointerEvent) => {
@@ -246,7 +244,7 @@ const App: FunctionComponent = () => {
                   createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '●'),
                   createElement(Zoom, { onZoomIn, onZoomOut })
                 ),
-                createElement<Props<Node, Edge>>(Renderer, {
+                createElement(Renderer, {
                   width,
                   height,
                   nodes: styledNodes,

@@ -122,7 +122,7 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
      */
     if (event === undefined) {
       setTimeout(() => {
-        let _event = event!
+        const _event = event!
         event = undefined
         const nodes = layout(_event)
         self.postMessage({ nodes, v: _event.v })

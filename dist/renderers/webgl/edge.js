@@ -314,7 +314,8 @@ var EdgeRenderer = /** @class */ (function () {
         if (this.curve === 0) {
             var startArrowOffset = this.reverseArrow ?
                 utils_1.movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - arrowSprite_1.ArrowSprite.ARROW_HEIGHT) :
-                start, endArrowOffset = this.forwardArrow ?
+                start;
+            var endArrowOffset = this.forwardArrow ?
                 utils_1.movePoint(targetContainer.x, targetContainer.y, theta, targetRadius + arrowSprite_1.ArrowSprite.ARROW_HEIGHT) :
                 end;
             /**

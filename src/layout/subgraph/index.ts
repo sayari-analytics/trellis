@@ -15,6 +15,7 @@ export const subgraphRadius = (radius: number, nodes: Node[]) => {
 
 export const Layout = () => {
   return <N extends Node>(previousNodes: N[], nextNodes: N[]) => {
+    // eslint-disable-next-line prefer-const
     let result: N[] = nextNodes.map((node) => ({ ...node })),
       collapseNode: N,
       collapseNodeX: number,
