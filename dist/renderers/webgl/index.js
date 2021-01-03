@@ -136,10 +136,10 @@ var InternalRenderer = /** @class */ (function () {
             _this.onViewportPointerUp = onViewportPointerUp;
             _this.onViewportPointerLeave = onViewportPointerLeave;
             _this.onViewportWheel = onViewportWheel;
-            _this.animateViewportPosition = animateViewportPosition;
-            _this.animateViewportZoom = animateViewportZoom;
-            _this.animateNodePosition = animateNodePosition;
-            _this.animateNodeRadius = animateNodeRadius;
+            _this.animateViewportPosition = animateViewportPosition === true ? exports.RENDERER_OPTIONS.animateViewportPosition : animateViewportPosition;
+            _this.animateViewportZoom = animateViewportZoom === true ? exports.RENDERER_OPTIONS.animateViewportZoom : animateViewportZoom;
+            _this.animateNodePosition = animateNodePosition === true ? exports.RENDERER_OPTIONS.animateNodePosition : animateNodePosition;
+            _this.animateNodeRadius = animateNodeRadius === true ? exports.RENDERER_OPTIONS.animateNodeRadius : animateNodeRadius;
             _this.dragInertia = dragInertia;
             _this.minZoom = minZoom;
             _this.maxZoom = maxZoom;

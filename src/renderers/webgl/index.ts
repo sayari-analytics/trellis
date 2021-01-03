@@ -101,10 +101,10 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   zoom?: number
   minZoom?: number
   maxZoom?: number
-  animateViewportPosition?: number | false
-  animateViewportZoom?: number | false
-  animateNodePosition?: number | false
-  animateNodeRadius?: number | false
+  animateViewportPosition?: number | boolean
+  animateViewportZoom?: number | boolean
+  animateNodePosition?: number | boolean
+  animateNodeRadius?: number | boolean
   cursor?: string
   dragInertia?: number
   nodesEqual?: (previous: N[], current: N[]) => boolean
@@ -350,10 +350,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onViewportPointerUp = onViewportPointerUp
     this.onViewportPointerLeave = onViewportPointerLeave
     this.onViewportWheel = onViewportWheel
-    this.animateViewportPosition = animateViewportPosition
-    this.animateViewportZoom = animateViewportZoom
-    this.animateNodePosition = animateNodePosition
-    this.animateNodeRadius = animateNodeRadius
+    this.animateViewportPosition = animateViewportPosition === true ? RENDERER_OPTIONS.animateViewportPosition : animateViewportPosition
+    this.animateViewportZoom = animateViewportZoom === true ? RENDERER_OPTIONS.animateViewportZoom : animateViewportZoom
+    this.animateNodePosition = animateNodePosition === true ? RENDERER_OPTIONS.animateNodePosition : animateNodePosition
+    this.animateNodeRadius = animateNodeRadius === true ? RENDERER_OPTIONS.animateNodeRadius : animateNodeRadius
     this.dragInertia = dragInertia
     this.minZoom = minZoom
     this.maxZoom = maxZoom

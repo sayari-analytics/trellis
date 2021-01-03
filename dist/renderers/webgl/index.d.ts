@@ -137,10 +137,10 @@ export declare type Options<N extends Graph.Node = Graph.Node, E extends Graph.E
     zoom?: number;
     minZoom?: number;
     maxZoom?: number;
-    animateViewportPosition?: number | false;
-    animateViewportZoom?: number | false;
-    animateNodePosition?: number | false;
-    animateNodeRadius?: number | false;
+    animateViewportPosition?: number | boolean;
+    animateViewportZoom?: number | boolean;
+    animateNodePosition?: number | boolean;
+    animateNodeRadius?: number | boolean;
     cursor?: string;
     dragInertia?: number;
     nodesEqual?: (previous: N[], current: N[]) => boolean;
