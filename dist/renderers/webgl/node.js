@@ -243,7 +243,7 @@ var NodeRenderer = /** @class */ (function () {
                 this.x = x;
             }
             else {
-                this.interpolateX = utils_2.interpolate(this.x, x, this.renderer.animatePosition);
+                this.interpolateX = utils_2.interpolate(this.x, x, this.renderer.animatePosition, this.renderer.time);
             }
             this.expectedNodeXPosition = undefined;
             this.targetX = x;
@@ -255,7 +255,7 @@ var NodeRenderer = /** @class */ (function () {
                 this.y = y;
             }
             else {
-                this.interpolateY = utils_2.interpolate(this.y, y, this.renderer.animatePosition);
+                this.interpolateY = utils_2.interpolate(this.y, y, this.renderer.animatePosition, this.renderer.time);
             }
             this.expectedNodeYPosition = undefined;
             this.targetY = y;
@@ -267,7 +267,7 @@ var NodeRenderer = /** @class */ (function () {
                 this.radius = radius;
             }
             else {
-                this.interpolateRadius = utils_2.interpolate(this.radius, radius, this.renderer.animateRadius);
+                this.interpolateRadius = utils_2.interpolate(this.radius, radius, this.renderer.animateRadius, this.renderer.time);
             }
             this.targetRadius = radius;
         }
@@ -527,7 +527,7 @@ var NodeRenderer = /** @class */ (function () {
         var e_5, _a, e_6, _b;
         this.dirty = false;
         if (this.interpolateX) {
-            var _c = this.interpolateX(), value = _c.value, done = _c.done;
+            var _c = this.interpolateX(this.renderer.time), value = _c.value, done = _c.done;
             this.x = value;
             if (done) {
                 this.interpolateX = undefined;
@@ -537,7 +537,7 @@ var NodeRenderer = /** @class */ (function () {
             }
         }
         if (this.interpolateY) {
-            var _d = this.interpolateY(), value = _d.value, done = _d.done;
+            var _d = this.interpolateY(this.renderer.time), value = _d.value, done = _d.done;
             this.y = value;
             if (done) {
                 this.interpolateY = undefined;
@@ -547,7 +547,7 @@ var NodeRenderer = /** @class */ (function () {
             }
         }
         if (this.interpolateRadius) {
-            var _e = this.interpolateRadius(), value = _e.value, done = _e.done;
+            var _e = this.interpolateRadius(this.renderer.time), value = _e.value, done = _e.done;
             this.radius = value;
             if (done) {
                 this.interpolateRadius = undefined;

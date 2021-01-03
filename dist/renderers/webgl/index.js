@@ -81,6 +81,7 @@ var InternalRenderer = /** @class */ (function () {
         this.dragging = false;
         this.dirty = false;
         this.viewportDirty = false;
+        this.time = performance.now();
         this.annotationsBottomLayer = new PIXI.Container();
         this.edgesLayer = new PIXI.Container();
         this.nodesLayer = new PIXI.Container();
@@ -156,7 +157,7 @@ var InternalRenderer = /** @class */ (function () {
                     _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 }
                 else {
-                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, _this.animateViewport);
+                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, _this.animateViewport, _this.time);
                 }
                 _this.expectedViewportZoom = undefined;
                 _this.targetZoom = zoom;
@@ -168,7 +169,7 @@ var InternalRenderer = /** @class */ (function () {
                     _this.x = x;
                 }
                 else {
-                    _this.interpolateX = utils_1.interpolate(_this.x, x, _this.animateViewport);
+                    _this.interpolateX = utils_1.interpolate(_this.x, x, _this.animateViewport, _this.time);
                 }
                 _this.expectedViewportXPosition = undefined;
                 _this.targetX = x;
@@ -180,7 +181,7 @@ var InternalRenderer = /** @class */ (function () {
                     _this.y = y;
                 }
                 else {
-                    _this.interpolateY = utils_1.interpolate(_this.y, y, _this.animateViewport);
+                    _this.interpolateY = utils_1.interpolate(_this.y, y, _this.animateViewport, _this.time);
                 }
                 _this.expectedViewportYPosition = undefined;
                 _this.targetY = y;
@@ -375,11 +376,12 @@ var InternalRenderer = /** @class */ (function () {
             return _this;
         };
         this.render = function (time) {
-            var elapsedTime = time - _this.previousTime;
-            _this.previousTime = time;
+            _this.time = time;
+            var elapsedTime = _this.time - _this.previousTime;
+            _this.previousTime = _this.time;
             _this.decelerateInteraction.update(elapsedTime);
             if (_this.interpolateZoom) {
-                var _a = _this.interpolateZoom(), value = _a.value, done = _a.done;
+                var _a = _this.interpolateZoom(_this.time), value = _a.value, done = _a.done;
                 _this.zoom = value;
                 _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 if (done) {
@@ -388,7 +390,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (_this.interpolateX) {
-                var _b = _this.interpolateX(), value = _b.value, done = _b.done;
+                var _b = _this.interpolateX(_this.time), value = _b.value, done = _b.done;
                 _this.x = value;
                 if (done) {
                     _this.interpolateX = undefined;
@@ -396,7 +398,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (_this.interpolateY) {
-                var _c = _this.interpolateY(), value = _c.value, done = _c.done;
+                var _c = _this.interpolateY(_this.time), value = _c.value, done = _c.done;
                 _this.y = value;
                 if (done) {
                     _this.interpolateY = undefined;
@@ -446,11 +448,12 @@ var InternalRenderer = /** @class */ (function () {
             var e_5, _a;
             var _b, _c, _d;
             (_c = (_b = _this.debug) === null || _b === void 0 ? void 0 : _b.stats) === null || _c === void 0 ? void 0 : _c.update();
-            var elapsedTime = time - _this.previousTime;
-            _this.previousTime = time;
+            _this.time = time;
+            var elapsedTime = _this.time - _this.previousTime;
+            _this.previousTime = _this.time;
             _this.decelerateInteraction.update(elapsedTime);
             if (_this.interpolateZoom) {
-                var _e = _this.interpolateZoom(), value = _e.value, done = _e.done;
+                var _e = _this.interpolateZoom(_this.time), value = _e.value, done = _e.done;
                 _this.zoom = value;
                 _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 if (done) {
@@ -459,7 +462,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (_this.interpolateX) {
-                var _f = _this.interpolateX(), value = _f.value, done = _f.done;
+                var _f = _this.interpolateX(_this.time), value = _f.value, done = _f.done;
                 _this.x = value;
                 if (done) {
                     _this.interpolateX = undefined;
@@ -467,7 +470,7 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (_this.interpolateY) {
-                var _g = _this.interpolateY(), value = _g.value, done = _g.done;
+                var _g = _this.interpolateY(_this.time), value = _g.value, done = _g.done;
                 _this.y = value;
                 if (done) {
                     _this.interpolateY = undefined;

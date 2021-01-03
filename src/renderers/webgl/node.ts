@@ -32,13 +32,13 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private renderer: InternalRenderer<N, E>
   private depth: number
   private targetX: number
-  private interpolateX?: () => { value: number, done: boolean }
+  private interpolateX?: (time: number) => { value: number, done: boolean }
   private expectedNodeXPosition?: number
   private targetY: number
-  private interpolateY?: () => { value: number, done: boolean }
+  private interpolateY?: (time: number) => { value: number, done: boolean }
   private expectedNodeYPosition?: number
   private targetRadius: number
-  private interpolateRadius?: () => { value: number, done: boolean }
+  private interpolateRadius?: (time: number) => { value: number, done: boolean }
   private label?: string
   private labelFamily?: string
   private labelColor?: number
@@ -115,7 +115,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.interpolateX = undefined
         this.x = x
       } else {
-        this.interpolateX = interpolate(this.x, x, this.renderer.animatePosition)
+        this.interpolateX = interpolate(this.x, x, this.renderer.animatePosition, this.renderer.time)
       }
 
       this.expectedNodeXPosition = undefined
@@ -128,7 +128,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.interpolateY = undefined
         this.y = y
       } else {
-        this.interpolateY = interpolate(this.y, y, this.renderer.animatePosition)
+        this.interpolateY = interpolate(this.y, y, this.renderer.animatePosition, this.renderer.time)
       }
 
       this.expectedNodeYPosition = undefined
@@ -141,7 +141,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.interpolateRadius = undefined
         this.radius = radius
       } else {
-        this.interpolateRadius = interpolate(this.radius, radius, this.renderer.animateRadius)
+        this.interpolateRadius = interpolate(this.radius, radius, this.renderer.animateRadius, this.renderer.time)
       }
 
       this.targetRadius = radius
@@ -388,7 +388,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.dirty = false
 
     if (this.interpolateX) {
-      const { value, done } = this.interpolateX()
+      const { value, done } = this.interpolateX(this.renderer.time)
       this.x = value
 
       if (done) {
@@ -399,7 +399,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     if (this.interpolateY) {
-      const { value, done } = this.interpolateY()
+      const { value, done } = this.interpolateY(this.renderer.time)
       this.y = value
 
       if (done) {
@@ -410,7 +410,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     if (this.interpolateRadius) {
-      const { value, done } = this.interpolateRadius()
+      const { value, done } = this.interpolateRadius(this.renderer.time)
       this.radius = value
 
       if (done) {

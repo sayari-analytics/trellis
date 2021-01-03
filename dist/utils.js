@@ -166,16 +166,15 @@ var equals = function (a, b) {
     return false;
 };
 exports.equals = equals;
-var interpolate = function (from, to, duration) {
+var interpolate = function (from, to, duration, time) {
     var elapsed = 0;
-    var t1 = performance.now();
+    var t1 = time;
     var interpolator = d3_interpolate_1.interpolateNumber(from, to);
     var ease = d3_interpolate_1.interpolateBasis([from, interpolator(0.7), interpolator(0.95), to]);
-    return function () {
-        var t2 = performance.now();
-        var diff = Math.max(20, t2 - t1);
+    return function (time) {
+        var diff = Math.max(20, time - t1);
         elapsed += diff;
-        t1 = t2;
+        t1 = time;
         if (elapsed >= duration) {
             return { done: true, value: to };
         }

@@ -212,6 +212,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     dragging: boolean;
     dirty: boolean;
     viewportDirty: boolean;
+    time: number;
     annotationsBottomLayer: PIXI.Container;
     edgesLayer: PIXI.Container;
     nodesLayer: PIXI.Container;

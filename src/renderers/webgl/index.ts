@@ -171,6 +171,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   dragging = false
   dirty = false
   viewportDirty = false
+  time = performance.now()
   annotationsBottomLayer = new PIXI.Container()
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
@@ -202,11 +203,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private previousTime = performance.now()
   private debug?: { logPerformance?: boolean, stats?: Stats }
   private cancelAnimationLoop: () => void
-  private interpolateX?: () => { value: number, done: boolean }
+  private interpolateX?: (time: number) => { value: number, done: boolean }
   private targetX = RENDERER_OPTIONS.x
-  private interpolateY?: () => { value: number, done: boolean }
+  private interpolateY?: (time: number) => { value: number, done: boolean }
   private targetY = RENDERER_OPTIONS.y
-  private interpolateZoom?: () => { value: number, done: boolean }
+  private interpolateZoom?: (time: number) => { value: number, done: boolean }
   private targetZoom = RENDERER_OPTIONS.zoom
   private firstRender = true
   private doubleClickTimeout?: number
@@ -370,7 +371,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.zoom = zoom
         this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
       } else {
-        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
+        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport, this.time)
       }
 
       this.expectedViewportZoom = undefined
@@ -383,7 +384,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.interpolateX = undefined
         this.x = x
       } else {
-        this.interpolateX = interpolate(this.x, x, this.animateViewport)
+        this.interpolateX = interpolate(this.x, x, this.animateViewport, this.time)
       }
 
       this.expectedViewportXPosition = undefined
@@ -396,7 +397,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         this.interpolateY = undefined
         this.y = y
       } else {
-        this.interpolateY = interpolate(this.y, y, this.animateViewport)
+        this.interpolateY = interpolate(this.y, y, this.animateViewport, this.time)
       }
 
       this.expectedViewportYPosition = undefined
@@ -578,13 +579,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   }
 
   private render = (time: number) => {
-    const elapsedTime = time - this.previousTime
-    this.previousTime = time
+    this.time = time
+    const elapsedTime = this.time - this.previousTime
+    this.previousTime = this.time
 
     this.decelerateInteraction.update(elapsedTime)
 
     if (this.interpolateZoom) {
-      const { value, done } = this.interpolateZoom()
+      const { value, done } = this.interpolateZoom(this.time)
       this.zoom = value
       this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
 
@@ -596,7 +598,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (this.interpolateX) {
-      const { value, done } = this.interpolateX()
+      const { value, done } = this.interpolateX(this.time)
       this.x = value
 
       if (done) {
@@ -607,7 +609,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (this.interpolateY) {
-      const { value, done } = this.interpolateY()
+      const { value, done } = this.interpolateY(this.time)
       this.y = value
 
       if (done) {
@@ -667,13 +669,14 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   private debugRender = (time: number) => {
     this.debug?.stats?.update()
-    const elapsedTime = time - this.previousTime
-    this.previousTime = time
+    this.time = time
+    const elapsedTime = this.time - this.previousTime
+    this.previousTime = this.time
 
     this.decelerateInteraction.update(elapsedTime)
 
     if (this.interpolateZoom) {
-      const { value, done } = this.interpolateZoom()
+      const { value, done } = this.interpolateZoom(this.time)
       this.zoom = value
       this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
 
@@ -685,7 +688,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (this.interpolateX) {
-      const { value, done } = this.interpolateX()
+      const { value, done } = this.interpolateX(this.time)
       this.x = value
 
       if (done) {
@@ -696,7 +699,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (this.interpolateY) {
-      const { value, done } = this.interpolateY()
+      const { value, done } = this.interpolateY(this.time)
       this.y = value
 
       if (done) {
