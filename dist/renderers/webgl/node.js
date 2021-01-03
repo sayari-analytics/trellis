@@ -238,36 +238,36 @@ var NodeRenderer = /** @class */ (function () {
         this.dirty = true;
         var x = (_e = this.node.x) !== null && _e !== void 0 ? _e : 0;
         if (x !== this.targetX) {
-            if (x === this.expectedNodeXPosition || !this.renderer.animatePosition || this.renderer.clickedNode) {
+            if (x === this.expectedNodeXPosition || !this.renderer.animateNodePosition || this.renderer.clickedNode) {
                 this.interpolateX = undefined;
                 this.x = x;
             }
             else {
-                this.interpolateX = utils_2.interpolate(this.x, x, this.renderer.animatePosition, this.renderer.time);
+                this.interpolateX = utils_2.interpolate(this.x, x, this.renderer.animateNodePosition, this.renderer.time);
             }
             this.expectedNodeXPosition = undefined;
             this.targetX = x;
         }
         var y = (_f = this.node.y) !== null && _f !== void 0 ? _f : 0;
         if (y !== this.targetY) {
-            if (y === this.expectedNodeYPosition || !this.renderer.animatePosition || this.renderer.clickedNode) {
+            if (y === this.expectedNodeYPosition || !this.renderer.animateNodePosition || this.renderer.clickedNode) {
                 this.interpolateY = undefined;
                 this.y = y;
             }
             else {
-                this.interpolateY = utils_2.interpolate(this.y, y, this.renderer.animatePosition, this.renderer.time);
+                this.interpolateY = utils_2.interpolate(this.y, y, this.renderer.animateNodePosition, this.renderer.time);
             }
             this.expectedNodeYPosition = undefined;
             this.targetY = y;
         }
         var radius = this.node.radius;
         if (radius !== this.targetRadius) {
-            if (!this.renderer.animateRadius) {
+            if (!this.renderer.animateNodeRadius) {
                 this.interpolateRadius = undefined;
                 this.radius = radius;
             }
             else {
-                this.interpolateRadius = utils_2.interpolate(this.radius, radius, this.renderer.animateRadius, this.renderer.time);
+                this.interpolateRadius = utils_2.interpolate(this.radius, radius, this.renderer.animateNodeRadius, this.renderer.time);
             }
             this.targetRadius = radius;
         }

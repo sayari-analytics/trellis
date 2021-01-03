@@ -101,9 +101,10 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   zoom?: number
   minZoom?: number
   maxZoom?: number
-  animatePosition?: number | false
-  animateRadius?: number | false
-  animateViewport?: number | false
+  animateViewportPosition?: number | false
+  animateViewportZoom?: number | false
+  animateNodePosition?: number | false
+  animateNodeRadius?: number | false
   cursor?: string
   dragInertia?: number
   nodesEqual?: (previous: N[], current: N[]) => boolean
@@ -141,7 +142,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
 
 export const RENDERER_OPTIONS = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animateViewport: 600, animatePosition: 800, animateRadius: 800, dragInertia: 0.88,
+  animateViewportPosition: 600, animateViewportZoom: 600, animateNodePosition: 800, animateNodeRadius: 800, dragInertia: 0.88,
   nodesEqual: () => false, edgesEqual: () => false, nodeIsEqual: () => false, edgeIsEqual: () => false,
 }
 
@@ -160,9 +161,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   expectedViewportYPosition?: number
   zoom = RENDERER_OPTIONS.zoom
   expectedViewportZoom?: number
-  animatePosition: number | false = RENDERER_OPTIONS.animatePosition
-  animateRadius: number | false = RENDERER_OPTIONS.animateRadius
-  animateViewport: number | false = RENDERER_OPTIONS.animateViewport
+  animateViewportPosition: number | false = RENDERER_OPTIONS.animateViewportPosition
+  animateViewportZoom: number | false = RENDERER_OPTIONS.animateViewportZoom
+  animateNodePosition: number | false = RENDERER_OPTIONS.animateNodePosition
+  animateNodeRadius: number | false = RENDERER_OPTIONS.animateNodeRadius
   dragInertia = RENDERER_OPTIONS.dragInertia
   hoveredNode?: NodeRenderer<N, E>
   clickedNode?: NodeRenderer<N, E>
@@ -313,7 +315,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     options: {
       width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, cursor,
-      animatePosition = RENDERER_OPTIONS.animatePosition, animateRadius = RENDERER_OPTIONS.animateRadius, animateViewport = RENDERER_OPTIONS.animateViewport, dragInertia = RENDERER_OPTIONS.dragInertia,
+      animateNodePosition = RENDERER_OPTIONS.animateNodePosition, animateNodeRadius = RENDERER_OPTIONS.animateNodeRadius,
+      animateViewportPosition = RENDERER_OPTIONS.animateViewportPosition, animateViewportZoom = RENDERER_OPTIONS.animateViewportZoom, dragInertia = RENDERER_OPTIONS.dragInertia,
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDragStart, onNodeDrag, onNodeDragEnd, onNodePointerUp, onNodeClick, onNodeDoubleClick, onNodePointerLeave,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgeClick, onEdgeDoubleClick, onEdgePointerLeave,
@@ -347,9 +350,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onViewportPointerUp = onViewportPointerUp
     this.onViewportPointerLeave = onViewportPointerLeave
     this.onViewportWheel = onViewportWheel
-    this.animateViewport = animateViewport
-    this.animatePosition = animatePosition
-    this.animateRadius = animateRadius
+    this.animateViewportPosition = animateViewportPosition
+    this.animateViewportZoom = animateViewportZoom
+    this.animateNodePosition = animateNodePosition
+    this.animateNodeRadius = animateNodeRadius
     this.dragInertia = dragInertia
     this.minZoom = minZoom
     this.maxZoom = maxZoom
@@ -366,12 +370,12 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (zoom !== this.targetZoom) {
-      if (zoom === this.expectedViewportZoom || !this.animateViewport || this.firstRender) {
+      if (zoom === this.expectedViewportZoom || !this.animateViewportZoom || this.firstRender) {
         this.interpolateZoom = undefined
         this.zoom = zoom
         this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
       } else {
-        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport, this.time)
+        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewportZoom, this.time)
       }
 
       this.expectedViewportZoom = undefined
@@ -380,11 +384,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (x !== this.targetX) {
-      if (x === this.expectedViewportXPosition || !this.animateViewport || this.firstRender) {
+      if (x === this.expectedViewportXPosition || !this.animateViewportPosition || this.firstRender) {
         this.interpolateX = undefined
         this.x = x
       } else {
-        this.interpolateX = interpolate(this.x, x, this.animateViewport, this.time)
+        this.interpolateX = interpolate(this.x, x, this.animateViewportPosition, this.time)
       }
 
       this.expectedViewportXPosition = undefined
@@ -393,11 +397,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (y !== this.targetY) {
-      if (y === this.expectedViewportYPosition || !this.animateViewport || this.firstRender) {
+      if (y === this.expectedViewportYPosition || !this.animateViewportPosition || this.firstRender) {
         this.interpolateY = undefined
         this.y = y
       } else {
-        this.interpolateY = interpolate(this.y, y, this.animateViewport, this.time)
+        this.interpolateY = interpolate(this.y, y, this.animateViewportPosition, this.time)
       }
 
       this.expectedViewportYPosition = undefined

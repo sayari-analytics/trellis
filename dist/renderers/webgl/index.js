@@ -60,7 +60,7 @@ var utils_2 = require("./utils");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-    animateViewport: 600, animatePosition: 800, animateRadius: 800, dragInertia: 0.88,
+    animateViewportPosition: 600, animateViewportZoom: 600, animateNodePosition: 800, animateNodeRadius: 800, dragInertia: 0.88,
     nodesEqual: function () { return false; }, edgesEqual: function () { return false; }, nodeIsEqual: function () { return false; }, edgeIsEqual: function () { return false; },
 };
 PIXI.utils.skipHello();
@@ -74,9 +74,10 @@ var InternalRenderer = /** @class */ (function () {
         this.x = exports.RENDERER_OPTIONS.x;
         this.y = exports.RENDERER_OPTIONS.y;
         this.zoom = exports.RENDERER_OPTIONS.zoom;
-        this.animatePosition = exports.RENDERER_OPTIONS.animatePosition;
-        this.animateRadius = exports.RENDERER_OPTIONS.animateRadius;
-        this.animateViewport = exports.RENDERER_OPTIONS.animateViewport;
+        this.animateViewportPosition = exports.RENDERER_OPTIONS.animateViewportPosition;
+        this.animateViewportZoom = exports.RENDERER_OPTIONS.animateViewportZoom;
+        this.animateNodePosition = exports.RENDERER_OPTIONS.animateNodePosition;
+        this.animateNodeRadius = exports.RENDERER_OPTIONS.animateNodeRadius;
         this.dragInertia = exports.RENDERER_OPTIONS.dragInertia;
         this.dragging = false;
         this.dirty = false;
@@ -108,7 +109,7 @@ var InternalRenderer = /** @class */ (function () {
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d, e_4, _e;
             var _f, _g, _h, _j, _k;
-            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, cursor = _m.cursor, _v = _m.animatePosition, animatePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animatePosition : _v, _w = _m.animateRadius, animateRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateRadius : _w, _x = _m.animateViewport, animateViewport = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewport : _x, _y = _m.dragInertia, dragInertia = _y === void 0 ? exports.RENDERER_OPTIONS.dragInertia : _y, _z = _m.nodesEqual, nodesEqual = _z === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _z, _0 = _m.edgesEqual, edgesEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _0, _1 = _m.nodeIsEqual, nodeIsEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _1, _2 = _m.edgeIsEqual, edgeIsEqual = _2 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _2, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDragStart = _m.onNodeDragStart, onNodeDrag = _m.onNodeDrag, onNodeDragEnd = _m.onNodeDragEnd, onNodePointerUp = _m.onNodePointerUp, onNodeClick = _m.onNodeClick, onNodeDoubleClick = _m.onNodeDoubleClick, onNodePointerLeave = _m.onNodePointerLeave, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgeClick = _m.onEdgeClick, onEdgeDoubleClick = _m.onEdgeDoubleClick, onEdgePointerLeave = _m.onEdgePointerLeave, onViewportPointerEnter = _m.onViewportPointerEnter, onViewportPointerDown = _m.onViewportPointerDown, onViewportDragStart = _m.onViewportDragStart, onViewportDrag = _m.onViewportDrag, onViewportDragEnd = _m.onViewportDragEnd, onViewportPointerMove = _m.onViewportPointerMove, onViewportPointerUp = _m.onViewportPointerUp, onViewportClick = _m.onViewportClick, onViewportDoubleClick = _m.onViewportDoubleClick, onViewportPointerLeave = _m.onViewportPointerLeave, onViewportWheel = _m.onViewportWheel, annotations = _a.annotations;
+            var nodes = _a.nodes, edges = _a.edges, _l = _a.options, _m = _l === void 0 ? exports.RENDERER_OPTIONS : _l, _o = _m.width, width = _o === void 0 ? exports.RENDERER_OPTIONS.width : _o, _p = _m.height, height = _p === void 0 ? exports.RENDERER_OPTIONS.height : _p, _q = _m.x, x = _q === void 0 ? exports.RENDERER_OPTIONS.x : _q, _r = _m.y, y = _r === void 0 ? exports.RENDERER_OPTIONS.y : _r, _s = _m.zoom, zoom = _s === void 0 ? exports.RENDERER_OPTIONS.zoom : _s, _t = _m.minZoom, minZoom = _t === void 0 ? exports.RENDERER_OPTIONS.minZoom : _t, _u = _m.maxZoom, maxZoom = _u === void 0 ? exports.RENDERER_OPTIONS.maxZoom : _u, cursor = _m.cursor, _v = _m.animateNodePosition, animateNodePosition = _v === void 0 ? exports.RENDERER_OPTIONS.animateNodePosition : _v, _w = _m.animateNodeRadius, animateNodeRadius = _w === void 0 ? exports.RENDERER_OPTIONS.animateNodeRadius : _w, _x = _m.animateViewportPosition, animateViewportPosition = _x === void 0 ? exports.RENDERER_OPTIONS.animateViewportPosition : _x, _y = _m.animateViewportZoom, animateViewportZoom = _y === void 0 ? exports.RENDERER_OPTIONS.animateViewportZoom : _y, _z = _m.dragInertia, dragInertia = _z === void 0 ? exports.RENDERER_OPTIONS.dragInertia : _z, _0 = _m.nodesEqual, nodesEqual = _0 === void 0 ? exports.RENDERER_OPTIONS.nodesEqual : _0, _1 = _m.edgesEqual, edgesEqual = _1 === void 0 ? exports.RENDERER_OPTIONS.edgesEqual : _1, _2 = _m.nodeIsEqual, nodeIsEqual = _2 === void 0 ? exports.RENDERER_OPTIONS.nodeIsEqual : _2, _3 = _m.edgeIsEqual, edgeIsEqual = _3 === void 0 ? exports.RENDERER_OPTIONS.edgeIsEqual : _3, onNodePointerEnter = _m.onNodePointerEnter, onNodePointerDown = _m.onNodePointerDown, onNodeDragStart = _m.onNodeDragStart, onNodeDrag = _m.onNodeDrag, onNodeDragEnd = _m.onNodeDragEnd, onNodePointerUp = _m.onNodePointerUp, onNodeClick = _m.onNodeClick, onNodeDoubleClick = _m.onNodeDoubleClick, onNodePointerLeave = _m.onNodePointerLeave, onEdgePointerEnter = _m.onEdgePointerEnter, onEdgePointerDown = _m.onEdgePointerDown, onEdgePointerUp = _m.onEdgePointerUp, onEdgeClick = _m.onEdgeClick, onEdgeDoubleClick = _m.onEdgeDoubleClick, onEdgePointerLeave = _m.onEdgePointerLeave, onViewportPointerEnter = _m.onViewportPointerEnter, onViewportPointerDown = _m.onViewportPointerDown, onViewportDragStart = _m.onViewportDragStart, onViewportDrag = _m.onViewportDrag, onViewportDragEnd = _m.onViewportDragEnd, onViewportPointerMove = _m.onViewportPointerMove, onViewportPointerUp = _m.onViewportPointerUp, onViewportClick = _m.onViewportClick, onViewportDoubleClick = _m.onViewportDoubleClick, onViewportPointerLeave = _m.onViewportPointerLeave, onViewportWheel = _m.onViewportWheel, annotations = _a.annotations;
             _this.onNodePointerEnter = onNodePointerEnter;
             _this.onNodePointerDown = onNodePointerDown;
             _this.onNodeDragStart = onNodeDragStart;
@@ -135,9 +136,10 @@ var InternalRenderer = /** @class */ (function () {
             _this.onViewportPointerUp = onViewportPointerUp;
             _this.onViewportPointerLeave = onViewportPointerLeave;
             _this.onViewportWheel = onViewportWheel;
-            _this.animateViewport = animateViewport;
-            _this.animatePosition = animatePosition;
-            _this.animateRadius = animateRadius;
+            _this.animateViewportPosition = animateViewportPosition;
+            _this.animateViewportZoom = animateViewportZoom;
+            _this.animateNodePosition = animateNodePosition;
+            _this.animateNodeRadius = animateNodeRadius;
             _this.dragInertia = dragInertia;
             _this.minZoom = minZoom;
             _this.maxZoom = maxZoom;
@@ -151,37 +153,37 @@ var InternalRenderer = /** @class */ (function () {
                 _this.viewportDirty = true;
             }
             if (zoom !== _this.targetZoom) {
-                if (zoom === _this.expectedViewportZoom || !_this.animateViewport || _this.firstRender) {
+                if (zoom === _this.expectedViewportZoom || !_this.animateViewportZoom || _this.firstRender) {
                     _this.interpolateZoom = undefined;
                     _this.zoom = zoom;
                     _this.root.scale.set(Math.max(_this.minZoom, Math.min(_this.maxZoom, _this.zoom)));
                 }
                 else {
-                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, _this.animateViewport, _this.time);
+                    _this.interpolateZoom = utils_1.interpolate(_this.zoom, zoom, _this.animateViewportZoom, _this.time);
                 }
                 _this.expectedViewportZoom = undefined;
                 _this.targetZoom = zoom;
                 _this.viewportDirty = true;
             }
             if (x !== _this.targetX) {
-                if (x === _this.expectedViewportXPosition || !_this.animateViewport || _this.firstRender) {
+                if (x === _this.expectedViewportXPosition || !_this.animateViewportPosition || _this.firstRender) {
                     _this.interpolateX = undefined;
                     _this.x = x;
                 }
                 else {
-                    _this.interpolateX = utils_1.interpolate(_this.x, x, _this.animateViewport, _this.time);
+                    _this.interpolateX = utils_1.interpolate(_this.x, x, _this.animateViewportPosition, _this.time);
                 }
                 _this.expectedViewportXPosition = undefined;
                 _this.targetX = x;
                 _this.viewportDirty = true;
             }
             if (y !== _this.targetY) {
-                if (y === _this.expectedViewportYPosition || !_this.animateViewport || _this.firstRender) {
+                if (y === _this.expectedViewportYPosition || !_this.animateViewportPosition || _this.firstRender) {
                     _this.interpolateY = undefined;
                     _this.y = y;
                 }
                 else {
-                    _this.interpolateY = utils_1.interpolate(_this.y, y, _this.animateViewport, _this.time);
+                    _this.interpolateY = utils_1.interpolate(_this.y, y, _this.animateViewportPosition, _this.time);
                 }
                 _this.expectedViewportYPosition = undefined;
                 _this.targetY = y;
@@ -316,8 +318,8 @@ var InternalRenderer = /** @class */ (function () {
             _this.annotations = annotations;
             var annotationsById = {};
             try {
-                for (var _3 = __values((_k = _this.annotations) !== null && _k !== void 0 ? _k : []), _4 = _3.next(); !_4.done; _4 = _3.next()) {
-                    var annotation = _4.value;
+                for (var _4 = __values((_k = _this.annotations) !== null && _k !== void 0 ? _k : []), _5 = _4.next(); !_5.done; _5 = _4.next()) {
+                    var annotation = _5.value;
                     if (_this.annotationsById[annotation.id] === undefined) {
                         // annotation enter
                         annotationsById[annotation.id] = new circle_1.CircleAnnotationRenderer(_this, annotation);
@@ -333,7 +335,7 @@ var InternalRenderer = /** @class */ (function () {
             catch (e_4_1) { e_4 = { error: e_4_1 }; }
             finally {
                 try {
-                    if (_4 && !_4.done && (_e = _3.return)) _e.call(_3);
+                    if (_5 && !_5.done && (_e = _4.return)) _e.call(_4);
                 }
                 finally { if (e_4) throw e_4.error; }
             }

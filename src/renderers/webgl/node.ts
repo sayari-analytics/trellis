@@ -111,11 +111,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const x = this.node.x ?? 0
     if (x !== this.targetX) {
-      if (x === this.expectedNodeXPosition || !this.renderer.animatePosition || this.renderer.clickedNode) {
+      if (x === this.expectedNodeXPosition || !this.renderer.animateNodePosition || this.renderer.clickedNode) {
         this.interpolateX = undefined
         this.x = x
       } else {
-        this.interpolateX = interpolate(this.x, x, this.renderer.animatePosition, this.renderer.time)
+        this.interpolateX = interpolate(this.x, x, this.renderer.animateNodePosition, this.renderer.time)
       }
 
       this.expectedNodeXPosition = undefined
@@ -124,11 +124,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const y = this.node.y ?? 0
     if (y !== this.targetY) {
-      if (y === this.expectedNodeYPosition || !this.renderer.animatePosition || this.renderer.clickedNode) {
+      if (y === this.expectedNodeYPosition || !this.renderer.animateNodePosition || this.renderer.clickedNode) {
         this.interpolateY = undefined
         this.y = y
       } else {
-        this.interpolateY = interpolate(this.y, y, this.renderer.animatePosition, this.renderer.time)
+        this.interpolateY = interpolate(this.y, y, this.renderer.animateNodePosition, this.renderer.time)
       }
 
       this.expectedNodeYPosition = undefined
@@ -137,11 +137,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     const radius = this.node.radius
     if (radius !== this.targetRadius) {
-      if (!this.renderer.animateRadius) {
+      if (!this.renderer.animateNodeRadius) {
         this.interpolateRadius = undefined
         this.radius = radius
       } else {
-        this.interpolateRadius = interpolate(this.radius, radius, this.renderer.animateRadius, this.renderer.time)
+        this.interpolateRadius = interpolate(this.radius, radius, this.renderer.animateNodeRadius, this.renderer.time)
       }
 
       this.targetRadius = radius
