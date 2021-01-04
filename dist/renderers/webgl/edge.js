@@ -87,7 +87,7 @@ var EdgeRenderer = /** @class */ (function () {
         this.doubleClick = false;
         this.pointerEnter = function (event) {
             var _a, _b;
-            if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== undefined)
+            if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== undefined || _this.renderer.clickedNode !== undefined || _this.renderer.dragging)
                 return;
             _this.renderer.hoveredEdge = _this;
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;
@@ -96,7 +96,7 @@ var EdgeRenderer = /** @class */ (function () {
         };
         this.pointerLeave = function (event) {
             var _a, _b;
-            if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== _this)
+            if (_this.renderer.clickedEdge !== undefined || _this.renderer.hoveredEdge !== _this || _this.renderer.clickedNode !== undefined || _this.renderer.dragging)
                 return;
             _this.renderer.hoveredEdge = undefined;
             var _c = _this.renderer.root.toLocal(event.data.global), x = _c.x, y = _c.y;

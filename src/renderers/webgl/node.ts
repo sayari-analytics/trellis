@@ -499,7 +499,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined) return
+    if (this.renderer.clickedNode !== undefined || this.renderer.dragging) return
 
     this.renderer.hoveredNode = this
 
@@ -592,7 +592,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this) return
+    if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this || this.renderer.dragging) return
 
     this.renderer.hoveredNode = undefined
 

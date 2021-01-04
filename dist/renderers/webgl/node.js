@@ -89,7 +89,7 @@ var NodeRenderer = /** @class */ (function () {
         this.nodeMoveYOffset = 0;
         this.pointerEnter = function (event) {
             var _a, _b;
-            if (_this.renderer.clickedNode !== undefined)
+            if (_this.renderer.clickedNode !== undefined || _this.renderer.dragging)
                 return;
             _this.renderer.hoveredNode = _this;
             if (_this.parent === undefined) {
@@ -174,7 +174,7 @@ var NodeRenderer = /** @class */ (function () {
         };
         this.pointerLeave = function (event) {
             var _a, _b;
-            if (_this.renderer.clickedNode !== undefined || _this.renderer.hoveredNode !== _this)
+            if (_this.renderer.clickedNode !== undefined || _this.renderer.hoveredNode !== _this || _this.renderer.dragging)
                 return;
             _this.renderer.hoveredNode = undefined;
             if (_this.parent === undefined) {

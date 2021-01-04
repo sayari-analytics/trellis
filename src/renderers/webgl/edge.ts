@@ -406,7 +406,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
 
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== undefined) return
+    if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== undefined || this.renderer.clickedNode !== undefined || this.renderer.dragging) return
 
     this.renderer.hoveredEdge = this
 
@@ -416,7 +416,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
   }
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== this) return
+    if (this.renderer.clickedEdge !== undefined || this.renderer.hoveredEdge !== this || this.renderer.clickedNode !== undefined || this.renderer.dragging) return
 
     this.renderer.hoveredEdge = undefined
 
