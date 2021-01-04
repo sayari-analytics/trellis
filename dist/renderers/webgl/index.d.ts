@@ -250,7 +250,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     dragInteraction: Drag<N, E>;
     decelerateInteraction: Decelerate<N, E>;
     fontLoader: {
-        load: (family: string) => (onfulfilled: (result: string) => void) => () => void;
+        load: (family: string, weight: string) => (onfulfilled: (result: string) => void) => () => void;
         loading: () => boolean;
     };
     imageLoader: {

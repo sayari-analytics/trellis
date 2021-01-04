@@ -19,7 +19,7 @@ document.body.appendChild(stats.dom)
 const createCompanyStyle = (): WebGL.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 5 }],
-  icon: { type: 'imageIcon', url: company },
+  icon: { type: 'imageIcon', url: company, scale: 1.8 },
   badge: [{
     position: 45,
     color: '#FFAF1D',
@@ -52,7 +52,7 @@ const createCompanyStyle = (): WebGL.NodeStyle => ({
 const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 5 }],
-  labelFamily: 'abc, sans-serif',
+  labelFamily: 'Roboto',
   icon: radius > 30 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius } :
     { type: 'imageIcon' as const, url: person, scale: 0.05 },
@@ -92,7 +92,7 @@ let edges: Edge[] = [
 ].map<Edge>((edge) => ({
   ...edge,
   style: {
-    labelFamily: 'abc, sans-serif',
+    labelFamily: 'Roboto',
   }
 }))
 

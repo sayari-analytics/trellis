@@ -43,7 +43,7 @@ export const FontLoader = () => {
   const loading = new Set<number>()
 
   return {
-    load: (family: string) => {
+    load: (family: string, weight: string) => {
       if (fontCache[family]) {
         return Async<string>((resolve) => resolve(family))
       } else if ((document as any)?.fonts?.load) {
@@ -51,7 +51,7 @@ export const FontLoader = () => {
         loading.add(_loadId)
 
         return Async<string>((resolve) => {
-          (document as any).fonts.load(`1em ${family}`).then(() => {
+          (document as any).fonts.load(`${weight} 1em ${family}`).then(() => {
             fontCache[family] = true
             loading.delete(_loadId)
             resolve(family)

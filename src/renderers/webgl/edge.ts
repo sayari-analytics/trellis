@@ -172,7 +172,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.labelLoader?.()
 
       if (this.label) {
-        this.labelLoader = this.renderer.fontLoader.load(this.labelFamily)((family) => {
+        this.labelLoader = this.renderer.fontLoader.load(this.labelFamily, 'normal')((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
           // this.dirty = true

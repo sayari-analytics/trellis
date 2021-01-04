@@ -184,7 +184,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.labelLoader?.()
 
       if (this.label) {
-        this.labelLoader = this.renderer.fontLoader.load(this.labelFamily)((family) => {
+        this.labelLoader = this.renderer.fontLoader.load(this.labelFamily, 'normal')((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
           this.dirty = true
@@ -227,7 +227,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.stroke = node.style?.stroke
       for (const container of this.strokeSpriteContainer) {
         this.nodeContainer.removeChild(container)
-        container.destroy()
+        container.destroy({ children: true })
       }
       this.strokeSprites = []
       this.strokeSpriteContainer = []
@@ -255,59 +255,70 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     if (!equals(node.style?.badge, this.badge)) {
       this.badge = node.style?.badge
-      this.badgeSpriteContainer?.destroy()
-      this.badgeSpriteContainer = undefined
-      this.badgeSprites = []
       this.badgeIconLoader.forEach((loader) => loader())
+      if (this.badgeSpriteContainer !== undefined) {
+        this.nodeContainer.removeChild(this.badgeSpriteContainer)
+        this.badgeSpriteContainer.destroy({ children: true })
+        this.badgeSpriteContainer = undefined
+      }
+      this.badgeSprites = []
 
       if (this.badge !== undefined) {
         this.badgeSpriteContainer = new PIXI.Container()
 
         for (const badge of this.badge) {
-          const badgeRadius = badge.radius ?? DEFAULT_BADGE_RADIUS
-          const badgeStrokeRadius = badgeRadius + (badge.strokeWidth ?? DEFAULT_BADGE_STROKE_WIDTH)
-          const badgeFillSprite = this.renderer.circle.create()
-          badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : colorToNumber(badge.color)
-          badgeFillSprite.scale.set(badgeRadius / CircleSprite.radius)
-
-          const badgeStrokeSprite = this.renderer.circle.create()
-          badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : colorToNumber(badge.stroke)
-          badgeStrokeSprite.scale.set(badgeStrokeRadius / CircleSprite.radius)
-
-          let badgeIconSprite: PIXI.Sprite | undefined
-
           if (badge.icon?.type === 'textIcon') {
-            const badgeIconLoader = this.renderer.fontLoader.load(badge.icon.family)((family) => {
+            this.badgeIconLoader.push(this.renderer.fontLoader.load(badge.icon.family, 'bold')((family) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
 
               this.dirty = true
               this.renderer.dirty = true
 
-              badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
+              const badgeRadius = badge.radius ?? DEFAULT_BADGE_RADIUS
+              const badgeStrokeRadius = badgeRadius + (badge.strokeWidth ?? DEFAULT_BADGE_STROKE_WIDTH)
+
+              const badgeFillSprite = this.renderer.circle.create()
+              badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : colorToNumber(badge.color)
+              badgeFillSprite.scale.set(badgeRadius / CircleSprite.radius)
+
+              const badgeStrokeSprite = this.renderer.circle.create()
+              badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : colorToNumber(badge.stroke)
+              badgeStrokeSprite.scale.set(badgeStrokeRadius / CircleSprite.radius)
+
+              const badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
 
               this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
               this.badgeSpriteContainer.addChild(badgeStrokeSprite)
               this.badgeSpriteContainer.addChild(badgeFillSprite)
               badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
               this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
-            })
-            this.badgeIconLoader.push(badgeIconLoader)
+            }))
           } else if (badge.icon?.type === 'imageIcon') {
-            const badgeIconLoader = this.renderer.imageLoader.load(badge.icon.url)((url) => {
+            this.badgeIconLoader.push(this.renderer.imageLoader.load(badge.icon.url)((url) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'imageIcon' || badge.icon?.url !== url) return
 
               this.dirty = true
               this.renderer.dirty = true
 
-              badgeIconSprite = this.renderer.image.create(badge.icon.url)
-              this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+              const badgeRadius = badge.radius ?? DEFAULT_BADGE_RADIUS
+              const badgeStrokeRadius = badgeRadius + (badge.strokeWidth ?? DEFAULT_BADGE_STROKE_WIDTH)
 
+              const badgeFillSprite = this.renderer.circle.create()
+              badgeFillSprite.tint = badge.color === undefined ? DEFAULT_NODE_FILL : colorToNumber(badge.color)
+              badgeFillSprite.scale.set(badgeRadius / CircleSprite.radius)
+
+              const badgeStrokeSprite = this.renderer.circle.create()
+              badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : colorToNumber(badge.stroke)
+              badgeStrokeSprite.scale.set(badgeStrokeRadius / CircleSprite.radius)
+
+              const badgeIconSprite = this.renderer.image.create(badge.icon.url)
+
+              this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
               this.badgeSpriteContainer.addChild(badgeStrokeSprite)
               this.badgeSpriteContainer.addChild(badgeFillSprite)
               badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
               this.nodeContainer.addChild(this.badgeSpriteContainer) // add to top
-            })
-            this.badgeIconLoader.push(badgeIconLoader)
+            }))
           }
         }
       }
@@ -319,11 +330,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
      */
     if (!equals(node.style?.icon, this.icon)) {
       this.icon = node.style?.icon
+      this.iconLoader?.()
       if (this.iconSprite !== undefined) {
         this.nodeContainer.removeChild(this.iconSprite)
         this.iconSprite.destroy()
         this.iconSprite = undefined
-        this.iconLoader?.()
       }
 
       /**
@@ -335,7 +346,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
        * }
        */
       if (this.icon?.type === 'textIcon') {
-        this.iconLoader = this.renderer.fontLoader.load(this.icon.family)((family) => {
+        this.iconLoader = this.renderer.fontLoader.load(this.icon.family, 'normal')((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
 
           this.dirty = true
@@ -450,7 +461,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         const [x, y] = movePoint(0, 0, angle, this.radius + this.strokeWidth)
         fill.position.set(x, y)
         stroke.position.set(x, y)
-        icon !== undefined && icon.position.set(x, y)
+        icon?.position.set(x, y)
       }
     }
 
@@ -481,8 +492,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       // exit subgraph node
       this.subgraphNodes[subgraphNodeId].delete()
     }
-    this.nodeContainer.destroy()
-    this.labelContainer.destroy()
+    this.nodeContainer.destroy({ children: true })
+    this.labelContainer.destroy({ children: true })
     delete this.renderer.nodesById[this.node.id]
   }
 

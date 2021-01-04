@@ -61,7 +61,7 @@ var FontLoader = function () {
     var loadId = 0;
     var loading = new Set();
     return {
-        load: function (family) {
+        load: function (family, weight) {
             var _a, _b;
             if (fontCache[family]) {
                 return exports.Async(function (resolve) { return resolve(family); });
@@ -70,7 +70,7 @@ var FontLoader = function () {
                 var _loadId_1 = loadId++;
                 loading.add(_loadId_1);
                 return exports.Async(function (resolve) {
-                    document.fonts.load("1em " + family).then(function () {
+                    document.fonts.load(weight + " 1em " + family).then(function () {
                         fontCache[family] = true;
                         loading.delete(_loadId_1);
                         resolve(family);
