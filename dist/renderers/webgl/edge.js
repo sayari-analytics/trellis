@@ -264,6 +264,7 @@ var EdgeRenderer = /** @class */ (function () {
                     var _a;
                     if (_this.label === undefined || _this.labelFamily !== family)
                         return;
+                    // this.dirty = true
                     _this.renderer.dirty = true;
                     _this.labelSprite = new PIXI.Text(_this.label, {
                         fontFamily: _this.labelFamily,

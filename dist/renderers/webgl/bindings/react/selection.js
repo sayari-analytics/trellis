@@ -72,6 +72,7 @@ var Selection = function (props) {
             (_b = props.onViewportDrag) === null || _b === void 0 ? void 0 : _b.call(props, event);
         }
     }, [props.onSelection, props.onViewportPointerDown]);
+    // TODO - to be symmetrical, pass either onViewportDragStart/End or onViewportPointerDown/Up.  The former requires drag events to have access to meta/ctrl/shift/alt keys
     var onViewportDragEnd = react_1.useCallback(function (event) {
         var _a;
         setState({ select: false });

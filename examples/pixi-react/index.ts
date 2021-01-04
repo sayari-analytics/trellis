@@ -116,7 +116,7 @@ const App: FunctionComponent = () => {
         new Set(Array.from(graph.selectedNodes).filter((node) => node !== id))
       ) : metaKey || shiftKey ? (
         new Set([...graph.selectedNodes, id])
-      ) : new Set<string>(id),
+      ) : new Set<string>([id]),
     }))
   }, [])
   const onNodeDoubleClick = useCallback(({ target }: WebGL.NodePointerEvent) => {

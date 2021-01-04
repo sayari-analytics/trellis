@@ -80,6 +80,7 @@ export const Selection: FunctionComponent<Props> = (props) => {
     }
   }, [props.onSelection, props.onViewportPointerDown])
 
+  // TODO - to be symmetrical, pass either onViewportDragStart/End or onViewportPointerDown/Up.  The former requires drag events to have access to meta/ctrl/shift/alt keys
   const onViewportDragEnd = useCallback((event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
     setState({ select: false })
     props.onViewportDragEnd?.(event)

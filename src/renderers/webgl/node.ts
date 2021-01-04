@@ -187,6 +187,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.labelLoader = this.renderer.fontLoader.load(this.labelFamily)((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
+          this.dirty = true
           this.renderer.dirty = true
 
           this.labelSprite = new PIXI.Text(this.label, {
@@ -279,6 +280,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
             const badgeIconLoader = this.renderer.fontLoader.load(badge.icon.family)((family) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'textIcon' || badge.icon?.family !== family) return
 
+              this.dirty = true
               this.renderer.dirty = true
 
               badgeIconSprite = this.renderer.fontIcon.create(badge.icon.text, badge.icon.family, badge.icon.size, 'bold', badge.icon.color)
@@ -294,6 +296,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
             const badgeIconLoader = this.renderer.imageLoader.load(badge.icon.url)((url) => {
               if (this.badgeSpriteContainer === undefined || badge.icon?.type !== 'imageIcon' || badge.icon?.url !== url) return
 
+              this.dirty = true
               this.renderer.dirty = true
 
               badgeIconSprite = this.renderer.image.create(badge.icon.url)
@@ -335,6 +338,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.iconLoader = this.renderer.fontLoader.load(this.icon.family)((family) => {
           if (this.icon?.type !== 'textIcon' || this.icon.family !== family) return
 
+          this.dirty = true
           this.renderer.dirty = true
 
           this.iconSprite = this.renderer.fontIcon.create(this.icon.text, this.icon.family, this.icon.size, 'normal', this.icon.color)
@@ -345,6 +349,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
         this.iconLoader = this.renderer.imageLoader.load(this.icon.url)((url) => {
           if (this.icon?.type !== 'imageIcon' || this.icon.url !== url) return
 
+          this.dirty = true
           this.renderer.dirty = true
 
           this.iconSprite = this.renderer.image.create(this.icon.url, this.icon.scale, this.icon.offsetX, this.icon.offsetY)
@@ -488,6 +493,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredNode = this
 
     if (this.parent === undefined) {
+      this.dirty = true
       this.renderer.dirty = true
       this.renderer.nodesLayer.removeChild(this.nodeContainer)
       this.renderer.labelsLayer.removeChild(this.labelContainer)
@@ -580,6 +586,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     this.renderer.hoveredNode = undefined
 
     if (this.parent === undefined) {
+      this.dirty = true
       this.renderer.dirty = true
       this.renderer.frontNodeLayer.removeChild(this.nodeContainer)
       this.renderer.frontLabelLayer.removeChild(this.labelContainer)
@@ -598,7 +605,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onNodePointerLeave?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
-
 
   private clearDoubleClick = () => {
     this.doubleClickTimeout = undefined

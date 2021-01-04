@@ -18,16 +18,58 @@ document.body.appendChild(stats.dom)
  */
 const createCompanyStyle = (): WebGL.NodeStyle => ({
   color: '#FFAF1D',
-  stroke: [{ color: '#F7CA4D', width: 6 }],
-  icon: { type: 'imageIcon', url: company }
+  stroke: [{ color: '#F7CA4D', width: 5 }],
+  icon: { type: 'imageIcon', url: company },
+  badge: [{
+    position: 45,
+    color: '#FFAF1D',
+    stroke: '#FFF',
+    strokeWidth: 3,
+    radius: 12,
+    icon: {
+      type: 'textIcon',
+      family: 'Roboto',
+      size: 16,
+      color: '#FFF',
+      text: '15',
+    }
+  }, {
+    position: 135,
+    color: '#E4171B',
+    stroke: '#FFF',
+    strokeWidth: 3,
+    radius: 12,
+    icon: {
+      type: 'textIcon',
+      family: 'Roboto',
+      size: 16,
+      color: '#FFF',
+      text: '!',
+    }
+  }],
 })
 
 const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   color: '#7CBBF3',
-  stroke: [{ color: '#90D7FB', width: 6 }],
+  stroke: [{ color: '#90D7FB', width: 5 }],
+  labelFamily: 'abc, sans-serif',
   icon: radius > 30 ?
     { type: 'textIcon' as const, family: 'Arial, Helvetica, monospace', text: 'P', color: '#cbedff', size: radius } :
-    { type: 'imageIcon' as const, url: person, scale: 0.05 }
+    { type: 'imageIcon' as const, url: person, scale: 0.05 },
+  badge: [{
+    position: 45,
+    color: '#7CBBF3',
+    stroke: '#FFF',
+    strokeWidth: 3,
+    radius: 12,
+    icon: {
+      type: 'textIcon',
+      family: 'Roboto',
+      size: 16,
+      color: '#FFF',
+      text: '8',
+    }
+  }],
 })
 
 let nodes = [
@@ -47,7 +89,12 @@ let edges: Edge[] = [
   { id: 'fa', source: 'a', target: 'f', label: 'Related To' }, { id: 'ga', source: 'a', target: 'g', label: 'Related To' }, { id: 'ha', source: 'a', target: 'h', label: 'Related To' }, { id: 'ia', source: 'a', target: 'i', label: 'Related To' },
   { id: 'ja', source: 'b', target: 'j', label: 'Related To' }, { id: 'ka', source: 'b', target: 'k', label: 'Related To' }, { id: 'la', source: 'b', target: 'l', label: 'Related To' }, { id: 'ma', source: 'l', target: 'm', label: 'Related To' },
   { id: 'na', source: 'c', target: 'n', label: 'Related To' }, { id: 'oa', source: 'c', target: 'o', label: 'Related To' }, { id: 'pa', source: 'c', target: 'p', label: 'Related To' }, { id: 'qa', source: 'c', target: 'q', label: 'Related To' },
-]
+].map<Edge>((edge) => ({
+  ...edge,
+  style: {
+    labelFamily: 'abc, sans-serif',
+  }
+}))
 
 
 /**
@@ -69,6 +116,8 @@ const render = WebGL.Renderer({
 const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
   height: container.offsetHeight,
+  animateNodePosition: false,
+  animateNodeRadius: false,
   zoom: 0.8,
   onNodeDrag: ({ nodeX: x, nodeY: y, target: { id } }) => {
     nodes = nodes.map((node) => (node.id === id ? { ...node, x, y } : node))
