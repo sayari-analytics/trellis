@@ -58,8 +58,8 @@ export class Drag <N extends Node, E extends Edge>{
           this.renderer.dragging = true
           this.renderer.onViewportDragStart?.({
             type: 'viewportDrag',
-            x,
-            y,
+            x: local.x,
+            y: local.y,
             clientX: client.x,
             clientY: client.y,
             viewportX,

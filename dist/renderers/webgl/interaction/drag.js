@@ -42,8 +42,8 @@ var Drag = /** @class */ (function () {
                         _this.renderer.dragging = true;
                         (_b = (_a = _this.renderer).onViewportDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, {
                             type: 'viewportDrag',
-                            x: x,
-                            y: y,
+                            x: local.x,
+                            y: local.y,
                             clientX: client.x,
                             clientY: client.y,
                             viewportX: viewportX,

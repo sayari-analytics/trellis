@@ -26,17 +26,22 @@ export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Pr
     const _renderer = PixiRenderer({ container: ref.current!, debug: props.debug })
     renderer.current = _renderer
 
-    return () => _renderer.delete()
-  }, [])
-
-  useEffect(() => {
     const { nodes, edges, annotations, ...options } = props
     options.nodesEqual = options.nodesEqual ?? defaultNodesEqual
     options.edgesEqual = options.edgesEqual ?? defaultEdgesEqual
 
-    renderer.current!({ nodes, edges, annotations, options })
-  }, [props])
+    renderer.current({ nodes, edges, annotations, options })
 
+    return () => _renderer.delete()
+  }, [])
+
+  if (renderer.current) {
+    const { nodes, edges, annotations, ...options } = props
+    options.nodesEqual = options.nodesEqual ?? defaultNodesEqual
+    options.edgesEqual = options.edgesEqual ?? defaultEdgesEqual
+
+    renderer.current({ nodes, edges, annotations, options })
+  }
 
   return createElement('div', { ref: ref })
 }
