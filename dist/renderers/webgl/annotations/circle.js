@@ -46,4 +46,7 @@ var CircleAnnotationRenderer = /** @class */ (function () {
     return CircleAnnotationRenderer;
 }());
 exports.CircleAnnotationRenderer = CircleAnnotationRenderer;
+// export const CircleAnnotationRenderer: AnnotationRendererConstructor<CircleAnnotation> = (renderer: InternalRenderer<any, any>, annotation: CircleAnnotation) => {
+//   return new InternalCircleAnnotationRenderer(renderer, annotation)
+// }
 //# sourceMappingURL=circle.js.map

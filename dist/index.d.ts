@@ -33,7 +33,22 @@ export declare type CircleAnnotation = {
         };
     };
 };
-export declare type Annotation = CircleAnnotation;
+export declare type RectangleAnnotation = {
+    type: 'rectangle';
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    style: {
+        color: string;
+        stroke: {
+            color: string;
+            width: number;
+        };
+    };
+};
+export declare type Annotation = CircleAnnotation | RectangleAnnotation;
 export declare type Bounds = {
     left: number;
     top: number;

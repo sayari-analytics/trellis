@@ -14,6 +14,8 @@ import { FontIconSprite } from './sprites/FontIconSprite'
 import { FontLoader, ImageLoader } from './Loader'
 import { CircleAnnotationRenderer } from './annotations/circle'
 import { clientPositionFromEvent, pointerKeysFromEvent } from './utils'
+import { AnnotationRenderer } from './annotations'
+import { RectangleAnnotationRenderer } from './annotations/rectangle'
 
 
 install(PIXI)
@@ -186,7 +188,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   annotations?: Graph.Annotation[]
   nodesById: { [id: string]: NodeRenderer<N, E> } = {}
   edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
-  annotationsById: { [id: string]: CircleAnnotationRenderer<N, E> } = {}
+  annotationsById: { [id: string]: AnnotationRenderer } = {}
   edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
   arrow: ArrowSprite<N, E>
   circle: CircleSprite<N, E>
@@ -521,16 +523,28 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
      */
     this.annotations = annotations
 
-    const annotationsById: { [id: string]: CircleAnnotationRenderer<N, E> } = {}
+    const annotationsById: { [id: string]: AnnotationRenderer } = {}
 
     for (const annotation of this.annotations ?? []) {
-      if (this.annotationsById[annotation.id] === undefined) {
+      const id = `${annotation.type}${annotation.id}`
+
+      if (this.annotationsById[id] === undefined) {
         // annotation enter
-        annotationsById[annotation.id] = new CircleAnnotationRenderer(this, annotation)
+        if (annotation.type === 'circle') {
+          annotationsById[id] = new CircleAnnotationRenderer(this, annotation)
+        } else if (annotation.type === 'rectangle') {
+          annotationsById[id] = new RectangleAnnotationRenderer(this, annotation)
+        }
+
         this.dirty = true
       } else {
         // annotation update
-        annotationsById[annotation.id] = this.annotationsById[annotation.id].update(annotation)
+        if (annotation.type === 'circle') {
+          annotationsById[id] = (this.annotationsById[id] as CircleAnnotationRenderer).update(annotation)
+        } else if (annotation.type === 'rectangle') {
+          annotationsById[id] = (this.annotationsById[id] as RectangleAnnotationRenderer).update(annotation)
+        }
+
         this.dirty = true
       }
     }

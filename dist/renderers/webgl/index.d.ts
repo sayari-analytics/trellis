@@ -10,7 +10,7 @@ import { ArrowSprite } from './sprites/arrowSprite';
 import { CircleSprite } from './sprites/circleSprite';
 import { ImageSprite } from './sprites/ImageSprite';
 import { FontIconSprite } from './sprites/FontIconSprite';
-import { CircleAnnotationRenderer } from './annotations/circle';
+import { AnnotationRenderer } from './annotations';
 export declare type TextIcon = {
     type: 'textIcon';
     family: string;
@@ -233,7 +233,7 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
         [id: string]: EdgeRenderer<N, E>;
     };
     annotationsById: {
-        [id: string]: CircleAnnotationRenderer<N, E>;
+        [id: string]: AnnotationRenderer;
     };
     edgeIndex: {
         [edgeA: string]: {
@@ -335,7 +335,7 @@ export declare const Renderer: (options: {
         nodes: N[];
         edges: E[];
         options?: Options<N, E> | undefined;
-        annotations?: Graph.CircleAnnotation[] | undefined;
+        annotations?: Graph.Annotation[] | undefined;
     }): void;
     delete: () => void;
 };

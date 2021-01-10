@@ -41,7 +41,25 @@ export type CircleAnnotation = {
 }
 
 
+export type RectangleAnnotation = {
+  type: 'rectangle'
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  style: {
+    color: string
+    stroke: {
+      color: string
+      width: number
+    }
+  }
+}
+
+
 export type Annotation = CircleAnnotation
+  | RectangleAnnotation
 
 
 export type Bounds = { left: number, top: number, right: number, bottom: number }

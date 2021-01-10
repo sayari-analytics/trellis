@@ -57,6 +57,7 @@ var FontIconSprite_1 = require("./sprites/FontIconSprite");
 var Loader_1 = require("./Loader");
 var circle_1 = require("./annotations/circle");
 var utils_2 = require("./utils");
+var rectangle_1 = require("./annotations/rectangle");
 unsafe_eval_1.install(PIXI);
 exports.RENDERER_OPTIONS = {
     width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
@@ -320,14 +321,25 @@ var InternalRenderer = /** @class */ (function () {
             try {
                 for (var _4 = __values((_k = _this.annotations) !== null && _k !== void 0 ? _k : []), _5 = _4.next(); !_5.done; _5 = _4.next()) {
                     var annotation = _5.value;
-                    if (_this.annotationsById[annotation.id] === undefined) {
+                    var id = "" + annotation.type + annotation.id;
+                    if (_this.annotationsById[id] === undefined) {
                         // annotation enter
-                        annotationsById[annotation.id] = new circle_1.CircleAnnotationRenderer(_this, annotation);
+                        if (annotation.type === 'circle') {
+                            annotationsById[id] = new circle_1.CircleAnnotationRenderer(_this, annotation);
+                        }
+                        else if (annotation.type === 'rectangle') {
+                            annotationsById[id] = new rectangle_1.RectangleAnnotationRenderer(_this, annotation);
+                        }
                         _this.dirty = true;
                     }
                     else {
                         // annotation update
-                        annotationsById[annotation.id] = _this.annotationsById[annotation.id].update(annotation);
+                        if (annotation.type === 'circle') {
+                            annotationsById[id] = _this.annotationsById[id].update(annotation);
+                        }
+                        else if (annotation.type === 'rectangle') {
+                            annotationsById[id] = _this.annotationsById[id].update(annotation);
+                        }
                         _this.dirty = true;
                     }
                 }
