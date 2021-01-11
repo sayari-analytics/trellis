@@ -81,7 +81,7 @@ var Selection = function (props) {
         };
         var onKeyUp = function () {
             _keys.current = {};
-            setState(function (state) { return (__assign(__assign({}, state), { select: false })); });
+            setState(function (state) { return (state.annotation === undefined ? __assign(__assign({}, state), { select: false }) : state); });
         };
         document.body.addEventListener('keydown', onKeyDown);
         document.body.addEventListener('keyup', onKeyUp);

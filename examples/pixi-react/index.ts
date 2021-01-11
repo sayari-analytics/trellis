@@ -255,7 +255,7 @@ const App: FunctionComponent = () => {
             children: ({ select, toggleSelect, annotation, cursor, onViewportDragStart, onViewportDrag, onViewportDragEnd }) => (
               createElement(Fragment, {},
                 createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },
-                  createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '●'),
+                  createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '■'),
                   createElement(Zoom, { onZoomIn, onZoomOut })
                 ),
                 createElement(Renderer, {

@@ -72,7 +72,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
     }
     const onKeyUp = () => {
       _keys.current = {}
-      setState((state) => ({ ...state, select: false }))
+      setState((state) => (state.annotation === undefined ? { ...state, select: false } : state))
     }
 
     document.body.addEventListener('keydown', onKeyDown)
