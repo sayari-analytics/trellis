@@ -174,7 +174,7 @@ const App: FunctionComponent = () => {
           subgraph: undefined,
         }))
       ),
-      selectedNodes: new Set()
+      selectedNodes: new Set(),
     }))
   }, [])
   const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: WebGL.ViewportDragEvent | WebGL.ViewportDragDecelerateEvent) => {
@@ -183,21 +183,8 @@ const App: FunctionComponent = () => {
   const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: WebGL.ViewportWheelEvent) => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
-  const onSelection = useCallback(({ x, y, radius, metaKey, shiftKey }: SelectionChangeEvent) => {
-    /**
-     * TODO - move selection logic inside Selection component
-     * - when shrinking selection area while holding shift/cmd, nodes no longer w/i selection radius should not be selected
-     * - maybe move multiselect node move logic to Selection component as well?
-     */
-    setGraph((graph) => ({
-      ...graph,
-      selectedNodes: graph.nodes
-        .filter((node) => Math.hypot((node.x ?? 0) - x, (node.y ?? 0) - y) <= radius)
-        .reduce((selectedNodes, node) => {
-          selectedNodes.add(node.id)
-          return selectedNodes
-        }, metaKey || shiftKey ? new Set(graph.selectedNodes) : new Set<string>())
-    }))
+  const onSelection = useCallback(({ selection, shiftKey, metaKey }: SelectionChangeEvent) => {
+    setGraph((graph) => ({ ...graph, selectedNodes: shiftKey || metaKey ? new Set([...graph.selectedNodes, ...selection]) : selection }))
   }, [])
 
   const styledNodes = useMemo(() => {
@@ -252,9 +239,11 @@ const App: FunctionComponent = () => {
       ({ width, height }: { width?: number, height?: number }) => (
         createElement('div', { style: { width: '100%', height: '100%' } }, (
           createElement(Selection, {
+            nodes: styledNodes,
+            shape: 'circle',
             onViewportDrag,
             onSelection,
-            children: ({ select, toggleSelect, annotation, cursor, onViewportPointerDown, onViewportDrag, onViewportDragEnd }) => (
+            children: ({ select, toggleSelect, annotation, cursor, onViewportDragStart, onViewportDrag, onViewportDragEnd }) => (
               createElement(Fragment, {},
                 createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },
                   createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '●'),
@@ -279,7 +268,7 @@ const App: FunctionComponent = () => {
                   onNodePointerLeave,
                   onEdgePointerEnter,
                   onEdgePointerLeave,
-                  onViewportPointerDown,
+                  onViewportDragStart,
                   onViewportDrag,
                   onViewportDragEnd,
                   onViewportPointerUp,
