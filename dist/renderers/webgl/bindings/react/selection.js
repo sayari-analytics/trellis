@@ -105,23 +105,21 @@ var Selection = function (props) {
         (_a = props.onViewportDragStart) === null || _a === void 0 ? void 0 : _a.call(props, event);
     }, [props.onViewportDragStart]);
     var onViewportDrag = react_1.useCallback(function (event) {
-        var e_2, _a;
-        var _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        var e_2, _a, e_3, _b;
+        var _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
         if (_state.current.select && _state.current.annotation && event.type === 'viewportDrag') {
             var selection = new Set();
             if (_props.current.shape === 'circle') {
-                var x = _state.current.annotation.x;
-                var y = _state.current.annotation.y;
-                var radius = Math.hypot(event.x - x, event.y - y);
+                var radius = Math.hypot(event.x - _state.current.annotation.x, event.y - _state.current.annotation.y);
                 setState({
                     select: true,
                     cursor: 'copy',
-                    annotation: { type: 'circle', x: x, y: y, radius: radius },
+                    annotation: { type: 'circle', x: _state.current.annotation.x, y: _state.current.annotation.y, radius: radius },
                 });
                 try {
-                    for (var _l = __values((_b = _props.current.nodes) !== null && _b !== void 0 ? _b : []), _m = _l.next(); !_m.done; _m = _l.next()) {
-                        var node = _m.value;
-                        if (Math.hypot(((_c = node.x) !== null && _c !== void 0 ? _c : 0) - x, ((_d = node.y) !== null && _d !== void 0 ? _d : 0) - y) <= radius) {
+                    for (var _q = __values((_c = _props.current.nodes) !== null && _c !== void 0 ? _c : []), _r = _q.next(); !_r.done; _r = _q.next()) {
+                        var node = _r.value;
+                        if (Math.hypot(((_d = node.x) !== null && _d !== void 0 ? _d : 0) - _state.current.annotation.x, ((_e = node.y) !== null && _e !== void 0 ? _e : 0) - _state.current.annotation.y) <= radius) {
                             selection.add(node.id);
                         }
                     }
@@ -129,28 +127,55 @@ var Selection = function (props) {
                 catch (e_2_1) { e_2 = { error: e_2_1 }; }
                 finally {
                     try {
-                        if (_m && !_m.done && (_a = _l.return)) _a.call(_l);
+                        if (_r && !_r.done && (_a = _q.return)) _a.call(_q);
                     }
                     finally { if (e_2) throw e_2.error; }
                 }
             }
             else {
-                // TODO
+                var x1 = _state.current.annotation.x;
+                var x2 = event.x;
+                var y1 = _state.current.annotation.y;
+                var y2 = event.y;
+                var width = x2 - x1;
+                var height = y2 - y1;
+                setState({
+                    select: true,
+                    cursor: 'copy',
+                    annotation: { type: 'rectangle', x: x1, y: y1, width: width, height: height },
+                });
+                try {
+                    for (var _s = __values((_f = _props.current.nodes) !== null && _f !== void 0 ? _f : []), _t = _s.next(); !_t.done; _t = _s.next()) {
+                        var node = _t.value;
+                        var x = (_g = node.x) !== null && _g !== void 0 ? _g : 0;
+                        var y = (_h = node.y) !== null && _h !== void 0 ? _h : 0;
+                        if (((x > x1 && x < x2) || (x > x2 && x < x1)) && ((y > y1 && y < y2) || (y > y2 && y < y1))) {
+                            selection.add(node.id);
+                        }
+                    }
+                }
+                catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                finally {
+                    try {
+                        if (_t && !_t.done && (_b = _s.return)) _b.call(_s);
+                    }
+                    finally { if (e_3) throw e_3.error; }
+                }
             }
             if (!setsAreEqual(_selection.current, selection)) {
                 _selection.current = selection;
-                (_e = props.onSelection) === null || _e === void 0 ? void 0 : _e.call(props, {
+                (_j = props.onSelection) === null || _j === void 0 ? void 0 : _j.call(props, {
                     type: 'selectionChange',
                     selection: selection,
-                    altKey: (_f = _keys.current.altKey) !== null && _f !== void 0 ? _f : false,
-                    ctrlKey: (_g = _keys.current.ctrlKey) !== null && _g !== void 0 ? _g : false,
-                    metaKey: (_h = _keys.current.metaKey) !== null && _h !== void 0 ? _h : false,
-                    shiftKey: (_j = _keys.current.shiftKey) !== null && _j !== void 0 ? _j : false,
+                    altKey: (_k = _keys.current.altKey) !== null && _k !== void 0 ? _k : false,
+                    ctrlKey: (_l = _keys.current.ctrlKey) !== null && _l !== void 0 ? _l : false,
+                    metaKey: (_m = _keys.current.metaKey) !== null && _m !== void 0 ? _m : false,
+                    shiftKey: (_o = _keys.current.shiftKey) !== null && _o !== void 0 ? _o : false,
                 });
             }
         }
         else {
-            (_k = props.onViewportDrag) === null || _k === void 0 ? void 0 : _k.call(props, event);
+            (_p = props.onViewportDrag) === null || _p === void 0 ? void 0 : _p.call(props, event);
         }
     }, [props.onSelection, props.onViewportDrag]);
     var onViewportDragEnd = react_1.useCallback(function (event) {

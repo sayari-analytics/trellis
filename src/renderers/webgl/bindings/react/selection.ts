@@ -105,23 +105,41 @@ export const Selection = <N extends Node>(props: Props<N>) => {
       const selection = new Set<string>()
 
       if (_props.current.shape === 'circle') {
-        const x = _state.current.annotation.x
-        const y = _state.current.annotation.y
-        const radius = Math.hypot(event.x - x, event.y - y)
+        const radius = Math.hypot(event.x - _state.current.annotation.x, event.y - _state.current.annotation.y)
 
         setState({
           select: true,
           cursor: 'copy',
-          annotation: { type: 'circle', x, y, radius },
+          annotation: { type: 'circle', x: _state.current.annotation.x, y: _state.current.annotation.y, radius },
         })
 
         for (const node of _props.current.nodes ?? []) {
-          if (Math.hypot((node.x ?? 0) - x, (node.y ?? 0) - y) <= radius) {
+          if (Math.hypot((node.x ?? 0) - _state.current.annotation.x, (node.y ?? 0) - _state.current.annotation.y) <= radius) {
             selection.add(node.id)
           }
         }
       } else {
-        // TODO
+        const x1 = _state.current.annotation.x
+        const x2 = event.x
+        const y1 = _state.current.annotation.y
+        const y2 = event.y
+        const width = x2 - x1
+        const height = y2 - y1
+
+        setState({
+          select: true,
+          cursor: 'copy',
+          annotation: { type: 'rectangle', x: x1, y: y1, width, height },
+        })
+
+        for (const node of _props.current.nodes ?? []) {
+          const x = node.x ?? 0
+          const y = node.y ?? 0
+
+          if (((x > x1 && x < x2) || (x > x2 && x < x1)) && ((y > y1 && y < y2) || (y > y2 && y < y1))) {
+            selection.add(node.id)
+          }
+        }
       }
 
       if (!setsAreEqual(_selection.current, selection)) {

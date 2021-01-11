@@ -250,7 +250,6 @@ const App: FunctionComponent = () => {
         createElement('div', { style: { width: '100%', height: '100%' } }, (
           createElement(Selection, {
             nodes: styledNodes,
-            shape: 'circle',
             onViewportDrag,
             onSelection,
             children: ({ select, toggleSelect, annotation, cursor, onViewportDragStart, onViewportDrag, onViewportDragEnd }) => (
