@@ -77,6 +77,10 @@ export declare type NodeDragEvent = {
     nodeX: number;
     nodeY: number;
     target: Graph.Node;
+    altKey?: boolean;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
 };
 export declare type EdgePointerEvent = {
     type: 'edgePointer';
@@ -111,6 +115,10 @@ export declare type ViewportDragEvent = {
     viewportX: number;
     viewportY: number;
     target: Graph.Viewport;
+    altKey?: boolean;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    shiftKey?: boolean;
 };
 export declare type ViewportDragDecelerateEvent = {
     type: 'viewportDragDecelarate';
@@ -257,6 +265,10 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
         load: (url: string) => (onfulfilled: (result: string) => void) => () => void;
         loading: () => boolean;
     };
+    altKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    shiftKey: boolean;
     container: HTMLDivElement;
     private clickedContainer;
     private previousTime;
@@ -271,6 +283,8 @@ export declare class InternalRenderer<N extends Graph.Node, E extends Graph.Edge
     private firstRender;
     private doubleClickTimeout?;
     private doubleClick;
+    private onKeyDown;
+    private onKeyUp;
     onNodePointerEnter?: (event: NodePointerEvent) => void;
     onNodePointerDown?: (event: NodePointerEvent) => void;
     onNodeDragStart?: (event: NodeDragEvent) => void;

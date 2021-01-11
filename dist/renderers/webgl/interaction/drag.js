@@ -48,7 +48,11 @@ var Drag = /** @class */ (function () {
                             clientY: client.y,
                             viewportX: viewportX,
                             viewportY: viewportY,
-                            target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom }
+                            target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom },
+                            altKey: _this.renderer.altKey,
+                            ctrlKey: _this.renderer.ctrlKey,
+                            metaKey: _this.renderer.metaKey,
+                            shiftKey: _this.renderer.shiftKey,
                         });
                     }
                     (_d = (_c = _this.renderer).onViewportDrag) === null || _d === void 0 ? void 0 : _d.call(_c, {
@@ -59,7 +63,11 @@ var Drag = /** @class */ (function () {
                         clientY: client.y,
                         viewportX: viewportX,
                         viewportY: viewportY,
-                        target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom }
+                        target: { x: _this.renderer.x, y: _this.renderer.y, zoom: _this.renderer.zoom },
+                        altKey: _this.renderer.altKey,
+                        ctrlKey: _this.renderer.ctrlKey,
+                        metaKey: _this.renderer.metaKey,
+                        shiftKey: _this.renderer.shiftKey,
                     });
                 }
             }

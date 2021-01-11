@@ -100,6 +100,10 @@ var InternalRenderer = /** @class */ (function () {
         this.root = new PIXI.Container();
         this.fontLoader = Loader_1.FontLoader();
         this.imageLoader = Loader_1.ImageLoader();
+        this.altKey = false;
+        this.ctrlKey = false;
+        this.metaKey = false;
+        this.shiftKey = false;
         this.clickedContainer = false;
         this.previousTime = performance.now();
         this.targetX = exports.RENDERER_OPTIONS.x;
@@ -107,6 +111,19 @@ var InternalRenderer = /** @class */ (function () {
         this.targetZoom = exports.RENDERER_OPTIONS.zoom;
         this.firstRender = true;
         this.doubleClick = false;
+        this.onKeyDown = function (_a) {
+            var altKey = _a.altKey, ctrlKey = _a.ctrlKey, metaKey = _a.metaKey, shiftKey = _a.shiftKey;
+            _this.altKey = altKey;
+            _this.ctrlKey = ctrlKey;
+            _this.metaKey = metaKey;
+            _this.shiftKey = shiftKey;
+        };
+        this.onKeyUp = function () {
+            _this.altKey = false;
+            _this.ctrlKey = false;
+            _this.metaKey = false;
+            _this.shiftKey = false;
+        };
         this._update = function (_a) {
             var e_1, _b, e_2, _c, e_3, _d, e_4, _e;
             var _f, _g, _h, _j, _k;
@@ -565,6 +582,8 @@ var InternalRenderer = /** @class */ (function () {
                 clearTimeout(_this.doubleClickTimeout);
                 _this.doubleClickTimeout = undefined;
             }
+            document.body.removeEventListener('keydown', _this.onKeyDown);
+            document.body.removeEventListener('keyup', _this.onKeyUp);
             _this.cancelAnimationLoop();
             _this.app.destroy(true, { children: true, texture: true, baseTexture: true });
             _this.circle.delete();
@@ -636,7 +655,8 @@ var InternalRenderer = /** @class */ (function () {
             if (_this.dragging) {
                 _this.dragging = false;
                 _this.clickedContainer = false;
-                (_a = _this.onViewportDragEnd) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportDrag', x: x, y: y, clientX: client.x, clientY: client.y, viewportX: _this.x, viewportY: _this.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom } }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
+                (_a = _this.onViewportDragEnd) === null || _a === void 0 ? void 0 : _a.call(_this, __assign({ type: 'viewportDrag', x: x,
+                    y: y, clientX: client.x, clientY: client.y, viewportX: _this.x, viewportY: _this.y, target: { x: _this.x, y: _this.y, zoom: _this.zoom }, altKey: _this.altKey, ctrlKey: _this.ctrlKey, metaKey: _this.metaKey, shiftKey: _this.shiftKey }, utils_2.pointerKeysFromEvent(event.data.originalEvent)));
             }
             else if (_this.clickedContainer) {
                 _this.clickedContainer = false;
@@ -704,6 +724,8 @@ var InternalRenderer = /** @class */ (function () {
         this.circle = new circleSprite_1.CircleSprite(this);
         this.image = new ImageSprite_1.ImageSprite();
         this.fontIcon = new FontIconSprite_1.FontIconSprite();
+        document.body.addEventListener('keydown', this.onKeyDown);
+        document.body.addEventListener('keyup', this.onKeyUp);
         this.debug = options.debug;
         if (this.debug) {
             this.cancelAnimationLoop = utils_1.animationFrameLoop(this.debugRender);

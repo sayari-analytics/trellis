@@ -64,7 +64,11 @@ export class Drag <N extends Node, E extends Edge>{
             clientY: client.y,
             viewportX,
             viewportY,
-            target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+            target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
+            altKey: this.renderer.altKey,
+            ctrlKey: this.renderer.ctrlKey,
+            metaKey: this.renderer.metaKey,
+            shiftKey: this.renderer.shiftKey,
           })
         }
 
@@ -76,7 +80,11 @@ export class Drag <N extends Node, E extends Edge>{
           clientY: client.y,
           viewportX,
           viewportY,
-          target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+          target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
+          altKey: this.renderer.altKey,
+          ctrlKey: this.renderer.ctrlKey,
+          metaKey: this.renderer.metaKey,
+          shiftKey: this.renderer.shiftKey,
         })
       }
     }

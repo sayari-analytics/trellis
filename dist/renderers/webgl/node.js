@@ -141,9 +141,35 @@ var NodeRenderer = /** @class */ (function () {
             _this.expectedNodeYPosition = nodeY;
             if (!_this.renderer.dragging) {
                 _this.renderer.dragging = true;
-                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
+                (_b = (_a = _this.renderer).onNodeDragStart) === null || _b === void 0 ? void 0 : _b.call(_a, {
+                    type: 'nodeDrag',
+                    x: x,
+                    y: y,
+                    clientX: client.x,
+                    clientY: client.y,
+                    nodeX: nodeX,
+                    nodeY: nodeY,
+                    target: _this.node,
+                    altKey: _this.renderer.altKey,
+                    ctrlKey: _this.renderer.ctrlKey,
+                    metaKey: _this.renderer.metaKey,
+                    shiftKey: _this.renderer.shiftKey,
+                });
             }
-            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: nodeX, nodeY: nodeY, target: _this.node });
+            (_d = (_c = _this.renderer).onNodeDrag) === null || _d === void 0 ? void 0 : _d.call(_c, {
+                type: 'nodeDrag',
+                x: x,
+                y: y,
+                clientX: client.x,
+                clientY: client.y,
+                nodeX: nodeX,
+                nodeY: nodeY,
+                target: _this.node,
+                altKey: _this.renderer.altKey,
+                ctrlKey: _this.renderer.ctrlKey,
+                metaKey: _this.renderer.metaKey,
+                shiftKey: _this.renderer.shiftKey,
+            });
         };
         this.pointerUp = function (event) {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
@@ -160,7 +186,20 @@ var NodeRenderer = /** @class */ (function () {
             var client = utils_1.clientPositionFromEvent(event.data.originalEvent);
             if (_this.renderer.dragging) {
                 _this.renderer.dragging = false;
-                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, { type: 'nodeDrag', x: x, y: y, clientX: client.x, clientY: client.y, nodeX: (_c = _this.node.x) !== null && _c !== void 0 ? _c : 0, nodeY: (_d = _this.node.y) !== null && _d !== void 0 ? _d : 0, target: _this.node });
+                (_b = (_a = _this.renderer).onNodeDragEnd) === null || _b === void 0 ? void 0 : _b.call(_a, {
+                    type: 'nodeDrag',
+                    x: x,
+                    y: y,
+                    clientX: client.x,
+                    clientY: client.y,
+                    nodeX: (_c = _this.node.x) !== null && _c !== void 0 ? _c : 0,
+                    nodeY: (_d = _this.node.y) !== null && _d !== void 0 ? _d : 0,
+                    target: _this.node,
+                    altKey: _this.renderer.altKey,
+                    ctrlKey: _this.renderer.ctrlKey,
+                    metaKey: _this.renderer.metaKey,
+                    shiftKey: _this.renderer.shiftKey,
+                });
             }
             else {
                 (_f = (_e = _this.renderer).onNodePointerUp) === null || _f === void 0 ? void 0 : _f.call(_e, __assign({ type: 'nodePointer', x: x, y: y, clientX: client.x, clientY: client.y, target: _this.node }, utils_1.pointerKeysFromEvent(event.data.originalEvent)));

@@ -556,10 +556,36 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     if (!this.renderer.dragging) {
       this.renderer.dragging = true
-      this.renderer.onNodeDragStart?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
+      this.renderer.onNodeDragStart?.({
+        type: 'nodeDrag',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        nodeX,
+        nodeY,
+        target: this.node,
+        altKey: this.renderer.altKey,
+        ctrlKey: this.renderer.ctrlKey,
+        metaKey: this.renderer.metaKey,
+        shiftKey: this.renderer.shiftKey,
+      })
     }
 
-    this.renderer.onNodeDrag?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX, nodeY, target: this.node })
+    this.renderer.onNodeDrag?.({
+      type: 'nodeDrag',
+      x,
+      y,
+      clientX: client.x,
+      clientY: client.y,
+      nodeX,
+      nodeY,
+      target: this.node,
+      altKey: this.renderer.altKey,
+      ctrlKey: this.renderer.ctrlKey,
+      metaKey: this.renderer.metaKey,
+      shiftKey: this.renderer.shiftKey,
+    })
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -578,7 +604,20 @@ export class NodeRenderer<N extends Node, E extends Edge>{
 
     if (this.renderer.dragging) {
       this.renderer.dragging = false
-      this.renderer.onNodeDragEnd?.({ type: 'nodeDrag', x, y, clientX: client.x, clientY: client.y, nodeX: this.node.x ?? 0, nodeY: this.node.y ?? 0, target: this.node })
+      this.renderer.onNodeDragEnd?.({
+        type: 'nodeDrag',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        nodeX: this.node.x ?? 0,
+        nodeY: this.node.y ?? 0,
+        target: this.node,
+        altKey: this.renderer.altKey,
+        ctrlKey: this.renderer.ctrlKey,
+        metaKey: this.renderer.metaKey,
+        shiftKey: this.renderer.shiftKey,
+      })
     } else {
       this.renderer.onNodePointerUp?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })
       this.renderer.onNodeClick?.({ type: 'nodePointer', x, y, clientX: client.x, clientY: client.y, target: this.node, ...pointerKeysFromEvent(event.data.originalEvent) })

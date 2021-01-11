@@ -155,7 +155,13 @@ var Selection = function (props) {
     }, [props.onSelection, props.onViewportDrag]);
     var onViewportDragEnd = react_1.useCallback(function (event) {
         var _a;
-        setState({ select: false });
+        _selection.current = new Set();
+        if (_props.current.enableOnShift !== false && _keys.current.shiftKey) {
+            setState({ select: true });
+        }
+        else {
+            setState({ select: false });
+        }
         (_a = props.onViewportDragEnd) === null || _a === void 0 ? void 0 : _a.call(props, event);
     }, [props.onViewportDragEnd]);
     return props.children({

@@ -84,13 +84,13 @@ const MAX_ZOOM = 2.5
  */
 const App: FunctionComponent = () => {
 
-  const [graph, setGraph] = useState<{ nodes: Node[], edges: Edge[], x: number, y: number, zoom: number, selectedNodes: Set<string>, hoverNode?: string, hoverEdge?: string }>({
+  const [graph, setGraph] = useState<{ nodes: Node[], edges: Edge[], x: number, y: number, zoom: number, selected: Set<string>, hoverNode?: string, hoverEdge?: string }>({
     nodes: [],
     edges: [],
     x: 0,
     y: 0,
     zoom: 1,
-    selectedNodes: new Set(),
+    selected: new Set(),
   })
 
   useEffect(() => {
@@ -118,7 +118,7 @@ const App: FunctionComponent = () => {
       nodes: graph.nodes.map((node) => (
         node.id === id ? (
           { ...node, x: nodeX, y: nodeY }
-        ) : graph.selectedNodes.has(node.id) ? (
+        ) : graph.selected.has(node.id) ? (
           { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy }
         ) : node
       ))
@@ -127,11 +127,21 @@ const App: FunctionComponent = () => {
   const onNodePointerUp = useCallback(({ metaKey, shiftKey, target: { id } }: WebGL.NodePointerEvent) => {
     setGraph((graph) => ({
       ...graph,
-      selectedNodes: metaKey || shiftKey && graph.selectedNodes.has(id) ? (
-        new Set(Array.from(graph.selectedNodes).filter((node) => node !== id))
-      ) : metaKey || shiftKey ? (
-        new Set([...graph.selectedNodes, id])
+      selected: graph.selected.has(id) && (metaKey || shiftKey) ? (
+        new Set(Array.from(graph.selected).filter((node) => node !== id))
+      ) : (metaKey || shiftKey) ? (
+        new Set([...graph.selected, id])
       ) : new Set<string>([id]),
+    }))
+  }, [])
+  const onNodeDragStart = useCallback(({ metaKey, shiftKey, target: { id } }) => {
+    setGraph((graph) => ({
+      ...graph,
+      selected: !graph.selected.has(id) && (metaKey || shiftKey) ? (
+        new Set([...graph.selected, id])
+      ) : !graph.selected.has(id) ? (
+        new Set([id])
+      ) : graph.selected
     }))
   }, [])
   const onNodeDoubleClick = useCallback(({ target }: WebGL.NodePointerEvent) => {
@@ -174,7 +184,7 @@ const App: FunctionComponent = () => {
           subgraph: undefined,
         }))
       ),
-      selectedNodes: new Set(),
+      selected: new Set(),
     }))
   }, [])
   const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: WebGL.ViewportDragEvent | WebGL.ViewportDragDecelerateEvent) => {
@@ -184,7 +194,7 @@ const App: FunctionComponent = () => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
   const onSelection = useCallback(({ selection, shiftKey, metaKey }: SelectionChangeEvent) => {
-    setGraph((graph) => ({ ...graph, selectedNodes: shiftKey || metaKey ? new Set([...graph.selectedNodes, ...selection]) : selection }))
+    setGraph((graph) => ({ ...graph, selected: shiftKey || metaKey ? new Set([...graph.selected, ...selection]) : selection }))
   }, [])
 
   const styledNodes = useMemo(() => {
@@ -192,9 +202,9 @@ const App: FunctionComponent = () => {
       let style: WebGL.NodeStyle
 
       if (node.subgraph !== undefined) {
-        if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
+        if (graph.selected.has(node.id) && node.id === graph.hoverNode) {
           style = { color: '#EFEFEF', stroke: [{ color: '#AAA', width: 4 }, { color: '#FFF', width: 2 }, { color: '#CCC', width: 2 }] }
-        } else if (graph.selectedNodes.has(node.id)) {
+        } else if (graph.selected.has(node.id)) {
           style = { color: '#EFEFEF', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#CCC', width: 2 }] }
         } else if (node.id === graph.hoverNode) {
           style = { color: '#EFEFEF', stroke: [{ color: '#AAA', width: 4 }, { color: '#FFF', width: 4 }] }
@@ -202,9 +212,9 @@ const App: FunctionComponent = () => {
           style = { color: '#EFEFEF', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 4 }] }
         }
       } else if (node.type === 'person') {
-        if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
+        if (graph.selected.has(node.id) && node.id === graph.hoverNode) {
           style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#7CBBF3', width: 2 }], icon: PERSON_ICON }
-        } else if (graph.selectedNodes.has(node.id)) {
+        } else if (graph.selected.has(node.id)) {
           style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }, { color: '#FFF', width: 2 }, { color: '#7CBBF3', width: 2 }], icon: PERSON_ICON }
         } else if (node.id === graph.hoverNode) {
           style = { color: '#7CBBF3', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 4 }], icon: PERSON_ICON }
@@ -212,9 +222,9 @@ const App: FunctionComponent = () => {
           style = { color: '#7CBBF3', stroke: [{ color: '#90D7FB', width: 4 }, { color: '#FFF', width: 4 }], icon: PERSON_ICON }
         }
       } else {
-        if (graph.selectedNodes.has(node.id) && node.id === graph.hoverNode) {
+        if (graph.selected.has(node.id) && node.id === graph.hoverNode) {
           style = { color: '#FFAF1D', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 2 }, { color: '#F7CA4D', width: 2 }], icon: COMPANY_ICON }
-        } else if (graph.selectedNodes.has(node.id)) {
+        } else if (graph.selected.has(node.id)) {
           style = { color: '#FFAF1D', stroke: [{ color: '#F7CA4D', width: 4 }, { color: '#FFF', width: 2 }, { color: '#F7CA4D', width: 2 }], icon: COMPANY_ICON }
         } else if (node.id === graph.hoverNode) {
           style = { color: '#FFAF1D', stroke: [{ color: '#CCC', width: 4 }, { color: '#FFF', width: 4 }], icon: COMPANY_ICON }
@@ -225,7 +235,7 @@ const App: FunctionComponent = () => {
 
       return { ...node, style }
     })
-  }, [graph.nodes, graph.selectedNodes, graph.hoverNode])
+  }, [graph.nodes, graph.selected, graph.hoverNode])
 
   const styledEdges = useMemo(() => {
     return graph.edges.map<Graph.Edge>((edge) => ({
@@ -263,6 +273,7 @@ const App: FunctionComponent = () => {
                   cursor,
                   onNodePointerEnter,
                   onNodePointerUp,
+                  onNodeDragStart,
                   onNodeDrag,
                   onNodeDoubleClick,
                   onNodePointerLeave,

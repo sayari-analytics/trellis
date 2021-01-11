@@ -77,7 +77,7 @@ export type EdgeStyle = {
 export type NodePointerEvent = { type: 'nodePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
-export type NodeDragEvent = { type: 'nodeDrag', x: number, y: number, clientX: number, clientY: number, nodeX: number, nodeY: number, target: Graph.Node }
+export type NodeDragEvent = { type: 'nodeDrag', x: number, y: number, clientX: number, clientY: number, nodeX: number, nodeY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
 export type EdgePointerEvent = { type: 'edgePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Edge, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -86,7 +86,7 @@ export type EdgePointerEvent = { type: 'edgePointer', x: number, y: number, clie
 export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
-export type ViewportDragEvent = { type: 'viewportDrag', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, target: Graph.Viewport }
+export type ViewportDragEvent = { type: 'viewportDrag', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
 export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', viewportX: number, viewportY: number, target: Graph.Viewport }
@@ -201,6 +201,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   decelerateInteraction: Decelerate<N, E>
   fontLoader = FontLoader()
   imageLoader = ImageLoader()
+  altKey = false
+  ctrlKey = false
+  metaKey = false
+  shiftKey = false
   container: HTMLDivElement
 
   private clickedContainer = false
@@ -216,6 +220,18 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private firstRender = true
   private doubleClickTimeout?: number
   private doubleClick = false
+  private onKeyDown = ({ altKey, ctrlKey, metaKey, shiftKey }: KeyboardEvent) => {
+    this.altKey = altKey
+    this.ctrlKey = ctrlKey
+    this.metaKey = metaKey
+    this.shiftKey = shiftKey
+  }
+  private onKeyUp = () => {
+    this.altKey = false
+    this.ctrlKey = false
+    this.metaKey = false
+    this.shiftKey = false
+  }
 
   onNodePointerEnter?: (event: NodePointerEvent) => void
   onNodePointerDown?: (event: NodePointerEvent) => void
@@ -300,6 +316,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.circle = new CircleSprite<N, E>(this)
     this.image = new ImageSprite()
     this.fontIcon = new FontIconSprite()
+
+    document.body.addEventListener('keydown', this.onKeyDown)
+    document.body.addEventListener('keyup', this.onKeyUp)
 
     this.debug = options.debug
     if (this.debug) {
@@ -810,6 +829,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.doubleClickTimeout = undefined
     }
 
+    document.body.removeEventListener('keydown', this.onKeyDown)
+    document.body.removeEventListener('keyup', this.onKeyUp)
+
     this.cancelAnimationLoop()
     this.app.destroy(true, { children: true, texture: true, baseTexture: true })
     this.circle.delete()
@@ -894,7 +916,21 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     if (this.dragging) {
       this.dragging = false
       this.clickedContainer = false
-      this.onViewportDragEnd?.({ type: 'viewportDrag', x, y, clientX: client.x, clientY: client.y, viewportX: this.x, viewportY: this.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+      this.onViewportDragEnd?.({
+        type: 'viewportDrag',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        viewportX: this.x,
+        viewportY: this.y,
+        target: { x: this.x, y: this.y, zoom: this.zoom },
+        altKey: this.altKey,
+        ctrlKey: this.ctrlKey,
+        metaKey: this.metaKey,
+        shiftKey: this.shiftKey,
+        ...pointerKeysFromEvent(event.data.originalEvent)
+      })
     } else if (this.clickedContainer) {
       this.clickedContainer = false
       this.onViewportPointerUp?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })

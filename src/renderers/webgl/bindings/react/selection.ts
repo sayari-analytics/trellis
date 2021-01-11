@@ -12,10 +12,10 @@ export type Props<N extends Node> = {
   strokeWidth?: number
   shape?: 'rectangle' | 'circle'
   enableOnShift?: boolean
-  onSelection?: ((event: SelectionChangeEvent) => void) | undefined
-  onViewportDragStart?: ((event: ViewportDragEvent) => void) | undefined
-  onViewportDrag?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined
-  onViewportDragEnd?: ((event: ViewportDragEvent | ViewportDragDecelerateEvent) => void) | undefined
+  onSelection?: (event: SelectionChangeEvent) => void
+  onViewportDragStart?: (event: ViewportDragEvent) => void
+  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
   children: (childProps: ChildProps) => ReactNode
 }
 
@@ -142,7 +142,12 @@ export const Selection = <N extends Node>(props: Props<N>) => {
   }, [props.onSelection, props.onViewportDrag])
 
   const onViewportDragEnd = useCallback((event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
-    setState({ select: false })
+    _selection.current = new Set()
+    if (_props.current.enableOnShift !== false && _keys.current.shiftKey) {
+      setState({ select: true })
+    } else {
+      setState({ select: false })
+    }
     props.onViewportDragEnd?.(event)
   }, [props.onViewportDragEnd])
 
