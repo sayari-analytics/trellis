@@ -13,7 +13,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const STYLE: Partial<WebGL.NodeStyle> = {
+const STYLE: Partial<Graph.NodeStyle> = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
@@ -40,7 +40,7 @@ let nodes: Graph.Node[] = [{
   label: 'C',
   style: STYLE
 }]
-let edges: Graph.Edge[] = []
+const edges: Graph.Edge[] = []
 
 
 /**

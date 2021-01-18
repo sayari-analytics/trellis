@@ -5,7 +5,7 @@ import * as Zoom from '../../src/controls/zoom'
 import * as Download from '../../src/controls/download'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
-import graphData from '../../tmp-data'
+import graphData from '../../data/tmp-data'
 
 
 export const stats = new Stats()

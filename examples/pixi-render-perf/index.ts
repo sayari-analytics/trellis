@@ -3,7 +3,7 @@ import * as Force from '../../src/layout/force'
 import * as Zoom from '../../src/controls/zoom'
 import * as Graph from '../../src'
 import * as WebGL from '../../src/renderers/webgl'
-import graphData from '../../tmp-data'
+import graphData from '../../data/tmp-data'
 import { throttleAnimationFrame } from '../../src/utils'
 
 

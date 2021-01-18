@@ -2,7 +2,7 @@ import Stats from 'stats.js'
 import * as Radial from '../../src/layout/radial'
 import * as Graph from '../../src/'
 import * as WebGL from '../../src/renderers/webgl'
-import graphData from '../../tmp-data'
+import graphData from '../../data/tmp-data'
 
 
 export const stats = new Stats()
@@ -20,7 +20,7 @@ const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 
-const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
+const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.25 },
@@ -49,7 +49,7 @@ const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
   }],
 })
 
-const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
+const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: radius * 1.25 },

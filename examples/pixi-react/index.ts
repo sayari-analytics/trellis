@@ -11,7 +11,7 @@ import * as Force from '../../src/layout/force'
 import * as Cluster from '../../src/layout/cluster'
 import * as Subgraph from '../../src/layout/subgraph'
 import * as WebGL from '../../src/renderers/webgl'
-import graphData from '../../tmp-data'
+import graphData from '../../data/tmp-data'
 
 
 const stats = new Stats()
@@ -23,7 +23,7 @@ type Node = Graph.Node & { type: string }
 type Edge = Graph.Edge
 
 
-const SUBGRAPH_STYLE: WebGL.NodeStyle = {
+const SUBGRAPH_STYLE: Graph.NodeStyle = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: 22 }
@@ -199,7 +199,7 @@ const App: FunctionComponent = () => {
 
   const styledNodes = useMemo(() => {
     return graph.nodes.map((node) => {
-      let style: WebGL.NodeStyle
+      let style: Graph.NodeStyle
 
       if (node.subgraph !== undefined) {
         if (graph.selected.has(node.id) && node.id === graph.hoverNode) {

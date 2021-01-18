@@ -1,5 +1,5 @@
 // import { Node, Edge, Graph } from '../../src/index'
-// import graphData from '../../tmp-data'
+// import graphData from '../../data/tmp-data'
 // import { of, Observable, interval } from 'rxjs'
 // import { map, mergeMap, tap, take } from 'rxjs/operators'
 // import { LayoutOptions } from '../../src/simulation'

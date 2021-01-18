@@ -18,7 +18,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
+const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 },
@@ -47,7 +47,7 @@ const createCompanyStyle = (radius: number): WebGL.NodeStyle => ({
   }],
 })
 
-const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
+const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   color: '#7CBBF3',
   labelSize: 10,
   labelWordWrap: 260,
@@ -67,7 +67,7 @@ const createPersonStyle = (radius: number): WebGL.NodeStyle => ({
   }],
 })
 
-const createSubgraphStyle = (radius: number): WebGL.NodeStyle => ({
+const createSubgraphStyle = (radius: number): Graph.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 2 }],
   icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'business', color: '#fff', size: radius * 1.2 }
