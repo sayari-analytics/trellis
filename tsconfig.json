@@ -63,4 +63,7 @@
   "include": [
     "src/**/*"
   ],
+  "exclude": [
+    "src/index.umd.ts"
+  ]
 }

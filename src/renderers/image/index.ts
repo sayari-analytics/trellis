@@ -2,14 +2,6 @@ import * as WebGL from '../webgl'
 import { Node, Edge } from '../../'
 
 
-export type TextIcon = WebGL.TextIcon
-
-export type ImageIcon = WebGL.ImageIcon
-
-export type NodeStyle = WebGL.NodeStyle
-
-export type EdgeStyle = WebGL.EdgeStyle
-
 export type Options = {
   width?: number
   height?: number

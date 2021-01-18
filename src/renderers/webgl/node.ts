@@ -1,8 +1,8 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer, NodeStyle } from '.'
+import { InternalRenderer } from '.'
 import { colorToNumber, RADIANS_PER_DEGREE, HALF_PI, movePoint, parentInFront, clientPositionFromEvent, pointerKeysFromEvent } from './utils'
-import { Node, Edge } from '../..'
-import { equals, interpolate } from '../../utils'
+import { Node, Edge, NodeStyle, equals } from '../..'
+import { interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
 
 

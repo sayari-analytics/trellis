@@ -1,6 +1,3 @@
-import { NodeStyle, EdgeStyle } from './renderers/webgl'
-
-
 export type Node = {
   id: string
   radius: number
@@ -22,6 +19,59 @@ export type Edge = {
   target: string
   label?: string
   style?: EdgeStyle
+}
+
+
+export type TextIcon = {
+  type: 'textIcon'
+  family: string
+  text: string
+  color: string
+  size: number
+}
+
+
+export type ImageIcon = {
+  type: 'imageIcon'
+  url: string
+  scale?: number
+  offsetX?: number
+  offsetY?: number
+}
+
+
+export type NodeStyle = {
+  color?: string
+  stroke?: {
+    color?: string
+    width?: number
+  }[]
+  badge?: {
+    position: number
+    radius?: number
+    color?: string
+    stroke?: string
+    strokeWidth?: number
+    icon?: TextIcon | ImageIcon
+  }[]
+  icon?: TextIcon | ImageIcon
+  labelFamily?: string
+  labelColor?: string
+  labelSize?: number
+  labelWordWrap?: number
+  labelBackground?: string
+}
+
+
+export type EdgeStyle = {
+  width?: number
+  stroke?: string
+  strokeOpacity?: number
+  labelFamily?: string
+  labelColor?: string
+  labelSize?: number
+  labelWordWrap?: number
+  arrow?: 'forward' | 'reverse' | 'both' | 'none'
 }
 
 
@@ -139,3 +189,36 @@ export const boundsToDimenions = ({ left, top, right, bottom }: Bounds, zoom: nu
 
 
 export const clamp = (min: number, max: number, value: number) => Math.max(min, Math.min(max, value))
+
+
+export const equals = <T>(a: T, b: T) => {
+  if (a === b) {
+    return true
+  } else if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) {
+      return false
+    }
+
+    for (let i = 0; i < a.length; i++) {
+      if (!equals(a[i], b[i])) {
+        return false
+      }
+    }
+
+    return true
+  } else if (typeof a === 'object' && typeof b === 'object') {
+    if (Object.keys(a).length !== Object.keys(b).length) {
+      return false
+    }
+
+    for (const key in a) {
+      if (!equals(a[key], b[key])) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  return false
+}

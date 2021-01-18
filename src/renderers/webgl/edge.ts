@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js-legacy'
-import { EdgeStyle, InternalRenderer } from '.'
+import { InternalRenderer } from '.'
 import { angle, colorToNumber, midPoint, movePoint, length, TWO_PI, HALF_PI, THREE_HALF_PI, clientPositionFromEvent, pointerKeysFromEvent } from './utils'
-import { Node, Edge } from '../..'
+import { Node, Edge, EdgeStyle } from '../..'
 import { ArrowSprite } from './sprites/arrowSprite'
 
 

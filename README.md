@@ -1,7 +1,37 @@
-A highly performant network visualization library with a simple, declarative API and plugable renderers
+# Trellis
+A highly performant network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases
+
+## Installation
+if using npm
+```bash
+npm install @sayari/trellis
+```
+
+or alternatively import via HTML
+```html
+<script src='https://unpkg.com/@sayari/trellis@{VERSION}/index.umd.min.js'></script>
+```
+
+<!-- ## Usage
+```js
+
+``` -->
+
+## Modules
+- renderers
+  - WebGL
+  - png/jpg
+- layout
+  - force
+  - hierarchy
+  - cluster
+  - subgraphs
+- bindings
+  - react
+  - native
 
 ## Philosophy
-This library primarily a loosely opinionated wrapper around existing projects, chiefly D3's [force](https://github.com/d3/d3-force) library, alongside various rendering libraries, including [pixijs](https://www.pixijs.com), [react](https://reactjs.org/), and d3's own [selection](https://github.com/d3/d3-selection) rendering library.  Plenty of other projects try to tame the sometimes obscure API fronting D3, or alternatively to provide smart bindings between d3 and other rendering frameworks like react.  Like those, this project tries to strike a balance between flexibility and ease of use.  It is designed to be highly modular, splitting application bindings from layout computation from graphical rendering, so if any of the provided solutions don't fit your specific needs, you can roll your own.
+Trellis decouples graph rendering from graph layout computations, and decouples both from framework-specific bindings. This means, at the expense of a little extra setup, integrating any of Trellis module with an existing application should be relatively straightforward. Similar to rendering libraries like React, Trellis focuses on performant rendering and graph-based computations, leaving questions of state management to the user. Moreover, by splitting responsibilities into separate modules, if existing modules don't fit your needs, you can always roll your own, while still benefiting from the remaining modules that are helpful.
 
 ## See Also
 - Sigma js
@@ -12,16 +42,28 @@ npm run dev
 ```
 
 ### Deployment
+prerelease
 ```bash
-npm run build
-git commit [filepaths]
-
-# tag major/minor/patch release
-npm version [major|minor|patch]
-# OR tag release candidate
-git tag -a -m"release candidate" v[major].[minor]-rc[number] # e.g. git tag -a -m"release candidate" v1.0-rc2
+npm version [premajor|preminor|prepatch|prerelease] --preid rc
 
 git push --follow-tags
 
-npm publish
+npm run build
+
+cp package.* README.md dist/
+
+npm publish dist/ --tag next
+```
+
+release
+```bash
+npm version [major|minor|patch]
+
+git push --follow-tags
+
+npm run build
+
+cp package.* README.md dist/
+
+npm publish dist/
 ```

@@ -21,59 +21,6 @@ import { RectangleAnnotationRenderer } from './annotations/rectangle'
 install(PIXI)
 
 
-export type TextIcon = {
-  type: 'textIcon'
-  family: string
-  text: string
-  color: string
-  size: number
-}
-
-
-export type ImageIcon = {
-  type: 'imageIcon'
-  url: string
-  scale?: number
-  offsetX?: number
-  offsetY?: number
-}
-
-
-export type NodeStyle = {
-  color?: string
-  stroke?: {
-    color?: string
-    width?: number
-  }[]
-  badge?: {
-    position: number
-    radius?: number
-    color?: string
-    stroke?: string
-    strokeWidth?: number
-    icon?: TextIcon | ImageIcon
-  }[]
-  icon?: TextIcon | ImageIcon
-  labelFamily?: string
-  labelColor?: string
-  labelSize?: number
-  labelWordWrap?: number
-  labelBackground?: string
-}
-
-
-export type EdgeStyle = {
-  width?: number
-  stroke?: string
-  strokeOpacity?: number
-  labelFamily?: string
-  labelColor?: string
-  labelSize?: number
-  labelWordWrap?: number
-  arrow?: 'forward' | 'reverse' | 'both' | 'none'
-}
-
-
 export type NodePointerEvent = { type: 'nodePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 

@@ -1,1 +1,5 @@
-declare module '@pixi/unsafe-eval'
+declare module '@pixi/unsafe-eval' {
+
+  export function install(pixi: unknown): void
+
+}

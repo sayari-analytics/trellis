@@ -1,6 +1,6 @@
 import { createElement, useRef, useEffect } from 'react'
-import { Renderer as PixiRenderer, Options } from '../..'
-import { Node, Edge, Annotation } from '../../../..'
+import { Renderer as PixiRenderer, Options } from '../../renderers/webgl'
+import { Node, Edge, Annotation } from '../..'
 
 
 export type Props<N extends Node = Node, E extends Edge = Edge> =
