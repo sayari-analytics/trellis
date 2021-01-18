@@ -2,13 +2,13 @@ import { createElement, FunctionComponent } from 'react'
 import { ButtonGroup } from './buttonGroup'
 
 
-export { clampZoom } from '../../../../controls/zoom'
-
-
 export type Props = {
   onZoomIn?: () => void
   onZoomOut?: () => void
 }
+
+
+export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
 
 
 // TODO - memoize, disable on min/max zoom
