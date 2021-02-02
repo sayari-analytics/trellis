@@ -24,24 +24,20 @@
       display: grid;
       grid-template-columns: min-content auto min-content;
     }
-
     h1 {
       margin: 0px;
       font-weight: 400;
     }
-
     h4 {
       margin: 0px;
       font-weight: 400;
     }
-
     ul {
       list-style-type: none;
       padding: 0px;
       display: grid;
       grid-gap: 6px
     }
-
     li {
       display: inline-flex;
       padding-left: 16px;
@@ -61,6 +57,7 @@
       color: #0A85FF;
     }
   </style>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://use.fontawesome.com/releases/v5.15.2/js/all.js" data-auto-replace-svg="nest"></script>
 </head>
@@ -69,9 +66,12 @@
     <div class="header">
       <img id="logo-placeholder"></img>
       <h1>Trellis</h1>
-      <a href="https://github.com/sayari-analytics/trellis"><i class="fab fa-github fa-2x"></i></a>
+      <a style="color:black" href="https://github.com/sayari-analytics/trellis"><i class="fab fa-github fa-2x"></i></a>
     </div>
-    <div id="graph-placeholder"></div>
+    <div id="graph-container">
+      <div id="graph"></div>
+      <script src="./index.js"></script>
+    </div>
     <div class="content">
       <h4>Examples/Tutorials:</h4>
       <ul>
