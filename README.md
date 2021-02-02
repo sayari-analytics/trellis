@@ -67,3 +67,16 @@ cp package.* README.md dist/
 
 npm publish dist/
 ```
+## Examples
+
+[Static Graph](https://observablehq.com/@julietadams/trellis-static-graph-example-2?collection=@julietadams/trellis-examples)
+
+[Viewport Interactions](https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples)
+
+[Node Interactions](https://observablehq.com/@julietadams/trellis-node-interaction-example)
+
+[Hierarchy Layout](https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples)
+
+[Simple React](https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js)
+
+[React + Selection](https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js)
