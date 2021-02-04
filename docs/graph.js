@@ -12,7 +12,7 @@ const height = document.querySelector('#graph-container').getBoundingClientRect(
 let pages = ['simple', 'hierarchy']
 let page = 0
 
-const dataSets = window.trellisData
+let data = window.trellisData
 
 setInterval(() => {
   if (page === pages.length - 1) page = 0
@@ -22,7 +22,7 @@ setInterval(() => {
 
 function App (selected) {
   if (selected === 'hierarchy') {
-    let data = dataSets['hierarchy']
+    data = hierarchy('jeff.skilling@enron.com', { nodes: data.nodes, edges: data.edges })
 
     const { x, y, zoom } = trellis.boundsToViewport(
       trellis.getSelectionBounds(data.nodes, 40),
@@ -54,7 +54,6 @@ function App (selected) {
 
     render({ nodes: data.nodes, edges: data.edges, options })
   } else {
-    const data = dataSets[selected]
     force({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => {
       const { x, y, zoom } = trellis.boundsToViewport(
         trellis.getSelectionBounds(nodes, 40),
