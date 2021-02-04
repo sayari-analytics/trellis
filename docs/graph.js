@@ -1,7 +1,24 @@
 import data from './data.js'
 
 const trellis = window.trellis
-const layout = trellis.layout.Force.Layout()
-const renderer = trellis.renderers.WebGL.Renderer
+const container = document.querySelector('#graph')
 
-console.log(trellis, layout, renderer)
+const layout = trellis.layout.Force.Layout()
+const render = trellis.renderers.WebGL.Renderer({ container })
+
+layout({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => {
+  const { x, y, zoom } = trellis.boundsToViewport(
+    trellis.getSelectionBounds(nodes, 40),
+    { width: width, height: 600 }
+  )
+
+  const options = {
+    x,
+    y,
+    zoom,
+    width: width,
+    height: 600,
+  }
+
+  render({ nodes, edges, options })
+})
