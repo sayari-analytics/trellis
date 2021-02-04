@@ -14,48 +14,18 @@ let page = 0
 
 const dataSets = window.trellisData
 
-setTimeout(() => {
+setInterval(() => {
   if (page === pages.length - 1) page = 0
   else page++
-}, 5000)
+  App(pages[page])
+}, 7000)
 
-if (pages[page] === 'hierarchy') {
-  let data = dataSets['hierarchy']
+function App (selected) {
+  if (selected === 'hierarchy') {
+    let data = dataSets['hierarchy']
 
-  const { x, y, zoom } = trellis.boundsToViewport(
-    trellis.getSelectionBounds(nodes, 40),
-    { width, height }
-  )
-
-  const options = {
-    x,
-    y,
-    zoom,
-    width,
-    height,
-    onViewportDrag: function ({ viewportX, viewportY }) {
-      options.x = viewportX
-      options.y = viewportY
-      render({ nodes, edges, options })
-    },
-    onViewportWheel: function ({ viewportX, viewportY, viewportZoom }) {
-      options.x = viewportX
-      options.y = viewportY
-      options.zoom = viewportZoom
-      render({ nodes, edges, options })
-    },
-    onNodePointerUp: ({ target: { id } }) => {
-      data = hierarchy(id, { nodes: data.nodes, edges: data.edges })
-      render({ nodes: data.nodes, edges: data.edges, options })
-    }
-  }
-
-  render({ nodes, edges, options })
-} else {
-  const data = dataSets[pages[page]]
-  force({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => {
     const { x, y, zoom } = trellis.boundsToViewport(
-      trellis.getSelectionBounds(nodes, 40),
+      trellis.getSelectionBounds(data.nodes, 40),
       { width, height }
     )
 
@@ -68,16 +38,51 @@ if (pages[page] === 'hierarchy') {
       onViewportDrag: function ({ viewportX, viewportY }) {
         options.x = viewportX
         options.y = viewportY
-        render({ nodes, edges, options })
+        render({ nodes: data.nodes, edges: data.edges, options })
       },
       onViewportWheel: function ({ viewportX, viewportY, viewportZoom }) {
         options.x = viewportX
         options.y = viewportY
         options.zoom = viewportZoom
-        render({ nodes, edges, options })
+        render({ nodes: data.nodes, edges: data.edges, options })
       },
+      onNodePointerUp: ({ target: { id } }) => {
+        data = hierarchy(id, { nodes: data.nodes, edges: data.edges })
+        render({ nodes: data.nodes, edges: data.edges, options })
+      }
     }
 
-    render({ nodes, edges, options })
-  })
+    render({ nodes: data.nodes, edges: data.edges, options })
+  } else {
+    const data = dataSets[selected]
+    force({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => {
+      const { x, y, zoom } = trellis.boundsToViewport(
+        trellis.getSelectionBounds(nodes, 40),
+        { width, height }
+      )
+
+      const options = {
+        x,
+        y,
+        zoom,
+        width,
+        height,
+        onViewportDrag: function ({ viewportX, viewportY }) {
+          options.x = viewportX
+          options.y = viewportY
+          render({ nodes, edges, options })
+        },
+        onViewportWheel: function ({ viewportX, viewportY, viewportZoom }) {
+          options.x = viewportX
+          options.y = viewportY
+          options.zoom = viewportZoom
+          render({ nodes, edges, options })
+        },
+      }
+
+      render({ nodes, edges, options })
+    })
+  }
 }
+
+App(pages[page])
