@@ -20,11 +20,6 @@ function styleNode (group) {
   }
 }
 
-// const categoricalScale = scale.scaleOrdinal(chromatic.schemeTableau10)
-// function color (x) {
-//   return categoricalScale(x)
-// }
-
 const edges = [
   {source: 'Napoleon', target: 'Myriel'},
   {source: 'Mlle.Baptistine', target: 'Myriel'},
