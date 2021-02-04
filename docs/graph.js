@@ -18,7 +18,7 @@ setInterval(() => {
   if (page === pages.length - 1) page = 0
   else page++
   App(pages[page])
-}, 7000)
+}, 10000)
 
 function App (selected) {
   if (selected === 'hierarchy') {
@@ -29,7 +29,7 @@ function App (selected) {
       { width, height }
     )
 
-    const options = {
+    let options = {
       x,
       y,
       zoom,
@@ -48,6 +48,13 @@ function App (selected) {
       },
       onNodePointerUp: ({ target: { id } }) => {
         data = hierarchy(id, { nodes: data.nodes, edges: data.edges })
+        const { x, y, zoom } = trellis.boundsToViewport(
+          trellis.getSelectionBounds(data.nodes, 40),
+          { width, height }
+        )
+        options.x = x
+        options.y = y
+        options.zoom = zoom
         render({ nodes: data.nodes, edges: data.edges, options })
       }
     }
