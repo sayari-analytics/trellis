@@ -12,31 +12,22 @@
       margin: 0;
       color: #181D22;
     }
-
-    .content {
-      padding: 12px 32px 20px
-    }
-
-    .header {
-      padding: 12px 32px 12px;
-      background: #FFF;
-      box-shadow: 0px 0px 3px 0px #ccc;
-      display: grid;
-      grid-template-columns: min-content auto min-content;
-    }
     h1 {
       margin: 0px;
-      font-weight: 400;
+      font-weight: 300;
+      font-size: 40px;
+      text-align: center;
+      align-self: center;
     }
-    h4 {
+    h3 {
       margin: 0px;
-      font-weight: 400;
+      font-weight: 500;
     }
     ul {
       list-style-type: none;
       padding: 0px;
       display: grid;
-      grid-gap: 6px
+      grid-gap: 8px;
     }
     li {
       display: inline-flex;
@@ -56,14 +47,31 @@
     a:visited {
       color: #0A85FF;
     }
+    .container {
+      display: grid;
+      grid-template-columns: 30vw 70vw;
+      grid-template-rows: 20vh 80vh;
+    }
+    .header {
+      padding: 24px 32px 8px;
+      display: grid;
+      grid-template-columns: min-content auto min-content;
+      grid-column: span 2;
+    }
+    .content {
+      margin: 0 32px 32px 32px;
+      padding: 18px;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 0px 2px 0 #ccc;
+      display: grid;
+      grid-template-rows: 24px max-content;
+    }
     .graph-container {
       background: white;
-      height: 300px;
-      width: 100vw;
-    }
-    .graph {
-      margin: auto;
-      width: 80vw;
+      box-shadow: 0 0px 2px 0 #ccc;
+      border-radius: 6px;
+      margin: 0 32px 32px 0
     }
   </style>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -82,18 +90,14 @@
   <script src="https://d3js.org/d3-scale-chromatic.v2.min.js"></script>
 </head>
 <body>
-  <div>
+  <div class="container">
     <div class="header">
       <img id="logo-placeholder"></img>
       <h1>Trellis</h1>
       <a style="color:black" href="https://github.com/sayari-analytics/trellis"><i class="fab fa-github fa-2x"></i></a>
     </div>
-    <div id="graph-container" class="graph-container">
-      <div id="graph" class="graph"></div>
-      <script type="module" src="./graph.js"></script>
-    </div>
     <div class="content">
-      <h4>Examples/Tutorials:</h4>
+      <h3>Examples/Tutorials:</h3>
       <ul>
         <li>
           <a href="'https://observablehq.com/@julietadams/trellis-static-graph-example-2?collection=@julietadams/trellis-examples'">
@@ -116,6 +120,10 @@
           <a href="https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js">React + Selection</a>
         </li> 
       </ul>
+    </div>
+    <div id="graph-container" class="graph-container">
+      <div id="graph"></div>
+      <script type="module" src="./graph.js"></script>
     </div>
   </div>
 </body>

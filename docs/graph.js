@@ -369,12 +369,13 @@ const styledNodes = [
 ].map(({ id, group }) => ({ id, label: id, radius: 18, style: styleNode(group) }))
 
 
-const width = container.getBoundingClientRect().width
+const width = document.querySelector('#graph-container').getBoundingClientRect().width
+const height = document.querySelector('#graph-container').getBoundingClientRect().height
 
 layout({ nodes: styledNodes, edges: styledEdges }).then(({ nodes, edges }) => {
   const { x, y, zoom } = trellis.boundsToViewport(
     trellis.getSelectionBounds(nodes, 40),
-    { width, height: 300 }
+    { width, height }
   )
 
   const options = {
@@ -382,7 +383,7 @@ layout({ nodes: styledNodes, edges: styledEdges }).then(({ nodes, edges }) => {
     y,
     zoom,
     width,
-    height: 300,
+    height,
     onViewportDrag: function ({ viewportX, viewportY }) {
       options.x = viewportX
       options.y = viewportY
