@@ -56,9 +56,18 @@
     a:visited {
       color: #0A85FF;
     }
+    .graph-container {
+      background: white;
+      height: 300px;
+      width: 100vw;
+    }
+    .graph {
+      margin: auto;
+      width: 80vw;
+    }
   </style>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script src="https://use.fontawesome.com/releases/v5.15.2/js/all.js" data-auto-replace-svg="nest"></script>
 
   <script src='https://unpkg.com/@sayari/trellis@0.3.0-rc.0/index.umd.min.js'></script>
@@ -79,8 +88,8 @@
       <h1>Trellis</h1>
       <a style="color:black" href="https://github.com/sayari-analytics/trellis"><i class="fab fa-github fa-2x"></i></a>
     </div>
-    <div id="graph-container">
-      <div id="graph"></div>
+    <div id="graph-container" class="graph-container">
+      <div id="graph" class="graph"></div>
       <script type="module" src="./graph.js"></script>
     </div>
     <div class="content">

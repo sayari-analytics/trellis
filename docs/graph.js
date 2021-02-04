@@ -4,16 +4,21 @@ const container = document.querySelector('#graph')
 const layout = trellis.layout.Force.Layout()
 const render = trellis.renderers.WebGL.Renderer({ container })
 
+const categoricalScale = d3.scaleOrdinal(d3.schemeTableau10)
+function color (x) {
+  return categoricalScale(x)
+}
+
 function styleNode (group) {
   return {
-    color: '#FFB71B',
+    color: color(group),
     labelSize: 10,
     labelWordWrap: 260,
-    stroke: [{ color: '#FFF', width: 2 }, { color: '#FFB71B', width: 1 }],
+    stroke: [{ color: '#FFF', width: 2 }, { color: color(group), width: 1 }],
     icon: { type: 'textIcon', family: 'Material Icons', text: 'person', color: '#fff', size: 21 },
     badge: [{
       position: 45,
-      color: '#FFB71B',
+      color: color(group),
       stroke: '#FFF',
       icon: {
         type: 'textIcon',
@@ -363,18 +368,32 @@ const styledNodes = [
   {id: 'Mme.Hucheloup', group: 8}
 ].map(({ id, group }) => ({ id, label: id, radius: 18, style: styleNode(group) }))
 
+
+const width = container.getBoundingClientRect().width
+
 layout({ nodes: styledNodes, edges: styledEdges }).then(({ nodes, edges }) => {
   const { x, y, zoom } = trellis.boundsToViewport(
     trellis.getSelectionBounds(nodes, 40),
-    { width: 600, height: 600 }
+    { width, height: 300 }
   )
 
   const options = {
     x,
     y,
     zoom,
-    width: 600,
-    height: 600,
+    width,
+    height: 300,
+    onViewportDrag: function ({ viewportX, viewportY }) {
+      options.x = viewportX
+      options.y = viewportY
+      render({ nodes, edges, options })
+    },
+    onViewportWheel: function ({ viewportX, viewportY, viewportZoom }) {
+      options.x = viewportX
+      options.y = viewportY
+      options.zoom = viewportZoom
+      render({ nodes, edges, options })
+    },
   }
 
   render({ nodes, edges, options })
