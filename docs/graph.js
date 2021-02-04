@@ -9,14 +9,14 @@ const render = trellis.renderers.WebGL.Renderer({ container })
 layout({ nodes: data.nodes, edges: data.edges }).then(({ nodes, edges }) => {
   const { x, y, zoom } = trellis.boundsToViewport(
     trellis.getSelectionBounds(nodes, 40),
-    { width: width, height: 600 }
+    { width: 600, height: 600 }
   )
 
   const options = {
     x,
     y,
     zoom,
-    width: width,
+    width: 600,
     height: 600,
   }
 
