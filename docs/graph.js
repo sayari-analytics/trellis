@@ -6,10 +6,7 @@ const hierarchy = trellis.layout.Hierarchy.Layout()
 
 const render = trellis.renderers.WebGL.Renderer({ container })
 
-const width = document.querySelector('#graph-container').getBoundingClientRect().width
-const height = document.querySelector('#graph-container').getBoundingClientRect().height
-
-let pages = ['simple', 'hierarchy']
+let pages = ['simple', 'hierarchy'] // goal is simple -> subgraphs (by K-mean clustering)
 let page = 0
 
 let data = window.trellisData
@@ -20,7 +17,11 @@ setInterval(() => {
   App(pages[page])
 }, 10000)
 
+
 function App (selected) {
+  const width = document.querySelector('#graph-container').getBoundingClientRect().width
+  const height = document.querySelector('#graph-container').getBoundingClientRect().height
+
   if (selected === 'hierarchy') {
     data = hierarchy('jeff.skilling@enron.com', { nodes: data.nodes, edges: data.edges })
 
