@@ -56,7 +56,7 @@ git push --follow-tags
 
 npm run build
 
-cp package.* README.md dist/
+cp package* README.md dist/
 
 npm publish dist/ --tag next
 ```
@@ -69,7 +69,7 @@ git push --follow-tags
 
 npm run build
 
-cp package.* README.md dist/
+cp package* README.md dist/
 
 npm publish dist/
 ```
