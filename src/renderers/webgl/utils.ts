@@ -41,17 +41,21 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 }
 
 
-export const clientPositionFromEvent = (event: MouseEvent | TouchEvent | PointerEvent) => (
-  event instanceof TouchEvent ?
-    { x: event.touches[0].clientX, y: event.touches[0].clientY } :
-    { x: event.clientX, y: event.clientY }
+/**
+ * Warning, TouchEvent does not exist in some browsers (e.g. Safari Version 14.0.2 (15610.3.7.1.10, 15610))
+ * so don't reference it directly
+ */
+export const clientPositionFromEvent = (event: MouseEvent | PointerEvent | TouchEvent) => (
+  event instanceof MouseEvent || event instanceof PointerEvent ?
+    { x: event.clientX, y: event.clientY } :
+    { x: event.touches[0].clientX, y: event.touches[0].clientY }
 )
 
 
-export const pointerKeysFromEvent = (event: MouseEvent | TouchEvent | PointerEvent) => (
-  event instanceof TouchEvent ?
-    {} :
-    { altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey }
+export const pointerKeysFromEvent = (event: MouseEvent | PointerEvent | TouchEvent) => (
+  event instanceof MouseEvent || event instanceof PointerEvent ?
+    { altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey } :
+    {}
 )
 
 
