@@ -1,131 +1,122 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Trellis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Roboto;
-      font-weight: 400;
-      background: #F3F3F3;
-      margin: 0;
-      color: #181D22;
-    }
-    h1 {
-      margin: 0px;
-      font-weight: 300;
-      font-size: 40px;
-      text-align: center;
-      align-self: center;
-    }
-    h3 {
-      margin: 0px;
-      font-weight: 300;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0px;
-      display: grid;
-      grid-gap: 8px;
-    }
-    li {
-      display: inline-flex;
-      padding-left: 16px;
-    }
-    a {
-      color: #0A85FF;
-      text-decoration: none;
-    }
-    a:hover {
-      color: #004285;
-      text-decoration: underline;
-    }
-    a:focus {
-      outline: none;
-    }
-    a:visited {
-      color: #0A85FF;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: 30vw 70vw;
-      grid-template-rows: 20vh 80vh;
-    }
-    .header {
-      padding: 24px 32px 8px;
-      display: grid;
-      grid-template-columns: min-content auto min-content;
-      grid-column: span 2;
-    }
-    .content {
-      margin: 0 32px 32px 32px;
-      padding: 18px;
-      background: white;
-      border-radius: 6px;
-      box-shadow: 0 0px 2px 0 #ccc;
-      display: grid;
-      grid-template-rows: 24px max-content;
-    }
-    .graph-container {
-      background: white;
-      box-shadow: 0 0px 2px 0 #ccc;
-      border-radius: 6px;
-      margin: 0 32px 32px 0
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <script src="https://use.fontawesome.com/releases/v5.15.2/js/all.js" data-auto-replace-svg="nest"></script>
+  <head>
+    <meta charset="utf-8" />
+    <title>Trellis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: Roboto;
+        font-weight: 400;
+        background: #f3f3f3;
+        margin: 0;
+        color: #181d22;
+      }
+      h3 {
+        margin: 0px;
+        font-weight: 300;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      a {
+        color: #0a85ff;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      a:hover {
+        color: #004285;
+        text-decoration: underline;
+      }
+      a:focus {
+        outline: none;
+      }
+      a:visited {
+        color: #0a85ff;
+      }
+      .container {
+        display: grid;
+        grid-template-columns: 30vw 70vw;
+        grid-template-rows: 15vh 85vh;
+      }
+      .header {
+        padding: 24px 32px 8px;
+        display: grid;
+        grid-template-columns: auto min-content;
+        grid-column: span 2;
+      }
+      .content {
+        margin: 0px 32px 32px 32px;
+        padding: 18px;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 0px 2px 0 #ccc;
+        display: grid;
+        grid-template-rows: 24px max-content;
+      }
+      .link-container {
+        margin: 12px 12px;
+        display: grid;
+        grid-gap: 8px;
+      }
+      .graph-container {
+        background: white;
+        box-shadow: 0 0px 2px 0 #ccc;
+        border-radius: 6px;
+        margin: 0 32px 32px 0;
+      }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+    <script src="https://use.fontawesome.com/releases/v5.15.2/js/all.js" data-auto-replace-svg="nest"></script>
 
-  <script src='https://unpkg.com/@sayari/trellis@0.3.0-rc.0/index.umd.min.js'></script>
+    <script src="https://unpkg.com/@sayari/trellis@0.3.0-rc.0/index.umd.min.js"></script>
 
-  <script src="https://d3js.org/d3-array.v2.min.js"></script>
-  <script src="https://d3js.org/d3-color.v2.min.js"></script>
-  <script src="https://d3js.org/d3-format.v2.min.js"></script>
-  <script src="https://d3js.org/d3-interpolate.v2.min.js"></script>
-  <script src="https://d3js.org/d3-time.v2.min.js"></script>
-  <script src="https://d3js.org/d3-time-format.v3.min.js"></script>
-  <script src="https://d3js.org/d3-scale.v3.min.js"></script>
-  <script src="https://d3js.org/d3-scale-chromatic.v2.min.js"></script>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <img width="100px" src="./logo.svg" alt="Tellis-Logo" />
-      <h1>Trellis</h1>
-      <a style="color:black" href="https://github.com/sayari-analytics/trellis"><i class="fab fa-github fa-2x"></i></a>
-    </div>
-    <div class="content">
-      <h3>Examples/Tutorials:</h3>
-      <ul>
-        <li>
+    <script src="https://d3js.org/d3-array.v2.min.js"></script>
+    <script src="https://d3js.org/d3-color.v2.min.js"></script>
+    <script src="https://d3js.org/d3-format.v2.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v2.min.js"></script>
+    <script src="https://d3js.org/d3-time.v2.min.js"></script>
+    <script src="https://d3js.org/d3-time-format.v3.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v3.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v2.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img width="250px" src="./logo.svg" alt="Tellis-Logo" />
+        <a style="color: black;" href="https://github.com/sayari-analytics/trellis">
+          <i class="fab fa-github fa-2x"></i>
+        </a>
+      </div>
+      <div class="content">
+        <h3>Examples/Tutorials:</h3>
+        <div class="link-container">
           <a href="https://observablehq.com/@julietadams/trellis-static-graph-example-2?collection=@julietadams/trellis-examples">
             Static Graph
           </a>
-        </li>
-        <li>
-          <a href="https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples">Viewport Interaction</a>
-        </li>
-        <li>
-          <a href="https://observablehq.com/@julietadams/trellis-node-interaction-example">Node Interaction</a>
-        </li>
-        <li>
-          <a href="https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples">Hierarchy</a>
-        </li>
-        <li>
-          <a href="https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js">Simple React</a>
-        </li>
-        <li>
-          <a href="https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js">React + Selection</a>
-        </li> 
-      </ul>
+          <a href="https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples">
+            Viewport Interaction
+          </a>
+          <a href="https://observablehq.com/@julietadams/trellis-node-interaction-example">
+            Node Interaction
+          </a>
+          <a href="https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples">
+            Hierarchy
+          </a>
+          <a href="https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js">
+            Simple React
+          </a>
+          <a href="https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js">
+            React + Selection
+          </a>
+        </div>
+      </div>
+      <div id="graph-container" class="graph-container">
+        <div id="graph"></div>
+        <script type="module" src="./data.js"></script>
+        <script type="module" src="./graph.js"></script>
+      </div>
     </div>
-    <div id="graph-container" class="graph-container">
-      <div id="graph"></div>
-      <script type="module" src="./data.js"></script>
-      <script type="module" src="./graph.js"></script>
-    </div>
-  </div>
-</body>
+  </body>
 </html>
