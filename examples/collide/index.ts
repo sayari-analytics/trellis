@@ -90,10 +90,9 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 // show layout with overlapping nodes
 render({ nodes, edges, options: renderOptions })
 
-const data = collide({ ...hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions }), options: { } })
-nodes = hierarchyNodes = data.nodes
-edges = hierarchyEdges = data.edges
-
+const data = collide({ nodes, edges, options: { } })
+nodes = data.nodes
+edges = data.edges
 //wait and show updated layout
 setTimeout(() => {
   render({ nodes, edges, options: renderOptions })
