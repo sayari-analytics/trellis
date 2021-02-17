@@ -255,17 +255,22 @@ export const connectedComponents = (graph: { nodes: Node[], edges: Edge[] }): { 
   }
 
 
-  for (const node in adjacencyList) {
-    if (visited.has(node)) {
+  for (const { id } of graph.nodes) {
+    if (visited.has(id)) {
       continue
     }
 
-    visited.add(node)
-    const toVisit = [node]
-    const component: { nodes: Record<string, Node>, edges: Record<string, Edge> } = { nodes: { node: nodes[node] }, edges: {} }
+    visited.add(id)
+    const toVisit = [id]
+    const component: { nodes: Record<string, Node>, edges: Record<string, Edge> } = { nodes: { node: nodes[id] }, edges: {} }
 
     while (toVisit.length > 0) {
-      for (const [adjacentNode, edges] of Object.entries(adjacencyList[toVisit.pop()!])) {
+      const next = adjacencyList[toVisit.pop()!]
+      if (next === undefined) {
+        continue
+      }
+
+      for (const [adjacentNode, edges] of Object.entries(next)) {
         for (const edge of edges) {
           component.edges[edge.id] = edge
         }
