@@ -128,6 +128,11 @@ export const Layout = () => {
     //     graphToDFSHierarchy(edgeIndex, root)
     // )
 
+    const { x, y } = graph.nodes.find((node) => node.id === root) ?? { x: undefined, y: undefined }
+    const xOffset = (graph.options?.x ?? 0) + (x ?? 0)
+    const yOffset = (graph.options?.y ?? 0) - (y ?? 0)
+
+
     return {
       ...graph,
       nodes: graph.nodes.map((node) => {
@@ -137,8 +142,8 @@ export const Layout = () => {
           node :
           {
             ...node,
-            x: positionedNode.x + (graph.options?.x ?? 0),
-            y: positionedNode.y - (graph.options?.y ?? 0),
+            x: positionedNode.x + xOffset,
+            y: positionedNode.y - yOffset,
           }
       })
     }

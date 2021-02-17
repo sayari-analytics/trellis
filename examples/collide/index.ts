@@ -1,10 +1,9 @@
 import Stats from 'stats.js'
-import * as Hierarchy from '../../src/layout/hierarchy'
 import * as Collide from '../../src/layout/collide'
 import * as Graph from '../../src/'
-import * as Zoom from '../../src/bindings/native/zoom'
 import * as WebGL from '../../src/renderers/webgl'
 import graphData from './data'
+
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -50,15 +49,11 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
 let nodes: Node[] = Object.values(graphData.nodes).map((node) => ({ ...node, style: node.type === 'company' ? createCompanyStyle(node.radius) : createPersonStyle(node.radius) }))
 let edges: Graph.Edge[] = Object.values(graphData.edges).map((edge) => edge)
 
-let hierarchyNodes: Node[] = []
-let hierarchyEdges: Graph.Edge[] = []
-
 
 /**
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const hierarchy = Hierarchy.Layout()
 const collide = Collide.Layout()
 const render = WebGL.Renderer({
   container,
@@ -69,11 +64,6 @@ const render = WebGL.Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Hierarchy.Options = {
-  y: container.offsetHeight,
-  x: 600,
-}
-
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
@@ -97,4 +87,3 @@ edges = data.edges
 setTimeout(() => {
   render({ nodes, edges, options: renderOptions })
 }, 5000)
-
