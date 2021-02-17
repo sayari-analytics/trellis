@@ -33,20 +33,20 @@ const render = WebGL.Renderer({
 /**
  * Layout and Render Graph
  */
-const { nodes, edges } = ['a', 'b', 'd'].reduce(
+const graph = ['a', 'b', 'd'].reduce(
   (graph, root) => hierarchy(root, graph),
   {
     nodes: [
-      { id: 'a', radius: 18, style: A_STYLE, x: 40, y: 20 },
-      { id: 'aa', radius: 18, style: A_STYLE, x: 40, y: 20 },
-      { id: 'ab', radius: 18, style: A_STYLE, x: 40, y: 20 },
-      { id: 'aba', radius: 18, style: A_STYLE, x: 40, y: 20 },
-      { id: 'b', radius: 18, style: B_STYLE, x: -40, y: -20 },
-      { id: 'ba', radius: 18, style: B_STYLE, x: -40, y: -20 },
-      { id: 'bb', radius: 18, style: B_STYLE, x: -40, y: -20 },
-      { id: 'c', radius: 18, style: C_STYLE, x: -160, y: -20 },
-      { id: 'd', radius: 18, style: D_STYLE, x: 260, y: -200 },
-      { id: 'da', radius: 18, style: D_STYLE, x: 260, y: -200 },
+      { id: 'a', radius: 18, style: A_STYLE },
+      { id: 'aa', radius: 18, style: A_STYLE },
+      { id: 'ab', radius: 18, style: A_STYLE },
+      { id: 'aba', radius: 18, style: A_STYLE },
+      { id: 'b', radius: 18, style: B_STYLE },
+      { id: 'ba', radius: 18, style: B_STYLE },
+      { id: 'bb', radius: 18, style: B_STYLE },
+      { id: 'c', radius: 18, style: C_STYLE },
+      { id: 'd', radius: 18, style: D_STYLE },
+      { id: 'da', radius: 18, style: D_STYLE },
     ],
     edges: [
       { id: 'a-aa', source: 'a', target: 'aa' },
@@ -61,14 +61,11 @@ const { nodes, edges } = ['a', 'b', 'd'].reduce(
 )
 
 
-const boundingCircles = components({ nodes, edges })
-console.log(boundingCircles)
-console.log({ nodes, edges })
+const { nodes, edges } = components(graph)
 
 
 render({
-  nodes: [...boundingCircles.map(({ x, y, r }, idx) => ({ id: `${idx}`, x, y, radius: r, style: { color: '#FFF', stroke: [{ color: '#AAA', width: 1 }] } })), ...nodes],
-  // nodes,
+  nodes,
   edges,
   options: {
     width: container.offsetWidth,

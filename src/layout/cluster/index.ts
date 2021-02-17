@@ -6,6 +6,7 @@ export const Layout = () => {
   return <N extends Node>(nodes: N[]) => {
     const positions: Record<string, [number, number]> = {}
 
+    // TODO - is packSiblings a better fit here?
     pack<{ id: string, radius: number }>()
       .padding(20)
       .radius((node) => node.data.radius)(

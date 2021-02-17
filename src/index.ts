@@ -224,11 +224,11 @@ export const equals = <T>(a: T, b: T) => {
 }
 
 
-export const connectedComponents = (graph: { nodes: Node[], edges: Edge[] }): { nodes: Node[], edges: Edge[] }[] => {
-  const adjacencyList: Record<string, Record<string, Edge[]>> = {}
-  const nodes: Record<string, Node> = {}
+export const connectedComponents = <N extends Node, E extends Edge>(graph: { nodes: N[], edges: E[] }): { nodes: N[], edges: E[] }[] => {
+  const adjacencyList: Record<string, Record<string, E[]>> = {}
+  const nodes: Record<string, N> = {}
   const visited = new Set<string>()
-  const components: { nodes: Record<string, Node>, edges: Record<string, Edge> }[] = []
+  const components: { nodes: Record<string, N>, edges: Record<string, E> }[] = []
 
 
   for (const edge of graph.edges) {
@@ -262,7 +262,7 @@ export const connectedComponents = (graph: { nodes: Node[], edges: Edge[] }): { 
 
     visited.add(id)
     const toVisit = [id]
-    const component: { nodes: Record<string, Node>, edges: Record<string, Edge> } = { nodes: { node: nodes[id] }, edges: {} }
+    const component: { nodes: Record<string, N>, edges: Record<string, E> } = { nodes: { [id]: nodes[id] }, edges: {} }
 
     while (toVisit.length > 0) {
       const next = adjacencyList[toVisit.pop()!]
