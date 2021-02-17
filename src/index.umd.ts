@@ -2,6 +2,7 @@ import * as Cluster from './layout/cluster'
 import * as Force from './layout/force'
 import * as Hierarchy from './layout/hierarchy'
 import * as Collide from './layout/collide'
+import * as Components from './layout/components'
 import * as Subgraph from './layout/subgraph'
 import * as WebGL from './renderers/webgl'
 import * as ReactWebGLBindings from './bindings/react/renderer'
@@ -24,7 +25,7 @@ export {
 } from './'
 
 
-export const layout = { Cluster, Force, Hierarchy, Subgraph, Collide }
+export const layout = { Cluster, Force, Hierarchy, Subgraph, Collide, Components }
 
 
 export const renderers = { WebGL, Image }
