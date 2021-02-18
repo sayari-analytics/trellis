@@ -292,3 +292,50 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: { nod
     edges: Object.values(edges),
   }))
 }
+
+
+export function* bfs<N extends Node, E extends Edge>(predicate: (node: N) => boolean, graph: { nodes: N[], edges: E[] }): Generator<N, void, void> {
+  const adjacencyList: Record<string, string[]> = {}
+  const nodes: Record<string, N> = {}
+  const visited = new Set<string>()
+  const queue = [graph.nodes[0].id]
+
+
+  for (const edge of graph.edges) {
+    if (adjacencyList[edge.source] === undefined) {
+      adjacencyList[edge.source] = []
+    }
+    if (adjacencyList[edge.target] === undefined) {
+      adjacencyList[edge.target] = []
+    }
+
+    adjacencyList[edge.source].push(edge.target)
+    adjacencyList[edge.target].push(edge.source)
+  }
+
+
+  for (const node of graph.nodes) {
+    nodes[node.id] = node
+  }
+
+
+  while (queue.length > 0) {
+    const node = queue.shift()!
+
+    if (visited.has(node)) {
+      continue
+    }
+
+    visited.add(node)
+
+    if (predicate(nodes[node])) {
+      yield nodes[node]
+    }
+
+    for (const adjacentNode of adjacencyList[node]) {
+      if (!visited.has(adjacentNode)) {
+        queue.push(adjacentNode)
+      }
+    }
+  }
+}
