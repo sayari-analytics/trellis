@@ -22,6 +22,7 @@ export {
   boundsToDimenions,
   clamp,
   equals,
+  bfs,
 } from './'
 
 
