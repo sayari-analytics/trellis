@@ -5,18 +5,93 @@
   <title>Graph</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap');
     body {
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: 'Lato', sans-serif;
+      color: #444;
       margin: 0;
     }
+    header {
+      position: fixed;
+      margin: 2rem 0;
+      display: grid;
+      grid-template-columns: 50% 50%;
+      align-items: center;
+      width: 100%;
+    }
+    #logo {
+      width: 200px;
+      padding-left: 4rem;
+    }
+    #github {
+      text-align: right;
+      padding-right: 4rem;
+    }
+    #github:hover {
+      opacity: 0.6;
+    }
+    main {
+      margin: 0 auto;
+      padding: 4rem;
+      max-width: 1200px;
+    }
     #graph {
-      width: 100vw;
-      height: 100vh;
+      height: 50vh;
+      /* width: 100vw;
+      height: 100vh; */
+    }
+    #copy {
+      padding: 2rem 4rem;
+      text-align: center;
+      font-size: 30px;
+      line-height: 3rem;
+    }
+    #scroll-arrow {
+      color: #aaa;
+      padding: 24px;
+    }
+    footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: #eee;
+      border-top: 1px solid #999;
+      padding: 12px 0;
+      text-align: center;
+      font-size: 14px;
+    }
+    a {
+      color: #0A85FF;
+    }
+    a:visited {
+      color: #0A85FF;
+    }
+    a:hover {
+      color: #7BF;
     }
   </style>
 </head>
 <body>
-  <div id="graph"></div>
+  <header>
+    <span id="logo">
+      <img src="logo.svg" alt="Sayari Labs Lobo">
+    </span>
+    <span id="github">
+      <a href="https://github.com/sayari-analytics/trellis">
+        <img src="GitHub-Mark-32px.png" alt="github">
+      </a>
+    </span>
+  </header>
+  <main>
+    <div id="graph"></div>
+    <div id="copy">
+      <p>A high performance network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases. Sayari renders to WebGL, Canvas, JPEG, and other targets.</p>
+      <p id="scroll-arrow">ᐯ</p>
+    </div>
+  </main>
+  <footer>
+    Trellis is a project by <a href="https://sayari.com">Sayari</a> Labs
+  </footer>
   <script src="./index.ts"></script>
 </body>
 </html>
