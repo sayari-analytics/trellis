@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>Graph</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap');
@@ -63,37 +64,41 @@
     header {
       padding: 2rem 0;
       display: grid;
-      grid-template-columns: 50% 50%;
+      grid-template-columns: 4rem auto 100px 100px 4rem;
       align-items: center;
+      text-align: center;
       width: 100%;
       position: absolute;
     }
     #logo {
       width: 200px;
-      padding-left: 4rem;
+      grid-column: 2;
     }
-    #github {
-      text-align: right;
-      padding-right: 4rem;
+    .docs {
+      padding: 0 12px;
+      font-size: 18px;
     }
-    #github:hover {
+    .github {
+      padding: 0 12px;
+    }
+    .github:hover {
       opacity: 0.6;
     }
     main {
       margin: 0 auto;
-      padding: 4rem;
+      padding: 1rem 4rem;
       max-width: 1200px;
     }
     #graph {
-      height: 50vh;
+      height: 70vh;
     }
     #copy {
-      padding: 4rem 0;
+      padding: 2rem 0 3rem;
       text-align: center;
     }
     #scroll-arrow {
       color: #aaa;
-      padding-bottom: 4rem;
+      padding-bottom: 3rem;
       text-align: center;
     }
     #code {
@@ -130,12 +135,14 @@
     }
     a {
       color: #0A85FF;
+      text-decoration: none;
     }
     a:visited {
       color: #0A85FF;
     }
     a:hover {
       color: #7BF;
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -144,11 +151,10 @@
     <span id="logo">
       <img src="logo.svg" alt="Sayari Labs Lobo">
     </span>
-    <span id="github">
-      <a href="https://github.com/sayari-analytics/trellis">
-        <img src="GitHub-Mark-32px.png" alt="github">
-      </a>
-    </span>
+    <a class="docs" href="/docs">Docs</a>
+    <a class="github" href="https://github.com/sayari-analytics/trellis">
+      <img src="GitHub-Mark-32px.png" alt="github">
+    </a>
   </header>
   <main>
     <div id="graph"></div>

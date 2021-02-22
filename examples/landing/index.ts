@@ -12,13 +12,17 @@ type Node = Graph.Node & { cluster?: number }
 const NODE_STYLE_A: Graph.NodeStyle = {
   color: '#0A85FF',
   stroke: [{ color: '#9CF', width: 3 }],
-  // icon: { type: 'textIcon', family: 'Helvetica', text: 'N', color: '#9CF', size: 22 }
+  icon: { type: 'textIcon', family: 'Material Icons', text: 'person', color: '#fff', size: 24 },
+  labelSize: 10,
+  labelColor: '#666',
 }
 
 const NODE_STYLE_B: Graph.NodeStyle = {
   color: '#FFB71B',
   stroke: [{ color: '#FEA', width: 3 }],
-  // icon: { type: 'textIcon', family: 'Helvetica', text: 'N', color: '#FEA', size: 22 }
+  icon: { type: 'textIcon', family: 'Material Icons', text: 'business', color: '#fff', size: 24 },
+  labelSize: 10,
+  labelColor: '#666',
 }
 
 // const NODE_STYLE_C: Graph.NodeStyle = {
@@ -30,6 +34,8 @@ const EDGE_STYLE: Graph.EdgeStyle = {
   stroke: '#BBB',
   width: 1,
   arrow: 'forward',
+  labelSize: 10,
+  labelColor: '#666',
 }
 
 
@@ -38,8 +44,8 @@ const render = WebGL.Renderer({ container })
 const force = Force.Layout()
 const hierarchy = Hierarchy.Layout()
 // const nodes = raw.nodes.map((id, idx) => ({ id: `${id}`, radius: 18, style: idx % 5 === 0 ? NODE_STYLE_C : idx % 3 === 0 ? NODE_STYLE_B : NODE_STYLE_A }))
-const nodes = raw.nodes.map<Node>((id, idx) => ({ id: `${id}`, radius: 18, style: idx % 4 === 0 ? NODE_STYLE_A : NODE_STYLE_B }))
-const edges = raw.edges.map(([source, target], idx) => ({ id: `${idx}`, source: `${source}`, target: `${target}`, style: EDGE_STYLE }))
+const nodes = raw.nodes.map<Node>((id, idx) => ({ id: `${id}`, radius: 18, label: `${idx % 4 === 0 ? 'person' : 'company'} ${id}`, style: idx % 4 === 0 ? NODE_STYLE_A : NODE_STYLE_B }))
+const edges = raw.edges.map(([source, target], idx) => ({ id: `${idx}`, source: `${source}`, target: `${target}`, label: 'linked to', style: EDGE_STYLE }))
 
 
 const filterGraph = (predicate: (node: Node) => boolean, graph: { nodes: Node[], edges: Graph.Edge[] }) => {
