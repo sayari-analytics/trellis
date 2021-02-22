@@ -108,6 +108,9 @@
     .keyword {
       color: #0A85FF;
     }
+    .variable {
+      color: #eaa91b;
+    }
     .comment {
       color: #91AD49;
     }
@@ -169,21 +172,16 @@
     </section>
     <section id="code">
 <!-- HTML generated using hilite.me -->
-<pre style="margin: 0; line-height: 1.1rem">
-  <span class="keyword">import</span> <span class="symbol">*</span> as Force from <span class="string">&#39;../../src/layout/force&#39;</span>
-  <span class="keyword">import</span> <span class="symbol">*</span> as WebGL from <span class="string">&#39;../../src/renderers/webgl&#39;</span>
+<pre style="margin: 0; line-height: 125%">
+  <span class="keyword">import</span> <span class="symbol">*</span> <span class="keyword">as</span> Force from <span class="string">&#39;@sayari/trellis/layout/force&#39;</span>
+  <span class="keyword">import</span> <span class="symbol">*</span> <span class="keyword">as</span> WebGL from <span class="string">&#39;@sayari/trellis/renderers/webgl&#39;</span>
 
   <span class="comment">/* Initialize Data */</span>
-  <span class="keyword">const</span> NODE_STYLE <span class="symbol">=</span> {
-    color<span class="symbol">:</span> <span class="string">&#39;#999&#39;</span>,
-    stroke<span class="symbol">:</span> [{ color<span class="symbol">:</span> <span class="string">&#39;#FFF&#39;</span>, width<span class="symbol">:</span> <span class="symbol">2</span> }, { color<span class="symbol">:</span> <span class="string">&#39;#F7CA4D&#39;</span>, width<span class="symbol">:</span> <span class="symbol">2</span> }],
-  }
-  <span class="keyword">const</span> EDGE_STYLE <span class="symbol">=</span> { arrow<span class="symbol">:</span> <span class="string">&#39;forward&#39;</span> }
-  <span class="keyword">let</span> nodes <span class="symbol">=</span> [<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>, <span class="string">&#39;c&#39;</span>, <span class="string">&#39;d&#39;</span>, <span class="string">&#39;e&#39;</span>, <span class="string">&#39;f&#39;</span>].map((id) <span class="symbol">=&gt;</span> ({ id, radius<span class="symbol">:</span> <span class="symbol">18</span>, style<span class="symbol">:</span> NODE_STYLE }))
-  <span class="keyword">let</span> edges <span class="symbol">=</span> [
-    { id<span class="symbol">:</span> <span class="string">&#39;ba&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;a&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;b&#39;</span> }, { id<span class="symbol">:</span> <span class="string">&#39;ca&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;a&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;c&#39;</span> }, { id<span class="symbol">:</span> <span class="string">&#39;da&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;a&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;d&#39;</span> },
-    { id<span class="symbol">:</span> <span class="string">&#39;ce&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;c&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;e&#39;</span> }, { id<span class="symbol">:</span> <span class="string">&#39;cf&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;c&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;f&#39;</span> }
-  ].map(({ id, source, target }) <span class="symbol">=&gt;</span> ({ id, source, target, style<span class="symbol">:</span> EDGE_STYLE }))
+  <span class="keyword">const</span> NODE_STYLE <span class="symbol">=</span> { color<span class="symbol">:</span> <span class="string">&#39;#999&#39;</span>, stroke<span class="symbol">:</span> [{ color<span class="symbol">:</span> <span class="string">&#39;#FFF&#39;</span>, width: <span class="variable">2</span> }, { color<span class="symbol">:</span> <span class="string">&#39;#F7CA4D&#39;</span>, width: <span class="variable">2</span> }] }
+  <span class="keyword">const</span> EDGE_STYLE <span class="symbol">=</span> { arrow<span class="symbol">:</span> <span class="string">&#39;forward&#39;</span>, width<span class="symbol">:</span> <span class="variable">2</span>, stroke<span class="symbol">:</span> <span class="string">&#39;#CCC&#39;</span> }
+  <span class="keyword">let</span> nodes <span class="symbol">=</span> [<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>, <span class="string">&#39;c&#39;</span>, <span class="string">&#39;d&#39;</span>, <span class="string">&#39;e&#39;</span>, <span class="string">&#39;f&#39;</span>].map((id) <span class="symbol">=&gt;</span> ({ id, radius: <span class="variable">18</span>, style: <span class="variable">NODE_STYLE</span> }))
+  <span class="keyword">let</span> edges <span class="symbol">=</span> [[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>], [<span class="string">&#39;a&#39;</span>, <span class="string">&#39;c&#39;</span>], [<span class="string">&#39;a&#39;</span>, <span class="string">&#39;d&#39;</span>], [<span class="string">&#39;c&#39;</span>, <span class="string">&#39;e&#39;</span>], [<span class="string">&#39;c&#39;</span>, <span class="string">&#39;f&#39;</span>]]
+    .map(([source, target]) <span class="symbol">=&gt;</span> ({ id<span class="symbol">:</span> <span class="string">`${source}_${target}`</span>, source, target, style: <span class="variable">EDGE_STYLE</span> }))
 
   <span class="comment">/* Create Renderer and Layout */</span>
   <span class="keyword">const</span> container <span class="symbol">=</span> <span class="keyword">document</span>.querySelector(<span class="string">&#39;#graph&#39;</span>)
@@ -192,43 +190,33 @@
 
   <span class="comment">/* Create renderer properties and handlers */</span>
   <span class="keyword">const</span> renderOptions <span class="symbol">=</span> {
-    width<span class="symbol">:</span> container.offsetWidth,
-    height<span class="symbol">:</span> container.offsetHeight,
+    width: <span class="variable">container.offsetWidth</span>,
+    height: <span class="variable">container.offsetHeight</span>,
     onNodePointerEnter<span class="symbol">:</span> ({ target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
-      nodes.forEach((node) <span class="symbol">=&gt;</span> {
-        <span class="keyword">if</span> (node.id <span class="symbol">===</span> id) node.style.stroke[<span class="symbol">1</span>].width <span class="symbol">=</span> <span class="symbol">4</span>
-      })
-
-      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+      nodes.find((node) <span class="symbol">=&gt;</span> node.id <span class="symbol">===</span> id).style.stroke[<span class="symbol">1</span>].width <span class="symbol">=</span> <span class="symbol">4</span>
+      render({ nodes, edges, options: <span class="variable">renderOptions</span> })
     },
     onNodePointerLeave<span class="symbol">:</span> ({ target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
-      nodes.forEach((node) <span class="symbol">=&gt;</span> {
-        <span class="keyword">if</span> (node.id <span class="symbol">===</span> id) node.style.stroke[<span class="symbol">1</span>].width <span class="symbol">=</span> <span class="symbol">2</span>
-      })
-
-      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+      nodes.find((node) <span class="symbol">=&gt;</span> node.id <span class="symbol">===</span> id).style.stroke[<span class="symbol">1</span>].width <span class="symbol">=</span> <span class="symbol">2</span>
+      render({ nodes, edges, options: <span class="variable">renderOptions</span> })
     },
-    onNodeDrag<span class="symbol">:</span> ({ nodeX<span class="symbol">:</span> x, nodeY<span class="symbol">:</span> y, target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
-      nodes.forEach((node) <span class="symbol">=&gt;</span> {
-        <span class="keyword">if</span> (node.id <span class="symbol">===</span> id) {
-          node.x <span class="symbol">=</span> x
-          node.y <span class="symbol">=</span> y
-        }
-      })
-      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+    onNodeDrag<span class="symbol">:</span> ({ nodeX: <span class="variable">x</span>, nodeY: <span class="variable">y</span>, target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
+      <span class="keyword">const</span> node <span class="symbol">=</span> nodes.find((node) <span class="symbol">=&gt;</span> node.id <span class="symbol">===</span> id)
+      node.x <span class="symbol">=</span> x
+      node.y <span class="symbol">=</span> y
+      render({ nodes, edges, options: <span class="variable">renderOptions</span> })
     },
     onViewportDrag<span class="symbol">:</span> ({ viewportX, viewportY }) <span class="symbol">=&gt;</span> {
       renderOptions.x <span class="symbol">=</span> viewportX
       renderOptions.y <span class="symbol">=</span> viewportY
-      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+      render({ nodes, edges, options: <span class="variable">renderOptions</span> })
     },
   }
 
   <span class="comment">/* Run layout and render graph */</span>
   force({ nodes, edges }).then((graph) <span class="symbol">=&gt;</span> {
     nodes <span class="symbol">=</span> graph.nodes
-
-    render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+    render({ nodes, edges, options: <span class="variable">renderOptions</span> })
   })
 </pre>
     </section>
