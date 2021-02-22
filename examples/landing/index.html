@@ -5,19 +5,68 @@
   <title>Graph</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap');
+    /* http://meyerweb.com/eric/tools/css/reset/
+      v2.0 | 20110126
+      License: none (public domain)
+    */
+    html, body, div, span, applet, object, iframe,
+    h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+    a, abbr, acronym, address, big, cite, code,
+    del, dfn, em, img, ins, kbd, q, s, samp,
+    small, strike, strong, sub, sup, tt, var,
+    b, u, i, center,
+    dl, dt, dd, ol, ul, li,
+    fieldset, form, label, legend,
+    table, caption, tbody, tfoot, thead, tr, th, td,
+    article, aside, canvas, details, embed,
+    figure, figcaption, footer, header, hgroup,
+    menu, nav, output, ruby, section, summary,
+    time, mark, audio, video {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-size: 100%;
+      font: inherit;
+      vertical-align: baseline;
+    }
+    /* HTML5 display-role reset for older browsers */
+    article, aside, details, figcaption, figure,
+    footer, header, hgroup, menu, nav, section {
+      display: block;
+    }
+    body {
+      line-height: 1;
+    }
+    ol, ul {
+      list-style: none;
+    }
+    blockquote, q {
+      quotes: none;
+    }
+    blockquote:before, blockquote:after,
+    q:before, q:after {
+      content: '';
+      content: none;
+    }
+    table {
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    /******/
     body {
       font-family: 'Lato', sans-serif;
       color: #444;
-      margin: 0;
     }
     header {
-      position: fixed;
-      margin: 2rem 0;
+      padding: 2rem 0;
       display: grid;
       grid-template-columns: 50% 50%;
       align-items: center;
       width: 100%;
+      position: absolute;
     }
     #logo {
       width: 200px;
@@ -37,28 +86,47 @@
     }
     #graph {
       height: 50vh;
-      /* width: 100vw;
-      height: 100vh; */
     }
     #copy {
-      padding: 2rem 4rem;
+      padding: 4rem 0;
       text-align: center;
-      font-size: 30px;
-      line-height: 3rem;
     }
     #scroll-arrow {
       color: #aaa;
-      padding: 24px;
+      padding-bottom: 4rem;
+      text-align: center;
+    }
+    #code {
+      font-family: 'Inconsolata', monospace;
+      padding-bottom: 2rem;
+    }
+    .keyword {
+      color: #0A85FF;
+    }
+    .comment {
+      color: #91AD49;
+    }
+    .symbol {
+      color: #999;
+    }
+    .string {
+      color: #7F5BCC;
     }
     footer {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
       background: #eee;
       border-top: 1px solid #999;
       padding: 12px 0;
       text-align: center;
       font-size: 14px;
+    }
+    strong {
+      color: #FFB71B;
+      font-weight: 400;
+    }
+    p {
+      font-size: 26px;
+      font-weight: 300;
+      line-height: 3rem;
     }
     a {
       color: #0A85FF;
@@ -84,10 +152,80 @@
   </header>
   <main>
     <div id="graph"></div>
-    <div id="copy">
-      <p>A high performance network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases. Sayari renders to WebGL, Canvas, JPEG, and other targets.</p>
-      <p id="scroll-arrow">ᐯ</p>
-    </div>
+    <section id="copy">
+      <p>A high performance network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases. Sayari renders to <strong>WebGL</strong>, <strong>Canvas</strong>, <strong>JPEG</strong>, and other targets.</p>
+    </section>
+    <section id="scroll-arrow">
+      scroll for more
+      <br />
+      ⌄
+      <!-- ᐯ -->
+    </section>
+    <section id="code">
+<!-- HTML generated using hilite.me -->
+<pre style="margin: 0; line-height: 1.1rem">
+  <span class="keyword">import</span> <span class="symbol">*</span> as Force from <span class="string">&#39;../../src/layout/force&#39;</span>
+  <span class="keyword">import</span> <span class="symbol">*</span> as WebGL from <span class="string">&#39;../../src/renderers/webgl&#39;</span>
+
+  <span class="comment">/* Initialize Data */</span>
+  <span class="keyword">const</span> NODE_STYLE <span class="symbol">=</span> {
+    color<span class="symbol">:</span> <span class="string">&#39;#999&#39;</span>,
+    stroke<span class="symbol">:</span> [{ color<span class="symbol">:</span> <span class="string">&#39;#FFF&#39;</span>, width<span class="symbol">:</span> <span class="symbol">2</span> }, { color<span class="symbol">:</span> <span class="string">&#39;#F7CA4D&#39;</span>, width<span class="symbol">:</span> <span class="symbol">2</span> }],
+  }
+  <span class="keyword">const</span> EDGE_STYLE <span class="symbol">=</span> { arrow<span class="symbol">:</span> <span class="string">&#39;forward&#39;</span> }
+  <span class="keyword">let</span> nodes <span class="symbol">=</span> [<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>, <span class="string">&#39;c&#39;</span>, <span class="string">&#39;d&#39;</span>, <span class="string">&#39;e&#39;</span>, <span class="string">&#39;f&#39;</span>].map((id) <span class="symbol">=&gt;</span> ({ id, radius<span class="symbol">:</span> <span class="symbol">18</span>, style<span class="symbol">:</span> NODE_STYLE }))
+  <span class="keyword">let</span> edges <span class="symbol">=</span> [
+    { id<span class="symbol">:</span> <span class="string">&#39;ba&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;a&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;b&#39;</span> }, { id<span class="symbol">:</span> <span class="string">&#39;ca&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;a&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;c&#39;</span> }, { id<span class="symbol">:</span> <span class="string">&#39;da&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;a&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;d&#39;</span> },
+    { id<span class="symbol">:</span> <span class="string">&#39;ce&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;c&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;e&#39;</span> }, { id<span class="symbol">:</span> <span class="string">&#39;cf&#39;</span>, source<span class="symbol">:</span> <span class="string">&#39;c&#39;</span>, target<span class="symbol">:</span> <span class="string">&#39;f&#39;</span> }
+  ].map(({ id, source, target }) <span class="symbol">=&gt;</span> ({ id, source, target, style<span class="symbol">:</span> EDGE_STYLE }))
+
+  <span class="comment">/* Create Renderer and Layout */</span>
+  <span class="keyword">const</span> container <span class="symbol">=</span> <span class="keyword">document</span>.querySelector(<span class="string">&#39;#graph&#39;</span>)
+  <span class="keyword">const</span> render <span class="symbol">=</span> WebGL.Renderer({ container })
+  <span class="keyword">const</span> force <span class="symbol">=</span> Force.Layout()
+
+  <span class="comment">/* Create renderer properties and handlers */</span>
+  <span class="keyword">const</span> renderOptions <span class="symbol">=</span> {
+    width<span class="symbol">:</span> container.offsetWidth,
+    height<span class="symbol">:</span> container.offsetHeight,
+    onNodePointerEnter<span class="symbol">:</span> ({ target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
+      nodes.forEach((node) <span class="symbol">=&gt;</span> {
+        <span class="keyword">if</span> (node.id <span class="symbol">===</span> id) node.style.stroke[<span class="symbol">1</span>].width <span class="symbol">=</span> <span class="symbol">4</span>
+      })
+
+      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+    },
+    onNodePointerLeave<span class="symbol">:</span> ({ target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
+      nodes.forEach((node) <span class="symbol">=&gt;</span> {
+        <span class="keyword">if</span> (node.id <span class="symbol">===</span> id) node.style.stroke[<span class="symbol">1</span>].width <span class="symbol">=</span> <span class="symbol">2</span>
+      })
+
+      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+    },
+    onNodeDrag<span class="symbol">:</span> ({ nodeX<span class="symbol">:</span> x, nodeY<span class="symbol">:</span> y, target<span class="symbol">:</span> { id } }) <span class="symbol">=&gt;</span> {
+      nodes.forEach((node) <span class="symbol">=&gt;</span> {
+        <span class="keyword">if</span> (node.id <span class="symbol">===</span> id) {
+          node.x <span class="symbol">=</span> x
+          node.y <span class="symbol">=</span> y
+        }
+      })
+      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+    },
+    onViewportDrag<span class="symbol">:</span> ({ viewportX, viewportY }) <span class="symbol">=&gt;</span> {
+      renderOptions.x <span class="symbol">=</span> viewportX
+      renderOptions.y <span class="symbol">=</span> viewportY
+      render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+    },
+  }
+
+  <span class="comment">/* Run layout and render graph */</span>
+  force({ nodes, edges }).then((graph) <span class="symbol">=&gt;</span> {
+    nodes <span class="symbol">=</span> graph.nodes
+
+    render({ nodes, edges, options<span class="symbol">:</span> renderOptions })
+  })
+</pre>
+    </section>
   </main>
   <footer>
     Trellis is a project by <a href="https://sayari.com">Sayari</a> Labs
