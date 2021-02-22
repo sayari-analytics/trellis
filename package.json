@@ -25,6 +25,7 @@
     "pixi.js-legacy": "^5.3.7"
   },
   "devDependencies": {
+    "@turf/clusters-kmeans": "^6.3.0",
     "@types/d3-color": "^1.2.2",
     "@types/d3-force": "^1.2.1",
     "@types/d3-hierarchy": "^2.0.0",
