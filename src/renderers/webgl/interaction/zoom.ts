@@ -17,7 +17,7 @@ export class Zoom <N extends Node, E extends Edge>{
   }
 
   wheel = (event: WheelEvent) => {
-    event.preventDefault()
+    if (this.renderer.onViewportWheel !== undefined) event.preventDefault()
 
     if (this.paused) {
       return
