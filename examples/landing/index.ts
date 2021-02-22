@@ -6,7 +6,7 @@ import * as Graph from '../../src/'
 import raw from './data'
 
 
-type Node = Graph.Node & { cluster?: number }
+type Node = Graph.Node & { cluster?: number, size?: number }
 
 
 const NODE_STYLE_A: Graph.NodeStyle = {
@@ -25,11 +25,6 @@ const NODE_STYLE_B: Graph.NodeStyle = {
   labelColor: '#666',
 }
 
-// const NODE_STYLE_C: Graph.NodeStyle = {
-//   color: '#7F5BCC',
-//   stroke: [{ color: '#CCC', width: 3 }]
-// }
-
 const EDGE_STYLE: Graph.EdgeStyle = {
   stroke: '#BBB',
   width: 1,
@@ -43,12 +38,11 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const render = WebGL.Renderer({ container })
 const force = Force.Layout()
 const hierarchy = Hierarchy.Layout()
-// const nodes = raw.nodes.map((id, idx) => ({ id: `${id}`, radius: 18, style: idx % 5 === 0 ? NODE_STYLE_C : idx % 3 === 0 ? NODE_STYLE_B : NODE_STYLE_A }))
 const nodes = raw.nodes.map<Node>((id, idx) => ({ id: `${id}`, radius: 18, label: `${idx % 4 === 0 ? 'person' : 'company'} ${id}`, style: idx % 4 === 0 ? NODE_STYLE_A : NODE_STYLE_B }))
 const edges = raw.edges.map(([source, target], idx) => ({ id: `${idx}`, source: `${source}`, target: `${target}`, label: 'linked to', style: EDGE_STYLE }))
 
 
-const filterGraph = (predicate: (node: Node) => boolean, graph: { nodes: Node[], edges: Graph.Edge[] }) => {
+const filterGraph = (predicate: (node: Node) => boolean) => (graph: { nodes: Node[], edges: Graph.Edge[] }) => {
   const nodeMap = graph.nodes.reduce<Record<string, Node>>((nodeMap, node) => (nodeMap[node.id] = node, nodeMap), {})
   return {
     nodes: graph.nodes.filter(predicate),
@@ -57,12 +51,39 @@ const filterGraph = (predicate: (node: Node) => boolean, graph: { nodes: Node[],
 }
 
 
-force({ nodes, edges }).then(({ nodes, edges }) => {
-  const nodeMap = nodes.reduce<Record<string, Node>>((nodeMap, node) => (nodeMap[node.id] = node, nodeMap), {})
+const groupBy = (grouper: (node: Node) => string) => (graph: { nodes: Node[], edges: Graph.Edge[] }) => {
+  const idMap: Record<string, string> = {}
 
-  clustersKmeans({
+  const nodes = Object.values(graph.nodes.reduce<Record<string, Node[]>>((groups, node) => {
+    const key = grouper(node)
+    if (groups[key] === undefined) groups[key] = []
+    groups[key].push(node)
+    return groups
+  }, {}))
+    .map((nodes) => {
+      nodes.forEach((node) => {
+        idMap[node.id] = nodes[0].id
+      })
+      return { ...nodes[0], size: nodes.length }
+    })
+
+  const edges = Object.values(graph.edges.reduce<Record<string, Graph.Edge>>((edges, edge) => {
+    if (edges[`${idMap[edge.source]}::${idMap[edge.target]}`] === undefined) {
+      edges[`${idMap[edge.source]}::${idMap[edge.target]}`] = { ...edge, source: idMap[edge.source], target: idMap[edge.target] }
+    }
+    return edges
+  }, {}))
+
+  return { nodes, edges }
+}
+
+
+const cluster = (graph: { nodes: Node[], edges: Graph.Edge[] }) => {
+  const nodeMap = graph.nodes.reduce<Record<string, Node>>((nodeMap, node) => (nodeMap[node.id] = node, nodeMap), {})
+
+  const nodes = clustersKmeans({
     type: 'FeatureCollection',
-    features: nodes.map(({ id, x, y }) => ({
+    features: graph.nodes.map(({ id, x = 0, y = 0 }) => ({
       type: 'Feature',
       geometry: {
         type: 'Point',
@@ -70,22 +91,34 @@ force({ nodes, edges }).then(({ nodes, edges }) => {
       },
       properties: { id }
     }))
-  }).features.forEach(({ properties }) => {
+  }).features.map(({ properties }) => {
     const cluster = properties.cluster ?? 0
     const node = nodeMap[(properties as any).id]
-    node.cluster = cluster
-    // node.style = { ...node.style, color: ['red', 'blue', 'green', 'yellow', 'red', 'orange', 'purple', 'pink'][cluster] }
+
+    return { ...node, cluster }
+    // return { ...node, cluster: properties.cluster ?? 0, style: { ...node.style, color: ['gray', 'blue', 'green', 'yellow', 'red', 'orange', 'purple', 'pink'][cluster] } }
   })
 
-  return Promise.all<{ nodes: Node[], edges: Graph.Edge[] }>([
-    force(filterGraph(({ cluster }) => cluster !== 2 && cluster !== 3 && cluster !== 5 && cluster !== 7, { nodes, edges })),
-    force(filterGraph(({ cluster }) => cluster !== 3 && cluster !== 7, { nodes, edges })),
-    force({ nodes, edges }),
-    hierarchy(`${raw.roots[0]}`, { nodes, edges }),
-    // collapse by group and hierarchy layout
-    // collapse by group and force layout
-  ])
-}).then((layouts) => {
+  return { nodes, edges }
+}
+
+
+Promise.all<{ nodes: Node[], edges: Graph.Edge[] }>([
+  force({ nodes, edges })
+    .then(cluster)
+    .then(filterGraph(({ cluster }) => cluster !== 2 && cluster !== 3 && cluster !== 5 && cluster !== 7))
+    .then(force),
+  force({ nodes, edges })
+    .then(cluster)
+    .then(filterGraph(({ cluster }) => cluster !== 3 && cluster !== 7))
+    .then(force),
+  force({ nodes, edges })
+    .then(cluster),
+  cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges })),
+  hierarchy(`${raw.roots[0]}`, groupBy((node) => node.cluster === 0 || node.cluster === 6 ? `${node.cluster}` : node.id)(cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges })))),
+  hierarchy(`${raw.roots[0]}`, groupBy((node) => node.cluster === 0 || node.cluster === 6 || node.cluster === 2 ? `${node.cluster}` : node.id)(cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges })))),
+  force(groupBy((node) => node.cluster === 0 || node.cluster === 6 || node.cluster === 2 ? `${node.cluster}` : node.id)(cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges }))))
+]).then((layouts) => {
   const draw = (idx: number, animate: boolean) => {
     const nodes = layouts[idx].nodes
     const edges = layouts[idx].edges
@@ -122,5 +155,16 @@ force({ nodes, edges }).then(({ nodes, edges }) => {
     draw(i, true)
   }, 3000)
 
-  ;(window as any).layouts = layouts
+  console.log(JSON.stringify(layouts.map(({ nodes, edges }) => {
+    const idMap = Object.values(nodes).reduce<Record<string, number>>((idMap, { id }, idx) => {
+      idMap[id] = idx
+      return idMap
+    }, {})
+
+    return {
+      roots: raw.roots,
+      nodes: Object.values(nodes).map(({ id, x = 0, y = 0 }) => [idMap[id], x, y]),
+      edges: Object.values(edges).map(({ id, source, target }) => [id, idMap[source], idMap[target]])
+    }
+  })))
 })

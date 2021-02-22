@@ -7,11 +7,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
-    "dev": "parcel examples/index.html",
     "perf": "parcel perf/index.html",
+    "dev:examples": "parcel examples/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
     "build:umd": "parcel build src/index.umd.ts --out-file dist/index.umd.min.js --global trellis",
-    "build": "rm -rf ./dist/ && npm run build:tsc && npm run build:umd"
+    "build": "rm -rf ./dist/ && npm run build:tsc && npm run build:umd",
+    "dev:docs": "parcel docs-src/index.html",
+    "build:docs": "parcel build docs-src/index.html --out-dir docs/ --public-url sayari-analytics.github.io/trellis"
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
