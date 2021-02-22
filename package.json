@@ -13,7 +13,7 @@
     "build:umd": "parcel build src/index.umd.ts --out-file dist/index.umd.min.js --global trellis",
     "build": "rm -rf ./dist/ && npm run build:tsc && npm run build:umd",
     "dev:docs": "parcel docs-src/index.html",
-    "build:docs": "parcel build docs-src/index.html --out-dir docs/ --public-url sayari-analytics.github.io/trellis"
+    "build:docs": "parcel build docs-src/index.html --out-dir docs/ --public-url https://sayari-analytics.github.io/trellis/"
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
