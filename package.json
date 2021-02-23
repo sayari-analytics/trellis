@@ -7,11 +7,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
-    "dev": "parcel examples/index.html",
     "perf": "parcel perf/index.html",
+    "dev:examples": "parcel examples/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
     "build:umd": "parcel build src/index.umd.ts --out-file dist/index.umd.min.js --global trellis",
-    "build": "rm -rf ./dist/ && npm run build:tsc && npm run build:umd"
+    "build": "rm -rf ./dist/ && npm run build:tsc && npm run build:umd",
+    "dev:docs": "parcel docs-src/index.html",
+    "build:docs": "parcel build docs-src/index.html --out-dir docs/ --public-url https://sayari-analytics.github.io/trellis/"
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
@@ -25,6 +27,7 @@
     "pixi.js-legacy": "^5.3.7"
   },
   "devDependencies": {
+    "@turf/clusters-kmeans": "^6.3.0",
     "@types/d3-color": "^1.2.2",
     "@types/d3-force": "^1.2.1",
     "@types/d3-hierarchy": "^2.0.0",

@@ -114,21 +114,22 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
     return nodes
   }
 
-  let event: LayoutEvent | undefined
+  // let event: LayoutEvent | undefined
 
   self.onmessage = ({ data }: Message<LayoutEvent>) => {
+    self.postMessage({ nodes: layout(data), v: data.v })
     /**
      * drop synchronous run events
      */
-    if (event === undefined) {
-      setTimeout(() => {
-        const _event = event!
-        event = undefined
-        const nodes = layout(_event)
-        self.postMessage({ nodes, v: _event.v })
-      }, 0)
-    }
-    event = data
+    // if (event === undefined) {
+    //   setTimeout(() => {
+    //     const _event = event!
+    //     event = undefined
+    //     const nodes = layout(_event)
+    //     self.postMessage({ nodes, v: _event.v })
+    //   }, 0)
+    // }
+    // event = data
   }
 }
 
@@ -136,7 +137,9 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
 const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOUT_OPTIONS)})`], { type: 'application/javascript' })
 
 
-// TODO - add debugging perf logs
+/**
+ * TODO - add debugging perf logs
+ */
 export const Layout = () => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
@@ -149,11 +152,14 @@ export const Layout = () => {
     worker.postMessage({ nodes: graph.nodes, edges: graph.edges, options: graph.options, v: version } as LayoutEvent)
 
     return new Promise<{ nodes: Extend<N, { x: number, y: number }>[], edges: E[] }>((resolve, reject) => {
-      worker.onmessage = ({ data }: Message<LayoutResultEvent<N>>) => {
+      const successHandler = ({ data }: Message<LayoutResultEvent<N>>) => {
         if (data.v === version) {
+          worker.removeEventListener('message', successHandler)
           resolve({ nodes: data.nodes, edges })
         }
       }
+      worker.addEventListener('message', successHandler)
+
       worker.onerror = reject
     })
   }
