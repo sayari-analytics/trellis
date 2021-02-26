@@ -494,29 +494,26 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
     this.nodeContainer.destroy({ children: true })
     this.labelContainer.destroy({ children: true })
-    delete this.renderer.nodesById[this.node.id]
   }
 
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedNode !== undefined || this.renderer.dragging) return
+    if (this.renderer.hoveredNode === this || this.renderer.clickedNode !== undefined || this.renderer.dragging) return
 
     this.renderer.hoveredNode = this
 
-    if (this.parent === undefined) {
-      this.dirty = true
-      this.renderer.dirty = true
-      this.renderer.nodesLayer.removeChild(this.nodeContainer)
-      this.renderer.labelsLayer.removeChild(this.labelContainer)
-      this.renderer.frontNodeLayer.addChild(this.nodeContainer)
-      this.renderer.frontLabelLayer.addChild(this.labelContainer)
+    this.dirty = true
+    this.renderer.dirty = true
+    this.renderer.nodesLayer.removeChild(this.nodeContainer)
+    this.renderer.labelsLayer.removeChild(this.labelContainer)
+    this.renderer.frontNodeLayer.addChild(this.nodeContainer)
+    this.renderer.frontLabelLayer.addChild(this.labelContainer)
 
-      for (const subgraphNodeId in this.subgraphNodes) {
-        this.renderer.nodesLayer.removeChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
-        this.renderer.labelsLayer.removeChild(this.subgraphNodes[subgraphNodeId].labelContainer)
-        this.renderer.frontNodeLayer.addChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
-        this.renderer.frontLabelLayer.addChild(this.subgraphNodes[subgraphNodeId].labelContainer)
-      }
+    for (const subgraphNodeId in this.subgraphNodes) {
+      this.renderer.nodesLayer.removeChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+      this.renderer.labelsLayer.removeChild(this.subgraphNodes[subgraphNodeId].labelContainer)
+      this.renderer.frontNodeLayer.addChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+      this.renderer.frontLabelLayer.addChild(this.subgraphNodes[subgraphNodeId].labelContainer)
     }
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
@@ -633,22 +630,21 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private pointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this || this.renderer.dragging) return
 
+    console.log('LEAVE', this.node.id, this.node, this.parent?.node.id)
     this.renderer.hoveredNode = undefined
 
-    if (this.parent === undefined) {
-      this.dirty = true
-      this.renderer.dirty = true
-      this.renderer.frontNodeLayer.removeChild(this.nodeContainer)
-      this.renderer.frontLabelLayer.removeChild(this.labelContainer)
-      this.renderer.nodesLayer.addChild(this.nodeContainer)
-      this.renderer.labelsLayer.addChild(this.labelContainer)
+    this.dirty = true
+    this.renderer.dirty = true
+    this.renderer.frontNodeLayer.removeChild(this.nodeContainer)
+    this.renderer.frontLabelLayer.removeChild(this.labelContainer)
+    this.renderer.nodesLayer.addChild(this.nodeContainer)
+    this.renderer.labelsLayer.addChild(this.labelContainer)
 
-      for (const subgraphNodeId in this.subgraphNodes) {
-        this.renderer.frontNodeLayer.removeChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
-        this.renderer.frontLabelLayer.removeChild(this.subgraphNodes[subgraphNodeId].labelContainer)
-        this.renderer.nodesLayer.addChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
-        this.renderer.labelsLayer.addChild(this.subgraphNodes[subgraphNodeId].labelContainer)
-      }
+    for (const subgraphNodeId in this.subgraphNodes) {
+      this.renderer.frontNodeLayer.removeChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+      this.renderer.frontLabelLayer.removeChild(this.subgraphNodes[subgraphNodeId].labelContainer)
+      this.renderer.nodesLayer.addChild(this.subgraphNodes[subgraphNodeId].nodeContainer)
+      this.renderer.labelsLayer.addChild(this.subgraphNodes[subgraphNodeId].labelContainer)
     }
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)

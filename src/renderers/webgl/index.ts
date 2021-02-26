@@ -387,6 +387,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
      * Build edge indices
      */
     if (!edgesAreEqual) {
+      this.edgeIndex = { }
+
       for (const edge of edges) {
         if (this.edgeIndex[edge.source] === undefined) {
           this.edgeIndex[edge.source] = {}
