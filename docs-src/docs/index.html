@@ -13,90 +13,22 @@
       @import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap");
       @import url("https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap");
       /* http://meyerweb.com/eric/tools/css/reset/
-      v2.0 | 20110126
-      License: none (public domain)
-    */
-      html,
-      body,
-      div,
-      span,
-      applet,
-      object,
-      iframe,
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6,
-      p,
-      blockquote,
-      pre,
-      a,
-      abbr,
-      acronym,
-      address,
-      big,
-      cite,
-      code,
-      del,
-      dfn,
-      em,
-      img,
-      ins,
-      kbd,
-      q,
-      s,
-      samp,
-      small,
-      strike,
-      strong,
-      sub,
-      sup,
-      tt,
-      var,
-      b,
-      u,
-      i,
-      center,
-      dl,
-      dt,
-      dd,
-      ol,
-      ul,
-      li,
-      fieldset,
-      form,
-      label,
-      legend,
-      table,
-      caption,
-      tbody,
-      tfoot,
-      thead,
-      tr,
-      th,
-      td,
-      article,
-      aside,
-      canvas,
-      details,
-      embed,
-      figure,
-      figcaption,
-      footer,
-      header,
-      hgroup,
-      menu,
-      nav,
-      output,
-      ruby,
-      section,
-      summary,
-      time,
-      mark,
-      audio,
-      video {
+        v2.0 | 20110126
+        License: none (public domain)
+      */
+      html, body, div, span, applet, object, iframe,
+      h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+      a, abbr, acronym, address, big, cite, code,
+      del, dfn, em, img, ins, kbd, q, s, samp,
+      small, strike, strong, sub, sup, tt, var,
+      b, u, i, center,
+      dl, dt, dd, ol, ul, li,
+      fieldset, form, label, legend,
+      table, caption, tbody, tfoot, thead, tr, th, td,
+      article, aside, canvas, details, embed,
+      figure, figcaption, footer, header, hgroup,
+      menu, nav, output, ruby, section, summary,
+      time, mark, audio, video {
         margin: 0;
         padding: 0;
         border: 0;
@@ -105,35 +37,22 @@
         vertical-align: baseline;
       }
       /* HTML5 display-role reset for older browsers */
-      article,
-      aside,
-      details,
-      figcaption,
-      figure,
-      footer,
-      header,
-      hgroup,
-      menu,
-      nav,
-      section {
+      article, aside, details, figcaption, figure,
+      footer, header, hgroup, menu, nav, section {
         display: block;
       }
       body {
         line-height: 1;
       }
-      ol,
-      ul {
+      ol, ul {
         list-style: none;
       }
-      blockquote,
-      q {
+      blockquote, q {
         quotes: none;
       }
-      blockquote:before,
-      blockquote:after,
-      q:before,
-      q:after {
-        content: "";
+      blockquote:before, blockquote:after,
+      q:before, q:after {
+        content: '';
         content: none;
       }
       table {
@@ -143,7 +62,7 @@
 
       /******/
       body {
-        font-family: "Lato", sans-serif;
+        font-family: 'Lato', sans-serif;
         color: #444;
         overflow-x: hidden;
       }
@@ -154,12 +73,26 @@
         align-items: center;
         text-align: center;
         width: 100%;
-        position: absolute;
+      }
+      #logo {
+        width: 200px;
+        grid-column: 2;
+      }
+      .docs {
+        padding: 0 12px;
+        font-size: 18px;
+      }
+      .github {
+        padding: 0 12px;
+      }
+      .github:hover {
+        opacity: 0.6;
       }
       main {
         margin: 0 auto;
         padding: 1rem 4rem;
         max-width: 1200px;
+        min-height: calc(100vh - 126px - 87px - 2rem);
       }
       footer {
         background: #eee;
@@ -172,8 +105,7 @@
         line-height: 1.6rem;
       }
       strong {
-        color: #ffb71b;
-        font-weight: 400;
+        font-weight: 700;
       }
       p {
         font-size: 20px;
@@ -181,15 +113,14 @@
         line-height: 3rem;
       }
       a {
-        color: #0a85ff;
+        color: #0A85FF;
         text-decoration: none;
-        text-align: left;
       }
       a:visited {
-        color: #0a85ff;
+        color: #0A85FF;
       }
       a:hover {
-        color: #7bf;
+        color: #004285;
         text-decoration: underline;
       }
       #logo {
@@ -197,9 +128,7 @@
         grid-column: 2;
       }
       #docs {
-        margin-top: 120px;
         display: grid;
-        grid-template-rows: 40px auto;
         align-items: center;
       }
       #example-list {
@@ -207,7 +136,7 @@
         padding-bottom: 2rem;
         display: grid;
         grid-template-columns: 250px 250px 250px;
-        grid-gap: 12px;
+        grid-gap: 18px;
         align-items: start;
       }
       @media (max-width: 700px) {
@@ -216,7 +145,7 @@
           padding-bottom: 2rem;
           display: grid;
           grid-template-columns: 250px 250px;
-          grid-gap: 12px;
+          grid-gap: 18px;
           align-items: start;
         }
       }
@@ -226,7 +155,7 @@
           padding-bottom: 2rem;
           display: grid;
           grid-template-columns: auto;
-          grid-gap: 12px;
+          grid-gap: 18px;
           align-items: start;
         }
       }
@@ -248,14 +177,20 @@
       }
       .example {
         display: grid;
-        grid-template-rows: 250px 50px;
+        grid-template-rows: 250px 64px;
         grid-gap: 12px;
         align-items: center;
         justify-items: center;
       }
-      .example-title {
+      .title {
         margin: 0 auto 0 0;
         align-self: start;
+      }
+      .title h2 {
+        margin-bottom: 6px;
+      }
+      .title p {
+        line-height: 1.2rem;
       }
       .description-text {
         text-align: left;
@@ -274,91 +209,92 @@
       <a class="docs" href="https://sayari.com/company/careers/">Jobs</a>
       <a class="docs" href="/docs/index.html">Docs</a>
       <a class="github" href="https://github.com/sayari-analytics/trellis">
-        <img src="/assets/GitHub-Mark-32px.png" alt="github" />
+        <img src="/assets/GitHub-Mark-120px-plus.png" height="32px" width="32px" alt="github">
       </a>
     </header>
     <main>
       <div id="docs">
-        <!--- feel free to remove the below text, wasn't sure if I should keep these or not -->
-        <div style="font-weight: 300; text-align: center">Docs coming soon...</div>
-        <p>In the meantime, check out our examples:</p>
+        <div style="font-weight: 300; text-align: center; margin-bottom: 4rem;">Documentation coming soon...</div>
+
         <div id="example-list">
           <div class="example">
             <div style="display: flex; justify-content: center">
               <img class="preview" src="/assets/trellis-static.jpeg"></img>
             </div>
-            <div class="example-title">
-                <a
-                  href="https://observablehq.com/@julietadams/trellis-static-graph?collection=@julietadams/trellis-examples"
-                  >Static Graph</a
-                >
-                <br/>
-                <span class="description-text">A simple vanilla js example</span>
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-static-graph?collection=@julietadams/trellis-examples">
+                  Static Graph
+                </a>
+              </h2>
+              <p class="description-text">
+                A simple vanilla js example
+              </p>
             </div>
           </div>
           <div class="example">
             <img class="preview" src="/assets/trellis-viewport.jpeg"></img>
-            <div class="example-title">
-              <a
-                href="https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples"
-                >Viewport Interactions</a
-              >
-              <br/>
-              <span class="description-text"
-                >Vanilla js example with viewport interactions</span
-              >
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples">
+                  Viewport Interactions
+                </a>
+              </h2>
+              <p class="description-text">
+                Vanilla js example with viewport interactions
+              </p>
             </div>
           </div>
           <div class="example">
             <img class="preview" src="/assets/trellis-node-interaction.jpeg"></img>
-            <div class="example-title">
-              <a
-                href="https://observablehq.com/@julietadams/trellis-node-interaction-example"
-                >Node Interactions</a
-              >
-              <br/>
-              <span class="description-text"
-                >Vanilla js example with node interactions</span
-              >
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-node-interaction-example">
+                  Node Interactions
+                </a>
+              </h2>
+              <p class="description-text">
+                Vanilla js example with node interactions
+              </p>
             </div>
           </div>
           <div class="example">
             <img class="preview" src="/assets/trellis-hierarchy.jpeg"></img>
-            <div class="example-title">
-              <a
-                href="https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples"
-                >Hierarchy Layout</a
-              >
-              <br/>
-              <span class="description-text"
-                >Vanilla js example using hierarchy layout</span
-              >
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples">
+                  Hierarchy Layout
+                </a>
+              </h2>
+              <p class="description-text">
+                Vanilla js example using hierarchy layout
+              </p>
             </div>
           </div>
           <div class="example">
             <img class="preview" src="/assets/trellis-react.jpeg"></img>
-            <div class="example-list">
-              <a
-                href="https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js"
-                >React Bindings</a
-              >
-              <br/>
-              <span class="description-text"
-                >React example with node and viewport interactions</span
-              >
+            <div class="title">
+              <h2>
+                <a href="https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js">
+                  React Bindings
+                </a>
+              </h2>
+              <p class="description-text">
+                React example with node and viewport interactions
+              </p>
             </div>
           </div>
           <div class="example">
             <img class="preview" src="/assets/trellis-react-selection.jpeg"></img>
-            <div class="example-title">
-              <a
-                href="https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js"
-                >React + Multiselect Tool</a
-              >
-              <br/>
-              <span class="description-text"
-                >React example showing how to use our provided selection component</span
-              >
+            <div class="title">
+              <h2>
+                <a href="https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js">
+                  React + Multiselect Tool
+                </a>
+              </h2>
+              <p class="description-text">
+                React example showing how to use our provided selection component
+              </p>
             </div>
           </div>
         </div>
