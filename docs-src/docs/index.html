@@ -1,159 +1,314 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Trellis Documentation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-  <link rel="icon" type="image/ico" href="/favicon.ico"/>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap');
-    /* http://meyerweb.com/eric/tools/css/reset/
-      v2.0 | 20110126
-      License: none (public domain)
-    */
-    html, body, div, span, applet, object, iframe,
-    h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-    a, abbr, acronym, address, big, cite, code,
-    del, dfn, em, img, ins, kbd, q, s, samp,
-    small, strike, strong, sub, sup, tt, var,
-    b, u, i, center,
-    dl, dt, dd, ol, ul, li,
-    fieldset, form, label, legend,
-    table, caption, tbody, tfoot, thead, tr, th, td,
-    article, aside, canvas, details, embed,
-    figure, figcaption, footer, header, hgroup,
-    menu, nav, output, ruby, section, summary,
-    time, mark, audio, video {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      font-size: 100%;
-      font: inherit;
-      vertical-align: baseline;
-    }
-    /* HTML5 display-role reset for older browsers */
-    article, aside, details, figcaption, figure,
-    footer, header, hgroup, menu, nav, section {
-      display: block;
-    }
-    body {
-      line-height: 1;
-    }
-    ol, ul {
-      list-style: none;
-    }
-    blockquote, q {
-      quotes: none;
-    }
-    blockquote:before, blockquote:after,
-    q:before, q:after {
-      content: '';
-      content: none;
-    }
-    table {
-      border-collapse: collapse;
-      border-spacing: 0;
-    }
+  <head>
+    <meta charset="utf-8" />
+    <title>Trellis Documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/ico" href="/favicon.ico" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap");
+      /* http://meyerweb.com/eric/tools/css/reset/
+        v2.0 | 20110126
+        License: none (public domain)
+      */
+      html, body, div, span, applet, object, iframe,
+      h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+      a, abbr, acronym, address, big, cite, code,
+      del, dfn, em, img, ins, kbd, q, s, samp,
+      small, strike, strong, sub, sup, tt, var,
+      b, u, i, center,
+      dl, dt, dd, ol, ul, li,
+      fieldset, form, label, legend,
+      table, caption, tbody, tfoot, thead, tr, th, td,
+      article, aside, canvas, details, embed,
+      figure, figcaption, footer, header, hgroup,
+      menu, nav, output, ruby, section, summary,
+      time, mark, audio, video {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-size: 100%;
+        font: inherit;
+        vertical-align: baseline;
+      }
+      /* HTML5 display-role reset for older browsers */
+      article, aside, details, figcaption, figure,
+      footer, header, hgroup, menu, nav, section {
+        display: block;
+      }
+      body {
+        line-height: 1;
+      }
+      ol, ul {
+        list-style: none;
+      }
+      blockquote, q {
+        quotes: none;
+      }
+      blockquote:before, blockquote:after,
+      q:before, q:after {
+        content: '';
+        content: none;
+      }
+      table {
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
 
-    /******/
-    body {
-      font-family: 'Lato', sans-serif;
-      color: #444;
-      overflow-x: hidden;
-    }
-    header {
-      padding: 2rem 0;
-      display: grid;
-      grid-template-columns: 4rem auto 100px 100px 100px 4rem;
-      align-items: center;
-      text-align: center;
-      width: 100%;
-      position: absolute;
-    }
-    #logo {
-      width: 200px;
-      grid-column: 2;
-    }
-    .docs {
-      padding: 0 12px;
-      font-size: 18px;
-    }
-    .github {
-      padding: 0 12px;
-    }
-    .github:hover {
-      opacity: 0.6;
-    }
-    main {
-      margin: 0 auto;
-      padding: 1rem 4rem;
-      max-width: 1200px;
-    }
-    #comming-soon {
-      height: calc(100vh - 2rem - 87px);
-      display: grid;
-      align-items: center;
-      text-align: center;
-    }
-    footer {
-      background: #eee;
-      border-top: 1px solid #999;
-      padding: 18px 0;
-      text-align: center;
-    }
-    footer p {
-      font-size: 16px;
-      line-height: 1.6rem;
-    }
-    strong {
-      color: #FFB71B;
-      font-weight: 400;
-    }
-    p {
-      font-size: 26px;
-      font-weight: 300;
-      line-height: 3rem;
-    }
-    a {
-      color: #0A85FF;
-      text-decoration: none;
-    }
-    a:visited {
-      color: #0A85FF;
-    }
-    a:hover {
-      color: #7BF;
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <span id="logo">
-      <a href="https://sayari-analytics.github.io/trellis/">
-        <img src="/logo.svg" alt="Trellis Logo">
+      /******/
+      body {
+        font-family: 'Lato', sans-serif;
+        color: #444;
+        overflow-x: hidden;
+      }
+      header {
+        padding: 2rem 0;
+        display: grid;
+        grid-template-columns: 4rem auto 100px 100px 100px 4rem;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+      }
+      #logo {
+        width: 200px;
+        grid-column: 2;
+      }
+      .docs {
+        padding: 0 12px;
+        font-size: 18px;
+      }
+      .github {
+        padding: 0 12px;
+      }
+      .github:hover {
+        opacity: 0.6;
+      }
+      main {
+        margin: 0 auto;
+        padding: 1rem 4rem;
+        max-width: 1200px;
+        min-height: calc(100vh - 126px - 87px - 2rem);
+      }
+      footer {
+        background: #eee;
+        border-top: 1px solid #999;
+        padding: 18px 0;
+        text-align: center;
+      }
+      footer p {
+        font-size: 16px;
+        line-height: 1.6rem;
+      }
+      strong {
+        font-weight: 700;
+      }
+      p {
+        font-size: 20px;
+        font-weight: 300;
+        line-height: 3rem;
+      }
+      a {
+        color: #0A85FF;
+        text-decoration: none;
+      }
+      a:visited {
+        color: #0A85FF;
+      }
+      a:hover {
+        color: #004285;
+        text-decoration: underline;
+      }
+      #logo {
+        width: 200px;
+        grid-column: 2;
+      }
+      #docs {
+        display: grid;
+        align-items: center;
+      }
+      #example-list {
+        margin: 0 auto;
+        padding-bottom: 2rem;
+        display: grid;
+        grid-template-columns: 250px 250px 250px;
+        grid-gap: 18px;
+        align-items: start;
+      }
+      @media (max-width: 700px) {
+        #example-list {
+          margin: 0 auto;
+          padding-bottom: 2rem;
+          display: grid;
+          grid-template-columns: 250px 250px;
+          grid-gap: 18px;
+          align-items: start;
+        }
+      }
+      @media (max-width: 500px) {
+        #example-list {
+          margin: 0 auto;
+          padding-bottom: 2rem;
+          display: grid;
+          grid-template-columns: auto;
+          grid-gap: 18px;
+          align-items: start;
+        }
+      }
+      .docs {
+        padding: 0 12px;
+        font-size: 18px;
+      }
+      .github {
+        padding: 0 12px;
+      }
+      .github:hover {
+        opacity: 0.6;
+      }
+      .preview {
+        align-self: center;
+        justify-self: center;
+        max-height: 250px;
+        max-width: 250px;
+      }
+      .example {
+        display: grid;
+        grid-template-rows: 250px 64px;
+        grid-gap: 12px;
+        align-items: center;
+        justify-items: center;
+      }
+      .title {
+        margin: 0 auto 0 0;
+        align-self: start;
+      }
+      .title h2 {
+        margin-bottom: 6px;
+      }
+      .title p {
+        line-height: 1.2rem;
+      }
+      .description-text {
+        text-align: left;
+        font-size: 14px;
+        font-weight: 300;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span id="logo">
+        <a href="https://sayari-analytics.github.io/trellis/">
+          <img src="/assets/logo.svg" alt="Trellis Logo" />
+        </a>
+      </span>
+      <a class="docs" href="https://sayari.com/company/careers/">Jobs</a>
+      <a class="docs" href="/docs/index.html">Docs</a>
+      <a class="github" href="https://github.com/sayari-analytics/trellis">
+        <img src="/assets/GitHub-Mark-120px-plus.png" height="32px" width="32px" alt="github">
       </a>
-    </span>
-    <a class="docs" href="https://sayari.com/company/careers/">Jobs</a>
-    <a class="docs" href="/docs/index.html">Docs</a>
-    <a class="github" href="https://github.com/sayari-analytics/trellis">
-      <img src="/GitHub-Mark-32px.png" alt="github">
-    </a>
-  </header>
-  <main>
-    <div id="comming-soon">
-      <p>coming soon...</p>
-    </div>
-  </main>
-  <footer>
-    <p>
-      Trellis is a project by <a href="https://sayari.com">Sayari Labs</a>.
-    </p>
-    <p>
-      Look interesting? We're hiring. Check out our <a href="https://sayari.com/company/careers/">job posts</a>, or <a href="mailto:tech@sayari.com">get in touch</a>.
-    </p>
-  </footer>
-</body>
+    </header>
+    <main>
+      <div id="docs">
+        <div style="font-weight: 300; text-align: center; margin-bottom: 4rem;">Documentation coming soon...</div>
+
+        <div id="example-list">
+          <div class="example">
+            <div style="display: flex; justify-content: center">
+              <img class="preview" src="/assets/trellis-static.jpeg"></img>
+            </div>
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-static-graph?collection=@julietadams/trellis-examples">
+                  Static Graph
+                </a>
+              </h2>
+              <p class="description-text">
+                A simple vanilla js example
+              </p>
+            </div>
+          </div>
+          <div class="example">
+            <img class="preview" src="/assets/trellis-viewport.jpeg"></img>
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples">
+                  Viewport Interactions
+                </a>
+              </h2>
+              <p class="description-text">
+                Vanilla js example with viewport interactions
+              </p>
+            </div>
+          </div>
+          <div class="example">
+            <img class="preview" src="/assets/trellis-node-interaction.jpeg"></img>
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-node-interaction-example">
+                  Node Interactions
+                </a>
+              </h2>
+              <p class="description-text">
+                Vanilla js example with node interactions
+              </p>
+            </div>
+          </div>
+          <div class="example">
+            <img class="preview" src="/assets/trellis-hierarchy.jpeg"></img>
+            <div class="title">
+              <h2>
+                <a href="https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples">
+                  Hierarchy Layout
+                </a>
+              </h2>
+              <p class="description-text">
+                Vanilla js example using hierarchy layout
+              </p>
+            </div>
+          </div>
+          <div class="example">
+            <img class="preview" src="/assets/trellis-react.jpeg"></img>
+            <div class="title">
+              <h2>
+                <a href="https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js">
+                  React Bindings
+                </a>
+              </h2>
+              <p class="description-text">
+                React example with node and viewport interactions
+              </p>
+            </div>
+          </div>
+          <div class="example">
+            <img class="preview" src="/assets/trellis-react-selection.jpeg"></img>
+            <div class="title">
+              <h2>
+                <a href="https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js">
+                  React + Multiselect Tool
+                </a>
+              </h2>
+              <p class="description-text">
+                React example showing how to use our provided selection component
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <p>
+        Trellis is a project by <a href="https://sayari.com">Sayari Labs</a>.
+      </p>
+      <p>
+        Look interesting? We're hiring. Check out our
+        <a href="https://sayari.com/company/careers/">job posts</a>, or
+        <a href="mailto:tech@sayari.com">get in touch</a>.
+      </p>
+    </footer>
+  </body>
 </html>
