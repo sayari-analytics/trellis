@@ -747,6 +747,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       }
 
       // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
+      // eslint-disable-next-line no-console
       console.log(
         `%c${total.toFixed(1)}ms%c (update: %c${update.toFixed(1)}%c, render: %c${render.toFixed(1)}%c, draw: %c${draw.toFixed(1)}%c, external: %c${external.toFixed(1)}%c)`,
         `color: ${total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'}`,
