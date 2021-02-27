@@ -630,7 +630,6 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private pointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedNode !== undefined || this.renderer.hoveredNode !== this || this.renderer.dragging) return
 
-    console.log('LEAVE', this.node.id, this.node, this.parent?.node.id)
     this.renderer.hoveredNode = undefined
 
     this.dirty = true
