@@ -1,6 +1,6 @@
 {
   "name": "@sayari/trellis",
-  "version": "0.3.0-rc.3",
+  "version": "0.3.0-rc.4",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "main": "./index.js",
   "types": "./index.d.ts",
