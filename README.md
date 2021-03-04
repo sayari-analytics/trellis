@@ -50,11 +50,11 @@ npm run dev
 ### Deployment
 prerelease
 ```bash
+npm run build
+
 npm version [premajor|preminor|prepatch|prerelease] --preid rc
 
 git push --follow-tags
-
-npm run build
 
 cp package* README.md dist/
 
@@ -63,11 +63,11 @@ npm publish dist/ --tag next
 
 release
 ```bash
+npm run build
+
 npm version [major|minor|patch]
 
 git push --follow-tags
-
-npm run build
 
 cp package* README.md dist/
 
