@@ -488,6 +488,10 @@ export class NodeRenderer<N extends Node, E extends Edge>{
       this.doubleClickTimeout = undefined
     }
 
+    this.labelLoader?.()
+    this.badgeIconLoader.forEach((loader) => loader())
+    this.iconLoader?.()
+
     for (const subgraphNodeId in this.subgraphNodes) {
       // exit subgraph node
       this.subgraphNodes[subgraphNodeId].delete()

@@ -396,6 +396,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       this.doubleClickTimeout = undefined
     }
 
+    this.labelLoader?.()
+
     this.line.destroy()
     this.arrowContainer.destroy()
     this.labelContainer.destroy()
