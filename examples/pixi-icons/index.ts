@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
-import * as Subgraph from '../../src/layout/subgraph'
+import * as Fisheye from '../../src/layout/fisheye'
 import * as Cluster from '../../src/layout/cluster'
 import * as Graph from '../../src/'
 import * as WebGL from '../../src/renderers/webgl'
@@ -102,7 +102,7 @@ let edges: Graph.Edge[] = [
  */
 const container = document.querySelector('#graph') as HTMLDivElement
 const force = Force.Layout()
-const subgraph = Subgraph.Layout()
+const fisheye = Fisheye.Layout()
 const cluster = Cluster.Layout()
 const render = WebGL.Renderer({
   container,
@@ -151,9 +151,11 @@ const renderOptions: WebGL.Options = {
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: createCompanyStyle() },
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: createCompanyStyle() },
     ]))
-    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
+    const radius = subgraphNodes
+      .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+      .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
-    nodes = subgraph(
+    nodes = fisheye(
       nodes,
       nodes.map((node) => {
         if (node.id === target.id) {
@@ -175,7 +177,7 @@ const renderOptions: WebGL.Options = {
     render({ nodes, edges, options: renderOptions })
   },
   onViewportPointerUp: () => {
-    nodes = subgraph(
+    nodes = fisheye(
       nodes,
       nodes.map((node, idx) => ({
         ...node,

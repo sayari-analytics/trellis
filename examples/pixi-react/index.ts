@@ -9,7 +9,7 @@ import { clampZoom, Zoom } from '../../src/bindings/react/zoom'
 import * as Graph from '../../src'
 import * as Force from '../../src/layout/force'
 import * as Cluster from '../../src/layout/cluster'
-import * as Subgraph from '../../src/layout/subgraph'
+import * as Fisheye from '../../src/layout/fisheye'
 import * as WebGL from '../../src/renderers/webgl'
 import graphData from '../../data/tmp-data'
 
@@ -74,7 +74,7 @@ const data = {
 
 const force = Force.Layout()
 const cluster = Cluster.Layout()
-const subgraph = Subgraph.Layout()
+const fisheye = Fisheye.Layout()
 const MIN_ZOOM = 0.1
 const MAX_ZOOM = 2.5
 
@@ -153,11 +153,13 @@ const App: FunctionComponent = () => {
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: SUBGRAPH_STYLE },
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: SUBGRAPH_STYLE },
     ]))
-    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
+    const radius = subgraphNodes
+      .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+      .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
     setGraph((graph) => ({
       ...graph,
-      nodes: subgraph(
+      nodes: fisheye(
         graph.nodes,
         graph.nodes.map((node) => node.id === target.id ? {
           ...node,
@@ -176,7 +178,7 @@ const App: FunctionComponent = () => {
   const onViewportPointerUp = useCallback(() => {
     setGraph((graph) => ({
       ...graph,
-      nodes: subgraph(
+      nodes: fisheye(
         graph.nodes,
         graph.nodes.map((node) => ({
           ...node,

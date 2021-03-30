@@ -340,3 +340,5 @@ export function* bfs<N extends Node, E extends Edge>(predicate: (node: N) => boo
     }
   }
 }
+
+export const distance = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
