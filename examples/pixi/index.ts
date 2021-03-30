@@ -184,7 +184,7 @@ downloadControl({
   top: 210,
   onClick: () => {
     const bounds = Graph.getSelectionBounds(nodes, 60)
-    const dimensions = Graph.boundsToDimenions(bounds, 1)
+    const dimensions = Graph.boundsToDimensions(bounds, 1)
     const viewport = Graph.boundsToViewport(bounds, dimensions)
 
     return imageRenderer({

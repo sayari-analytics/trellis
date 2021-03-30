@@ -119,7 +119,7 @@ const downloadControl = Download.Control({ container })
 downloadControl({
   top: 160,
   onClick: () => {
-    const { width, height } = Graph.boundsToDimenions(Graph.getSelectionBounds(nodes, 80), 1)
+    const { width, height } = Graph.boundsToDimensions(Graph.getSelectionBounds(nodes, 80), 1)
 
     return imageRenderer({
       nodes: nodes,

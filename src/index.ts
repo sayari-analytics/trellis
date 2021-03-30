@@ -180,7 +180,7 @@ export const boundsToViewport = ({ left, top, right, bottom }: Bounds, { width, 
 }
 
 
-export const boundsToDimenions = ({ left, top, right, bottom }: Bounds, zoom: number): Dimensions => {
+export const boundsToDimensions = ({ left, top, right, bottom }: Bounds, zoom: number): Dimensions => {
   return {
     width: (right - left) / zoom,
     height: (bottom - top) / zoom,

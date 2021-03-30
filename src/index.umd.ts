@@ -19,7 +19,7 @@ export {
   mergeBounds,
   viewportToBounds,
   boundsToViewport,
-  boundsToDimenions,
+  boundsToDimensions,
   clamp,
   equals,
   bfs,
