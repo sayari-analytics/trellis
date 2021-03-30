@@ -16,6 +16,7 @@ export const Layout = () => {
         positions[id] = [x, y]
       })
 
-    return nodes.map((node) => ({ ...node, x: positions[node.id][0], y: positions[node.id][1] }))
+    // TODO: could also pass fx and fy to hierarchy and that should take care of it
+    return nodes.map((node) => ({ ...node, x: node.fx ?? positions[node.id][0], y: node.fy ?? positions[node.id][1] }))
   }
 }

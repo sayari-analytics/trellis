@@ -1,17 +1,18 @@
 export type Node = {
   id: string
   radius: number
-  x?: number | undefined // TODO - add prop for fixed position
-  y?: number | undefined
-  label?: string | undefined
+  x?: number
+  y?: number
+  fx?: number
+  fy?: number
+  label?: string
   style?: NodeStyle
   subgraph?: {
     nodes: Node[]
     edges: Edge[]
     options?: {}
-  } | undefined
+  }
 }
-
 
 export type Edge = {
   id: string

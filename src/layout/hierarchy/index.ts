@@ -98,7 +98,7 @@ export const Layout = () => {
     }, {})
 
     if (edgeIndex[root] === undefined) {
-      return graph
+      return { nodes: graph.nodes, edges: graph.edges }
     }
 
     const layout = graph.options?.size !== undefined ?
@@ -128,13 +128,13 @@ export const Layout = () => {
     //     graphToDFSHierarchy(edgeIndex, root)
     // )
 
-    const { x, y } = graph.nodes.find((node) => node.id === root) ?? { x: undefined, y: undefined }
-    const xOffset = (graph.options?.x ?? 0) + (x ?? 0)
-    const yOffset = (graph.options?.y ?? 0) - (y ?? 0)
+    const { x, y, fx, fy } = graph.nodes.find((node) => node.id === root) ?? { x: undefined, y: undefined, fx: undefined, fy: undefined }
+    const xOffset = (graph.options?.x ?? 0) + (fx ?? x ?? 0)
+    const yOffset = (graph.options?.y ?? 0) - (fy ?? y ?? 0)
 
 
     return {
-      ...graph,
+      edges: graph.edges,
       nodes: graph.nodes.map((node) => {
         const positionedNode = positionedDataById[node.id]
 
@@ -142,8 +142,8 @@ export const Layout = () => {
           node :
           {
             ...node,
-            x: positionedNode.x + xOffset,
-            y: positionedNode.y - yOffset,
+            x: node.fx ?? (positionedNode.x + xOffset),
+            y: node.fy ?? (positionedNode.y - yOffset),
           }
       })
     }
