@@ -15,9 +15,6 @@ export const Layout = () => {
     const padding = graph.options?.padding ?? DEFAULT_PADDING
 
     const components = connectedComponents(graph).map(({ nodes, edges }) => {
-      // TODO: not sure if I should use fx/fy when mapping nodes here. The only case I am thinking where this would likely cause wonkiness
-      // is if there are 2 fixed nodes in a component that are rather far apart, causing the component's radius to be VERY large
-      // likely making the graph less readable?
       const { x, y, r } = packEnclose(nodes.map(({ x = 0, y = 0, radius: r }) => ({ x, y, r })))
       return { x0: x, y0: y, r: r + padding, nodes, edges }
     })

@@ -16,7 +16,6 @@ export const Layout = () => {
         positions[id] = [x, y]
       })
 
-    // TODO: should we still
     return nodes.map((node) => ({ ...node, x: positions[node.id][0], y: positions[node.id][1] }))
   }
 }
