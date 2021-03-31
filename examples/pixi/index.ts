@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
-import * as Subgraph from '../../src/layout/subgraph'
+import * as Fisheye from '../../src/layout/fisheye'
 import * as Zoom from '../../src/bindings/native/zoom'
 import * as Selection from '../../src/bindings/native/selection'
 import * as Download from '../../src/bindings/native/download'
@@ -107,7 +107,7 @@ const render = WebGL.Renderer({
   debug: { stats, logPerformance: false }
 })
 const force = Force.Layout()
-const subgraph = Subgraph.Layout()
+const fisheye = Fisheye.Layout()
 const cluster = Cluster.Layout()
 
 
@@ -138,7 +138,7 @@ const { onViewportPointerDown, onViewportDrag, onViewportPointerUp } = selection
   onViewportPointerUp: () => {
     annotations = []
 
-    nodes = subgraph(
+    nodes = fisheye(
       nodes,
       nodes.map((node) => (node.subgraph ? {
         ...node,
@@ -261,9 +261,11 @@ const renderOptions: WebGL.Options = {
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`, radius: 10, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`, style: createSubgraphStyle(10) },
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`, radius: 10, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`, style: createSubgraphStyle(10) },
     ]))
-    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
+    const radius = subgraphNodes
+      .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+      .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
-    nodes = subgraph(
+    nodes = fisheye(
       nodes,
       nodes.map((node) => (node.id === target.id ? {
         ...node,

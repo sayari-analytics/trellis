@@ -33,20 +33,21 @@ const render = WebGL.Renderer({
 /**
  * Layout and Render Graph
  */
+// TODO: remove the commented out code before merging
 const graph = ['a', 'b', 'd'].reduce(
   (graph, root) => hierarchy(root, graph),
   {
     nodes: [
-      { id: 'a', radius: 18, style: A_STYLE },
-      { id: 'aa', radius: 18, style: A_STYLE },
-      { id: 'ab', radius: 18, style: A_STYLE },
-      { id: 'aba', radius: 18, style: A_STYLE },
-      { id: 'b', radius: 18, style: B_STYLE },
-      { id: 'ba', radius: 18, style: B_STYLE },
-      { id: 'bb', radius: 18, style: B_STYLE },
-      { id: 'c', radius: 18, style: C_STYLE },
-      { id: 'd', radius: 18, style: D_STYLE },
-      { id: 'da', radius: 18, style: D_STYLE },
+      { id: 'a', label: 'a', radius: 18, style: A_STYLE },
+      { id: 'aa', label: 'aa', radius: 18, style: A_STYLE },
+      { id: 'ab', label: 'ab', radius: 18, style: A_STYLE },
+      { id: 'aba', label: 'aba', radius: 18, style: A_STYLE },
+      { id: 'b', label: 'b', radius: 18, style: B_STYLE },
+      { id: 'ba', label: 'ba', radius: 18, style: B_STYLE },
+      { id: 'bb', label: 'bb', radius: 18, style: B_STYLE },
+      { id: 'c', label: 'c', radius: 18, style: C_STYLE },
+      { id: 'd', label: 'd', radius: 18, style: D_STYLE },
+      { id: 'da', label: 'da', radius: 18, style: D_STYLE },
     ],
     edges: [
       { id: 'a-aa', source: 'a', target: 'aa' },
@@ -73,5 +74,5 @@ render({
     x: 0,
     y: 0,
     zoom: 1,
-  }
+  },
 })

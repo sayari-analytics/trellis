@@ -98,7 +98,7 @@ export const Layout = () => {
     }, {})
 
     if (edgeIndex[root] === undefined) {
-      return graph
+      return { nodes: graph.nodes, edges: graph.edges }
     }
 
     const layout = graph.options?.size !== undefined ?
@@ -134,7 +134,7 @@ export const Layout = () => {
 
 
     return {
-      ...graph,
+      edges: graph.edges,
       nodes: graph.nodes.map((node) => {
         const positionedNode = positionedDataById[node.id]
 

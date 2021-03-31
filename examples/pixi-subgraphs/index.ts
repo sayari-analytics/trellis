@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Cluster from '../../src/layout/cluster'
-import * as Subgraph from '../../src/layout/subgraph'
+import * as Fisheye from '../../src/layout/fisheye'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Graph from '../../src/'
 
@@ -22,13 +22,15 @@ let nodes: Graph.Node[] = [{
   id: 'a',
   radius: 18,
   x: 0,
-  y: 85,
+  y: 0,
   label: 'A',
+  fx: 0,
+  fy: 0,
   style: STYLE
 }, {
   id: 'b',
   radius: 18,
-  x: -100,
+  x: -200,
   y: -85,
   label: 'B',
   style: STYLE
@@ -47,7 +49,7 @@ const edges: Graph.Edge[] = []
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const subgraph = Subgraph.Layout()
+const fisheye = Fisheye.Layout()
 const cluster = Cluster.Layout()
 const render = WebGL.Renderer({
   container,
@@ -70,9 +72,11 @@ const renderOptions: WebGL.Options = {
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`, style: STYLE },
       { id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`, radius: 18, label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`, style: STYLE },
     ]))
-    const radius = Subgraph.subgraphRadius(target.radius, subgraphNodes) + 20
+    const radius = subgraphNodes
+      .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+      .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
-    nodes = subgraph(
+    nodes = fisheye(
       nodes,
       nodes.map((node) => {
         if (node.id === target.id) {
@@ -94,7 +98,7 @@ const renderOptions: WebGL.Options = {
     render({ nodes, edges, options: renderOptions })
   },
   onViewportPointerUp: () => {
-    nodes = subgraph(
+    nodes = fisheye(
       nodes,
       nodes.map((node) => ({
         ...node,

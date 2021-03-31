@@ -1,17 +1,18 @@
 export type Node = {
   id: string
   radius: number
-  x?: number | undefined // TODO - add prop for fixed position
-  y?: number | undefined
-  label?: string | undefined
+  x?: number
+  y?: number
+  fx?: number
+  fy?: number
+  label?: string
   style?: NodeStyle
   subgraph?: {
     nodes: Node[]
     edges: Edge[]
     options?: {}
-  } | undefined
+  }
 }
-
 
 export type Edge = {
   id: string
@@ -339,3 +340,5 @@ export function* bfs<N extends Node, E extends Edge>(predicate: (node: N) => boo
     }
   }
 }
+
+export const distance = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)

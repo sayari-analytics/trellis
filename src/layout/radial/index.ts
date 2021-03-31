@@ -41,7 +41,6 @@ export const Layout = () => {
         }
       }),
       edges,
-      options: graph.options
     }
   }
 }
