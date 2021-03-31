@@ -36,8 +36,8 @@ export const Layout = () => {
 
         return {
           ...node,
-          x: node.fx ?? (Math.cos(theta) * radius + (graph.options?.x ?? 0)),
-          y: node.fy ?? (Math.sin(theta) * radius - (graph.options?.y ?? 0)),
+          x: Math.cos(theta) * radius + (graph.options?.x ?? 0),
+          y: Math.sin(theta) * radius - (graph.options?.y ?? 0),
         }
       }),
       edges,

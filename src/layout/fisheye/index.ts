@@ -33,8 +33,8 @@ export const Layout = () => {
             nodeX = node.x ?? 0
             nodeY = node.y ?? 0
             theta = Math.atan2(collapseNodeY - nodeY, collapseNodeX - nodeX)
-            node.x = node.fx ?? (nodeX + (Math.cos(theta) * radius))
-            node.y = node.fy ?? (nodeY + (Math.sin(theta) * radius))
+            node.x = nodeX + (Math.cos(theta) * radius)
+            node.y = nodeY + (Math.sin(theta) * radius)
           }
         }
       }
@@ -56,8 +56,8 @@ export const Layout = () => {
             nodeX = node.x ?? 0
             nodeY = node.y ?? 0
             theta = Math.atan2(nodeY - expandNodeY, nodeX - expandNodeX)
-            node.x = node.fx ?? (nodeX + (Math.cos(theta) * radius))
-            node.y = node.fy ?? (nodeY + (Math.sin(theta) * radius))
+            node.x = nodeX + (Math.cos(theta) * radius)
+            node.y = nodeY + (Math.sin(theta) * radius)
           }
         }
       }

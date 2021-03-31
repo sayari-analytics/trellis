@@ -109,7 +109,6 @@ const cluster = (graph: { nodes: Node[], edges: Graph.Edge[] }) => {
     const node = nodeMap[(properties as any).id]
 
     return { ...node, cluster }
-    // return { ...node, cluster: properties.cluster ?? 0, style: { ...node.style, color: ['gray', 'blue', 'green', 'yellow', 'red', 'orange', 'purple', 'pink'][cluster] } }
   })
 
   return { nodes, edges }
@@ -151,8 +150,9 @@ Promise.all<{ nodes: Node[], edges: Graph.Edge[] }>([
         zoom,
         animateNodePosition: !!animate,
         animateViewportPosition: true,
-        animateViewportZoom: true
-      }
+        animateViewportZoom: true,
+        onNodeClick: ({ target: node }) => { console.log(node) }
+      },
     })
   }
 

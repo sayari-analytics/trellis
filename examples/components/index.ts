@@ -46,8 +46,8 @@ const graph = ['a', 'b', 'd'].reduce(
       { id: 'ba', label: 'ba', radius: 18, style: B_STYLE },
       { id: 'bb', label: 'bb', radius: 18, style: B_STYLE },
       { id: 'c', label: 'c', radius: 18, style: C_STYLE },
-      { id: 'd', label: 'd', radius: 18, style: D_STYLE, /*fx: 0, fy: 100*/ },
-      { id: 'da', label: 'da', radius: 18, style: D_STYLE, /*fx: 0, fy: 0*/ },
+      { id: 'd', label: 'd', radius: 18, style: D_STYLE },
+      { id: 'da', label: 'da', radius: 18, style: D_STYLE },
     ],
     edges: [
       { id: 'a-aa', source: 'a', target: 'aa' },
@@ -74,6 +74,5 @@ render({
     x: 0,
     y: 0,
     zoom: 1,
-    //onNodeClick: ({ target: node }) => { console.log(node) }
   },
 })
