@@ -311,7 +311,8 @@ export class NodeRenderer<N extends Node, E extends Edge>{
               badgeStrokeSprite.tint = badge.stroke === undefined ? DEFAULT_NODE_STROKE : colorToNumber(badge.stroke)
               badgeStrokeSprite.scale.set(badgeStrokeRadius / CircleSprite.radius)
 
-              const badgeIconSprite = this.renderer.image.create(badge.icon.url)
+              const badgeIconSprite = this.renderer.image.create(badge.icon.url, badge.icon.scale, badge.icon.offsetX, badge.icon.offsetY)
+
 
               this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
               this.badgeSpriteContainer.addChild(badgeStrokeSprite)
