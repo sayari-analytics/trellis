@@ -222,12 +222,12 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     const sourceContainer = this.renderer.nodesById[this.edge.source],
       targetContainer = this.renderer.nodesById[this.edge.target],
       sourceRadius = sourceContainer.radius + sourceContainer.strokeWidth,
-      targetRadius = targetContainer.radius + targetContainer.strokeWidth
-
-    let theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
+      targetRadius = targetContainer.radius + targetContainer.strokeWidth,
+      theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
       start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius),
-      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius),
-      center = midPoint(start[0], start[1], end[0], end[1])
+      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
+
+    let center = midPoint(start[0], start[1], end[0], end[1])
 
     if (sourceContainer === targetContainer) {
       // TODO: handle multiple self-edges
