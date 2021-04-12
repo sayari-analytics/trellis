@@ -232,9 +232,14 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
     if (sourceContainer === targetContainer) {
       // TODO: handle multiple self-edges
       if (this.curve === 0) {
+        this.x0 = sourceContainer.x
+        this.y0 = sourceContainer.y
+        this.x1 = sourceContainer.x
+        this.y1 = sourceContainer.y
+
         center = [sourceContainer.x - sourceRadius, sourceContainer.y]
 
-        const r = sourceRadius * .8
+        const r = sourceRadius * .75
         const circle = new PIXI.Circle(...center, r)
           
         this.renderer.edgesGraphic
