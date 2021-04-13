@@ -203,8 +203,8 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      * TODO - expose edge curve in style spec
      */
     const parallelEdges = this.renderer.edgeIndex[this.edge.source][this.edge.target]
-
-    this.curve = parallelEdges.size - 1
+    // curve will be 0 for 1 self edge and negative for the rest, making it easy to render a single self edge
+    this.curve = this.edge.source === this.edge.target ? 0 : parallelEdges.size - 1
     for (const edgeId of parallelEdges) {
       if (edgeId === this.edge.id) {
         break
@@ -225,10 +225,35 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       targetRadius = targetContainer.radius + targetContainer.strokeWidth,
       theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
       start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius),
-      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius),
-      center = midPoint(start[0], start[1], end[0], end[1])
+      end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
 
-    if (this.curve === 0) {
+    let center = midPoint(start[0], start[1], end[0], end[1])
+
+    if (sourceContainer === targetContainer) {
+      // TODO: handle multiple self-edges
+      if (this.curve === 0) {
+        const r = 2 * sourceRadius
+        center = [sourceContainer.x - r, sourceContainer.y]
+
+        const circle = new PIXI.Circle(...center, r)
+        this.x0 = sourceContainer.x
+        this.y0 = sourceContainer.y
+        this.x1 = sourceContainer.x
+        this.y1 = sourceContainer.y
+          
+        this.renderer.edgesGraphic
+          .moveTo(this.x0, this.y0)
+          .lineStyle(this.width, this.stroke, this.strokeOpacity)
+          .drawShape(circle)
+
+        this.labelContainer.x = center[0] - r
+        this.labelContainer.y = center[1]
+
+        if ((this.labelSprite?.width ?? 0) > (2 * r) ) this.labelContainer.visible = false
+
+        this.line.hitArea = circle
+      }
+    } else if (this.curve === 0) {
       const startArrowOffset = this.reverseArrow ?
         movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius - ArrowSprite.ARROW_HEIGHT) :
         start
@@ -268,20 +293,20 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       // TODO - don't bother rendering hitArea when animating position or dragging
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const perpendicular = theta + HALF_PI
-      const hitAreaVerticies: number[] = new Array(8)
+      const hitAreaVertices: number[] = new Array(8)
       let point = movePoint(start[0], start[1], perpendicular, hoverRadius)
-      hitAreaVerticies[0] = point[0]
-      hitAreaVerticies[1] = point[1]
+      hitAreaVertices[0] = point[0]
+      hitAreaVertices[1] = point[1]
       point = movePoint(end[0], end[1], perpendicular, hoverRadius)
-      hitAreaVerticies[2] = point[0]
-      hitAreaVerticies[3] = point[1]
+      hitAreaVertices[2] = point[0]
+      hitAreaVertices[3] = point[1]
       point = movePoint(end[0], end[1], perpendicular, -hoverRadius)
-      hitAreaVerticies[4] = point[0]
-      hitAreaVerticies[5] = point[1]
+      hitAreaVertices[4] = point[0]
+      hitAreaVertices[5] = point[1]
       point = movePoint(start[0], start[1], perpendicular, -hoverRadius)
-      hitAreaVerticies[6] = point[0]
-      hitAreaVerticies[7] = point[1]
-      this.line.hitArea = new PIXI.Polygon(hitAreaVerticies)
+      hitAreaVertices[6] = point[0]
+      hitAreaVertices[7] = point[1]
+      this.line.hitArea = new PIXI.Polygon(hitAreaVertices)
       // this.renderer.edgesGraphic.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
     } else {
       this.curvePeak = movePoint(
@@ -334,26 +359,26 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
       }
 
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
-      const hitAreaVerticies: number[] = new Array(12)
+      const hitAreaVertices: number[] = new Array(12)
       let point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, hoverRadius)
-      hitAreaVerticies[0] = point[0]
-      hitAreaVerticies[1] = point[1]
+      hitAreaVertices[0] = point[0]
+      hitAreaVertices[1] = point[1]
       point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, hoverRadius)
-      hitAreaVerticies[2] = point[0]
-      hitAreaVerticies[3] = point[1]
+      hitAreaVertices[2] = point[0]
+      hitAreaVertices[3] = point[1]
       point = movePoint(this.x1, this.y1, thetaCurveEnd + HALF_PI, hoverRadius)
-      hitAreaVerticies[4] = point[0]
-      hitAreaVerticies[5] = point[1]
+      hitAreaVertices[4] = point[0]
+      hitAreaVertices[5] = point[1]
       point = movePoint(this.x1, this.y1, theta + HALF_PI, -hoverRadius)
-      hitAreaVerticies[6] = point[0]
-      hitAreaVerticies[7] = point[1]
+      hitAreaVertices[6] = point[0]
+      hitAreaVertices[7] = point[1]
       point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, -hoverRadius)
-      hitAreaVerticies[8] = point[0]
-      hitAreaVerticies[9] = point[1]
+      hitAreaVertices[8] = point[0]
+      hitAreaVertices[9] = point[1]
       point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, -hoverRadius)
-      hitAreaVerticies[10] = point[0]
-      hitAreaVerticies[11] = point[1]
-      this.line.hitArea = new PIXI.Polygon(hitAreaVerticies)
+      hitAreaVertices[10] = point[0]
+      hitAreaVertices[11] = point[1]
+      this.line.hitArea = new PIXI.Polygon(hitAreaVertices)
       // this.renderer.edgesGraphic.lineStyle(1, 0xff0000, 0.5).drawPolygon(this.line.hitArea as any)
     }
 
@@ -382,7 +407,9 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
      */
     if (this.label && this.labelSprite) {
       const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
-      if (this.labelSprite.width > edgeLength) {
+      // For self edges using edgeLength like this won't work, so there is logic in the
+      // if clause handling drawing self edges to hide labels when necessary
+      if (this.labelSprite.width > edgeLength && this.edge.target !== this.edge.source) {
         this.labelSprite.visible = false
       } else {
         this.labelSprite.visible = true
