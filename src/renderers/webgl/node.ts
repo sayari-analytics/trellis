@@ -53,7 +53,7 @@ export class NodeRenderer<N extends Node, E extends Edge>{
   private strokeSpriteContainer: PIXI.Container[] = []
   private strokeSprites: { sprite: PIXI.Sprite, width: number }[] = []
   private badgeSpriteContainer?: PIXI.Container
-  private badgeSprites: { fill: PIXI.Sprite, stroke: PIXI.Sprite, icon?: PIXI.Sprite, angle: number }[] = []
+  private badgeSprites: { fill: PIXI.Sprite, stroke: PIXI.Sprite, icon?: PIXI.Sprite, angle: number, iconXOffset?: number, iconYOffset?: number }[] = []
   private labelContainer = new PIXI.Container() // TODO - create lazily
   private labelSprite?: PIXI.Text
   private labelBackgroundSprite?: PIXI.Sprite
@@ -314,7 +314,14 @@ export class NodeRenderer<N extends Node, E extends Edge>{
               const badgeIconSprite = this.renderer.image.create(badge.icon.url, badge.icon.scale, badge.icon.offsetX, badge.icon.offsetY)
 
 
-              this.badgeSprites.push({ fill: badgeFillSprite, stroke: badgeStrokeSprite, icon: badgeIconSprite, angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI })
+              this.badgeSprites.push({
+                fill: badgeFillSprite,
+                stroke: badgeStrokeSprite,
+                icon: badgeIconSprite,
+                angle: (badge.position * RADIANS_PER_DEGREE) - HALF_PI,
+                iconXOffset: badge.icon.offsetX,
+                iconYOffset: badge.icon.offsetY
+              })
               this.badgeSpriteContainer.addChild(badgeStrokeSprite)
               this.badgeSpriteContainer.addChild(badgeFillSprite)
               badgeIconSprite !== undefined && this.badgeSpriteContainer.addChild(badgeIconSprite)
@@ -458,11 +465,11 @@ export class NodeRenderer<N extends Node, E extends Edge>{
     }
 
     if (this.badge !== undefined) {
-      for (const { fill, stroke, icon, angle } of this.badgeSprites) {
+      for (const { fill, stroke, icon, angle, iconXOffset = 0, iconYOffset = 0 } of this.badgeSprites) {
         const [x, y] = movePoint(0, 0, angle, this.radius + this.strokeWidth)
         fill.position.set(x, y)
         stroke.position.set(x, y)
-        icon?.position.set(x, y)
+        icon?.position.set(x + iconXOffset, y + iconYOffset)
       }
     }
 
