@@ -791,9 +791,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   }
 
   base64 = (resolution: number = 2, mimetype: string = 'image/jpeg') => {
-    return new Promise<string>((resolve) => {
+    return new Promise<string>((resolve, reject) => {
       const cancelAnimationFrame = animationFrameLoop((time) => {
         if (!this.fontLoader.loading() && !this.imageLoader.loading()) {
+          return
+        }
+
+        cancelAnimationFrame()
+
+        try {
           this.render(time)
           // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
           const background = new PIXI.Graphics()
@@ -803,6 +809,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
           this.root.addChildAt(background, 0)
 
+          // what causes this to throw on some machines? https://github.com/sayari-analytics/graph-ui/issues/1557
           const imageTexture = this.app.renderer.generateTexture(
             this.root,
             PIXI.SCALE_MODES.LINEAR,
@@ -814,9 +821,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
           imageTexture.destroy()
           this.root.removeChild(background)
           background.destroy()
-          cancelAnimationFrame()
 
           resolve(dataURL)
+        } catch (err) {
+          reject(err)
         }
       })
     })
