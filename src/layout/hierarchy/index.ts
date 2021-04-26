@@ -79,6 +79,29 @@ const _hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: 
 
 const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarchyToGraph(hierarchy, {})
 
+const findSubgraphNode = (node: Node, id: string): Node | undefined => {
+  if (node.id === id) return node
+
+  if (node.subgraph !== undefined) {
+    for (const subgraphNode of node.subgraph.nodes) {
+      const nestedNode = findSubgraphNode(subgraphNode, id)
+      if (nestedNode !== undefined) return nestedNode
+    }
+  }
+
+  return undefined
+}
+
+const findParent = (nodes: Node[], id: string): Node | undefined => {
+  return nodes.find((node) => {
+    if (node.subgraph !== undefined) {
+      for (const subgraphNode of node.subgraph.nodes) {
+        const nestedNode = findSubgraphNode(subgraphNode, id)
+        if (nestedNode !== undefined) return true
+      }
+    }
+  })
+}
 
 
 export const Layout = () => {
@@ -97,10 +120,12 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
-    if (edgeIndex[root] === undefined) {
+    const parent = edgeIndex[root] === undefined ? findParent(graph.nodes, root) : undefined
+    if (edgeIndex[root] === undefined && parent === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
+    const leastNestedRoot = parent?.id ?? root
     const layout = graph.options?.size !== undefined ?
       tree<Hierarchy>().size(graph.options.size) :
       tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
@@ -113,8 +138,8 @@ export const Layout = () => {
       layout(
         hierarchy(
           graph.options?.bfs !== false ?
-            graphToBFSHierarchy(edgeIndex, root) :
-            graphToDFSHierarchy(edgeIndex, root)
+            graphToBFSHierarchy(edgeIndex, leastNestedRoot) :
+            graphToDFSHierarchy(edgeIndex, leastNestedRoot)
         )
       )
     )
@@ -128,7 +153,7 @@ export const Layout = () => {
     //     graphToDFSHierarchy(edgeIndex, root)
     // )
 
-    const { x, y } = graph.nodes.find((node) => node.id === root) ?? { x: undefined, y: undefined }
+    const { x, y } = graph.nodes.find((node) => node.id === leastNestedRoot) ?? { x: undefined, y: undefined }
     const xOffset = (graph.options?.x ?? 0) + (x ?? 0)
     const yOffset = (graph.options?.y ?? 0) - (y ?? 0)
 

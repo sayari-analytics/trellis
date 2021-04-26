@@ -53,7 +53,10 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
 
 
 let nodes = Object.values(graphData.nodes)
-  .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
+  .map((node, idx) => ({
+    ...node,
+    label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label 
+  }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
   .map<Node>(({ id, label, type }) => ({
@@ -61,6 +64,18 @@ let nodes = Object.values(graphData.nodes)
     label,
     radius: 18,
     type,
+    subgraph: {
+      nodes: [{
+        id: 'subgraph-node-test',
+        radius: 18,
+        type,
+        label: 'test',
+        style: type === 'company' ?
+          createCompanyStyle(18) :
+          createPersonStyle(18),
+      }],
+      edges: [] as Graph.Edge[]
+    },
     style: type === 'company' ?
       createCompanyStyle(18) :
       createPersonStyle(18)
@@ -208,7 +223,7 @@ zoomControl({
 })
 
 let layout = 'hierarchy'
-const hierarchyData = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
+const hierarchyData = hierarchy('subgraph-node-test', { nodes, edges, options: layoutOptions })
 nodes = hierarchyNodes = hierarchyData.nodes
 edges = hierarchyEdges = hierarchyData.edges
 force({ nodes, edges }).then((forceData) => {
