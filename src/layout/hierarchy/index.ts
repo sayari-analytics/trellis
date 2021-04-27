@@ -93,14 +93,16 @@ const findSubgraphNode = (node: Node, id: string): Node | undefined => {
 }
 
 const findParent = (nodes: Node[], id: string): Node | undefined => {
-  return nodes.find((node) => {
+  for (const node of nodes) {
     if (node.subgraph !== undefined) {
       for (const subgraphNode of node.subgraph.nodes) {
         const nestedNode = findSubgraphNode(subgraphNode, id)
-        if (nestedNode !== undefined) return true
+        if (nestedNode !== undefined) return node
       }
     }
-  })
+  }
+
+  return undefined
 }
 
 
