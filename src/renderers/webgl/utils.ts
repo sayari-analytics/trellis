@@ -48,7 +48,9 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 export const clientPositionFromEvent = (event: MouseEvent | PointerEvent | TouchEvent) => (
   event instanceof MouseEvent || event instanceof PointerEvent ?
     { x: event.clientX, y: event.clientY } :
-    { x: event.touches[0].clientX, y: event.touches[0].clientY }
+    event.type === 'touchend' ?
+      { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY } :
+      { x: event.touches[0].clientX, y: event.touches[0].clientY }
 )
 
 
