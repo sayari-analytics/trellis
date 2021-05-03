@@ -64,18 +64,6 @@ let nodes = Object.values(graphData.nodes)
     label,
     radius: 18,
     type,
-    subgraph: {
-      nodes: [{
-        id: 'subgraph-node-test',
-        radius: 18,
-        type,
-        label: 'test',
-        style: type === 'company' ?
-          createCompanyStyle(18) :
-          createPersonStyle(18),
-      }],
-      edges: [] as Graph.Edge[]
-    },
     style: type === 'company' ?
       createCompanyStyle(18) :
       createPersonStyle(18)
@@ -223,7 +211,7 @@ zoomControl({
 })
 
 let layout = 'hierarchy'
-const hierarchyData = hierarchy('subgraph-node-test', { nodes, edges, options: layoutOptions })
+const hierarchyData = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
 nodes = hierarchyNodes = hierarchyData.nodes
 edges = hierarchyEdges = hierarchyData.edges
 force({ nodes, edges }).then((forceData) => {

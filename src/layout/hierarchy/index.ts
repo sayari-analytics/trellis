@@ -79,26 +79,26 @@ const _hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: 
 
 const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarchyToGraph(hierarchy, {})
 
-const findSubgraphNode = (node: Node, id: string): Node | undefined => {
-  if (node.id === id) return node
+const containsSubgraphNode = (nodes: Node[], id: string): boolean => {
+  for(const node of nodes) {
+    if (node.id === id) return true
 
-  if (node.subgraph !== undefined) {
-    for (const subgraphNode of node.subgraph.nodes) {
-      const nestedNode = findSubgraphNode(subgraphNode, id)
-      if (nestedNode !== undefined) return nestedNode
+    if (node.subgraph !== undefined) {
+      const exists = containsSubgraphNode(node.subgraph.nodes, id)
+      if (exists) return true
     }
   }
 
-  return undefined
+  return false
 }
 
-const findParent = (nodes: Node[], id: string): Node | undefined => {
+const findAncestor = (nodes: Node[], id: string): string | undefined => {
   for (const node of nodes) {
+    if (node.id === id) return node.id
+
     if (node.subgraph !== undefined) {
-      for (const subgraphNode of node.subgraph.nodes) {
-        const nestedNode = findSubgraphNode(subgraphNode, id)
-        if (nestedNode !== undefined) return node
-      }
+      const exists = containsSubgraphNode(node.subgraph.nodes, id)
+      if (exists) return node.id
     }
   }
 
@@ -107,7 +107,7 @@ const findParent = (nodes: Node[], id: string): Node | undefined => {
 
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
+  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []
@@ -122,12 +122,12 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
-    const parent = edgeIndex[root] === undefined ? findParent(graph.nodes, root) : undefined
-    if (edgeIndex[root] === undefined && parent === undefined) {
+    const root = edgeIndex[rootId] === undefined ? (findAncestor(graph.nodes, rootId) ?? rootId) : rootId
+
+    if (edgeIndex[root] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
-    const leastNestedRoot = parent?.id ?? root
     const layout = graph.options?.size !== undefined ?
       tree<Hierarchy>().size(graph.options.size) :
       tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
@@ -140,8 +140,8 @@ export const Layout = () => {
       layout(
         hierarchy(
           graph.options?.bfs !== false ?
-            graphToBFSHierarchy(edgeIndex, leastNestedRoot) :
-            graphToDFSHierarchy(edgeIndex, leastNestedRoot)
+            graphToBFSHierarchy(edgeIndex, root) :
+            graphToDFSHierarchy(edgeIndex, root)
         )
       )
     )
@@ -155,7 +155,7 @@ export const Layout = () => {
     //     graphToDFSHierarchy(edgeIndex, root)
     // )
 
-    const { x, y } = graph.nodes.find((node) => node.id === leastNestedRoot) ?? { x: undefined, y: undefined }
+    const { x, y } = graph.nodes.find((node) => node.id === root) ?? { x: undefined, y: undefined }
     const xOffset = (graph.options?.x ?? 0) + (x ?? 0)
     const yOffset = (graph.options?.y ?? 0) - (y ?? 0)
 
