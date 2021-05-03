@@ -79,10 +79,35 @@ const _hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: 
 
 const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarchyToGraph(hierarchy, {})
 
+const containsSubgraphNode = (nodes: Node[], id: string): boolean => {
+  for(const node of nodes) {
+    if (node.id === id) return true
+
+    if (node.subgraph !== undefined) {
+      const exists = containsSubgraphNode(node.subgraph.nodes, id)
+      if (exists) return true
+    }
+  }
+
+  return false
+}
+
+const findAncestor = (nodes: Node[], id: string): string | undefined => {
+  for (const node of nodes) {
+    if (node.id === id) return node.id
+
+    if (node.subgraph !== undefined) {
+      const exists = containsSubgraphNode(node.subgraph.nodes, id)
+      if (exists) return node.id
+    }
+  }
+
+  return undefined
+}
 
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(root: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
+  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []
@@ -96,6 +121,8 @@ export const Layout = () => {
 
       return edgeIndex
     }, {})
+
+    const root = edgeIndex[rootId] === undefined ? (findAncestor(graph.nodes, rootId) ?? rootId) : rootId
 
     if (edgeIndex[root] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }

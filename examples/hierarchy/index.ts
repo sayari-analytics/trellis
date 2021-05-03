@@ -53,7 +53,10 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
 
 
 let nodes = Object.values(graphData.nodes)
-  .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
+  .map((node, idx) => ({
+    ...node,
+    label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label 
+  }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
   .map<Node>(({ id, label, type }) => ({
