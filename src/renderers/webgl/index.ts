@@ -793,7 +793,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   base64 = (resolution: number = 2, mimetype: string = 'image/jpeg') => {
     return new Promise<string>((resolve, reject) => {
       const cancelAnimationFrame = animationFrameLoop((time) => {
-        if (!this.fontLoader.loading() && !this.imageLoader.loading()) {
+        if (this.fontLoader.loading() || this.imageLoader.loading()) {
           return
         }
 
