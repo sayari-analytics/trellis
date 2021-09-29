@@ -240,7 +240,7 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
         this.y0 = sourceContainer.y
         this.x1 = sourceContainer.x
         this.y1 = sourceContainer.y
-          
+
         this.renderer.edgesGraphic
           .moveTo(this.x0, this.y0)
           .lineStyle(this.width, this.stroke, this.strokeOpacity)
@@ -358,6 +358,9 @@ export class EdgeRenderer<N extends Node, E extends Edge>{
         this.reverseArrow.rotation = thetaCurveStart + Math.PI
       }
 
+      /**
+       * TODO - properly calculate bezier hit area: https://github.com/w8r/bezier-intersect#quadbezieraabbax-ay-cx-cy-bx-by-minx-miny-maxx-maxy-resultarraynumbernumber
+       */
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const hitAreaVertices: number[] = new Array(12)
       let point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, hoverRadius)
