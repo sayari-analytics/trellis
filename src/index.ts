@@ -333,9 +333,11 @@ export function* bfs<N extends Node, E extends Edge>(predicate: (node: N) => boo
       yield nodes[node]
     }
 
-    for (const adjacentNode of adjacencyList[node]) {
-      if (!visited.has(adjacentNode)) {
-        queue.push(adjacentNode)
+    if (adjacencyList[node]) {
+      for (const adjacentNode of adjacencyList[node]) {
+        if (!visited.has(adjacentNode)) {
+          queue.push(adjacentNode)
+        }
       }
     }
   }
