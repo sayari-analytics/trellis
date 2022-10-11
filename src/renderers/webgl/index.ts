@@ -16,6 +16,7 @@ import { CircleAnnotationRenderer } from './annotations/circle'
 import { clientPositionFromEvent, pointerKeysFromEvent } from './utils'
 import { AnnotationRenderer } from './annotations'
 import { RectangleAnnotationRenderer } from './annotations/rectangle'
+import { TextAnnotationRenderer } from './annotations/text'
 
 
 install(PIXI)
@@ -28,6 +29,12 @@ export type NodeDragEvent = { type: 'nodeDrag', x: number, y: number, clientX: n
 
 
 export type EdgePointerEvent = { type: 'edgePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Edge, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+
+
+export type AnnotationPointerEvent = { type: 'annotationPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+
+
+export type AnnotationDragEvent = { type: 'annotationDrag',  x: number, y: number, clientX: number, clientY: number, annotationX: number, annotationY: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
 export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -75,6 +82,15 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onEdgePointerLeave?: (event: EdgePointerEvent) => void
   onEdgeClick?: (event: EdgePointerEvent) => void
   onEdgeDoubleClick?: (event: EdgePointerEvent) => void
+  onAnnotationPointerEnter?: (event: AnnotationPointerEvent) => void
+  onAnnotationPointerDown?: (event: AnnotationPointerEvent) => void
+  onAnnotationDragStart?: (event: AnnotationDragEvent) => void
+  onAnnotationDrag?: (event: AnnotationDragEvent) => void
+  onAnnotationDragEnd?: (event: AnnotationDragEvent) => void
+  onAnnotationPointerUp?: (event: AnnotationPointerEvent) => void
+  onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
+  onAnnotationClick?: (event: AnnotationPointerEvent) => void
+  onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -119,6 +135,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   clickedNode?: NodeRenderer<N, E>
   hoveredEdge?: EdgeRenderer<N, E>
   clickedEdge?: EdgeRenderer<N, E>
+  hoveredAnnotation?: AnnotationRenderer
+  clickedAnnotation?: AnnotationRenderer
   dragging = false
   dirty = false
   viewportDirty = false
@@ -195,6 +213,16 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onEdgePointerLeave?: (event: EdgePointerEvent) => void
   onEdgeClick?: (event: EdgePointerEvent) => void
   onEdgeDoubleClick?: (event: EdgePointerEvent) => void
+  onAnnotationPointerEnter?: (event: AnnotationPointerEvent) => void
+  onAnnotationPointerDown?: (event: AnnotationPointerEvent) => void
+  onAnnotationDragStart?: (event: AnnotationDragEvent) => void
+  onAnnotationDrag?: (event: AnnotationDragEvent) => void
+  onAnnotationDragEnd?: (event: AnnotationDragEvent) => void
+  onAnnotationPointerUp?: (event: AnnotationPointerEvent) => void
+  onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
+  onAnnotationClick?: (event: AnnotationPointerEvent) => void
+  onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
+  // onAnnotationResize?: (event: AnnotationResizeEvent) => void
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -288,6 +316,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDragStart, onNodeDrag, onNodeDragEnd, onNodePointerUp, onNodeClick, onNodeDoubleClick, onNodePointerLeave,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgeClick, onEdgeDoubleClick, onEdgePointerLeave,
+      onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationPointerUp, onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
       onViewportPointerEnter, onViewportPointerDown, onViewportDragStart, onViewportDrag, onViewportDragEnd, onViewportPointerMove, onViewportPointerUp, onViewportClick, onViewportDoubleClick, onViewportPointerLeave, onViewportWheel,
     } = RENDERER_OPTIONS,
     annotations
@@ -307,6 +336,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onEdgeClick = onEdgeClick
     this.onEdgeDoubleClick = onEdgeDoubleClick
     this.onEdgePointerLeave = onEdgePointerLeave
+    this.onAnnotationPointerEnter = onAnnotationPointerEnter
+    this.onAnnotationPointerDown = onAnnotationPointerDown
+    this.onAnnotationDragStart = onAnnotationDragStart
+    this.onAnnotationDrag = onAnnotationDrag
+    this.onAnnotationDragEnd = onAnnotationDragEnd
+    this.onAnnotationPointerUp = onAnnotationPointerUp
+    this.onAnnotationPointerLeave = onAnnotationPointerLeave
+    this.onAnnotationClick = onAnnotationClick
+    this.onAnnotationDoubleClick = onAnnotationDoubleClick
     this.onViewportPointerEnter = onViewportPointerEnter
     this.onViewportPointerDown = onViewportPointerDown
     this.onViewportDragStart = onViewportDragStart
@@ -502,6 +540,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
           annotationsById[id] = new CircleAnnotationRenderer(this, annotation)
         } else if (annotation.type === 'rectangle') {
           annotationsById[id] = new RectangleAnnotationRenderer(this, annotation)
+        } else if (annotation.type === 'text') {
+          annotationsById[id] = new TextAnnotationRenderer(this, annotation)
         }
 
         this.dirty = true
@@ -511,6 +551,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
           annotationsById[id] = (this.annotationsById[id] as CircleAnnotationRenderer).update(annotation)
         } else if (annotation.type === 'rectangle') {
           annotationsById[id] = (this.annotationsById[id] as RectangleAnnotationRenderer).update(annotation)
+        } else if (annotation.type === 'text') {
+          annotationsById[id] = (this.annotationsById[id] as TextAnnotationRenderer).update(annotation)
         }
 
         this.dirty = true
@@ -846,7 +888,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.dragInteraction.down(event)
     this.decelerateInteraction.down()
 
-    if (this.hoveredNode === undefined && this.clickedNode === undefined  && this.hoveredEdge === undefined && this.clickedEdge === undefined) {
+    if (this.hoveredNode === undefined && this.clickedNode === undefined && 
+        this.hoveredEdge === undefined && this.clickedEdge === undefined &&
+        this.hoveredAnnotation === undefined && this.clickedAnnotation == undefined
+    ) {
       this.clickedContainer = true
       const { x, y } = this.root.toLocal(event.data.global)
       const client = clientPositionFromEvent(event.data.originalEvent)

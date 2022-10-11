@@ -108,9 +108,37 @@ export type RectangleAnnotation = {
   }
 }
 
+export type TextAnnotation = {
+  type: 'text'
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  content: string
+  resize?: boolean
+  boxStyle: {
+    color: string
+    stroke: {
+      color: string
+      width: number
+    }
+  }
+  textStyle?: Partial<{
+    fontName: string
+    fontSize: number
+    weight: string
+    color: string
+    align: 'left' | 'center' | 'right' | 'justify'
+    spacing: number
+    maxWidth: number
+  }>
+}
+
 
 export type Annotation = CircleAnnotation
   | RectangleAnnotation
+  | TextAnnotation
 
 
 export type Bounds = { left: number, top: number, right: number, bottom: number }
