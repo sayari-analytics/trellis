@@ -80,19 +80,7 @@ export class TextAnnotationRenderer {
     }
 
 
-    this.textSprite.x = this.annotation.x
-    this.textSprite.y = this.annotation.y
-
-    this.textSprite.text = this.annotation.content
-    this.textSprite.style.fontFamily = this.annotation.textStyle?.fontName ?? 'Arial'
-    this.textSprite.style.fontSize = this.annotation.textStyle?.fontSize ?? 14
-    this.textSprite.style.stroke = this.annotation.textStyle?.color ?? '#000000'
-    this.textSprite.style.letterSpacing = this.annotation.textStyle?.spacing ?? 0
-    this.textSprite.style.wordWrap = true
-    this.textSprite.style.wordWrapWidth = this.annotation.textStyle?.maxWidth ?? this.annotation.width ?? 0
-    this.textSprite.style.align = this.annotation.textStyle?.align ?? 'left'
-
-    this.textSprite.updateText(false)
+    this.styleText()
   }
 
 
@@ -137,26 +125,51 @@ export class TextAnnotationRenderer {
           .endFill()      }
 
     if (containerUpdated || textUpdated) {
-      this.textSprite.x = this.annotation.x
-      this.textSprite.y = this.annotation.y
-
-      if (textUpdated) {
-        this.textSprite.text = this.annotation.content
-        this.textSprite.style.fontFamily = this.annotation.textStyle?.fontName ?? 'Arial'
-        this.textSprite.style.fontSize = this.annotation.textStyle?.fontSize ?? 14
-        this.textSprite.style.stroke = this.annotation.textStyle?.color ?? '#000000'
-        this.textSprite.style.letterSpacing = this.annotation.textStyle?.spacing ?? 0
-        this.textSprite.style.wordWrap = true
-        this.textSprite.style.wordWrapWidth = this.annotation.textStyle?.maxWidth ?? this.annotation.width ?? 0
-        this.textSprite.style.align = this.annotation.textStyle?.align ?? 'left'
-      }
-
-      this.textSprite.updateText(false)
+      this.styleText()
     }
 
     return this
   }
 
+
+  private styleText() {
+    // this.textSprite.style.padding = 4 wasn't working
+    // so I artificially adding some padding
+    let text = this.annotation.content
+
+    const style = new PIXI.TextStyle({
+      fontFamily: this.annotation.textStyle?.fontName ?? 'Arial',
+      fontSize: this.annotation.textStyle?.fontSize ?? 14,
+      stroke: this.annotation.textStyle?.color ?? '#000000',
+      letterSpacing: this.annotation.textStyle?.spacing ?? 0,
+      wordWrap: true,
+      //account for padding
+      wordWrapWidth: this.annotation.textStyle?.maxWidth ?? this.annotation.width - 2 ?? 0,
+      breakWords: true,
+      align: this.annotation.textStyle?.align ?? 'left'
+    })
+
+
+    const metrics = PIXI.TextMetrics.measureText(this.annotation.content, style, true)
+
+    if (metrics.height > this.annotation.height - 2) {
+      const numLines = Math.floor((this.annotation.height - 2) / metrics.lineHeight)
+      text = metrics.lines
+        .slice(0, numLines)
+        // not sure about if I should join with the whitespace or not
+        .join(' ')
+        .slice(undefined, -3)
+        .concat('...')
+    }
+
+    this.textSprite.x = this.annotation.x + 2
+    this.textSprite.y = this.annotation.y + 2
+
+    this.textSprite.text = text
+    this.textSprite.style = style
+
+    this.textSprite.updateText(false)
+  }
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
     if (this.renderer.hoveredAnnotation === this || this.renderer.clickedAnnotation !== undefined || this.renderer.dragging) return
@@ -295,7 +308,12 @@ export class TextAnnotationRenderer {
     this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
-  private clearDoubleClick = () => {
+  private resize(event: PIXI.InteractionEvent) {
+
+    return
+  }
+
+  private clearDoubleClick() {
     this.doubleClickTimeout = undefined
     this.doubleClick = false
   }

@@ -36,7 +36,7 @@ const App: FunctionComponent = () => {
       x: 10,
       y: 10,
       resize: true,
-      content: 'This is a test lalalalalalalalalalalalalallalal',
+      content: 'This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text.',
       boxStyle: {
         color: '#FFFFFF',
         stroke: {
