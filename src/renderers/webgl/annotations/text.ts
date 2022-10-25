@@ -5,10 +5,9 @@ import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '..
 
 
 //TODO
-// - deal with overflow
-// - resizing
-// - set min size
-// - deal with limiting how the cursor can move when resizing
+// - fix buggy drag/resize interaction
+// - make styling look nice
+// - test changing font family, size, alignment etc..
 
 export class TextAnnotationRenderer {
 
