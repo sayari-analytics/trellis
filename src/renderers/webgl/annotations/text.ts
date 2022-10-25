@@ -7,6 +7,8 @@ import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '..
 //TODO
 // - deal with overflow
 // - resizing
+// - set min size
+// - deal with limiting how the cursor can move when resizing
 
 export class TextAnnotationRenderer {
 
@@ -14,16 +16,18 @@ export class TextAnnotationRenderer {
   y: number
   dirty = false
 
+  private renderer: InternalRenderer<any, any>
+
   private annotation: TextAnnotation
   private annotationContainer = new PIXI.Container()
   private resizeContainer = new PIXI.Container()
 
-
-  private renderer: InternalRenderer<any, any>
   private rectangleGraphic = new PIXI.Graphics()
   private triangleGraphic = new PIXI.Graphics()
-
   private textSprite = new PIXI.Text('')
+
+  // private annotationDragging = false
+  // private triangleDragging = false
 
   private moveOffsetX = 0
   private moveOffsetY = 0
@@ -37,11 +41,22 @@ export class TextAnnotationRenderer {
     this.annotationContainer.interactive = true
     this.annotationContainer.buttonMode = true
 
+    this.resizeContainer.interactive = true
+    this.resizeContainer.buttonMode = true
+
+    this.resizeContainer.addChild(this.triangleGraphic)
+
     this.annotationContainer.addChild(this.rectangleGraphic)
-    this.annotationContainer.addChild(this.triangleGraphic)
     this.annotationContainer.addChild(this.textSprite)
 
     this.renderer.annotationsBottomLayer.addChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.addChild(this.resizeContainer)
+
+    this.resizeContainer
+      .on('pointerdown', this.trianglePointerDown)
+      .on('pointerup', this.trianglePointerUp)
+      .on('pointerupoutside', this.trianglePointerUp)
+      .on('pointercancel', this.trianglePointerUp)
 
     this.annotationContainer
       .on('pointerover', this.pointerEnter)
@@ -62,20 +77,19 @@ export class TextAnnotationRenderer {
       .endFill()
 
     if (this.annotation.resize) {
-      const origin = [
-        this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.height,
-      ]
-
-      const vertices = [
-        origin[0] - 10, origin[1],
-        origin[0], origin[1] - 10
+      const triangleOrigin = [
+        this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.height
       ]
 
       this.triangleGraphic
         .clear()
         .beginFill(colorToNumber(this.annotation.boxStyle.color))
         .lineStyle(1, 0x000000)
-        .drawPolygon([...origin, ...vertices])
+        .drawPolygon([
+          ...triangleOrigin, 
+          triangleOrigin[0] - 10, triangleOrigin[1],
+          triangleOrigin[0], triangleOrigin[1] - 10
+        ])
         .endFill()      
     }
 
@@ -83,57 +97,42 @@ export class TextAnnotationRenderer {
     this.styleText()
   }
 
-
   update(annotation: TextAnnotation) {
-
-    const containerUpdated = this.annotation.width !== annotation.width ||
-      this.annotation.height !== annotation.height ||
-      this.annotation.x !== annotation.x ||
-      this.annotation.y !== annotation.y
-
-    const boxUpdated = !equals(this.annotation.boxStyle, annotation.boxStyle)
-    const textUpdated = this.annotation.content !== annotation.content ||
-      !equals(this.annotation.textStyle, annotation.textStyle)
 
     this.annotation = annotation
 
     this.x = this.annotation.x
     this.y = this.annotation.y
 
-    if (containerUpdated || boxUpdated) {
-      this.rectangleGraphic
-        .clear()
-        .beginFill(colorToNumber(this.annotation.boxStyle.color))
-        .lineStyle(this.annotation.boxStyle.stroke.width, colorToNumber(this.annotation.boxStyle.stroke.color))
-        .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
-        .endFill()
+    this.rectangleGraphic
+      .clear()
+      .beginFill(colorToNumber(this.annotation.boxStyle.color))
+      .lineStyle(this.annotation.boxStyle.stroke.width, colorToNumber(this.annotation.boxStyle.stroke.color))
+      .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
+      .endFill()
 
-        const origin = [
-          this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.height,
-        ]
-  
-        const vertices = [
-          origin[0] - 10, origin[1],
-          origin[0], origin[1] - 10
-        ]
-  
-        this.triangleGraphic
-          .clear()
-          .beginFill(colorToNumber(this.annotation.boxStyle.color))
-          .lineStyle(1, 0x000000)
-          .drawPolygon([...origin, ...vertices])
-          .endFill()      }
+    const triangleOrigin = [
+      this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.height
+    ]
 
-    if (containerUpdated || textUpdated) {
-      this.styleText()
-    }
+    this.triangleGraphic
+      .clear()
+      .beginFill(colorToNumber(this.annotation.boxStyle.color))
+      .lineStyle(1, 0x000000)
+      .drawPolygon([
+        ...triangleOrigin, 
+        triangleOrigin[0] - 10, triangleOrigin[1],
+        triangleOrigin[0], triangleOrigin[1] - 10
+      ])
+      .endFill()   
+
+    this.styleText()
 
     return this
   }
 
-
   private styleText() {
-    // this.textSprite.style.padding = 4 wasn't working
+    // this.textSprite.style.padding = 4 wasn't working as expected
     // so I artificially adding some padding
     let text = this.annotation.content
 
@@ -178,10 +177,6 @@ export class TextAnnotationRenderer {
 
     this.dirty = true
     this.renderer.dirty = true
-    // this.renderer.nodesLayer.removeChild(this.nodeContainer)
-    // this.renderer.labelsLayer.removeChild(this.labelContainer)
-    // this.renderer.frontNodeLayer.addChild(this.nodeContainer)
-    // this.renderer.frontLabelLayer.addChild(this.labelContainer)
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
@@ -253,7 +248,7 @@ export class TextAnnotationRenderer {
     if (this.renderer.clickedAnnotation === undefined) return
 
     this.renderer.clickedAnnotation = undefined
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.trianglePointerMove)
     this.renderer.zoomInteraction.resume()
     this.renderer.dragInteraction.resume()
     this.renderer.decelerateInteraction.resume()
@@ -298,17 +293,73 @@ export class TextAnnotationRenderer {
 
     this.dirty = true
     this.renderer.dirty = true
-    // this.renderer.frontNodeLayer.removeChild(this.nodeContainer)
-    // this.renderer.frontLabelLayer.removeChild(this.labelContainer)
-    // this.renderer.nodesLayer.addChild(this.nodeContainer)
-    // this.renderer.labelsLayer.addChild(this.labelContainer)
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
-  private resize(event: PIXI.InteractionEvent) {
+  private trianglePointerDown = (_: PIXI.InteractionEvent) => {
+    if (this.doubleClickTimeout === undefined) {
+      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+    } else {
+      this.doubleClick = true
+    }
+
+    this.renderer.clickedAnnotation = this
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.trianglePointerMove)
+    this.renderer.zoomInteraction.pause()
+    this.renderer.dragInteraction.pause()
+    this.renderer.decelerateInteraction.pause()
+
+    return
+  }
+
+  private trianglePointerMove = (event: PIXI.InteractionEvent) => {
+    if (this.renderer.clickedAnnotation === undefined) return
+
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    
+    if (!this.renderer.dragging) {
+      this.renderer.dragging = true
+    }
+
+    const triangleOrigin = [
+      this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.height
+    ]
+
+    const dx = x - triangleOrigin[0]
+    const dy = y - triangleOrigin[1]
+
+    const newWidth = this.annotation.width + dx
+    const newHeight = this.annotation.height + dy
+
+    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x, y, dx: newWidth < 15 ? 0 : dx, dy: newHeight < 15 ? 0 : dy, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+
+    return
+  }
+
+  private trianglePointerUp = (event: PIXI.InteractionEvent) => {
+    if (this.renderer.clickedAnnotation === undefined) return
+
+    this.renderer.clickedAnnotation = undefined
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
+    this.renderer.zoomInteraction.resume()
+    this.renderer.dragInteraction.resume()
+    this.renderer.decelerateInteraction.resume()
+
+    const { x, y } = this.renderer.root.toLocal(event.data.global)
+    const client = clientPositionFromEvent(event.data.originalEvent)
+
+    if (this.renderer.dragging) {
+      this.renderer.dragging = false
+    } else {
+      if (this.doubleClick) {
+        this.doubleClick = false
+        this.doubleClickTimeout = undefined
+        this.renderer.onAnnotationDoubleClick?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+      }
+    }
 
     return
   }

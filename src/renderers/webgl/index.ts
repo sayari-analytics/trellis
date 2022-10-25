@@ -37,6 +37,9 @@ export type AnnotationPointerEvent = { type: 'annotationPointer', x: number, y: 
 export type AnnotationDragEvent = { type: 'annotationDrag',  x: number, y: number, clientX: number, clientY: number, annotationX: number, annotationY: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
+export type AnnotationResizeEvent = { type: 'annotationResize',  x: number, y: number, dx: number, dy: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+
+
 export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
@@ -87,6 +90,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onAnnotationDragStart?: (event: AnnotationDragEvent) => void
   onAnnotationDrag?: (event: AnnotationDragEvent) => void
   onAnnotationDragEnd?: (event: AnnotationDragEvent) => void
+  onAnnotationResize?: (event: AnnotationResizeEvent) => void
   onAnnotationPointerUp?: (event: AnnotationPointerEvent) => void
   onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
   onAnnotationClick?: (event: AnnotationPointerEvent) => void
@@ -222,7 +226,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
   onAnnotationClick?: (event: AnnotationPointerEvent) => void
   onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
-  // onAnnotationResize?: (event: AnnotationResizeEvent) => void
+  onAnnotationResize?: (event: AnnotationResizeEvent) => void
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -316,7 +320,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDragStart, onNodeDrag, onNodeDragEnd, onNodePointerUp, onNodeClick, onNodeDoubleClick, onNodePointerLeave,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgeClick, onEdgeDoubleClick, onEdgePointerLeave,
-      onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationPointerUp, onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
+      onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationResize, onAnnotationPointerUp, onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
       onViewportPointerEnter, onViewportPointerDown, onViewportDragStart, onViewportDrag, onViewportDragEnd, onViewportPointerMove, onViewportPointerUp, onViewportClick, onViewportDoubleClick, onViewportPointerLeave, onViewportWheel,
     } = RENDERER_OPTIONS,
     annotations
@@ -341,6 +345,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onAnnotationDragStart = onAnnotationDragStart
     this.onAnnotationDrag = onAnnotationDrag
     this.onAnnotationDragEnd = onAnnotationDragEnd
+    this.onAnnotationResize = onAnnotationResize
     this.onAnnotationPointerUp = onAnnotationPointerUp
     this.onAnnotationPointerLeave = onAnnotationPointerLeave
     this.onAnnotationClick = onAnnotationClick

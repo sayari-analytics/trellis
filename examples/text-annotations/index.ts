@@ -72,6 +72,17 @@ const App: FunctionComponent = () => {
       ))
     }))
   }, [])
+
+  const onAnnotationResize = useCallback(({ dx, dy, target: { id, x = 0, y = 0 } }: WebGL.AnnotationResizeEvent) => {
+    setGraph((graph) => ({
+      ...graph,
+      annotations: graph.annotations.map((annotation) => (
+        annotation.id === id && annotation.type === 'text' ? (
+          { ...annotation, width: annotation.width + dx, height: annotation.height + dy }
+        ) : annotation
+      ))
+    }))
+  }, [])
   
   const onViewportPointerUp = useCallback(() => {
     setGraph((graph) => ({
@@ -122,6 +133,7 @@ const App: FunctionComponent = () => {
                   onViewportPointerUp,
                   onViewportWheel,
                   onAnnotationDrag,
+                  onAnnotationResize,
                   debug: { stats }
                 })
               )
