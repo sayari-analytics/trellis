@@ -29,7 +29,7 @@ export class TextAnnotationRenderer {
   private textSprite = new PIXI.Text('')
 
   private interaction: 'drag' | 'resize' | undefined
-  private clickedTriangle: PIXI.Graphics | undefined
+  private resizeClicked: PIXI.Graphics | undefined
 
   private moveOffsetX = 0
   private moveOffsetY = 0
@@ -55,10 +55,10 @@ export class TextAnnotationRenderer {
     this.renderer.annotationsBottomLayer.addChild(this.resizeContainer)
 
     this.resizeContainer
-      .on('pointerdown', this.trianglePointerDown)
-      .on('pointerup', this.trianglePointerUp)
-      .on('pointerupoutside', this.trianglePointerUp)
-      .on('pointercancel', this.trianglePointerUp)
+      .on('pointerdown', this.resizePointerDown)
+      .on('pointerup', this.resizePointerUp)
+      .on('pointerupoutside', this.resizePointerUp)
+      .on('pointercancel', this.resizePointerUp)
 
     this.annotationContainer
       .on('pointerover', this.pointerEnter)
@@ -205,7 +205,7 @@ export class TextAnnotationRenderer {
   }
 
   private pointerMove = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined || this.clickedTriangle !== undefined || this.interaction === 'resize') return
+    if (this.renderer.clickedAnnotation === undefined || this.resizeClicked !== undefined || this.interaction === 'resize') return
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
@@ -248,10 +248,10 @@ export class TextAnnotationRenderer {
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined || this.clickedTriangle !== undefined) return
+    if (this.renderer.clickedAnnotation === undefined || this.resizeClicked !== undefined) return
 
     this.renderer.clickedAnnotation = undefined
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.trianglePointerMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.resizePointerMove)
     this.renderer.zoomInteraction.resume()
     this.renderer.dragInteraction.resume()
     this.renderer.decelerateInteraction.resume()
@@ -303,11 +303,11 @@ export class TextAnnotationRenderer {
     this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
-  private trianglePointerDown = (_: PIXI.InteractionEvent) => {
+  private resizePointerDown = (_: PIXI.InteractionEvent) => {
 
-    this.clickedTriangle = this.triangleGraphic
+    this.resizeClicked = this.triangleGraphic
     this.renderer.clickedAnnotation = this
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.trianglePointerMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.resizePointerMove)
     this.renderer.zoomInteraction.pause()
     this.renderer.dragInteraction.pause()
     this.renderer.decelerateInteraction.pause()
@@ -315,8 +315,8 @@ export class TextAnnotationRenderer {
     return
   }
 
-  private trianglePointerMove = (event: PIXI.InteractionEvent) => {
-    if (this.clickedTriangle === undefined || this.interaction === 'drag') return
+  private resizePointerMove = (event: PIXI.InteractionEvent) => {
+    if (this.resizeClicked === undefined || this.interaction === 'drag') return
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     
@@ -340,11 +340,11 @@ export class TextAnnotationRenderer {
     return
   }
 
-  private trianglePointerUp = (_: PIXI.InteractionEvent) => {
-    if (this.clickedTriangle === undefined) return
+  private resizePointerUp = (_: PIXI.InteractionEvent) => {
+    if (this.resizeClicked === undefined) return
 
     this.renderer.clickedAnnotation = undefined
-    this.clickedTriangle = undefined
+    this.resizeClicked = undefined
 
     ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
     this.renderer.zoomInteraction.resume()
