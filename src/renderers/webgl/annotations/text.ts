@@ -9,6 +9,9 @@ import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '..
 // - make styling look nice
 // - test changing font family, size, alignment etc..
 
+
+const TRIANGLE_LENGTH = 15
+
 export class TextAnnotationRenderer {
 
   x: number
@@ -25,8 +28,8 @@ export class TextAnnotationRenderer {
   private triangleGraphic = new PIXI.Graphics()
   private textSprite = new PIXI.Text('')
 
-  // private annotationDragging = false
-  // private triangleDragging = false
+  private interaction: 'drag' | 'resize' | undefined
+  private clickedTriangle: PIXI.Graphics | undefined
 
   private moveOffsetX = 0
   private moveOffsetY = 0
@@ -86,8 +89,8 @@ export class TextAnnotationRenderer {
         .lineStyle(1, 0x000000)
         .drawPolygon([
           ...triangleOrigin, 
-          triangleOrigin[0] - 10, triangleOrigin[1],
-          triangleOrigin[0], triangleOrigin[1] - 10
+          triangleOrigin[0] - TRIANGLE_LENGTH, triangleOrigin[1],
+          triangleOrigin[0], triangleOrigin[1] - TRIANGLE_LENGTH
         ])
         .endFill()      
     }
@@ -120,8 +123,8 @@ export class TextAnnotationRenderer {
       .lineStyle(1, 0x000000)
       .drawPolygon([
         ...triangleOrigin, 
-        triangleOrigin[0] - 10, triangleOrigin[1],
-        triangleOrigin[0], triangleOrigin[1] - 10
+        triangleOrigin[0] - TRIANGLE_LENGTH, triangleOrigin[1],
+        triangleOrigin[0], triangleOrigin[1] - TRIANGLE_LENGTH
       ])
       .endFill()   
 
@@ -202,7 +205,7 @@ export class TextAnnotationRenderer {
   }
 
   private pointerMove = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined) return
+    if (this.renderer.clickedAnnotation === undefined || this.clickedTriangle !== undefined || this.interaction === 'resize') return
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
@@ -211,6 +214,7 @@ export class TextAnnotationRenderer {
 
     if (!this.renderer.dragging) {
       this.renderer.dragging = true
+      this.interaction = 'drag'
       this.renderer.onAnnotationDragStart?.({
         type: 'annotationDrag',
         x,
@@ -225,26 +229,26 @@ export class TextAnnotationRenderer {
         metaKey: this.renderer.metaKey,
         shiftKey: this.renderer.shiftKey,
       })
+    } else {
+      this.renderer.onAnnotationDrag?.({
+        type: 'annotationDrag',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        annotationX,
+        annotationY,
+        target: this.annotation,
+        altKey: this.renderer.altKey,
+        ctrlKey: this.renderer.ctrlKey,
+        metaKey: this.renderer.metaKey,
+        shiftKey: this.renderer.shiftKey,
+      })
     }
-
-    this.renderer.onAnnotationDrag?.({
-      type: 'annotationDrag',
-      x,
-      y,
-      clientX: client.x,
-      clientY: client.y,
-      annotationX,
-      annotationY,
-      target: this.annotation,
-      altKey: this.renderer.altKey,
-      ctrlKey: this.renderer.ctrlKey,
-      metaKey: this.renderer.metaKey,
-      shiftKey: this.renderer.shiftKey,
-    })
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined) return
+    if (this.renderer.clickedAnnotation === undefined || this.clickedTriangle !== undefined) return
 
     this.renderer.clickedAnnotation = undefined
     ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.trianglePointerMove)
@@ -259,6 +263,7 @@ export class TextAnnotationRenderer {
 
     if (this.renderer.dragging) {
       this.renderer.dragging = false
+      this.interaction = undefined
       this.renderer.onAnnotationDragEnd?.({
         type: 'annotationDrag',
         x,
@@ -299,12 +304,8 @@ export class TextAnnotationRenderer {
   }
 
   private trianglePointerDown = (_: PIXI.InteractionEvent) => {
-    if (this.doubleClickTimeout === undefined) {
-      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
-    } else {
-      this.doubleClick = true
-    }
 
+    this.clickedTriangle = this.triangleGraphic
     this.renderer.clickedAnnotation = this
     ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.trianglePointerMove)
     this.renderer.zoomInteraction.pause()
@@ -315,12 +316,13 @@ export class TextAnnotationRenderer {
   }
 
   private trianglePointerMove = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined) return
+    if (this.clickedTriangle === undefined || this.interaction === 'drag') return
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     
     if (!this.renderer.dragging) {
       this.renderer.dragging = true
+      this.interaction = 'resize'
     }
 
     const triangleOrigin = [
@@ -338,26 +340,20 @@ export class TextAnnotationRenderer {
     return
   }
 
-  private trianglePointerUp = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined) return
+  private trianglePointerUp = (_: PIXI.InteractionEvent) => {
+    if (this.clickedTriangle === undefined) return
 
     this.renderer.clickedAnnotation = undefined
+    this.clickedTriangle = undefined
+
     ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
     this.renderer.zoomInteraction.resume()
     this.renderer.dragInteraction.resume()
     this.renderer.decelerateInteraction.resume()
 
-    const { x, y } = this.renderer.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
-
     if (this.renderer.dragging) {
       this.renderer.dragging = false
-    } else {
-      if (this.doubleClick) {
-        this.doubleClick = false
-        this.doubleClickTimeout = undefined
-        this.renderer.onAnnotationDoubleClick?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
-      }
+      this.interaction = undefined
     }
 
     return

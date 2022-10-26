@@ -60,20 +60,23 @@ const App: FunctionComponent = () => {
   }, [])
 
   const onAnnotationDrag = useCallback(({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: WebGL.AnnotationDragEvent) => {
+    console.log('annotation drag')
     const dx = annotationX - x
     const dy = annotationY - y
+
 
     setGraph((graph) => ({
       ...graph,
       annotations: graph.annotations.map((annotation) => (
         annotation.id === id ? (
-          { ...annotation, x: annotationX, y: annotationY }
+          { ...annotation, x: annotation.x + dx, y: annotation.y + dy }
         ) : annotation
       ))
     }))
   }, [])
 
   const onAnnotationResize = useCallback(({ dx, dy, target: { id, x = 0, y = 0 } }: WebGL.AnnotationResizeEvent) => {
+    console.log('resize')
     setGraph((graph) => ({
       ...graph,
       annotations: graph.annotations.map((annotation) => (
@@ -105,39 +108,22 @@ const App: FunctionComponent = () => {
     createElement(ReactResizeDetector, {},
       ({ width, height }: { width?: number, height?: number }) => (
         createElement('div', { style: { width: '100%', height: '100%' } }, (
-          createElement(Selection, {
+          createElement(Renderer, {
+            width,
+            height,
             nodes: [],
-            onViewportDrag,
-            onSelection,
-            children: ({ select, toggleSelect, annotation, cursor, onViewportDragStart, onViewportDrag, onViewportDragEnd }) => (
-              createElement(Fragment, {},
-                createElement('div', { style: { position: 'absolute', top: 72, left: 12 } },
-                  createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '■'),
-                  createElement(Zoom, { onZoomIn, onZoomOut })
-                ),
-                createElement(Renderer, {
-                  width,
-                  height,
-                  nodes: [],
-                  edges: [],
-                  annotations: graph.annotations,
-                  x: graph.x,
-                  y: graph.y,
-                  zoom: graph.zoom,
-                  minZoom: MIN_ZOOM,
-                  maxZoom: MAX_ZOOM,
-                  cursor,
-                  onViewportDragStart,
-                  onViewportDrag,
-                  onViewportDragEnd,
-                  onViewportPointerUp,
-                  onViewportWheel,
-                  onAnnotationDrag,
-                  onAnnotationResize,
-                  debug: { stats }
-                })
-              )
-            )
+            edges: [],
+            annotations: graph.annotations,
+            x: graph.x,
+            y: graph.y,
+            // onViewportDragStart,
+            // onViewportDrag,
+            // onViewportDragEnd,
+            // onViewportPointerUp,
+            // onViewportWheel,
+            onAnnotationDrag,
+            onAnnotationResize,
+            debug: { stats }
           })
         ))
       )
