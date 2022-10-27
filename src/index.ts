@@ -117,21 +117,22 @@ export type TextAnnotation = {
   height: number
   content: string
   resize?: boolean
-  boxStyle: {
+  style: Partial<{
     color: string
+    padding: number
     stroke: {
       color: string
       width: number
-    }
-  }
-  textStyle?: Partial<{
-    fontName: string
-    fontSize: number
-    weight: string
-    color: string
-    align: 'left' | 'center' | 'right' | 'justify'
-    spacing: number
-    maxWidth: number
+    },
+    text: Partial<{
+      fontName: string
+      fontSize: number
+      weight: string
+      color: string
+      align: 'left' | 'center' | 'right' | 'justify'
+      spacing: number
+      maxWidth: number
+    }>
   }>
 }
 

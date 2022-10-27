@@ -1,17 +1,20 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { equals, TextAnnotation } from '../../..'
+import { TextAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
 
 
 //TODO
-// - fix buggy drag/resize interaction
+// - update cursors depending on interaction
+// - cleanup event handlers
 // - make styling look nice
 // - test changing font family, size, alignment etc..
 
 
 const TRIANGLE_LENGTH = 15
-
+const DEFAULT_FILL = '#FFFFFF'
+const DEFAULT_STROKE = '#000000'
+const DEFAULT_PADDING = 4
 export class TextAnnotationRenderer {
 
   x: number
@@ -73,8 +76,8 @@ export class TextAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.boxStyle.color))
-      .lineStyle(this.annotation.boxStyle.stroke.width, colorToNumber(this.annotation.boxStyle.stroke.color))
+      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
 
@@ -85,8 +88,8 @@ export class TextAnnotationRenderer {
 
       this.triangleGraphic
         .clear()
-        .beginFill(colorToNumber(this.annotation.boxStyle.color))
-        .lineStyle(1, 0x000000)
+        .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+        .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
         .drawPolygon([
           ...triangleOrigin, 
           triangleOrigin[0] - TRIANGLE_LENGTH, triangleOrigin[1],
@@ -108,8 +111,8 @@ export class TextAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.boxStyle.color))
-      .lineStyle(this.annotation.boxStyle.stroke.width, colorToNumber(this.annotation.boxStyle.stroke.color))
+      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
 
@@ -119,8 +122,8 @@ export class TextAnnotationRenderer {
 
     this.triangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.boxStyle.color))
-      .lineStyle(1, 0x000000)
+      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawPolygon([
         ...triangleOrigin, 
         triangleOrigin[0] - TRIANGLE_LENGTH, triangleOrigin[1],
@@ -138,23 +141,25 @@ export class TextAnnotationRenderer {
     // so I artificially adding some padding
     let text = this.annotation.content
 
+    const padding = this.annotation.style.padding ?? DEFAULT_PADDING
+
     const style = new PIXI.TextStyle({
-      fontFamily: this.annotation.textStyle?.fontName ?? 'Arial',
-      fontSize: this.annotation.textStyle?.fontSize ?? 14,
-      stroke: this.annotation.textStyle?.color ?? '#000000',
-      letterSpacing: this.annotation.textStyle?.spacing ?? 0,
+      fontFamily: this.annotation.style.text?.fontName ?? 'Arial',
+      fontSize: this.annotation.style.text?.fontSize ?? 14,
+      stroke: this.annotation.style.text?.color ?? '#000000',
+      letterSpacing: this.annotation.style.text?.spacing ?? 0,
       wordWrap: true,
       //account for padding
-      wordWrapWidth: this.annotation.textStyle?.maxWidth ?? this.annotation.width - 2 ?? 0,
+      wordWrapWidth: this.annotation.style.text?.maxWidth ?? this.annotation.width - (2 * padding) ?? 0,
       breakWords: true,
-      align: this.annotation.textStyle?.align ?? 'left'
+      align: this.annotation.style.text?.align ?? 'left'
     })
 
 
     const metrics = PIXI.TextMetrics.measureText(this.annotation.content, style, true)
 
-    if (metrics.height > this.annotation.height - 2) {
-      const numLines = Math.floor((this.annotation.height - 2) / metrics.lineHeight)
+    if (metrics.height > this.annotation.height - (2 * padding)) {
+      const numLines = Math.floor((this.annotation.height - (2 * padding)) / metrics.lineHeight)
       text = metrics.lines
         .slice(0, numLines)
         // not sure about if I should join with the whitespace or not
@@ -163,8 +168,8 @@ export class TextAnnotationRenderer {
         .concat('...')
     }
 
-    this.textSprite.x = this.annotation.x + 2
-    this.textSprite.y = this.annotation.y + 2
+    this.textSprite.x = this.annotation.x + padding
+    this.textSprite.y = this.annotation.y + padding
 
     this.textSprite.text = text
     this.textSprite.style = style
@@ -335,7 +340,7 @@ export class TextAnnotationRenderer {
     const newWidth = this.annotation.width + dx
     const newHeight = this.annotation.height + dy
 
-    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x, y, dx: newWidth < 15 ? 0 : dx, dy: newHeight < 15 ? 0 : dy, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x, y, width: newWidth < 15 ? this.annotation.width : newWidth, height: newHeight < 15 ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
 
     return
   }
@@ -367,6 +372,10 @@ export class TextAnnotationRenderer {
 
   delete() {
     this.rectangleGraphic.destroy()
+    this.triangleGraphic.destroy()
     this.textSprite.destroy()
+
+    this.annotationContainer.destroy()
+    this.triangleGraphic.destroy()
   }
 }

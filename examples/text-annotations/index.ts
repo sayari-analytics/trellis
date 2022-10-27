@@ -37,7 +37,7 @@ const App: FunctionComponent = () => {
       y: 10,
       resize: true,
       content: 'This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text.',
-      boxStyle: {
+      style: {
         color: '#FFFFFF',
         stroke: {
           color: '#000000',
@@ -52,15 +52,7 @@ const App: FunctionComponent = () => {
   })
 
 
-  const onZoomIn = useCallback(() => {
-    setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom / 0.6) }))
-  }, [])
-  const onZoomOut = useCallback(() => {
-    setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom * 0.6) }))
-  }, [])
-
   const onAnnotationDrag = useCallback(({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: WebGL.AnnotationDragEvent) => {
-    console.log('annotation drag')
     const dx = annotationX - x
     const dy = annotationY - y
 
@@ -75,13 +67,12 @@ const App: FunctionComponent = () => {
     }))
   }, [])
 
-  const onAnnotationResize = useCallback(({ dx, dy, target: { id, x = 0, y = 0 } }: WebGL.AnnotationResizeEvent) => {
-    console.log('resize')
+  const onAnnotationResize = useCallback(({ width, height, target: { id, x = 0, y = 0 } }: WebGL.AnnotationResizeEvent) => {
     setGraph((graph) => ({
       ...graph,
       annotations: graph.annotations.map((annotation) => (
         annotation.id === id && annotation.type === 'text' ? (
-          { ...annotation, width: annotation.width + dx, height: annotation.height + dy }
+          { ...annotation, width, height }
         ) : annotation
       ))
     }))
@@ -99,9 +90,6 @@ const App: FunctionComponent = () => {
   const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: WebGL.ViewportWheelEvent) => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
-  const onSelection = useCallback(({ selection, shiftKey, metaKey }: SelectionChangeEvent) => {
-    setGraph((graph) => ({ ...graph, selected: shiftKey || metaKey ? new Set([...graph.selected, ...selection]) : selection }))
-  }, [])
 
 
   return (
@@ -116,11 +104,9 @@ const App: FunctionComponent = () => {
             annotations: graph.annotations,
             x: graph.x,
             y: graph.y,
-            // onViewportDragStart,
-            // onViewportDrag,
-            // onViewportDragEnd,
-            // onViewportPointerUp,
-            // onViewportWheel,
+            onViewportDrag,
+            onViewportPointerUp,
+            onViewportWheel,
             onAnnotationDrag,
             onAnnotationResize,
             debug: { stats }
