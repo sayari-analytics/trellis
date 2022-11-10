@@ -127,10 +127,13 @@ export type TextAnnotation = {
     text: Partial<{
       fontName: string
       fontSize: number
+      fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
+      fontStyle: 'normal'| 'italic' | 'oblique'
       weight: string
       color: string
       align: 'left' | 'center' | 'right' | 'justify'
-      spacing: number
+      letterSpacing: number
+      lineSpacing: number
       maxWidth: number
     }>
   }>

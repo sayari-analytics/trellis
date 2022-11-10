@@ -146,8 +146,11 @@ export class TextAnnotationRenderer {
     const style = new PIXI.TextStyle({
       fontFamily: this.annotation.style.text?.fontName ?? 'Arial',
       fontSize: this.annotation.style.text?.fontSize ?? 14,
+      fontWeight: this.annotation.style.text?.fontWeight ?? 'normal',
+      fontStyle: this.annotation.style.text?.fontStyle ?? 'normal',
       stroke: this.annotation.style.text?.color ?? '#000000',
-      letterSpacing: this.annotation.style.text?.spacing ?? 0,
+      letterSpacing: this.annotation.style.text?.letterSpacing ?? 0,
+      leading: this.annotation.style.text?.lineSpacing ?? 0,
       wordWrap: true,
       //account for padding
       wordWrapWidth: this.annotation.style.text?.maxWidth ?? this.annotation.width - (2 * padding) ?? 0,
@@ -340,7 +343,31 @@ export class TextAnnotationRenderer {
     const newWidth = this.annotation.width + dx
     const newHeight = this.annotation.height + dy
 
-    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x, y, width: newWidth < 15 ? this.annotation.width : newWidth, height: newHeight < 15 ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+    const style = new PIXI.TextStyle({
+      fontFamily: this.annotation.style.text?.fontName ?? 'Arial',
+      fontSize: this.annotation.style.text?.fontSize ?? 14,
+      fontWeight: this.annotation.style.text?.fontWeight ?? 'normal',
+      fontStyle: this.annotation.style.text?.fontStyle ?? 'normal',
+      stroke: this.annotation.style.text?.color ?? '#000000',
+      letterSpacing: this.annotation.style.text?.letterSpacing ?? 0,
+      leading: this.annotation.style.text?.lineSpacing ?? 0,
+      wordWrap: true,
+      //account for padding
+      wordWrapWidth: this.annotation.style.text?.maxWidth ?? this.annotation.width - (2 * (this.annotation.style.padding ?? DEFAULT_PADDING)) ?? 0,
+      breakWords: true,
+      align: this.annotation.style.text?.align ?? 'left'
+    })
+
+
+    const metrics = PIXI.TextMetrics.measureText(this.annotation.content, style, true)
+
+    // min width determined by multiplying the fontSize by 2 to account for the ellipsis + the padding  
+    const minWidth = (2 * metrics.fontProperties.fontSize) + (2 * (this.annotation.style.padding ?? DEFAULT_PADDING))
+    // min height should be the lineHeight of 1 row of text + padding
+    const minHeight = metrics.lineHeight + (2 * (this.annotation.style.padding ?? DEFAULT_PADDING))
+
+    
+    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x, y, width: newWidth < minWidth ? this.annotation.width : newWidth, height: newHeight < minHeight ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
 
     return
   }

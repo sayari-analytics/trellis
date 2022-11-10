@@ -76,7 +76,10 @@ let annotations = [{
     color: '#FFFFFF',
     stroke: {
       color: '#000000',
-      width: 2
+      width: .5
+    },
+    text: {
+      fontSize: 18
     }
   }
 }]
