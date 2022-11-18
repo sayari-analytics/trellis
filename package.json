@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@pixi/unsafe-eval": "^5.3.7",
-    "d3-color": "^1.4.1",
+    "d3-color": "^3.1.0",
     "d3-force": "^2.0.1",
     "d3-hierarchy": "^2.0.0",
     "d3-interpolate": "^1.4.0",
