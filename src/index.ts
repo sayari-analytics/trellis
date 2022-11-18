@@ -240,12 +240,12 @@ export const equals = <T>(a: T, b: T) => {
 
     return true
   } else if (typeof a === 'object' && typeof b === 'object') {
-    if (Object.keys(a).length !== Object.keys(b).length) {
+    if (Object.keys(a ?? {}).length !== Object.keys(b ?? {}).length) {
       return false
     }
 
     for (const key in a) {
-      if (!equals(a[key], b[key])) {
+      if (!equals(a?.[key], b?.[key])) {
         return false
       }
     }
