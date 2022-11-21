@@ -163,23 +163,19 @@ export const getSelectionBounds = (elements: (Node | Annotation)[], padding: num
 
   for (const el of elements) {
     if ('type' in el) {
-      const annotation = el as Annotation
-
-      const annotationLeft = annotation.type === 'circle' ? (annotation.x ?? 0) - annotation.radius : annotation.x ?? 0
-      const annotationTop = annotation.type === 'circle' ? (annotation.x ?? 0) - annotation.radius : annotation.y ?? 0
-      const annotationRight = (annotation.x ?? 0) + (annotation.type === 'circle' ? annotation.radius : annotation.width)
-      const annotationBottom = (annotation.x ?? 0) + (annotation.type === 'circle' ? annotation.radius : annotation.height)
+      const annotationLeft = el.type === 'circle' ? (el.x ?? 0) - el.radius : el.x ?? 0
+      const annotationTop = el.type === 'circle' ? (el.x ?? 0) - el.radius : el.y ?? 0
+      const annotationRight = (el.x ?? 0) + (el.type === 'circle' ? el.radius : el.width)
+      const annotationBottom = (el.x ?? 0) + (el.type === 'circle' ? el.radius : el.height)
       if (annotationLeft < left) left = annotationLeft
       if (annotationTop < top) top = annotationTop
       if (annotationRight > right) right = annotationRight
       if (annotationBottom > bottom) bottom = annotationBottom
     } else {
-      const node = el
-
-      const nodeLeft = (node.x ?? 0) - node.radius
-      const nodeTop = (node.y ?? 0) - node.radius
-      const nodeRight = (node.x ?? 0) + node.radius
-      const nodeBottom = (node.y ?? 0) + node.radius
+      const nodeLeft = (el.x ?? 0) - el.radius
+      const nodeTop = (el.y ?? 0) - el.radius
+      const nodeRight = (el.x ?? 0) + el.radius
+      const nodeBottom = (el.y ?? 0) + el.radius
       if (nodeLeft < left) left = nodeLeft
       if (nodeTop < top) top = nodeTop
       if (nodeRight > right) right = nodeRight
