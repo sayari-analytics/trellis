@@ -4,12 +4,6 @@ import { TextAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
 
 
-//TODO
-// - update cursors depending on interaction
-// - cleanup event handlers
-// - make styling look nice
-// - test changing font family, size, alignment etc..
-
 
 const TRIANGLE_LENGTH = 15
 const DEFAULT_FILL = '#FFFFFF'
@@ -76,7 +70,7 @@ export class TextAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
       .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
@@ -88,7 +82,7 @@ export class TextAnnotationRenderer {
 
       this.triangleGraphic
         .clear()
-        .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+        .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
         .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
         .drawPolygon([
           ...triangleOrigin, 
@@ -111,7 +105,7 @@ export class TextAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
       .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
@@ -122,7 +116,7 @@ export class TextAnnotationRenderer {
 
     this.triangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
       .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawPolygon([
         ...triangleOrigin, 
@@ -194,6 +188,7 @@ export class TextAnnotationRenderer {
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
+
     if (this.doubleClickTimeout === undefined) {
       this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
     } else {
@@ -213,7 +208,7 @@ export class TextAnnotationRenderer {
   }
 
   private pointerMove = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined || this.resizeClicked !== undefined || this.interaction === 'resize') return
+    if (this.renderer.clickedAnnotation !== this || this.resizeClicked !== undefined || this.interaction === 'resize') return
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
@@ -256,10 +251,10 @@ export class TextAnnotationRenderer {
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
-    if (this.renderer.clickedAnnotation === undefined || this.resizeClicked !== undefined) return
+    if (this.renderer.clickedAnnotation !== this || this.resizeClicked !== undefined) return
 
     this.renderer.clickedAnnotation = undefined
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.resizePointerMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
     this.renderer.zoomInteraction.resume()
     this.renderer.dragInteraction.resume()
     this.renderer.decelerateInteraction.resume()
@@ -324,7 +319,7 @@ export class TextAnnotationRenderer {
   }
 
   private resizePointerMove = (event: PIXI.InteractionEvent) => {
-    if (this.resizeClicked === undefined || this.interaction === 'drag') return
+    if (this.renderer.clickedAnnotation !== this || this.resizeClicked === undefined || this.interaction === 'drag') return
 
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     
@@ -373,12 +368,12 @@ export class TextAnnotationRenderer {
   }
 
   private resizePointerUp = (_: PIXI.InteractionEvent) => {
-    if (this.resizeClicked === undefined) return
+    if (this.renderer.clickedAnnotation !== this || this.resizeClicked === undefined) return
 
     this.renderer.clickedAnnotation = undefined
     this.resizeClicked = undefined
 
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.pointerMove)
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).off('pointermove', this.resizePointerMove)
     this.renderer.zoomInteraction.resume()
     this.renderer.dragInteraction.resume()
     this.renderer.decelerateInteraction.resume()
