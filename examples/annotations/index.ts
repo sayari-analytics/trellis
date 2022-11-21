@@ -161,7 +161,7 @@ const downloadControl = Download.Control({ container })
 downloadControl({
   top: 75,
   onClick: () => {
-    const bounds = Graph.getSelectionBounds(nodes, 60)
+    const bounds = Graph.getSelectionBounds([...nodes, ...annotations], 60)
     const dimensions = Graph.boundsToDimensions(bounds, 1)
     const viewport = Graph.boundsToViewport(bounds, dimensions)
 

@@ -155,21 +155,36 @@ export type Dimensions = { width: number, height: number }
 export type Viewport = { x: number, y: number, zoom: number }
 
 
-export const getSelectionBounds = (nodes: Node[], padding: number = 0): Bounds => {
+export const getSelectionBounds = (elements: (Node | Annotation)[], padding: number = 0): Bounds => {
   let left = 0
   let top = 0
   let right = 0
   let bottom = 0
 
-  for (const node of nodes) {
-    const nodeLeft = (node.x ?? 0) - node.radius
-    const nodeTop = (node.y ?? 0) - node.radius
-    const nodeRight = (node.x ?? 0) + node.radius
-    const nodeBottom = (node.y ?? 0) + node.radius
-    if (nodeLeft < left) left = nodeLeft
-    if (nodeTop < top) top = nodeTop
-    if (nodeRight > right) right = nodeRight
-    if (nodeBottom > bottom) bottom = nodeBottom
+  for (const el of elements) {
+    if ('type' in el) {
+      const annotation = el as Annotation
+
+      const annotationLeft = annotation.type === 'circle' ? (annotation.x ?? 0) - annotation.radius : annotation.x ?? 0
+      const annotationTop = annotation.type === 'circle' ? (annotation.x ?? 0) - annotation.radius : annotation.y ?? 0
+      const annotationRight = (annotation.x ?? 0) + (annotation.type === 'circle' ? annotation.radius : annotation.width)
+      const annotationBottom = (annotation.x ?? 0) + (annotation.type === 'circle' ? annotation.radius : annotation.height)
+      if (annotationLeft < left) left = annotationLeft
+      if (annotationTop < top) top = annotationTop
+      if (annotationRight > right) right = annotationRight
+      if (annotationBottom > bottom) bottom = annotationBottom
+    } else {
+      const node = el
+
+      const nodeLeft = (node.x ?? 0) - node.radius
+      const nodeTop = (node.y ?? 0) - node.radius
+      const nodeRight = (node.x ?? 0) + node.radius
+      const nodeBottom = (node.y ?? 0) + node.radius
+      if (nodeLeft < left) left = nodeLeft
+      if (nodeTop < top) top = nodeTop
+      if (nodeRight > right) right = nodeRight
+      if (nodeBottom > bottom) bottom = nodeBottom
+    }
   }
 
   return { left: left - padding, top: top - padding, right: right + padding, bottom: bottom + padding }
