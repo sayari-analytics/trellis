@@ -65,7 +65,7 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
 
 let annotations = [{
   type: 'text' as const,
-  id: 'test-annotation',
+  id: 'test-text-annotation',
   width: 100,
   height: 100,
   x: -400,
@@ -80,6 +80,40 @@ let annotations = [{
     },
     text: {
       fontSize: 18
+    }
+  }
+}, {
+  type: 'text' as const,
+  id: 'test-text-annotation-2',
+  width: 100,
+  height: 100,
+  x: -600,
+  y: -200,
+  resize: true,
+  content: 'TEST 2',
+  style: {
+    color: '#FFFFFF',
+    stroke: {
+      color: '#000000',
+      width: .5
+    },
+    text: {
+      fontSize: 18
+    }
+  }
+}, {
+  type: 'rectangle' as const,
+  id: 'test-rectangle-annotation',
+  width: 100,
+  height: 100,
+  x: -600,
+  y: -400,
+  resize: true,
+  style: {
+    color: '#FFFFFF',
+    stroke: {
+      color: '#000000',
+      width: .5
     }
   }
 }]
@@ -203,8 +237,6 @@ const renderOptions: WebGL.Options = {
     const dx = annotationX - x
     const dy = annotationY - y
 
-    console.log(x,y)
-
     annotations = annotations.map((annotation) => (
       annotation.id === id ? (
         { ...annotation, x: annotation.x + dx, y: annotation.y + dy }
@@ -215,7 +247,7 @@ const renderOptions: WebGL.Options = {
   },
   onAnnotationResize: ({ width, height, target: { id, x = 0, y = 0 } }: WebGL.AnnotationResizeEvent) => {
     annotations = annotations.map((annotation) => (
-      annotation.id === id && annotation.type === 'text' ? (
+      annotation.id === id ? (
         { ...annotation, width, height }
       ) : annotation
     ))

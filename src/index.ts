@@ -99,6 +99,7 @@ export type RectangleAnnotation = {
   y: number
   width: number
   height: number
+  resize?: boolean
   style: {
     color: string
     stroke: {
