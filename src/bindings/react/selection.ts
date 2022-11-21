@@ -184,7 +184,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
       y: state.annotation.y,
       radius: state.annotation.radius,
       style: {
-        color: props.color ?? '#eee',
+        backgroundColor: props.color ?? '#eee',
         stroke: {
           color: props.strokeColor ?? '#ccc',
           width: props.strokeWidth ?? 2
@@ -198,7 +198,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
       width: state.annotation.width,
       height: state.annotation.height,
       style: {
-        color: props.color ?? '#eee',
+        backgroundColor: props.color ?? '#eee',
         stroke: {
           color: props.strokeColor ?? '#ccc',
           width: props.strokeWidth ?? 2
