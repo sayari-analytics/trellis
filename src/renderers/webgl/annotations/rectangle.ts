@@ -69,7 +69,7 @@ export class RectangleAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.rectangle.style.color))
+      .beginFill(colorToNumber(this.rectangle.style.backgroundColor))
       .lineStyle(this.rectangle.style.stroke.width, colorToNumber(this.rectangle.style.stroke.color))
       .drawRect(this.rectangle.x, this.rectangle.y, this.rectangle.width, this.rectangle.height)
       .endFill()
@@ -82,7 +82,7 @@ export class RectangleAnnotationRenderer {
 
       this.triangleGraphic
         .clear()
-        .beginFill(colorToNumber(this.rectangle.style.color ?? DEFAULT_FILL))
+        .beginFill(colorToNumber(this.rectangle.style.backgroundColor ?? DEFAULT_FILL))
         .lineStyle(this.rectangle.style.stroke?.width ?? 1, colorToNumber(this.rectangle.style.stroke?.color ?? DEFAULT_STROKE))
         .drawPolygon([
           ...triangleOrigin, 

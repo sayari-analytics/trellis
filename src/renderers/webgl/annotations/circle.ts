@@ -23,7 +23,7 @@ export class CircleAnnotationRenderer {
 
     this.circleGraphic
       .clear()
-      .beginFill(colorToNumber(this.circle.style.color))
+      .beginFill(colorToNumber(this.circle.style.backgroundColor))
       .lineStyle(this.circle.style.stroke.width, colorToNumber(this.circle.style.stroke.color))
       .drawCircle(this.circle.x, this.circle.y, this.circle.radius)
       .endFill()

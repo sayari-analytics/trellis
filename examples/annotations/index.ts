@@ -73,7 +73,7 @@ let annotations = [{
   resize: true,
   content: 'This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text. This is a test of long text.',
   style: {
-    color: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     stroke: {
       color: '#000000',
       width: .5
@@ -92,7 +92,7 @@ let annotations = [{
   resize: true,
   content: 'TEST 2',
   style: {
-    color: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     stroke: {
       color: '#000000',
       width: .5
@@ -110,7 +110,7 @@ let annotations = [{
   y: -400,
   resize: true,
   style: {
-    color: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     stroke: {
       color: '#000000',
       width: .5

@@ -83,7 +83,7 @@ export type CircleAnnotation = {
   y: number
   radius: number
   style: {
-    color: string
+    backgroundColor: string
     stroke: {
       color: string
       width: number
@@ -101,7 +101,7 @@ export type RectangleAnnotation = {
   height: number
   resize?: boolean
   style: {
-    color: string
+    backgroundColor: string
     stroke: {
       color: string
       width: number
@@ -119,7 +119,7 @@ export type TextAnnotation = {
   content: string
   resize?: boolean
   style: Partial<{
-    color: string
+    backgroundColor: string
     padding: number
     stroke: {
       color: string

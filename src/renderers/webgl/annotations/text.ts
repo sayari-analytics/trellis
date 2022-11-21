@@ -70,7 +70,7 @@ export class TextAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
       .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
@@ -82,7 +82,7 @@ export class TextAnnotationRenderer {
 
       this.triangleGraphic
         .clear()
-        .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+        .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
         .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
         .drawPolygon([
           ...triangleOrigin, 
@@ -105,7 +105,7 @@ export class TextAnnotationRenderer {
 
     this.rectangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
       .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
@@ -116,7 +116,7 @@ export class TextAnnotationRenderer {
 
     this.triangleGraphic
       .clear()
-      .beginFill(colorToNumber(this.annotation.style.color ?? DEFAULT_FILL))
+      .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
       .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
       .drawPolygon([
         ...triangleOrigin, 
