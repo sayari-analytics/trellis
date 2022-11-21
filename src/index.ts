@@ -162,16 +162,7 @@ export const getSelectionBounds = (elements: (Node | Annotation)[], padding: num
   let bottom = 0
 
   for (const el of elements) {
-    if ('type' in el) {
-      const annotationLeft = el.type === 'circle' ? (el.x ?? 0) - el.radius : el.x ?? 0
-      const annotationTop = el.type === 'circle' ? (el.x ?? 0) - el.radius : el.y ?? 0
-      const annotationRight = (el.x ?? 0) + (el.type === 'circle' ? el.radius : el.width)
-      const annotationBottom = (el.x ?? 0) + (el.type === 'circle' ? el.radius : el.height)
-      if (annotationLeft < left) left = annotationLeft
-      if (annotationTop < top) top = annotationTop
-      if (annotationRight > right) right = annotationRight
-      if (annotationBottom > bottom) bottom = annotationBottom
-    } else {
+    if (!('type' in el)) {
       const nodeLeft = (el.x ?? 0) - el.radius
       const nodeTop = (el.y ?? 0) - el.radius
       const nodeRight = (el.x ?? 0) + el.radius
@@ -180,6 +171,24 @@ export const getSelectionBounds = (elements: (Node | Annotation)[], padding: num
       if (nodeTop < top) top = nodeTop
       if (nodeRight > right) right = nodeRight
       if (nodeBottom > bottom) bottom = nodeBottom
+    } else if (el.type === 'circle') {
+      const annotationLeft = (el.x ?? 0) - el.radius
+      const annotationTop = (el.x ?? 0) - el.radius
+      const annotationRight = (el.x ?? 0) + el.radius
+      const annotationBottom = (el.x ?? 0) + el.radius
+      if (annotationLeft < left) left = annotationLeft
+      if (annotationTop < top) top = annotationTop
+      if (annotationRight > right) right = annotationRight
+      if (annotationBottom > bottom) bottom = annotationBottom
+    } else if (el.type === 'rectangle' || el.type === 'text') {
+      const annotationLeft = el.x ?? 0
+      const annotationTop = el.y ?? 0
+      const annotationRight = (el.x ?? 0) + el.width
+      const annotationBottom = (el.x ?? 0) + el.height
+      if (annotationLeft < left) left = annotationLeft
+      if (annotationTop < top) top = annotationTop
+      if (annotationRight > right) right = annotationRight
+      if (annotationBottom > bottom) bottom = annotationBottom
     }
   }
 
