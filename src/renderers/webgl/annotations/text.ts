@@ -142,7 +142,7 @@ export class TextAnnotationRenderer {
       fontSize: this.annotation.style.text?.fontSize ?? 14,
       fontWeight: this.annotation.style.text?.fontWeight ?? 'normal',
       fontStyle: this.annotation.style.text?.fontStyle ?? 'normal',
-      stroke: this.annotation.style.text?.color ?? '#000000',
+      fill: this.annotation.style.text?.color ?? '#000000',
       letterSpacing: this.annotation.style.text?.letterSpacing ?? 0,
       leading: this.annotation.style.text?.lineSpacing ?? 0,
       wordWrap: true,

@@ -79,7 +79,9 @@ let annotations = [{
       width: .5
     },
     text: {
-      fontSize: 18
+      fontSize: 12,
+      color: '#953838',
+      fontWeight: 'bold' as const
     }
   }
 }, {
