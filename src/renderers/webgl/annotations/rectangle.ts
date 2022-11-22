@@ -286,11 +286,10 @@ export class RectangleAnnotationRenderer {
   }
 
   delete() {
-    this.rectangleGraphic.destroy()
+    this.renderer.annotationsBottomLayer.removeChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.removeChild(this.resizeContainer)
+
+    this.annotationContainer.destroy({ children: true })
+    this.triangleGraphic.destroy({ children: true })
   }
 }
-
-
-// export const RectangleAnnotationRenderer: AnnotationRendererConstructor<RectangleAnnotation> = (renderer: InternalRenderer<any, any>, annotation: RectangleAnnotation) => {
-//   return new RectangleAnnotationRenderer(renderer, annotation)
-// }

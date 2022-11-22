@@ -393,11 +393,10 @@ export class TextAnnotationRenderer {
 
 
   delete() {
-    this.rectangleGraphic.destroy()
-    this.triangleGraphic.destroy()
-    this.textSprite.destroy()
+    this.renderer.annotationsBottomLayer.removeChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.removeChild(this.resizeContainer)
 
-    this.annotationContainer.destroy()
-    this.triangleGraphic.destroy()
+    this.annotationContainer.destroy({ children: true })
+    this.triangleGraphic.destroy({ children: true })
   }
 }
