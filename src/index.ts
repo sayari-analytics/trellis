@@ -162,33 +162,24 @@ export const getSelectionBounds = (elements: (Node | Annotation)[], padding: num
   let bottom = 0
 
   for (const el of elements) {
-    if (!('type' in el)) {
-      const nodeLeft = (el.x ?? 0) - el.radius
-      const nodeTop = (el.y ?? 0) - el.radius
-      const nodeRight = (el.x ?? 0) + el.radius
-      const nodeBottom = (el.y ?? 0) + el.radius
-      if (nodeLeft < left) left = nodeLeft
-      if (nodeTop < top) top = nodeTop
-      if (nodeRight > right) right = nodeRight
-      if (nodeBottom > bottom) bottom = nodeBottom
-    } else if (el.type === 'circle') {
-      const annotationLeft = (el.x ?? 0) - el.radius
-      const annotationTop = (el.x ?? 0) - el.radius
-      const annotationRight = (el.x ?? 0) + el.radius
-      const annotationBottom = (el.x ?? 0) + el.radius
-      if (annotationLeft < left) left = annotationLeft
-      if (annotationTop < top) top = annotationTop
-      if (annotationRight > right) right = annotationRight
-      if (annotationBottom > bottom) bottom = annotationBottom
-    } else if (el.type === 'rectangle' || el.type === 'text') {
-      const annotationLeft = el.x ?? 0
-      const annotationTop = el.y ?? 0
-      const annotationRight = (el.x ?? 0) + el.width
-      const annotationBottom = (el.x ?? 0) + el.height
-      if (annotationLeft < left) left = annotationLeft
-      if (annotationTop < top) top = annotationTop
-      if (annotationRight > right) right = annotationRight
-      if (annotationBottom > bottom) bottom = annotationBottom
+    if ('radius' in el) {
+      const circleLeft = (el.x ?? 0) - el.radius
+      const circleTop = (el.y ?? 0) - el.radius
+      const circleRight = (el.x ?? 0) + el.radius
+      const circleBottom = (el.y ?? 0) + el.radius
+      if (circleLeft < left) left = circleLeft
+      if (circleTop < top) top = circleTop
+      if (circleRight > right) right = circleRight
+      if (circleBottom > bottom) bottom = circleBottom
+    } else if ('width' in el && 'height' in el) {
+      const rectLeft = el.x ?? 0
+      const rectTop = el.y ?? 0
+      const rectRight = (el.x ?? 0) + el.width
+      const rectBottom = (el.x ?? 0) + el.height
+      if (rectLeft < left) left = rectLeft
+      if (rectTop < top) top = rectTop
+      if (rectRight > right) right = rectRight
+      if (rectBottom > bottom) bottom = rectBottom
     }
   }
 
