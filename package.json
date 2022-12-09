@@ -62,7 +62,7 @@
     "webgl"
   ],
   "peerDependencies": {
-    "react": "^16.0"
+    "react": ">=16.0"
   },
   "repository": {
     "type": "git",
