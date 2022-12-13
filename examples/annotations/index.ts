@@ -247,10 +247,10 @@ const renderOptions: WebGL.Options = {
 
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationResize: ({ width, height, target: { id, x = 0, y = 0 } }: WebGL.AnnotationResizeEvent) => {
+  onAnnotationResize: ({ x, y, width, height, target: { id } }: WebGL.AnnotationResizeEvent) => {
     annotations = annotations.map((annotation) => (
       annotation.id === id ? (
-        { ...annotation, width, height }
+        { ...annotation, x, y, width, height }
       ) : annotation
     ))
 
