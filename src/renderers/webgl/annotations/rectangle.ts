@@ -4,47 +4,46 @@ import { RectangleAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
 
 
-
 const DEFAULT_FILL = '#FFFFFF'
 const DEFAULT_STROKE = '#000000'
 
 const MIN_WIDTH = 5
 const MIN_HEIGHT = 5
 
-const HIT_AREA_PADDING = 10
+// const HIT_AREA_PADDING = 10
 const RESIZE_RADIUS = 4
 
 type ResizeHitBox = {
   graphic: PIXI.Graphics
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  position: 'nw' | 'ne' | 'sw' | 'se'
 }
 
 const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
   switch(hitBox.position) {
-    case 'top-left' :
+    case 'nw' :
       return [rectOrigin.x, rectOrigin.y]
-    case 'bottom-left':
+    case 'sw':
       return [rectOrigin.x, rectOrigin.y + height]
-    case 'top-right':
+    case 'ne':
       return [rectOrigin.x + width, rectOrigin.y]
-    case 'bottom-right':
+    case 'se':
       return [rectOrigin.x + width, rectOrigin.y + height]
   }
 }
 
-const getHitArea = (annotation: RectangleAnnotation) => {
-  const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-  const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
-  const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-  const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
+// const getHitArea = (annotation: RectangleAnnotation) => {
+//   const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
+//   const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
+//   const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
+//   const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
 
-  return [
-    ...topLeft,
-    ...bottomLeft,
-    ...bottomRight,
-    ...topRight
-  ]
-}
+//   return [
+//     ...topLeft,
+//     ...bottomLeft,
+//     ...bottomRight,
+//     ...topRight
+//   ]
+// }
 export class RectangleAnnotationRenderer {
 
   x: number
@@ -58,11 +57,12 @@ export class RectangleAnnotationRenderer {
   private resizeContainer = new PIXI.Container()
 
   private rectangleGraphic = new PIXI.Graphics()
+
   private resizeHitBoxes: ResizeHitBox[] = [
-    { graphic: new PIXI.Graphics(), position: 'top-left' },
-    { graphic: new PIXI.Graphics(), position: 'top-right' },
-    { graphic: new PIXI.Graphics(), position: 'bottom-left' },
-    { graphic: new PIXI.Graphics(), position: 'bottom-right' }
+    { graphic: new PIXI.Graphics(), position: 'nw' },
+    { graphic: new PIXI.Graphics(), position: 'ne' },
+    { graphic: new PIXI.Graphics(), position: 'sw' },
+    { graphic: new PIXI.Graphics(), position: 'se' }
   ] 
 
   private interaction: 'drag' | 'resize' | undefined
@@ -96,7 +96,6 @@ export class RectangleAnnotationRenderer {
     })
 
     this.annotationContainer.addChild(this.rectangleGraphic)
-
     this.renderer.annotationsBottomLayer.addChild(this.annotationContainer)
     this.renderer.annotationsBottomLayer.addChild(this.resizeContainer)
 
@@ -118,10 +117,15 @@ export class RectangleAnnotationRenderer {
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
 
-    this.rectangleGraphic.hitArea = new PIXI.Polygon(getHitArea(this.annotation))
+    // TODO: figure out how to pad hitarea without affecting pointer events
+    // this.rectangleGraphic.hitArea = new PIXI.Polygon(getHitArea(this.annotation))
+
+    if (this.annotation.resize) this.handleHitBoxes(false)
+
   }
 
   update(annotation: RectangleAnnotation) {
+    const toggleResize = annotation.resize !== this.annotation.resize
 
     this.annotation = annotation
 
@@ -136,19 +140,10 @@ export class RectangleAnnotationRenderer {
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
 
-    if (this.annotation.resize) {
-      this.resizeHitBoxes.forEach((hitBox) => {
-        const origin = getHitBoxOrigin(hitBox, { x: this.annotation.x, y: this.annotation.y }, this.annotation.width, this.annotation.height)
-        if (origin === undefined) return
 
-        hitBox.graphic
-          .clear()
-          .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
-          .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
-          .drawCircle(origin[0], origin[1], RESIZE_RADIUS)
-          .endFill()      
-
-      }) 
+    if (toggleResize || this.annotation.resize) {
+      if (this.annotation.resize) this.handleHitBoxes(false) 
+      else this.handleHitBoxes(true)
     }
 
     return this
@@ -160,9 +155,10 @@ export class RectangleAnnotationRenderer {
       if (origin === undefined) return
 
       if (hide) {
-        hitBox.graphic
-          .clear()
+        hitBox.graphic.destroy()
       } else {
+        if (hitBox.graphic === undefined) hitBox.graphic = new PIXI.Graphics()
+
         hitBox.graphic
           .clear()
           .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
@@ -177,7 +173,11 @@ export class RectangleAnnotationRenderer {
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
     if (this.renderer.hoveredAnnotation === this || this.renderer.clickedAnnotation !== undefined || this.renderer.dragging) return
-    if (this.annotation.resize) this.handleHitBoxes(false)
+
+    this.renderer.annotationsBottomLayer.removeChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.removeChild(this.resizeContainer)
+    this.renderer.annotationsLayer.addChild(this.annotationContainer)
+    this.renderer.annotationsLayer.addChild(this.resizeContainer)
 
     this.renderer.hoveredAnnotation = this
 
@@ -297,7 +297,11 @@ export class RectangleAnnotationRenderer {
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedAnnotation !== undefined || this.renderer.hoveredAnnotation !== this || this.renderer.dragging) return
-    if (this.annotation.resize) this.handleHitBoxes(true)
+
+    this.renderer.annotationsLayer.removeChild(this.annotationContainer)
+    this.renderer.annotationsLayer.removeChild(this.resizeContainer)
+    this.renderer.annotationsBottomLayer.addChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.addChild(this.resizeContainer)
 
     this.renderer.hoveredAnnotation = undefined
 
@@ -308,6 +312,20 @@ export class RectangleAnnotationRenderer {
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
+
+  // TODO: do we want pointerEnter/Leave events for the resize circles?
+  // private resizePointerEnter = (event: PIXI.InteractionEvent) => {
+  //   if (this.renderer.hoveredAnnotation === this || this.renderer.clickedAnnotation !== undefined || this.renderer.dragging) return
+
+  //   this.renderer.hoveredAnnotation = this
+
+  //   this.dirty = true
+  //   this.renderer.dirty = true
+
+  //   const { x, y } = this.renderer.root.toLocal(event.data.global)
+  //   const client = clientPositionFromEvent(event.data.originalEvent)
+  //   this.renderer.onAnnotationPointerEnter?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+  // }
 
   private resizePointerDown = (hitBoxIdx: number) => (_: PIXI.InteractionEvent) => {
 
@@ -348,7 +366,7 @@ export class RectangleAnnotationRenderer {
     let newX = this.annotation.x
     let newY = this.annotation.y
 
-    if (hitBox.position === 'top-left') {
+    if (hitBox.position === 'nw') {
       const dx = hitBoxOrigin[0] - x
       const dy = hitBoxOrigin[1] - y
 
@@ -357,7 +375,7 @@ export class RectangleAnnotationRenderer {
 
       newWidth = this.annotation.width + dx
       newHeight = this.annotation.height + dy
-    } else if (hitBox.position === 'bottom-left') {
+    } else if (hitBox.position === 'sw') {
       const dx = hitBoxOrigin[0] - x
       const dy = y - hitBoxOrigin[1]
 
@@ -367,7 +385,7 @@ export class RectangleAnnotationRenderer {
       newX = x
       newY = y - newHeight
 
-    } else if (hitBox.position === 'top-right') {
+    } else if (hitBox.position === 'ne') {
       const dx = x - hitBoxOrigin[0]
       const dy = hitBoxOrigin[1] - y
 
@@ -377,7 +395,7 @@ export class RectangleAnnotationRenderer {
       newX = x - newWidth
       newY = y
 
-    } else if (hitBox.position === 'bottom-right') {
+    } else if (hitBox.position === 'se') {
       const dx = x - hitBoxOrigin[0]
       const dy = y - hitBoxOrigin[1]
 
@@ -386,7 +404,7 @@ export class RectangleAnnotationRenderer {
     }
 
     
-    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x: newWidth < MIN_WIDTH ? this.annotation.x : newX, y: newHeight < MIN_HEIGHT ? this.annotation.y : newY, width: newWidth < MIN_WIDTH ? this.annotation.width : newWidth, height: newHeight < MIN_HEIGHT ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.renderer.onAnnotationResize?.({ type: 'annotationResize', position: hitBox.position, x: newWidth < MIN_WIDTH ? this.annotation.x : newX, y: newHeight < MIN_HEIGHT ? this.annotation.y : newY, width: newWidth < MIN_WIDTH ? this.annotation.width : newWidth, height: newHeight < MIN_HEIGHT ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
 
     return
   }
@@ -409,6 +427,19 @@ export class RectangleAnnotationRenderer {
 
     return
   }
+
+  // private resizePointerLeave = (event: PIXI.InteractionEvent) => {
+  //   if (this.renderer.clickedAnnotation !== undefined || this.renderer.hoveredAnnotation !== this || this.renderer.dragging) return
+
+  //   this.renderer.hoveredAnnotation = undefined
+
+  //   this.dirty = true
+  //   this.renderer.dirty = true
+
+  //   const { x, y } = this.renderer.root.toLocal(event.data.global)
+  //   const client = clientPositionFromEvent(event.data.originalEvent)
+  //   this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+  // }
 
   private clearDoubleClick() {
     this.doubleClickTimeout = undefined

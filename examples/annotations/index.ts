@@ -65,7 +65,7 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
 
 let annotations = [{
   type: 'text' as const,
-  id: 'test-text-annotation',
+  id: '1',
   width: 100,
   height: 100,
   x: -400,
@@ -86,7 +86,7 @@ let annotations = [{
   }
 }, {
   type: 'text' as const,
-  id: 'test-text-annotation-2',
+  id: '2',
   width: 100,
   height: 100,
   x: -600,
@@ -235,7 +235,7 @@ const renderOptions: WebGL.Options = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationDrag: ({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: WebGL.AnnotationDragEvent) => {
+  onAnnotationDrag: ({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: WebGL.AnnotationDragEvent) => {    
     const dx = annotationX - x
     const dy = annotationY - y
 
@@ -247,7 +247,9 @@ const renderOptions: WebGL.Options = {
 
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationResize: ({ x, y, width, height, target: { id } }: WebGL.AnnotationResizeEvent) => {
+  onAnnotationResize: ({ position, x, y, width, height, target: { id } }: WebGL.AnnotationResizeEvent) => {
+    renderOptions.cursor = `${position}-resize`
+
     annotations = annotations.map((annotation) => (
       annotation.id === id ? (
         { ...annotation, x, y, width, height }

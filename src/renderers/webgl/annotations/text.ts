@@ -9,40 +9,40 @@ const DEFAULT_FILL = '#FFFFFF'
 const DEFAULT_STROKE = '#000000'
 const DEFAULT_PADDING = 4
 
-const HIT_AREA_PADDING = 10
+// const HIT_AREA_PADDING = 10
 const RESIZE_RADIUS = 4
 
 type ResizeHitBox = {
   graphic: PIXI.Graphics
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  position: 'nw' | 'ne' | 'sw' | 'se'
 }
 
 const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
   switch(hitBox.position) {
-    case 'top-left' :
+    case 'nw' :
       return [rectOrigin.x, rectOrigin.y]
-    case 'bottom-left':
+    case 'sw':
       return [rectOrigin.x, rectOrigin.y + height]
-    case 'top-right':
+    case 'ne':
       return [rectOrigin.x + width, rectOrigin.y]
-    case 'bottom-right':
+    case 'se':
       return [rectOrigin.x + width, rectOrigin.y + height]
   }
 }
 
-const getHitArea = (annotation: TextAnnotation) => {
-  const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-  const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
-  const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-  const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
+// const getHitArea = (annotation: TextAnnotation) => {
+//   const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
+//   const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
+//   const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
+//   const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
 
-  return [
-    ...topLeft,
-    ...bottomLeft,
-    ...bottomRight,
-    ...topRight
-  ]
-}
+//   return [
+//     ...topLeft,
+//     ...bottomLeft,
+//     ...bottomRight,
+//     ...topRight
+//   ]
+// }
 export class TextAnnotationRenderer {
 
   x: number
@@ -56,12 +56,13 @@ export class TextAnnotationRenderer {
   private resizeContainer = new PIXI.Container()
 
   private rectangleGraphic = new PIXI.Graphics()
+
   private textSprite = new PIXI.Text('')
   private resizeHitBoxes: ResizeHitBox[] = [
-    { graphic: new PIXI.Graphics(), position: 'top-left' },
-    { graphic: new PIXI.Graphics(), position: 'top-right' },
-    { graphic: new PIXI.Graphics(), position: 'bottom-left' },
-    { graphic: new PIXI.Graphics(), position: 'bottom-right' }
+    { graphic: new PIXI.Graphics(), position: 'nw' },
+    { graphic: new PIXI.Graphics(), position: 'ne' },
+    { graphic: new PIXI.Graphics(), position: 'sw' },
+    { graphic: new PIXI.Graphics(), position: 'se' }
   ] 
 
   private interaction: 'drag' | 'resize' | undefined
@@ -118,12 +119,16 @@ export class TextAnnotationRenderer {
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
 
-    this.rectangleGraphic.hitArea = new PIXI.Polygon(getHitArea(this.annotation))
+    // TODO: figure out how to pad hitarea without affecting pointer events
+    // this.rectangleGraphic.hitArea = new PIXI.Polygon(getHitArea(this.annotation))
+
+    if (this.annotation.resize) this.handleHitBoxes(false)
 
     this.styleText()
   }
 
   update(annotation: TextAnnotation) {
+    const toggleResize = annotation.resize !== this.annotation.resize
 
     this.annotation = annotation
 
@@ -138,19 +143,10 @@ export class TextAnnotationRenderer {
       .drawRect(this.annotation.x, this.annotation.y, this.annotation.width, this.annotation.height)
       .endFill()
 
-    if (this.annotation.resize) {
-      this.resizeHitBoxes.forEach((hitBox) => {
-        const origin = getHitBoxOrigin(hitBox, { x: this.annotation.x, y: this.annotation.y }, this.annotation.width, this.annotation.height)
-        if (origin === undefined) return
 
-        hitBox.graphic
-          .clear()
-          .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
-          .lineStyle(this.annotation.style.stroke?.width ?? 1, colorToNumber(this.annotation.style.stroke?.color ?? DEFAULT_STROKE))
-          .drawCircle(origin[0], origin[1], RESIZE_RADIUS)
-          .endFill()      
-
-      }) 
+    if (toggleResize || this.annotation.resize) {
+      if (this.annotation.resize) this.handleHitBoxes(false) 
+      else this.handleHitBoxes(true)
     }
 
     this.styleText()
@@ -208,8 +204,7 @@ export class TextAnnotationRenderer {
       if (origin === undefined) return
 
       if (hide) {
-        hitBox.graphic
-          .clear()
+        hitBox.graphic.destroy()
       } else {
         hitBox.graphic
           .clear()
@@ -225,7 +220,11 @@ export class TextAnnotationRenderer {
 
   private pointerEnter = (event: PIXI.InteractionEvent) => {
     if (this.renderer.hoveredAnnotation === this || this.renderer.clickedAnnotation !== undefined || this.renderer.dragging) return
-    if (this.annotation.resize) this.handleHitBoxes(false)
+
+    this.renderer.annotationsBottomLayer.removeChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.removeChild(this.resizeContainer)
+    this.renderer.annotationsLayer.addChild(this.annotationContainer)
+    this.renderer.annotationsLayer.addChild(this.resizeContainer)
 
     this.renderer.hoveredAnnotation = this
 
@@ -345,7 +344,11 @@ export class TextAnnotationRenderer {
 
   private pointerLeave = (event: PIXI.InteractionEvent) => {
     if (this.renderer.clickedAnnotation !== undefined || this.renderer.hoveredAnnotation !== this || this.renderer.dragging) return
-    if (this.annotation.resize) this.handleHitBoxes(true)
+
+    this.renderer.annotationsLayer.removeChild(this.annotationContainer)
+    this.renderer.annotationsLayer.removeChild(this.resizeContainer)
+    this.renderer.annotationsBottomLayer.addChild(this.annotationContainer)
+    this.renderer.annotationsBottomLayer.addChild(this.resizeContainer)
 
     this.renderer.hoveredAnnotation = undefined
 
@@ -396,7 +399,7 @@ export class TextAnnotationRenderer {
     let newX = this.annotation.x
     let newY = this.annotation.y
 
-    if (hitBox.position === 'top-left') {
+    if (hitBox.position === 'nw') {
       const dx = hitBoxOrigin[0] - x
       const dy = hitBoxOrigin[1] - y
 
@@ -405,7 +408,7 @@ export class TextAnnotationRenderer {
 
       newWidth = this.annotation.width + dx
       newHeight = this.annotation.height + dy
-    } else if (hitBox.position === 'bottom-left') {
+    } else if (hitBox.position === 'sw') {
       const dx = hitBoxOrigin[0] - x
       const dy = y - hitBoxOrigin[1]
 
@@ -415,7 +418,7 @@ export class TextAnnotationRenderer {
       newX = x
       newY = y - newHeight
 
-    } else if (hitBox.position === 'top-right') {
+    } else if (hitBox.position === 'ne') {
       const dx = x - hitBoxOrigin[0]
       const dy = hitBoxOrigin[1] - y
 
@@ -425,7 +428,7 @@ export class TextAnnotationRenderer {
       newX = x - newWidth
       newY = y
 
-    } else if (hitBox.position === 'bottom-right') {
+    } else if (hitBox.position === 'se') {
       const dx = x - hitBoxOrigin[0]
       const dy = y - hitBoxOrigin[1]
 
@@ -458,7 +461,7 @@ export class TextAnnotationRenderer {
     const minHeight = metrics.lineHeight + (2 * (this.annotation.style.padding ?? DEFAULT_PADDING))
 
     
-    this.renderer.onAnnotationResize?.({ type: 'annotationResize', x: newWidth < minWidth ? this.annotation.x : newX, y: newHeight < minHeight ? this.annotation.y : newY, width: newWidth < minWidth ? this.annotation.width : newWidth, height: newHeight < minHeight ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.renderer.onAnnotationResize?.({ type: 'annotationResize', position: hitBox.position, x: newWidth < minWidth ? this.annotation.x : newX, y: newHeight < minHeight ? this.annotation.y : newY, width: newWidth < minWidth ? this.annotation.width : newWidth, height: newHeight < minHeight ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
 
     return
   }
