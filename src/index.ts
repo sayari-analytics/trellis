@@ -163,23 +163,23 @@ export const getSelectionBounds = (elements: (Node | Annotation)[], padding: num
 
   for (const el of elements) {
     if ('radius' in el) {
-      const circleLeft = (el.x ?? 0) - el.radius
-      const circleTop = (el.y ?? 0) - el.radius
-      const circleRight = (el.x ?? 0) + el.radius
-      const circleBottom = (el.y ?? 0) + el.radius
-      if (circleLeft < left) left = circleLeft
-      if (circleTop < top) top = circleTop
-      if (circleRight > right) right = circleRight
-      if (circleBottom > bottom) bottom = circleBottom
+      const elementLeft = (el.x ?? 0) - el.radius
+      const elementTop = (el.y ?? 0) - el.radius
+      const elementRight = (el.x ?? 0) + el.radius
+      const elementBottom = (el.y ?? 0) + el.radius
+      if (elementLeft < left) left = elementLeft
+      if (elementTop < top) top = elementTop
+      if (elementRight > right) right = elementRight
+      if (elementBottom > bottom) bottom = elementBottom
     } else if ('width' in el && 'height' in el) {
-      const rectLeft = el.x ?? 0
-      const rectTop = el.y ?? 0
-      const rectRight = (el.x ?? 0) + el.width
-      const rectBottom = (el.x ?? 0) + el.height
-      if (rectLeft < left) left = rectLeft
-      if (rectTop < top) top = rectTop
-      if (rectRight > right) right = rectRight
-      if (rectBottom > bottom) bottom = rectBottom
+      const elementLeft = el.x ?? 0
+      const elementTop = el.y ?? 0
+      const elementRight = (el.x ?? 0) + el.width
+      const elementBottom = (el.x ?? 0) + el.height
+      if (elementLeft < left) left = elementLeft
+      if (elementTop < top) top = elementTop
+      if (elementRight > right) right = elementRight
+      if (elementBottom > bottom) bottom = elementBottom
     }
   }
 
