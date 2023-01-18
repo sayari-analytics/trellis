@@ -2,47 +2,12 @@ import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
 import { TextAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
+import { DEFAULT_FILL, DEFAULT_STROKE, ResizeHitBox, getHitBoxOrigin, RESIZE_RADIUS } from './utils'
 
 
-
-const DEFAULT_FILL = '#FFFFFF'
-const DEFAULT_STROKE = '#000000'
 const DEFAULT_PADDING = 4
 
-// const HIT_AREA_PADDING = 10
-const RESIZE_RADIUS = 4
-
-type ResizeHitBox = {
-  graphic: PIXI.Graphics
-  position: 'nw' | 'ne' | 'sw' | 'se'
-}
-
-const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
-  switch(hitBox.position) {
-    case 'nw' :
-      return [rectOrigin.x, rectOrigin.y]
-    case 'sw':
-      return [rectOrigin.x, rectOrigin.y + height]
-    case 'ne':
-      return [rectOrigin.x + width, rectOrigin.y]
-    case 'se':
-      return [rectOrigin.x + width, rectOrigin.y + height]
-  }
-}
-
-// const getHitArea = (annotation: TextAnnotation) => {
-//   const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-//   const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
-//   const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-//   const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
-
-//   return [
-//     ...topLeft,
-//     ...bottomLeft,
-//     ...bottomRight,
-//     ...topRight
-//   ]
-// }
+// TODO: do we want pointerEnter/Leave events for the resize circles?
 export class TextAnnotationRenderer {
 
   x: number

@@ -2,48 +2,11 @@ import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
 import { RectangleAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
-
-
-const DEFAULT_FILL = '#FFFFFF'
-const DEFAULT_STROKE = '#000000'
+import { DEFAULT_FILL, DEFAULT_STROKE, ResizeHitBox, getHitBoxOrigin, RESIZE_RADIUS } from './utils'
 
 const MIN_WIDTH = 5
 const MIN_HEIGHT = 5
-
-// const HIT_AREA_PADDING = 10
-const RESIZE_RADIUS = 4
-
-type ResizeHitBox = {
-  graphic: PIXI.Graphics
-  position: 'nw' | 'ne' | 'sw' | 'se'
-}
-
-const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
-  switch(hitBox.position) {
-    case 'nw' :
-      return [rectOrigin.x, rectOrigin.y]
-    case 'sw':
-      return [rectOrigin.x, rectOrigin.y + height]
-    case 'ne':
-      return [rectOrigin.x + width, rectOrigin.y]
-    case 'se':
-      return [rectOrigin.x + width, rectOrigin.y + height]
-  }
-}
-
-// const getHitArea = (annotation: RectangleAnnotation) => {
-//   const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-//   const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
-//   const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
-//   const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
-
-//   return [
-//     ...topLeft,
-//     ...bottomLeft,
-//     ...bottomRight,
-//     ...topRight
-//   ]
-// }
+// TODO: do we want pointerEnter/Leave events for the resize circles?
 export class RectangleAnnotationRenderer {
 
   x: number
@@ -313,20 +276,6 @@ export class RectangleAnnotationRenderer {
     this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
   }
 
-  // TODO: do we want pointerEnter/Leave events for the resize circles?
-  // private resizePointerEnter = (event: PIXI.InteractionEvent) => {
-  //   if (this.renderer.hoveredAnnotation === this || this.renderer.clickedAnnotation !== undefined || this.renderer.dragging) return
-
-  //   this.renderer.hoveredAnnotation = this
-
-  //   this.dirty = true
-  //   this.renderer.dirty = true
-
-  //   const { x, y } = this.renderer.root.toLocal(event.data.global)
-  //   const client = clientPositionFromEvent(event.data.originalEvent)
-  //   this.renderer.onAnnotationPointerEnter?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
-  // }
-
   private resizePointerDown = (hitBoxIdx: number) => (_: PIXI.InteractionEvent) => {
 
     this.resizeClicked = this.resizeHitBoxes[hitBoxIdx]
@@ -427,19 +376,6 @@ export class RectangleAnnotationRenderer {
 
     return
   }
-
-  // private resizePointerLeave = (event: PIXI.InteractionEvent) => {
-  //   if (this.renderer.clickedAnnotation !== undefined || this.renderer.hoveredAnnotation !== this || this.renderer.dragging) return
-
-  //   this.renderer.hoveredAnnotation = undefined
-
-  //   this.dirty = true
-  //   this.renderer.dirty = true
-
-  //   const { x, y } = this.renderer.root.toLocal(event.data.global)
-  //   const client = clientPositionFromEvent(event.data.originalEvent)
-  //   this.renderer.onAnnotationPointerLeave?.({ type: 'annotationPointer', x, y, clientX: client.x, clientY: client.y, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
-  // }
 
   private clearDoubleClick() {
     this.doubleClickTimeout = undefined
