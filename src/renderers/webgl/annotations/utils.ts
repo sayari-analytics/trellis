@@ -13,14 +13,14 @@ export type ResizeHitBox = {
 
 export const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
   switch(hitBox.position) {
-    case 'nw' :
-      return [rectOrigin.x, rectOrigin.y]
-    case 'sw':
-      return [rectOrigin.x, rectOrigin.y + height]
-    case 'ne':
-      return [rectOrigin.x + width, rectOrigin.y]
-    case 'se':
-      return [rectOrigin.x + width, rectOrigin.y + height]
+  case 'nw' :
+    return [rectOrigin.x, rectOrigin.y]
+  case 'sw':
+    return [rectOrigin.x, rectOrigin.y + height]
+  case 'ne':
+    return [rectOrigin.x + width, rectOrigin.y]
+  case 'se':
+    return [rectOrigin.x + width, rectOrigin.y + height]
   }
 }
 

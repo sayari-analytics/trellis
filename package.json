@@ -7,6 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
     "build:umd": "parcel build src/index.umd.ts --out-file dist/index.umd.min.js --global trellis",
