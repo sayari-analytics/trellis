@@ -34,10 +34,13 @@ export type EdgePointerEvent = { type: 'edgePointer', x: number, y: number, clie
 export type AnnotationPointerEvent = { type: 'annotationPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
+export type AnnotationResizePointerEvent = { type: 'annotationPointer', position: 'nw' | 'ne' | 'se' | 'sw', x: number, y: number, clientX: number, clientY: number, target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+
+
 export type AnnotationDragEvent = { type: 'annotationDrag',  x: number, y: number, clientX: number, clientY: number, annotationX: number, annotationY: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
-export type AnnotationResizeEvent = { type: 'annotationResize',  x: number, y: number, width: number, height: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type AnnotationResizeEvent = { type: 'annotationResize', position: 'nw' | 'ne' | 'se' | 'sw',  x: number, y: number, width: number, height: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 
 
 export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -70,6 +73,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   edgesEqual?: (previous: E[], current: E[]) => boolean
   nodeIsEqual?: (previous: N, current: N) => boolean
   edgeIsEqual?: (previous: E, current: E) => boolean
+
   onNodePointerEnter?: (event: NodePointerEvent) => void
   onNodePointerDown?: (event: NodePointerEvent) => void
   onNodeDragStart?: (event: NodeDragEvent) => void
@@ -79,22 +83,31 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onNodeClick?: (event: NodePointerEvent) => void
   onNodeDoubleClick?: (event: NodePointerEvent) => void
   onNodePointerLeave?: (event: NodePointerEvent) => void
+
   onEdgePointerEnter?: (event: EdgePointerEvent) => void
   onEdgePointerDown?: (event: EdgePointerEvent) => void
   onEdgePointerUp?: (event: EdgePointerEvent) => void
   onEdgePointerLeave?: (event: EdgePointerEvent) => void
   onEdgeClick?: (event: EdgePointerEvent) => void
   onEdgeDoubleClick?: (event: EdgePointerEvent) => void
+
   onAnnotationPointerEnter?: (event: AnnotationPointerEvent) => void
   onAnnotationPointerDown?: (event: AnnotationPointerEvent) => void
   onAnnotationDragStart?: (event: AnnotationDragEvent) => void
   onAnnotationDrag?: (event: AnnotationDragEvent) => void
   onAnnotationDragEnd?: (event: AnnotationDragEvent) => void
-  onAnnotationResize?: (event: AnnotationResizeEvent) => void
   onAnnotationPointerUp?: (event: AnnotationPointerEvent) => void
   onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
   onAnnotationClick?: (event: AnnotationPointerEvent) => void
   onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
+  
+  onAnnotationResizePointerUp?: (event: AnnotationResizePointerEvent) => void
+  onAnnotationResizePointerLeave?: (event: AnnotationResizePointerEvent) => void
+  onAnnotationResize?: (event: AnnotationResizeEvent) => void
+  onAnnotationResizePointerEnter?: (event: AnnotationResizePointerEvent) => void
+  onAnnotationResizePointerDown?: (event: AnnotationResizePointerEvent) => void
+
+
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -146,6 +159,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   viewportDirty = false
   time = performance.now()
   annotationsBottomLayer = new PIXI.Container()
+  annotationsLayer = new PIXI.Container()
   edgesLayer = new PIXI.Container()
   nodesLayer = new PIXI.Container()
   labelsLayer = new PIXI.Container()
@@ -266,9 +280,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
     this.labelsLayer.interactiveChildren = false
     this.nodesLayer.sortableChildren = true // TODO - perf test
+    this.annotationsBottomLayer.sortableChildren = true
 
     this.app.stage.addChild(this.root)
     this.root.addChild(this.annotationsBottomLayer)
+    this.root.addChild(this.annotationsLayer)
     this.root.addChild(this.edgesGraphic)
     this.root.addChild(this.edgesLayer)
     this.root.addChild(this.nodesLayer)
