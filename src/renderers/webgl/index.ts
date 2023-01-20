@@ -16,7 +16,6 @@ import { CircleAnnotationRenderer } from './annotations/circle'
 import { clientPositionFromEvent, pointerKeysFromEvent } from './utils'
 import { AnnotationRenderer } from './annotations'
 import { RectangleAnnotationRenderer } from './annotations/rectangle'
-import { TextAnnotationRenderer } from './annotations/text'
 
 
 install(PIXI)
@@ -559,10 +558,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         // annotation enter
         if (annotation.type === 'circle') {
           annotationsById[id] = new CircleAnnotationRenderer(this, annotation)
-        } else if (annotation.type === 'rectangle') {
+        } else if (annotation.type === 'rectangle' || annotation.type === 'text') {
           annotationsById[id] = new RectangleAnnotationRenderer(this, annotation)
-        } else if (annotation.type === 'text') {
-          annotationsById[id] = new TextAnnotationRenderer(this, annotation)
         }
 
         this.dirty = true
@@ -570,10 +567,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         // annotation update
         if (annotation.type === 'circle') {
           annotationsById[id] = (this.annotationsById[id] as CircleAnnotationRenderer).update(annotation)
-        } else if (annotation.type === 'rectangle') {
+        } else if (annotation.type === 'rectangle' || annotation.type === 'text') {
           annotationsById[id] = (this.annotationsById[id] as RectangleAnnotationRenderer).update(annotation)
-        } else if (annotation.type === 'text') {
-          annotationsById[id] = (this.annotationsById[id] as TextAnnotationRenderer).update(annotation)
         }
 
         this.dirty = true

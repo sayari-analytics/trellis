@@ -1,11 +1,51 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { RectangleAnnotation } from '../../..'
+import { RectangleAnnotation, TextAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
-import { DEFAULT_FILL, DEFAULT_STROKE, ResizeHitBox, getHitBoxOrigin, RESIZE_RADIUS } from './utils'
 
+
+const DEFAULT_PADDING = 4
 const MIN_WIDTH = 5
 const MIN_HEIGHT = 5
+
+const DEFAULT_FILL = '#FFFFFF'
+const DEFAULT_STROKE = '#000000'
+
+// const HIT_AREA_PADDING = 10
+const RESIZE_RADIUS = 4
+
+type ResizeHitBox = {
+  graphic: PIXI.Graphics
+  position: 'nw' | 'ne' | 'sw' | 'se'
+}
+
+const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
+  switch(hitBox.position) {
+  case 'nw' :
+    return [rectOrigin.x, rectOrigin.y]
+  case 'sw':
+    return [rectOrigin.x, rectOrigin.y + height]
+  case 'ne':
+    return [rectOrigin.x + width, rectOrigin.y]
+  case 'se':
+    return [rectOrigin.x + width, rectOrigin.y + height]
+  }
+}
+
+// const getHitArea = (annotation: RectangleAnnotation) => {
+//   const topLeft = [annotation.x - HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
+//   const bottomLeft = [annotation.x - HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
+//   const topRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y - HIT_AREA_PADDING]
+//   const bottomRight = [annotation.x + annotation.width + HIT_AREA_PADDING, annotation.y + annotation.height + HIT_AREA_PADDING]
+
+//   return [
+//     ...topLeft,
+//     ...bottomLeft,
+//     ...bottomRight,
+//     ...topRight
+//   ]
+// }
+
 // TODO: do we want pointerEnter/Leave events for the resize circles?
 export class RectangleAnnotationRenderer {
 
@@ -15,12 +55,13 @@ export class RectangleAnnotationRenderer {
 
   private renderer: InternalRenderer<any, any>
 
-  private annotation: RectangleAnnotation
+  private annotation: TextAnnotation | RectangleAnnotation
   private annotationContainer = new PIXI.Container()
   private resizeContainer = new PIXI.Container()
 
   private rectangleGraphic = new PIXI.Graphics()
 
+  private textSprite = new PIXI.Text('')
   private resizeHitBoxes: ResizeHitBox[] = [
     { graphic: new PIXI.Graphics(), position: 'nw' },
     { graphic: new PIXI.Graphics(), position: 'ne' },
@@ -36,7 +77,7 @@ export class RectangleAnnotationRenderer {
   private doubleClickTimeout: number | undefined
   private doubleClick = false
 
-  constructor(renderer: InternalRenderer<any, any>, annotation: RectangleAnnotation) {
+  constructor(renderer: InternalRenderer<any, any>, annotation: TextAnnotation | RectangleAnnotation) {
     this.renderer = renderer
     this.annotation = annotation
 
@@ -59,6 +100,8 @@ export class RectangleAnnotationRenderer {
     })
 
     this.annotationContainer.addChild(this.rectangleGraphic)
+    this.annotationContainer.addChild(this.textSprite)
+
     this.renderer.annotationsBottomLayer.addChild(this.annotationContainer)
     this.renderer.annotationsBottomLayer.addChild(this.resizeContainer)
 
@@ -84,10 +127,10 @@ export class RectangleAnnotationRenderer {
     // this.rectangleGraphic.hitArea = new PIXI.Polygon(getHitArea(this.annotation))
 
     if (this.annotation.resize) this.handleHitBoxes(false)
-
+    if (this.annotation.type == 'text') this.styleText(this.annotation)
   }
 
-  update(annotation: RectangleAnnotation) {
+  update(annotation: TextAnnotation | RectangleAnnotation) {
     const toggleResize = annotation.resize !== this.annotation.resize
 
     this.annotation = annotation
@@ -109,7 +152,56 @@ export class RectangleAnnotationRenderer {
       else this.handleHitBoxes(true)
     }
 
+    if (this.annotation.type == 'text') this.styleText(this.annotation)
+
     return this
+  }
+
+  private styleText(annotation: TextAnnotation) {
+    if (annotation.type === 'text') {
+      // textSprite.style.padding = 4 wasn't working as expected
+      // so I artificially adding some padding
+      let text = annotation.content
+
+      const padding = annotation.style.padding ?? DEFAULT_PADDING
+
+      const style = new PIXI.TextStyle({
+        fontFamily: annotation.style.text?.fontName ?? 'Arial',
+        fontSize: annotation.style.text?.fontSize ?? 14,
+        fontWeight: annotation.style.text?.fontWeight ?? 'normal',
+        fontStyle: annotation.style.text?.fontStyle ?? 'normal',
+        fill: annotation.style.text?.color ?? '#000000',
+        letterSpacing: annotation.style.text?.letterSpacing ?? 0,
+        leading: annotation.style.text?.lineSpacing ?? 0,
+        wordWrap: true,
+        //account for padding
+        wordWrapWidth: annotation.style.text?.maxWidth ?? annotation.width - (2 * padding) ?? 0,
+        breakWords: true,
+        align: annotation.style.text?.align ?? 'left'
+      })
+
+
+      const metrics = PIXI.TextMetrics.measureText(annotation.content, style, true)
+
+      if (metrics.height > annotation.height - (2 * padding)) {
+        const numLines = Math.floor((annotation.height - (2 * padding)) / metrics.lineHeight)
+        text = metrics.lines
+          .slice(0, numLines)
+          // not sure about if I should join with the whitespace or not
+          .join(' ')
+          .slice(undefined, -3)
+          .concat('...')
+      }
+      
+
+      this.textSprite.x = annotation.x + padding
+      this.textSprite.y = annotation.y + padding
+
+      this.textSprite.text = text
+      this.textSprite.style = style
+
+      this.textSprite.updateText(false)
+    }
   }
 
   private handleHitBoxes(hide: boolean) {
@@ -118,10 +210,8 @@ export class RectangleAnnotationRenderer {
       if (origin === undefined) return
 
       if (hide) {
-        hitBox.graphic.destroy()
+        hitBox.graphic.clear()
       } else {
-        if (hitBox.graphic === undefined) hitBox.graphic = new PIXI.Graphics()
-
         hitBox.graphic
           .clear()
           .beginFill(colorToNumber(this.annotation.style.backgroundColor ?? DEFAULT_FILL))
@@ -352,8 +442,36 @@ export class RectangleAnnotationRenderer {
       newHeight = this.annotation.height + dy
     }
 
-    
-    this.renderer.onAnnotationResize?.({ type: 'annotationResize', position: hitBox.position, x: newWidth < MIN_WIDTH ? this.annotation.x : newX, y: newHeight < MIN_HEIGHT ? this.annotation.y : newY, width: newWidth < MIN_WIDTH ? this.annotation.width : newWidth, height: newHeight < MIN_HEIGHT ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
+
+    let minHeight = MIN_HEIGHT
+    let minWidth = MIN_WIDTH
+
+    if (this.annotation.type === 'text') {
+      const style = new PIXI.TextStyle({
+        fontFamily: this.annotation.style.text?.fontName ?? 'Arial',
+        fontSize: this.annotation.style.text?.fontSize ?? 14,
+        fontWeight: this.annotation.style.text?.fontWeight ?? 'normal',
+        fontStyle: this.annotation.style.text?.fontStyle ?? 'normal',
+        stroke: this.annotation.style.text?.color ?? '#000000',
+        letterSpacing: this.annotation.style.text?.letterSpacing ?? 0,
+        leading: this.annotation.style.text?.lineSpacing ?? 0,
+        wordWrap: true,
+        //account for padding
+        wordWrapWidth: this.annotation.style.text?.maxWidth ?? this.annotation.width - (2 * (this.annotation.style.padding ?? DEFAULT_PADDING)) ?? 0,
+        breakWords: true,
+        align: this.annotation.style.text?.align ?? 'left'
+      })
+  
+  
+      const metrics = PIXI.TextMetrics.measureText(this.annotation.content, style, true)
+  
+      // for text annotations min width determined by multiplying the fontSize by 2 to account for the ellipsis + the padding  
+      minWidth = (2 * metrics.fontProperties.fontSize) + (2 * (this.annotation.style.padding ?? DEFAULT_PADDING))
+      // for text annotations min height should be the lineHeight of 1 row of text + padding
+      minHeight = metrics.lineHeight + (2 * (this.annotation.style.padding ?? DEFAULT_PADDING))
+    }
+
+    this.renderer.onAnnotationResize?.({ type: 'annotationResize', position: hitBox.position, x: newWidth < minWidth ? this.annotation.x : newX, y: newHeight < minHeight ? this.annotation.y : newY, width: newWidth < minWidth ? this.annotation.width : newWidth, height: newHeight < minHeight ? this.annotation.height : newHeight, target: this.annotation, ...pointerKeysFromEvent(event.data.originalEvent) })
 
     return
   }
