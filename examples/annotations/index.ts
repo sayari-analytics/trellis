@@ -280,3 +280,30 @@ force({ nodes, edges, options: layoutOptions }).then((graph) => {
 
   render({ nodes, edges, annotations, options: renderOptions })
 })
+
+
+// Testing to make sure hiding resize controls and deleting is working as expected
+// and that cleanup is good
+setTimeout(() => {
+  annotations[0] = {
+    ...annotations[0],
+    resize: false
+  }
+  render({ nodes, edges, annotations, options: renderOptions })
+}, 5000)
+
+setTimeout(() => {
+  annotations[0] = {
+    ...annotations[0],
+    resize: true
+  }
+  render({ nodes, edges, annotations, options: renderOptions })
+}, 10000)
+
+setTimeout(() => {
+  render({ nodes, edges, annotations: [], options: renderOptions })
+}, 15000)
+
+setTimeout(() => {
+  render({ nodes, edges, annotations, options: renderOptions })
+}, 20000)
