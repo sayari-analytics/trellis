@@ -14,12 +14,12 @@ const DEFAULT_STROKE = '#000000'
 // const HIT_AREA_PADDING = 10
 const RESIZE_RADIUS = 4
 
-type ResizeHitBox = {
+type ResizeControl = {
   graphic: PIXI.Graphics
   position: 'nw' | 'ne' | 'sw' | 'se'
 }
 
-const getHitBoxOrigin = (hitBox: ResizeHitBox, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
+const getResizeControlOrigin = (hitBox: ResizeControl, rectOrigin: { x: number, y: number }, width: number, height: number): [x: number, y: number] | undefined => {
   switch(hitBox.position) {
   case 'nw' :
     return [rectOrigin.x, rectOrigin.y]
@@ -62,7 +62,7 @@ export class RectangleAnnotationRenderer {
   private rectangleGraphic = new PIXI.Graphics()
 
   private textSprite = new PIXI.Text('')
-  private resizeHitBoxes: ResizeHitBox[] = [
+  private resizeControls: ResizeControl[] = [
     { graphic: new PIXI.Graphics(), position: 'nw' },
     { graphic: new PIXI.Graphics(), position: 'ne' },
     { graphic: new PIXI.Graphics(), position: 'sw' },
@@ -70,7 +70,7 @@ export class RectangleAnnotationRenderer {
   ] 
 
   private interaction: 'drag' | 'resize' | undefined
-  private resizeClicked: ResizeHitBox | undefined
+  private resizeClicked: ResizeControl | undefined
 
   private moveOffsetX = 0
   private moveOffsetY = 0
@@ -87,7 +87,7 @@ export class RectangleAnnotationRenderer {
     this.resizeContainer.interactive = true
     this.resizeContainer.buttonMode = true
 
-    this.resizeHitBoxes.forEach((hitBox, idx) => {
+    this.resizeControls.forEach((hitBox, idx) => {
       this.resizeContainer.addChild(hitBox.graphic)
       hitBox.graphic.interactive = true
       hitBox.graphic.buttonMode = true
@@ -205,8 +205,8 @@ export class RectangleAnnotationRenderer {
   }
 
   private handleHitBoxes(hide: boolean) {
-    this.resizeHitBoxes.forEach((hitBox) => {
-      const origin = getHitBoxOrigin(hitBox, { x: this.annotation.x, y: this.annotation.y }, this.annotation.width, this.annotation.height)
+    this.resizeControls.forEach((hitBox) => {
+      const origin = getResizeControlOrigin(hitBox, { x: this.annotation.x, y: this.annotation.y }, this.annotation.width, this.annotation.height)
       if (origin === undefined) return
 
       if (hide) {
@@ -368,7 +368,7 @@ export class RectangleAnnotationRenderer {
 
   private resizePointerDown = (hitBoxIdx: number) => (_: PIXI.InteractionEvent) => {
 
-    this.resizeClicked = this.resizeHitBoxes[hitBoxIdx]
+    this.resizeClicked = this.resizeControls[hitBoxIdx]
     this.renderer.clickedAnnotation = this
     ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).on('pointermove', this.resizePointerMove(hitBoxIdx))
     this.renderer.zoomInteraction.pause()
@@ -382,7 +382,7 @@ export class RectangleAnnotationRenderer {
     if (
       this.renderer.clickedAnnotation !== this ||
       this.resizeClicked === undefined ||
-      this.resizeClicked.position !== this.resizeHitBoxes[hitBoxIdx].position ||
+      this.resizeClicked.position !== this.resizeControls[hitBoxIdx].position ||
       this.interaction === 'drag'
     ) return
 
@@ -393,8 +393,8 @@ export class RectangleAnnotationRenderer {
       this.interaction = 'resize'
     }
 
-    const hitBox = this.resizeHitBoxes[hitBoxIdx]
-    const hitBoxOrigin = getHitBoxOrigin(hitBox, { x: this.annotation.x, y: this.annotation.y }, this.annotation.width, this.annotation.height)
+    const hitBox = this.resizeControls[hitBoxIdx]
+    const hitBoxOrigin = getResizeControlOrigin(hitBox, { x: this.annotation.x, y: this.annotation.y }, this.annotation.width, this.annotation.height)
 
     if (hitBoxOrigin === undefined) return // idk we need to have a safeguard in case something wonky happens
 
