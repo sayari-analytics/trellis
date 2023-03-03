@@ -888,6 +888,52 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     })
   }
 
+  blob = (resolution: number = 2) => {
+    return new Promise<string>((resolve, reject) => {
+      const cancelAnimationFrame = animationFrameLoop((time) => {
+        if (this.fontLoader.loading() || this.imageLoader.loading()) {
+          return
+        }
+
+        cancelAnimationFrame()
+
+        try {
+          this.render(time)
+          // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
+          const background = new PIXI.Graphics()
+            .beginFill(0xffffff)
+            .drawRect((-this.x * this.zoom) - (this.width / 2), (-this.y * this.zoom) - (this.height / 2), this.width, this.height)
+            .endFill()
+
+          this.root.addChildAt(background, 0)
+
+          // what causes this to throw on some machines? https://github.com/sayari-analytics/graph-ui/issues/1557
+          const imageTexture = this.app.renderer.generateTexture(
+            this.root,
+            {
+              scaleMode: PIXI.SCALE_MODES.LINEAR,
+              resolution,
+              // region: new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
+            }
+          )
+
+          return (this.app.renderer.plugins.extract as PIXI.Extract).canvas(imageTexture).toBlob(blob => {
+            imageTexture.destroy()
+            this.root.removeChild(background)
+            background.destroy()
+            if (blob !== null) {
+              resolve(URL.createObjectURL(blob))
+            } else {
+              reject(new Error('failed to generate blob'))
+            }
+          })
+        } catch (err) {
+          reject(err)
+        }
+      })
+    })
+  }
+
   private pointerEnter = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
