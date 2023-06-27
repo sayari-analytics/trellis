@@ -56,8 +56,10 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   color: "#7CBBF3",
-  labelSize: 10,
-  labelWordWrap: 260,
+  label: {
+    fontSize: 10,
+    wordWrap: 260,
+  },
   stroke: [
     { color: "#FFF", width: 2 },
     { color: "#90D7FB", width: 1 },
@@ -134,9 +136,11 @@ let edges: Graph.Edge[] = [
     label: "A to E 1",
     style: {
       arrow: "forward",
-      labelBackground: "#FFA500",
-      labelWordWrap: 600,
-      labelBackgroundOpacity: 0.5,
+      label: {
+        wordWrap: 600,
+        background: "#FFA500",
+        backgroundOpacity: 0.5,
+      },
     },
   },
   {

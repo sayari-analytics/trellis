@@ -38,8 +38,18 @@ export type ImageIcon = {
   offsetY?: number
 }
 
+type LabelStyle = Partial<{
+  color: string
+  fontFamily: string
+  fontSize: number
+  wordWrap: number
+  background: string
+  backgroundOpacity: number
+}>
+
 export type NodeStyle = {
   color?: string
+  icon?: TextIcon | ImageIcon
   stroke?: {
     color?: string
     width?: number
@@ -52,30 +62,15 @@ export type NodeStyle = {
     strokeWidth?: number
     icon?: TextIcon | ImageIcon
   }[]
-  icon?: TextIcon | ImageIcon
-  labelFamily?: string
-  labelColor?: string
-  labelSize?: number
-  labelWordWrap?: number
-  // TODO: I think we should switch this to being formatted as an object
-  // similar to stroke i.e. labelBackground: { color: string, opacity?: number }
-  // or maybe put all the label related style stuff in one obj and we can share
-  // that type between edge and node
-  labelBackground?: string
-  labelBackgroundOpacity?: number
+  label?: LabelStyle
 }
 
 export type EdgeStyle = {
   width?: number
   stroke?: string
   strokeOpacity?: number
-  labelFamily?: string
-  labelColor?: string
-  labelSize?: number
-  labelWordWrap?: number
-  labelBackground?: string
-  labelBackgroundOpacity?: number
   arrow?: 'forward' | 'reverse' | 'both' | 'none'
+  label?: LabelStyle
 }
 
 export type CircleAnnotation = {

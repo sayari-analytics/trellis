@@ -202,15 +202,15 @@ export class NodeRenderer<N extends Node, E extends Edge> {
     /**
      * Label
      */
-    const labelFamily = node.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
+    const labelFamily = node.style?.label?.fontFamily ?? DEFAULT_LABEL_FAMILY
     const labelColor =
-      node.style?.labelColor === undefined
+      node.style?.label?.color === undefined
         ? DEFAULT_LABEL_COLOR
-        : colorToNumber(node.style?.labelColor)
-    const labelSize = node.style?.labelSize ?? DEFAULT_LABEL_SIZE
-    const labelWordWrap = node.style?.labelWordWrap
-    const labelBackground = node.style?.labelBackground
-    const labelBackgroundOpacity = node.style?.labelBackgroundOpacity
+        : colorToNumber(node.style.label.color)
+    const labelSize = node.style?.label?.fontSize ?? DEFAULT_LABEL_SIZE
+    const labelWordWrap = node.style?.label?.wordWrap
+    const labelBackground = node.style?.label?.background
+    const labelBackgroundOpacity = node.style?.label?.backgroundOpacity
 
     if (
       node.label !== this.label ||

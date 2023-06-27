@@ -1,5 +1,5 @@
-import * as PIXI from "pixi.js-legacy"
-import { InternalRenderer } from "."
+import * as PIXI from 'pixi.js-legacy'
+import { InternalRenderer } from '.'
 import {
   angle,
   colorToNumber,
@@ -11,18 +11,18 @@ import {
   THREE_HALF_PI,
   clientPositionFromEvent,
   pointerKeysFromEvent,
-} from "./utils"
-import { Node, Edge, EdgeStyle } from "../.."
-import { ArrowSprite } from "./sprites/arrowSprite"
+} from './utils'
+import { Node, Edge, EdgeStyle } from '../..'
+import { ArrowSprite } from './sprites/arrowSprite'
 
 const LINE_HOVER_RADIUS = 4
 const DEFAULT_EDGE_WIDTH = 1
-const DEFAULT_EDGE_COLOR = colorToNumber("#ccc")
+const DEFAULT_EDGE_COLOR = colorToNumber('#ccc')
 const DEFAULT_EDGE_OPACITY = 1
-const DEFAULT_LABEL_FAMILY = "Helvetica"
-const DEFAULT_LABEL_COLOR = colorToNumber("#444")
+const DEFAULT_LABEL_FAMILY = 'Helvetica'
+const DEFAULT_LABEL_COLOR = colorToNumber('#444')
 const DEFAULT_LABEL_SIZE = 11
-const DEFAULT_ARROW = "none"
+const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer<N extends Node, E extends Edge> {
   edge: E
@@ -40,7 +40,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
   private strokeOpacity = DEFAULT_EDGE_OPACITY
   private line = new PIXI.ParticleContainer() // can this be a DisplayObject
   private arrowContainer = new PIXI.Container() // why can't this be a ParticleContainer
-  private arrow: EdgeStyle["arrow"] = DEFAULT_ARROW
+  private arrow: EdgeStyle['arrow'] = DEFAULT_ARROW
   private forwardArrow?: PIXI.Sprite
   private reverseArrow?: PIXI.Sprite
   private labelContainer = new PIXI.Container() // TODO - can't use ParticleContainer.  lazily add label sprite directly to edgesLayer
@@ -65,12 +65,12 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     this.line.interactive = true
     this.line.buttonMode = true
     this.line
-      .on("pointerover", this.pointerEnter)
-      .on("pointerout", this.pointerLeave)
-      .on("pointerdown", this.pointerDown)
-      .on("pointerup", this.pointerUp)
-      .on("pointerupoutside", this.pointerUp)
-      .on("pointercancel", this.pointerUp)
+      .on('pointerover', this.pointerEnter)
+      .on('pointerout', this.pointerLeave)
+      .on('pointerdown', this.pointerDown)
+      .on('pointerup', this.pointerUp)
+      .on('pointerupoutside', this.pointerUp)
+      .on('pointercancel', this.pointerUp)
 
     this.renderer.edgesLayer.addChild(this.line)
     /**
@@ -102,17 +102,17 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       this.forwardArrow = undefined
       this.reverseArrow = undefined
 
-      if (this.arrow === "forward") {
+      if (this.arrow === 'forward') {
         this.forwardArrow = this.renderer.arrow.create()
         this.forwardArrow.tint = this.stroke
         this.forwardArrow.alpha = this.strokeOpacity
         this.arrowContainer.addChild(this.forwardArrow)
-      } else if (this.arrow === "reverse") {
+      } else if (this.arrow === 'reverse') {
         this.reverseArrow = this.renderer.arrow.create()
         this.reverseArrow.tint = this.stroke
         this.reverseArrow.alpha = this.strokeOpacity
         this.arrowContainer.addChild(this.reverseArrow)
-      } else if (this.arrow === "both") {
+      } else if (this.arrow === 'both') {
         this.forwardArrow = this.renderer.arrow.create()
         this.reverseArrow = this.renderer.arrow.create()
         this.forwardArrow.tint = this.stroke
@@ -133,12 +133,12 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
         : colorToNumber(edge.style?.stroke)
     if (this.stroke !== stroke) {
       this.stroke = stroke
-      if (this.arrow === "forward" && this.forwardArrow !== undefined) {
+      if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
         this.forwardArrow.tint = this.stroke
-      } else if (this.arrow === "reverse" && this.reverseArrow !== undefined) {
+      } else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
         this.reverseArrow.tint = this.stroke
       } else if (
-        this.arrow === "both" &&
+        this.arrow === 'both' &&
         this.forwardArrow !== undefined &&
         this.reverseArrow !== undefined
       ) {
@@ -153,12 +153,12 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     const strokeOpacity = edge.style?.strokeOpacity ?? DEFAULT_EDGE_OPACITY
     if (this.strokeOpacity !== strokeOpacity) {
       this.strokeOpacity = strokeOpacity
-      if (this.arrow === "forward" && this.forwardArrow !== undefined) {
+      if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
         this.forwardArrow.alpha = this.strokeOpacity
-      } else if (this.arrow === "reverse" && this.reverseArrow !== undefined) {
+      } else if (this.arrow === 'reverse' && this.reverseArrow !== undefined) {
         this.reverseArrow.alpha = this.strokeOpacity
       } else if (
-        this.arrow === "both" &&
+        this.arrow === 'both' &&
         this.forwardArrow !== undefined &&
         this.reverseArrow !== undefined
       ) {
@@ -169,15 +169,15 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     /**
      * Label
      */
-    const labelFamily = edge.style?.labelFamily ?? DEFAULT_LABEL_FAMILY
+    const labelFamily = edge.style?.label?.fontFamily ?? DEFAULT_LABEL_FAMILY
     const labelColor =
-      edge.style?.labelColor === undefined
+      edge.style?.label?.color === undefined
         ? DEFAULT_LABEL_COLOR
-        : colorToNumber(edge.style?.labelColor)
-    const labelSize = edge.style?.labelSize ?? DEFAULT_LABEL_SIZE
-    const labelWordWrap = edge.style?.labelWordWrap
-    const labelBackground = edge.style?.labelBackground
-    const labelBackgroundOpacity = edge.style?.labelBackgroundOpacity
+        : colorToNumber(edge.style.label.color)
+    const labelSize = edge.style?.label?.fontSize ?? DEFAULT_LABEL_SIZE
+    const labelWordWrap = edge.style?.label?.wordWrap
+    const labelBackground = edge.style?.label?.background
+    const labelBackgroundOpacity = edge.style?.label?.backgroundOpacity
 
     if (
       edge.label !== this.label ||
@@ -203,7 +203,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       if (this.label) {
         this.labelLoader = this.renderer.fontLoader.load(
           this.labelFamily,
-          "normal"
+          'normal'
         )((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
@@ -214,10 +214,10 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
             fontFamily: this.labelFamily,
             fontSize: (this.labelSize ?? DEFAULT_LABEL_SIZE) * 2.5,
             fill: this.labelColor,
-            lineJoin: "round",
-            stroke: "#fafafa",
+            lineJoin: 'round',
+            stroke: '#fafafa',
             strokeThickness: 2.5 * 2.5,
-            align: "center",
+            align: 'center',
             wordWrap: labelWordWrap !== undefined,
             wordWrapWidth: labelWordWrap,
           })
@@ -317,19 +317,19 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     } else if (this.curve === 0) {
       const startArrowOffset = this.reverseArrow
         ? movePoint(
-            sourceContainer.x,
-            sourceContainer.y,
-            theta,
-            -sourceRadius - ArrowSprite.ARROW_HEIGHT
-          )
+          sourceContainer.x,
+          sourceContainer.y,
+          theta,
+          -sourceRadius - ArrowSprite.ARROW_HEIGHT
+        )
         : start
       const endArrowOffset = this.forwardArrow
         ? movePoint(
-            targetContainer.x,
-            targetContainer.y,
-            theta,
-            targetRadius + ArrowSprite.ARROW_HEIGHT
-          )
+          targetContainer.x,
+          targetContainer.y,
+          theta,
+          targetRadius + ArrowSprite.ARROW_HEIGHT
+        )
         : end
       /**
        * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
@@ -401,30 +401,30 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       )
       const curveStart = this.reverseArrow
         ? movePoint(
-            sourceContainer.x,
-            sourceContainer.y,
-            thetaCurveStart,
-            -sourceRadius - ArrowSprite.ARROW_HEIGHT
-          )
+          sourceContainer.x,
+          sourceContainer.y,
+          thetaCurveStart,
+          -sourceRadius - ArrowSprite.ARROW_HEIGHT
+        )
         : movePoint(
-            sourceContainer.x,
-            sourceContainer.y,
-            thetaCurveStart,
-            -sourceRadius
-          )
+          sourceContainer.x,
+          sourceContainer.y,
+          thetaCurveStart,
+          -sourceRadius
+        )
       const curveEnd = this.forwardArrow
         ? movePoint(
-            targetContainer.x,
-            targetContainer.y,
-            thetaCurveEnd,
-            targetRadius + ArrowSprite.ARROW_HEIGHT
-          )
+          targetContainer.x,
+          targetContainer.y,
+          thetaCurveEnd,
+          targetRadius + ArrowSprite.ARROW_HEIGHT
+        )
         : movePoint(
-            targetContainer.x,
-            targetContainer.y,
-            thetaCurveEnd,
-            targetRadius
-          )
+          targetContainer.x,
+          targetContainer.y,
+          thetaCurveEnd,
+          targetRadius
+        )
       this.x0 = curveStart[0]
       this.y0 = curveStart[1]
       this.x1 = curveEnd[0]
@@ -609,7 +609,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onEdgePointerEnter?.({
-      type: "edgePointer",
+      type: 'edgePointer',
       x,
       y,
       clientX: client.x,
@@ -633,7 +633,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onEdgePointerLeave?.({
-      type: "edgePointer",
+      type: 'edgePointer',
       x,
       y,
       clientX: client.x,
@@ -663,7 +663,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onEdgePointerDown?.({
-      type: "edgePointer",
+      type: 'edgePointer',
       x,
       y,
       clientX: client.x,
@@ -684,7 +684,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     const { x, y } = this.renderer.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
     this.renderer.onEdgePointerUp?.({
-      type: "edgePointer",
+      type: 'edgePointer',
       x,
       y,
       clientX: client.x,
@@ -693,7 +693,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       ...pointerKeysFromEvent(event.data.originalEvent),
     })
     this.renderer.onEdgeClick?.({
-      type: "edgePointer",
+      type: 'edgePointer',
       x,
       y,
       clientX: client.x,
@@ -706,7 +706,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       this.doubleClick = false
       this.doubleClickTimeout = undefined
       this.renderer.onEdgeDoubleClick?.({
-        type: "edgePointer",
+        type: 'edgePointer',
         x,
         y,
         clientX: client.x,
