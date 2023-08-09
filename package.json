@@ -19,13 +19,16 @@
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
   "dependencies": {
-    "@pixi/unsafe-eval": "^6.5.5",
+    "@pixi/events": "^6.5.10",
+    "@pixi/unsafe-eval": "^6.5.10",
     "d3-color": "^3.1.0",
     "d3-force": "^2.0.1",
     "d3-hierarchy": "^2.0.0",
     "d3-interpolate": "^1.4.0",
     "fontfaceobserver": "^2.1.0",
-    "pixi.js-legacy": "^6.5.5"
+    "parcel": "^2.9.3",
+    "pixi.js": "^7.2.4",
+    "pixi.js-legacy": "^6.5.10"
   },
   "devDependencies": {
     "@turf/clusters-kmeans": "^6.3.0",
@@ -45,7 +48,9 @@
     "d3-scale": "^3.2.1",
     "d3-scale-chromatic": "^1.5.0",
     "eslint": "^7.17.0",
-    "parcel-bundler": "^1.12.4",
+    "process": "^0.11.10",
+    "punycode": "^1.4.1",
+    "querystring-es3": "^0.2.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-resize-detector": "^5.2.0",
