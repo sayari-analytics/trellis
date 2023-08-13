@@ -1,5 +1,7 @@
-import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
+import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js-legacy'
+import Stats from 'stats.js'
 import { Grid } from './grid'
+import { Nodes } from './nodes'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
@@ -89,6 +91,7 @@ export const RENDERER_OPTIONS = {
 
 export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge>{
   container: HTMLDivElement
+  debug?: Stats
   app: Application
   root = new Container()
   eventSystem: EventSystem
@@ -110,10 +113,10 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
   animateViewportZoom: number | false = RENDERER_OPTIONS.animateViewportZoom
   animateNodePosition: number | false = RENDERER_OPTIONS.animateNodePosition
   animateNodeRadius: number | false = RENDERER_OPTIONS.animateNodeRadius
-  hoveredNode?: undefined // NodeRenderer<N, E>
-  clickedNode?: undefined // NodeRenderer<N, E>
-  hoveredEdge?: undefined // EdgeRenderer<N, E>
-  clickedEdge?: undefined // EdgeRenderer<N, E>
+  hoveredNode?: undefined // NodeRenderer<N>
+  clickedNode?: undefined // NodeRenderer<N>
+  hoveredEdge?: undefined // EdgeRenderer<E>
+  clickedEdge?: undefined // EdgeRenderer<E>
   hoveredAnnotation?: undefined // AnnotationRenderer
   clickedAnnotation?: undefined // AnnotationRenderer
   onNodePointerEnter?: (event: NodePointerEvent) => void
@@ -164,7 +167,7 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
   // private targetZoom = RENDERER_OPTIONS.zoom
   // private firstRender = true
 
-  constructor (options: { container: HTMLDivElement, debug?: boolean }) {
+  constructor (options: { container: HTMLDivElement, debug?: boolean, forceCanvas?: boolean }) {
     if (!(options.container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
     }
@@ -183,15 +186,17 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
       autoDensity: true,
       powerPreference: 'high-performance',
       backgroundAlpha: 0,
+      forceCanvas: options.forceCanvas,
     })
 
     this.app.stage.addChild(this.root)
 
-    new Grid(this, 1000, 1000, 50)
+    // new Grid(this, 1000, 1000, 100, { hideText: true })
+    new Nodes(this)
 
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
-    this.root.interactive = true
+    this.root.eventMode = 'static'
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 
@@ -206,9 +211,21 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     this.root.addEventListener('pointerupoutside', this.pointerUp)
     this.root.addEventListener('pointercancel', this.pointerUp)
     this.root.addEventListener('pointerleave', this.pointerLeave)
-    view.addEventListener!('wheel', this.zoomInteraction.wheel)
+    view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
 
-    this.app.ticker.add(this.render)
+    if (options.debug) {
+      this.app.ticker.add((dt: number) => {
+        this.debug?.end()
+        this.debug?.begin()
+        this.render(dt)
+      })
+      this.debug = new Stats()
+      this.debug.showPanel(0)
+      document.body.appendChild(this.debug.dom)
+      this.debug?.begin()
+    } else {
+      this.app.ticker.add(this.render)
+    }
   }
 
   update = ({
@@ -326,12 +343,13 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     this.root.y = (this.y * this.zoom) + (this.height / 2)
   }
 
-  render = (dt: number) => {
+  private render = (dt: number) => {
     this.decelerateInteraction.update(dt)
     this.app.render()
   }
 
   delete = () => {
+    this.app.destroy(true, { children: true, texture: true, baseTexture: true })
   }
 
   image = () => {

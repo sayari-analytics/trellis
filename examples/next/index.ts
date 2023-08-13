@@ -1,19 +1,28 @@
 import * as WebGL from '../../src/renderers/webgl-next'
 import * as Graph from '../../src/'
 
+try {
+  document.createElement('canvas').getContext('webgl')
+  // eslint-disable-next-line no-console
+  console.log('browser supports webgl')
+} catch (err) {
+  console.warn(err)
+}
+
 const container = document.querySelector('#graph') as HTMLDivElement
 
-const render = new WebGL.InternalRenderer({ container })
+const render = new WebGL.InternalRenderer({ container, debug: true })
+;(window as any).render = render
 
 const nodes: Graph.Node[] = []
 const edges: Graph.Edge[] = []
 const renderOptions: WebGL.Options = {
-  width: 600, // container.offsetWidth,
-  height: 600, // container.offsetHeight,
+  width: 1200, // container.offsetWidth,
+  height: 1200, // container.offsetHeight,
   x: 0,
   y: 0,
   zoom: 1,
-  minZoom: 0.25,
+  minZoom: 0.001,
   maxZoom: 2.5,
   onViewportPointerDown: (event: WebGL.ViewportPointerEvent) => {
     // console.log('pointer down', `x: ${event.x}, y: ${event.y}`)

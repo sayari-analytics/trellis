@@ -1,4 +1,4 @@
-import { Point } from 'pixi.js'
+import { Point } from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
 
 
@@ -16,7 +16,10 @@ export class Zoom {
   }
 
   wheel = (event: WheelEvent) => {
-    if (this.renderer.onViewportWheel !== undefined) event.preventDefault()
+    if (this.renderer.onViewportWheel !== undefined) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
 
     if (this.paused) {
       return
@@ -64,6 +67,10 @@ export class Zoom {
       viewportZoom: zoomEnd,
       target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
     })
+
+    if (this.renderer.onViewportWheel !== undefined) {
+      return false
+    }
   }
 
   pause() {

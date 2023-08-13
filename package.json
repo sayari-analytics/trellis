@@ -28,7 +28,7 @@
     "fontfaceobserver": "^2.1.0",
     "parcel": "^2.9.3",
     "pixi.js": "^7.2.4",
-    "pixi.js-legacy": "^6.5.10"
+    "pixi.js-legacy": "^7.2.4"
   },
   "devDependencies": {
     "@turf/clusters-kmeans": "^6.3.0",

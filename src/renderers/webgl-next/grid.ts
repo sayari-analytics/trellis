@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js'
+import { Container, Graphics, Text, TextStyle } from 'pixi.js-legacy'
 import { InternalRenderer } from '.'
 
 
@@ -15,7 +15,7 @@ export class Grid {
     align: 'center',
   }
 
-  constructor (renderer: InternalRenderer<any, any>, width: number, height: number, interval: number) {
+  constructor (renderer: InternalRenderer<any, any>, width: number, height: number, interval: number, options?: { hideText?: boolean }) {
     this.renderer = renderer
     this.renderer.root.addChild(this.container)
     const graticules = new Graphics()
@@ -30,11 +30,14 @@ export class Grid {
         .moveTo(x, -halfHeight)
         .lineTo(x, halfHeight)
 
-      const coordinate = new Text(x.toString(), this.textStyle)
-      coordinate.x = x
-      coordinate.y = 0
-      coordinate.anchor.set(0.5, 0.5)
-      this.container.addChild(coordinate)
+      if (!options?.hideText) {
+        const coordinate = new Text(x.toString(), this.textStyle)
+        coordinate.x = x
+        coordinate.y = 0
+        coordinate.anchor.set(0.5, 0.5)
+        coordinate.cullable = true
+        this.container.addChild(coordinate)
+      }
     }
 
     for (let y = -halfHeight; y <= halfHeight; y += interval) {
@@ -43,11 +46,12 @@ export class Grid {
         .moveTo(-halfWidth, y)
         .lineTo(halfWidth, y)
 
-      if (y !== 0) {
+      if (!options?.hideText && y !== 0) {
         const coordinate = new Text(y.toString(), this.textStyle)
         coordinate.x = 0
         coordinate.y = y
         coordinate.anchor.set(0.5, 0.5)
+        coordinate.cullable = true
         this.container.addChild(coordinate)
       }
     }
