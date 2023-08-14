@@ -6,6 +6,7 @@ import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import * as Graph from '../..'
+import { interpolate } from '../../utils'
 
 
 export type NodePointerEvent = { type: 'nodePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -37,6 +38,8 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   edgesEqual?: (previous: E[], current: E[]) => boolean
   nodeIsEqual?: (previous: N, current: N) => boolean
   edgeIsEqual?: (previous: E, current: E) => boolean
+  annotationsEqual?: (previous: Graph.Annotation[], current: Graph.Annotation[]) => boolean
+  annotationEqual?: (previous: Graph.Annotation, current: Graph.Annotation) => boolean
 
   onNodePointerEnter?: (event: NodePointerEvent) => void
   onNodePointerDown?: (event: NodePointerEvent) => void
@@ -82,10 +85,11 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
 
 export const RENDERER_OPTIONS = {
   width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animateViewportPosition: 600, animateViewportZoom: 600, animateNodePosition: 800, animateNodeRadius: 800,
+  animateViewportPosition: 800, animateViewportZoom: 800, animateNodePosition: 800, animateNodeRadius: 800,
   dragInertia: 0.88,
   nodesEqual: Object.is, edgesEqual: Object.is,
   nodeIsEqual: Object.is, edgeIsEqual: Object.is,
+  annotationsEqual: Object.is, annotationEqual: Object.is,
 }
 
 
@@ -113,6 +117,10 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
   animateViewportZoom: number | false = RENDERER_OPTIONS.animateViewportZoom
   animateNodePosition: number | false = RENDERER_OPTIONS.animateNodePosition
   animateNodeRadius: number | false = RENDERER_OPTIONS.animateNodeRadius
+  nodes: N[] = []
+  edges: E[] = []
+  annotations: Graph.Annotation[] = []
+  dirty: boolean = false
   hoveredNode?: undefined // NodeRenderer<N>
   clickedNode?: undefined // NodeRenderer<N>
   hoveredEdge?: undefined // EdgeRenderer<E>
@@ -159,13 +167,13 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
   private doubleClickTimeout?: number
   private doubleClick = false
   private clickedContainer = false
-  // private interpolateX?: (time: number) => { value: number, done: boolean }
-  // private targetX = RENDERER_OPTIONS.x
-  // private interpolateY?: (time: number) => { value: number, done: boolean }
-  // private targetY = RENDERER_OPTIONS.y
-  // private interpolateZoom?: (time: number) => { value: number, done: boolean }
-  // private targetZoom = RENDERER_OPTIONS.zoom
-  // private firstRender = true
+  private interpolateX?: (dt: number) => { value: number, done: boolean }
+  private targetX = RENDERER_OPTIONS.x
+  private interpolateY?: (dt: number) => { value: number, done: boolean }
+  private targetY = RENDERER_OPTIONS.y
+  private interpolateZoom?: (dt: number) => { value: number, done: boolean }
+  private targetZoom = RENDERER_OPTIONS.zoom
+  private firstRender = true
 
   constructor (options: { container: HTMLDivElement, debug?: boolean, forceCanvas?: boolean }) {
     if (!(options.container instanceof HTMLDivElement)) {
@@ -190,9 +198,11 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     })
 
     this.app.stage.addChild(this.root)
+    this.root.x = (this.x * this.zoom) + (this.width / 2)
+    this.root.y = (this.y * this.zoom) + (this.height / 2)
 
-    // new Grid(this, 1000, 1000, 100, { hideText: true })
-    new Nodes(this)
+    new Grid(this, 15000, 15000, 200, { hideText: true })
+    new Nodes(this, 30000, 50, 0.5)
 
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
@@ -236,13 +246,13 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
       animateNodePosition = RENDERER_OPTIONS.animateNodePosition, animateNodeRadius = RENDERER_OPTIONS.animateNodeRadius,
       animateViewportPosition = RENDERER_OPTIONS.animateViewportPosition, animateViewportZoom = RENDERER_OPTIONS.animateViewportZoom, dragInertia = RENDERER_OPTIONS.dragInertia,
-      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
+      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual, annotationsEqual = RENDERER_OPTIONS.annotationsEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDragStart, onNodeDrag, onNodeDragEnd, onNodePointerUp, onNodeClick, onNodeDoubleClick, onNodePointerLeave,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgeClick, onEdgeDoubleClick, onEdgePointerLeave,
       onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationResize, onAnnotationPointerUp, onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
       onViewportPointerEnter, onViewportPointerDown, onViewportDragStart, onViewportDrag, onViewportDragEnd, onViewportPointerMove, onViewportPointerUp, onViewportClick, onViewportDoubleClick, onViewportPointerLeave, onViewportWheel,
     } = RENDERER_OPTIONS,
-    annotations
+    annotations = []
   }: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
     this.onNodePointerEnter = onNodePointerEnter
     this.onNodePointerDown = onNodePointerDown
@@ -288,63 +298,126 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     this.minZoom = minZoom
     this.maxZoom = maxZoom
 
+
+    /**
+     * Update Viewport Dimensions
+     */
     if (width !== this.width || height !== this.height) {
       this.width = width
       this.height = height
+      this.root.x = (this.x * this.zoom) + (this.width / 2)
+      this.root.y = (this.y * this.zoom) + (this.height / 2)
       this.app.renderer.resize(this.width, this.height)
-      // this.viewportDirty = true
     }
 
-    // if (zoom !== this.targetZoom) {
-    //   if (zoom === this.expectedViewportZoom || !this.animateViewportZoom || this.firstRender) {
-    //     this.interpolateZoom = undefined
-    //     this.zoom = zoom
-    //     this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
-    //   } else {
-    //     this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewportZoom, this.time)
-    //   }
 
-    //   this.expectedViewportZoom = undefined
-    //   this.targetZoom = zoom
-    //   this.viewportDirty = true
-    // }
-    this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom))
-    this.root.scale.set(this.zoom)
+    /**
+     * Update Viewport Zoom/Position
+     */
+    const _zoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom))
+    if (_zoom !== this.targetZoom) {
+      if (_zoom === this.expectedViewportZoom || !this.animateViewportZoom || this.firstRender) {
+        this.interpolateZoom = undefined
+        this.zoom = _zoom
+        this.root.scale.set(this.zoom)
+      } else {
+        this.interpolateZoom = interpolate(this.zoom, _zoom, this.animateViewportZoom)
+      }
+      this.targetZoom = _zoom
+      this.firstRender = false
+    }
 
-    // if (x !== this.targetX) {
-    //   if (x === this.expectedViewportXPosition || !this.animateViewportPosition || this.firstRender) {
-    //     this.interpolateX = undefined
-    //     this.x = x
-    //   } else {
-    //     this.interpolateX = interpolate(this.x, x, this.animateViewportPosition, this.time)
-    //   }
+    if (x !== this.targetX) {
+      if (x === this.expectedViewportXPosition || !this.animateViewportPosition || this.firstRender) {
+        this.interpolateX = undefined
+        this.x = x
+        this.root.x = (this.x * this.zoom) + (this.width / 2)
+      } else {
+        this.interpolateX = interpolate(this.x, x, this.animateViewportPosition)
+      }
 
-    //   this.expectedViewportXPosition = undefined
-    //   this.targetX = x
-    //   this.viewportDirty = true
-    // }
-    this.x = x
+      this.expectedViewportXPosition = undefined
+      this.targetX = x
+      this.firstRender = false
+    }
 
-    // if (y !== this.targetY) {
-    //   if (y === this.expectedViewportYPosition || !this.animateViewportPosition || this.firstRender) {
-    //     this.interpolateY = undefined
-    //     this.y = y
-    //   } else {
-    //     this.interpolateY = interpolate(this.y, y, this.animateViewportPosition, this.time)
-    //   }
+    if (y !== this.targetY) {
+      if (y === this.expectedViewportYPosition || !this.animateViewportPosition || this.firstRender) {
+        this.interpolateY = undefined
+        this.y = y
+        this.root.y = (this.y * this.zoom) + (this.height / 2)
+      } else {
+        this.interpolateY = interpolate(this.y, y, this.animateViewportPosition)
+      }
 
-    //   this.expectedViewportYPosition = undefined
-    //   this.targetY = y
-    //   this.viewportDirty = true
-    // }
-    this.y = y
+      this.expectedViewportYPosition = undefined
+      this.targetY = y
+      this.firstRender = false
+    }
 
-    this.root.x = (this.x * this.zoom) + (this.width / 2)
-    this.root.y = (this.y * this.zoom) + (this.height / 2)
+
+    /**
+     * Update Nodes and Edges
+     */
+    if (!edgesEqual(this.edges, edges)) {
+      this.edges = edges
+      this.firstRender = false
+      this.dirty = true
+    }
+
+    if (!nodesEqual(this.nodes, nodes)) {
+      this.nodes = nodes
+      this.firstRender = false
+      this.dirty = true
+    }
+
+    /**
+     * Update Annotations
+     */
+    if (!annotationsEqual(this.annotations, annotations)) {
+      this.nodes = nodes
+      this.firstRender = false
+      this.dirty = true
+    }
   }
 
   private render = (dt: number) => {
     this.decelerateInteraction.update(dt)
+
+    if (this.interpolateZoom) {
+      const { value, done } = this.interpolateZoom(dt)
+      this.zoom = value
+      this.root.scale.set(this.zoom)
+
+      if (done) {
+        this.interpolateZoom = undefined
+      }
+    }
+
+    if (this.interpolateX) {
+      const { value, done } = this.interpolateX(dt)
+      this.x = value
+      this.root.x = (this.x * this.zoom) + (this.width / 2)
+
+      if (done) {
+        this.interpolateX = undefined
+      }
+    }
+
+    if (this.interpolateY) {
+      const { value, done } = this.interpolateY(dt)
+      this.y = value
+      this.root.y = (this.y * this.zoom) + (this.height / 2)
+
+      if (done) {
+        this.interpolateY = undefined
+      }
+    }
+
+    if (this.dirty) {
+      // render nodes and edges
+    }
+
     this.app.render()
   }
 
@@ -436,6 +509,7 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
   }
 
   private pointerUp = (event: FederatedPointerEvent) => {
+    const isDragging = this.dragInteraction.dragging
     this.dragInteraction.up(event)
     this.decelerateInteraction.up()
 
@@ -455,23 +529,9 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
         metaKey: event.metaKey,
         shiftKey: event.shiftKey
       })
-      this.onViewportClick?.({
-        type: 'viewportPointer',
-        x,
-        y,
-        clientX: event.clientX,
-        clientY: event.clientY,
-        target: { x: this.x, y: this.y, zoom: this.zoom },
-        altKey: event.altKey,
-        ctrlKey: event.ctrlKey,
-        metaKey: event.metaKey,
-        shiftKey: event.shiftKey
-      })
 
-      if (this.doubleClick) {
-        this.doubleClick = false
-        this.doubleClickTimeout = undefined
-        this.onViewportDoubleClick?.({
+      if (!isDragging) {
+        this.onViewportClick?.({
           type: 'viewportPointer',
           x,
           y,
@@ -483,6 +543,23 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
           metaKey: event.metaKey,
           shiftKey: event.shiftKey
         })
+  
+        if (this.doubleClick) {
+          this.doubleClick = false
+          this.doubleClickTimeout = undefined
+          this.onViewportDoubleClick?.({
+            type: 'viewportPointer',
+            x,
+            y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            target: { x: this.x, y: this.y, zoom: this.zoom },
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey
+          })
+        }
       }
     }
   }

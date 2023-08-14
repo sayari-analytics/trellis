@@ -58,7 +58,7 @@ export class Zoom {
 
     this.renderer.onViewportWheel?.({
       type: 'viewportWheel',
-      x: localStart.x,
+      x: localStart.x, // these don't really make sense do they?
       y: localStart.y,
       clientX: event.clientX,
       clientY: event.clientY,
