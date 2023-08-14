@@ -16,10 +16,12 @@ export class Zoom {
   }
 
   wheel = (event: WheelEvent) => {
-    if (this.renderer.onViewportWheel !== undefined) {
-      event.preventDefault()
-      event.stopPropagation()
+    if (this.renderer.onViewportWheel === undefined) {
+      return
     }
+
+    event.preventDefault()
+    event.stopPropagation()
 
     if (this.paused) {
       return
@@ -68,9 +70,7 @@ export class Zoom {
       target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
     })
 
-    if (this.renderer.onViewportWheel !== undefined) {
-      return false
-    }
+    return false
   }
 
   pause() {

@@ -10,8 +10,9 @@ export class Decelerate {
   private renderer: InternalRenderer
   private paused = false
   private saved: { x: number, y: number, time: number }[] = []
-  private x?: number
-  private y?: number
+  private i: number = 0
+  private x: number = 0
+  private y: number = 0
   private minSpeed = 0.01
 
   constructor(renderer: InternalRenderer<any, any>) {
@@ -19,8 +20,8 @@ export class Decelerate {
   }
 
   down = () => {
-    this.saved = []
-    this.x = this.y = undefined
+    this.saved = new Array(60)
+    this.x = this.y = this.i = 0
   }
 
   move = () => {
@@ -28,17 +29,19 @@ export class Decelerate {
       return
     }
 
-    this.saved.push({ x: this.renderer.x, y: this.renderer.y, time: performance.now() })
-    if (this.saved.length > 60) {
+    this.saved[this.i++] = { x: this.renderer.x, y: this.renderer.y, time: performance.now() }
+
+    if (this.i > 60) {
       this.saved.splice(0, 30)
+      this.i = 30
     }
   }
 
   up = () => {
-    if (this.saved.length) {
+    if (this.i > 0) {
       const now = performance.now()
       for (const save of this.saved) {
-        if (save.time >= now - 100) {
+        if (save !== undefined && save.time >= now - 100) {
           const time = now - save.time
           this.x = (this.renderer.x - save.x) / time
           this.y = (this.renderer.y - save.y) / time
@@ -49,12 +52,11 @@ export class Decelerate {
   }
 
   update = (elapsed: number) => {
-    if (this.paused || this.renderer.dragInertia === 0) {
+    if (this.renderer.onViewportDrag === undefined || this.paused || this.renderer.dragInertia === 0) {
       return
     }
-
-    let x
-    let y
+    
+    let x: number | undefined, y: number | undefined
 
     if (this.x) {
       x = this.renderer.x + this.x * elapsed * 8
@@ -75,7 +77,7 @@ export class Decelerate {
     if (x || y) {
       this.renderer.expectedViewportXPosition = x ?? this.renderer.x
       this.renderer.expectedViewportYPosition = y ?? this.renderer.y
-      this.renderer.onViewportDrag?.({
+      this.renderer.onViewportDrag({
         type: 'viewportDragDecelarate',
         viewportX: x ?? this.renderer.x,
         viewportY: y ?? this.renderer.y,

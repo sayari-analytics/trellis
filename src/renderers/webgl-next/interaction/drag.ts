@@ -21,20 +21,18 @@ export class Drag {
   }
 
   down = (event: FederatedPointerEvent) => {
-    if (this.paused) {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
-    if (this.renderer.onViewportDrag) {
-      this.renderer.container.style.cursor = 'move'
-    }
+    this.renderer.container.style.cursor = 'move'
 
     this.last = { x: event.global.x, y: event.global.y }
     this.current = event.pointerId
   }
 
   move = (event: FederatedPointerEvent) => {
-    if (this.paused) {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
@@ -93,13 +91,11 @@ export class Drag {
   }
 
   up = (event: FederatedPointerEvent) => {
-    if (this.paused) {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
-    if (this.renderer.onViewportDrag) {
-      this.renderer.container.style.cursor = 'auto'
-    }
+    this.renderer.container.style.cursor = 'auto'
 
     if (this.dragging) {
       this.dragging = false
