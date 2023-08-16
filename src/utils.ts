@@ -136,7 +136,7 @@ export const interpolateDuration = (duration: number) => {
 export const interpolate = (from: number, to: number, duration: number) => {
   let elapsed = 0
   const interpolator = interpolateNumber(from, to)
-  const ease = interpolateBasis([from, interpolator(0.7), interpolator(0.95), to])
+  const ease = interpolateBasis([from, interpolator(0.3), interpolator(0.8), interpolator(0.95), to])
 
   return (dt: number) => {
     const diff = Math.max(20, dt)

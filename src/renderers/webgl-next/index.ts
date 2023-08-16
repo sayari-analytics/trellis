@@ -1,4 +1,4 @@
-import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js-legacy'
+import { Application, Container, EventSystem, FederatedPointerEvent, Graphics, Rectangle, RenderTexture } from 'pixi.js-legacy'
 import Stats from 'stats.js'
 import { Grid } from './grid'
 import { Nodes } from './nodes'
@@ -7,6 +7,9 @@ import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import * as Graph from '../..'
 import { interpolate } from '../../utils'
+import { NodeRenderer, createCircleTexture } from './node'
+import { EdgeRenderer } from './edge'
+import { EMPTY_ARRAY } from './utils'
 
 
 export type NodePointerEvent = { type: 'nodePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -20,6 +23,7 @@ export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: numb
 export type ViewportDragEvent = { type: 'viewportDrag', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', viewportX: number, viewportY: number, target: Graph.Viewport }
 export type ViewportWheelEvent = { type: 'viewportWheel', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, viewportZoom: number, target: Graph.Viewport }
+
 export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> = {
   width?: number
   height?: number
@@ -33,14 +37,12 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   animateNodePosition?: number | boolean
   animateNodeRadius?: number | boolean
   dragInertia?: number
-
   nodesEqual?: (previous: N[], current: N[]) => boolean
   edgesEqual?: (previous: E[], current: E[]) => boolean
   nodeIsEqual?: (previous: N, current: N) => boolean
   edgeIsEqual?: (previous: E, current: E) => boolean
   annotationsEqual?: (previous: Graph.Annotation[], current: Graph.Annotation[]) => boolean
   annotationEqual?: (previous: Graph.Annotation, current: Graph.Annotation) => boolean
-
   onNodePointerEnter?: (event: NodePointerEvent) => void
   onNodePointerDown?: (event: NodePointerEvent) => void
   onNodeDragStart?: (event: NodeDragEvent) => void
@@ -93,38 +95,44 @@ export const RENDERER_OPTIONS = {
 }
 
 
-export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge>{
+export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> {
   container: HTMLDivElement
   debug?: Stats
-  app: Application
-  root = new Container()
-  eventSystem: EventSystem
+  nodes: N[] = []
+  edges: E[] = []
+  annotations: Graph.Annotation[] = []
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   minZoom = RENDERER_OPTIONS.minZoom
   maxZoom = RENDERER_OPTIONS.maxZoom
   x = RENDERER_OPTIONS.x
-  expectedViewportXPosition?: number
   y = RENDERER_OPTIONS.y
-  expectedViewportYPosition?: number
   zoom = RENDERER_OPTIONS.zoom
+  app: Application
+  root = new Container()
+  edgesLayer = new Container()
+  nodesLayer = new Container()
+  circleTexture: RenderTexture
+  edgesGraphic = new Graphics()
+  nodesById: Record<string, NodeRenderer<N>> = {}
+  edgesById: Record<string, EdgeRenderer<E>> = {}
+  eventSystem: EventSystem
+  expectedViewportXPosition?: number
+  expectedViewportYPosition?: number
   expectedViewportZoom?: number
-  zoomInteraction: Zoom
-  dragInteraction: Drag
-  decelerateInteraction: Decelerate
+  zoomInteraction = new Zoom(this)
+  dragInteraction = new Drag(this)
+  decelerateInteraction = new Decelerate(this)
   dragInertia = RENDERER_OPTIONS.dragInertia
   animateViewportPosition: number | false = RENDERER_OPTIONS.animateViewportPosition
   animateViewportZoom: number | false = RENDERER_OPTIONS.animateViewportZoom
   animateNodePosition: number | false = RENDERER_OPTIONS.animateNodePosition
   animateNodeRadius: number | false = RENDERER_OPTIONS.animateNodeRadius
-  nodes: N[] = []
-  edges: E[] = []
-  annotations: Graph.Annotation[] = []
   dirty: boolean = false
-  hoveredNode?: undefined // NodeRenderer<N>
-  clickedNode?: undefined // NodeRenderer<N>
-  hoveredEdge?: undefined // EdgeRenderer<E>
-  clickedEdge?: undefined // EdgeRenderer<E>
+  hoveredNode?: NodeRenderer<N>
+  clickedNode?: NodeRenderer<N>
+  hoveredEdge?: EdgeRenderer<E>
+  clickedEdge?: EdgeRenderer<E>
   hoveredAnnotation?: undefined // AnnotationRenderer
   clickedAnnotation?: undefined // AnnotationRenderer
   onNodePointerEnter?: (event: NodePointerEvent) => void
@@ -200,19 +208,24 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     this.app.stage.addChild(this.root)
     this.root.x = (this.x * this.zoom) + (this.width / 2)
     this.root.y = (this.y * this.zoom) + (this.height / 2)
+    new Grid(this, 15000, 15000, 100, { hideText: false })
+    // new Nodes(this, 50000, 50, 0.5)
 
-    new Grid(this, 15000, 15000, 200, { hideText: true })
-    new Nodes(this, 30000, 50, 0.5)
+    // this.root.addChild(this.annotationsBottomLayer)
+    // this.root.addChild(this.annotationsLayer)
+    // this.root.addChild(this.edgesGraphic)
+    this.root.addChild(this.edgesLayer)
+    this.root.addChild(this.nodesLayer)
+    // this.root.addChild(this.labelsLayer)
+    // this.root.addChild(this.frontNodeLayer)
+    // this.root.addChild(this.frontLabelLayer)
 
+    this.circleTexture = createCircleTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static'
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
-
-    this.zoomInteraction = new Zoom(this)
-    this.dragInteraction = new Drag(this)
-    this.decelerateInteraction = new Decelerate(this)
     
     this.root.addEventListener('pointerenter', this.pointerEnter)
     this.root.addEventListener('pointerdown', this.pointerDown)
@@ -246,13 +259,16 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
       minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom,
       animateNodePosition = RENDERER_OPTIONS.animateNodePosition, animateNodeRadius = RENDERER_OPTIONS.animateNodeRadius,
       animateViewportPosition = RENDERER_OPTIONS.animateViewportPosition, animateViewportZoom = RENDERER_OPTIONS.animateViewportZoom, dragInertia = RENDERER_OPTIONS.dragInertia,
-      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual, annotationsEqual = RENDERER_OPTIONS.annotationsEqual,
+      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
+      annotationsEqual = RENDERER_OPTIONS.annotationsEqual, annotationEqual = RENDERER_OPTIONS.annotationEqual,
       onNodePointerEnter, onNodePointerDown, onNodeDragStart, onNodeDrag, onNodeDragEnd, onNodePointerUp, onNodeClick, onNodeDoubleClick, onNodePointerLeave,
       onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgeClick, onEdgeDoubleClick, onEdgePointerLeave,
-      onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationResize, onAnnotationPointerUp, onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
-      onViewportPointerEnter, onViewportPointerDown, onViewportDragStart, onViewportDrag, onViewportDragEnd, onViewportPointerMove, onViewportPointerUp, onViewportClick, onViewportDoubleClick, onViewportPointerLeave, onViewportWheel,
+      onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationResize, onAnnotationPointerUp,
+      onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
+      onViewportPointerEnter, onViewportPointerDown, onViewportDragStart, onViewportDrag, onViewportDragEnd, onViewportPointerMove, onViewportPointerUp,
+      onViewportClick, onViewportDoubleClick, onViewportPointerLeave, onViewportWheel,
     } = RENDERER_OPTIONS,
-    annotations = []
+    annotations = (EMPTY_ARRAY as []) // TODO - don't cast
   }: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
     this.onNodePointerEnter = onNodePointerEnter
     this.onNodePointerDown = onNodePointerDown
@@ -359,14 +375,57 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     /**
      * Update Nodes and Edges
      */
-    if (!edgesEqual(this.edges, edges)) {
-      this.edges = edges
-      this.firstRender = false
-      this.dirty = true
+    if (!nodesEqual(this.nodes, nodes)) {
+      console.log('update nodes')
+      this.nodes = nodes
+
+      if (this.nodes.length !== 0 && nodes.length !== 0) {
+        const nodesById: { [id: string]: NodeRenderer<N> } = {}
+  
+        for (const node of nodes) {
+          if (this.nodesById[node.id] === undefined) {
+            // node enter
+            // let adjacentNode: string | undefined
+  
+            // if (this.edgeIndex[node.id]) {
+            //   // nodes w edges from existing positioned nodes enter from one of those nodes
+            //   adjacentNode = Object.keys(this.edgeIndex[node.id]).find((adjacentNodeId) => (
+            //     this.nodesById[adjacentNodeId]?.node.x !== undefined && this.nodesById[adjacentNodeId]?.node.y !== undefined
+            //   ))
+            // }
+  
+            // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? 0, this.nodesById[adjacentNode ?? '']?.y ?? 0, node.radius)
+            // nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? node.x, this.nodesById[adjacentNode ?? '']?.y ?? node.y, node.radius)
+            nodesById[node.id] = new NodeRenderer(this, node)
+          } else if (!nodeIsEqual(this.nodesById[node.id].node, node)) {
+            // node update
+            nodesById[node.id] = this.nodesById[node.id].update(node)
+          } else {
+            nodesById[node.id] = this.nodesById[node.id]
+          }
+        }
+  
+        for (const nodeId in this.nodesById) {
+          if (nodesById[nodeId] === undefined) {
+            // node exit
+            this.nodesById[nodeId].delete()
+          }
+        }
+  
+        this.nodesById = nodesById
+        this.firstRender = false
+        this.dirty = true
+      }
     }
 
-    if (!nodesEqual(this.nodes, nodes)) {
-      this.nodes = nodes
+    if (!edgesEqual(this.edges, edges)) {
+      console.log('update edges')
+      this.edges = edges
+
+      for (const edge of edges) {
+        new EdgeRenderer(this, edge)
+      }
+
       this.firstRender = false
       this.dirty = true
     }
@@ -375,7 +434,8 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
      * Update Annotations
      */
     if (!annotationsEqual(this.annotations, annotations)) {
-      this.nodes = nodes
+      console.log('update annotations', this.annotations, annotations)
+      this.annotations = annotations
       this.firstRender = false
       this.dirty = true
     }
@@ -385,6 +445,7 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     this.decelerateInteraction.update(dt)
 
     if (this.interpolateZoom) {
+      console.log('interpolate zoom')
       const { value, done } = this.interpolateZoom(dt)
       this.zoom = value
       this.root.scale.set(this.zoom)
@@ -395,6 +456,7 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     }
 
     if (this.interpolateX) {
+      console.log('interpolate x')
       const { value, done } = this.interpolateX(dt)
       this.x = value
       this.root.x = (this.x * this.zoom) + (this.width / 2)
@@ -405,6 +467,7 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     }
 
     if (this.interpolateY) {
+      console.log('interpolate y')
       const { value, done } = this.interpolateY(dt)
       this.y = value
       this.root.y = (this.y * this.zoom) + (this.height / 2)
@@ -415,10 +478,30 @@ export class InternalRenderer<N extends Graph.Node = Graph.Node, E extends Graph
     }
 
     if (this.dirty) {
-      // render nodes and edges
+      console.log('dirty')
+      for (const nodeId in this.nodesById) {
+        // TODO - only render if it's dirty
+        this.nodesById[nodeId].render(dt)
+      }
+
+      // this.edgesGraphic.clear()
+      // for (const edgeId in this.edgesById) {
+      //   /**
+      //    * TODO - only render dirty edges [this is a harder thing to check than a node's dirty status]
+      //    * an edge is dirty if:
+      //    * - it has been added/updated
+      //    * - any multiedge (edge that shares source/target) has been added/updated/deleted
+      //    * - the position or radius of its source/target node has been updated
+      //    * additionally, the way edges are drawn will need to change:
+      //    * rather than clearing all edges via `this.edgesGraphic.clear()` and rerendering each,
+      //    * each edge might need to be its own PIXI.Graphics object
+      //    */
+      //   this.edgesById[edgeId].render()
+      // }
     }
 
     this.app.render()
+    this.dirty = false
   }
 
   delete = () => {

@@ -11,7 +11,7 @@ export class Grid {
     lineJoin: 'round',
     fill: '#666',
     stroke: '#fff',
-    strokeThickness: 3,
+    strokeThickness: 2.5,
     align: 'center',
   }
 
@@ -26,11 +26,11 @@ export class Grid {
 
     for (let x = -halfWidth; x <= halfWidth; x += interval) {
       graticules
-        .lineStyle(x === 0 ? 2 : 1, '#ddd', 1)
+        .lineStyle(x === 0 ? 3 : 1, x === 0 ? '#f00' : '#aaa', 1)
         .moveTo(x, -halfHeight)
         .lineTo(x, halfHeight)
 
-      if (!options?.hideText) {
+      if (!options?.hideText && x !== 0) {
         const coordinate = new Text(x.toString(), this.textStyle)
         coordinate.x = x
         coordinate.y = 0
@@ -42,7 +42,7 @@ export class Grid {
 
     for (let y = -halfHeight; y <= halfHeight; y += interval) {
       graticules
-        .lineStyle(y === 0 ? 2 : 1, '#ddd', 1)
+        .lineStyle(y === 0 ? 3 : 1, y === 0 ? '#f00' : '#aaa', 1)
         .moveTo(-halfWidth, y)
         .lineTo(halfWidth, y)
 

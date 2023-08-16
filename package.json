@@ -57,7 +57,7 @@
     "rxjs": "^6.5.5",
     "stats.js": "^0.17.0",
     "ts-loader": "^6.2.2",
-    "typescript": "^4.9.3"
+    "typescript": "^5.1.6"
   },
   "keywords": [
     "graph",

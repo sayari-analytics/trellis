@@ -1,13 +1,16 @@
-import { color } from 'd3-color'
+import { InternalRenderer } from '.'
+import { NodeRenderer } from './node'
 
 
-export const colorToNumber = (colorString: string): number => {
-  const c = color(colorString)
-  if (c === null) {
-    return 0x000000
+export const parentInFront = (renderer: InternalRenderer<any, any>, parent: NodeRenderer<any> | undefined) => {
+  while (parent) {
+    if (renderer.hoveredNode === parent) {
+      return true
+    }
+    parent = parent.parent
   }
 
-  return parseInt(c.hex().slice(1), 16)
+  return false
 }
 
 export const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
@@ -35,3 +38,6 @@ export const THREE_HALF_PI = HALF_PI * 3
 
 
 export const RADIANS_PER_DEGREE = Math.PI / 180
+
+
+export const EMPTY_ARRAY: readonly[] = []

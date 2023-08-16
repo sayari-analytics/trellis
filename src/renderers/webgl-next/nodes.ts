@@ -82,8 +82,8 @@ export class Nodes {
       circle.tint = 0xff4444
       circle.cullable = true
       circle.scale.set(0.04)
-      circle.x = x - 5
-      circle.y = y - 5
+      circle.x = x
+      circle.y = y
 
       renderer.root.addChild(circle)
     }

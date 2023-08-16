@@ -58,7 +58,7 @@ export class Drag {
           this.dragging = true
           this.renderer.onViewportDragStart?.({
             type: 'viewportDrag',
-            x: local.x,
+            x: local.x, // necessary?
             y: local.y,
             clientX: event.clientX,
             clientY: event.clientY,
@@ -96,7 +96,7 @@ export class Drag {
     }
 
     this.renderer.container.style.cursor = 'auto'
-
+    
     if (this.dragging) {
       this.dragging = false
       const { x, y } = this.renderer.root.toLocal(event.global)
