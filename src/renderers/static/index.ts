@@ -8,42 +8,30 @@ import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
+import * as Graph from '../..'
 
-
-export type ViewportDragEvent = {
-  type: 'viewportDrag',
-  x: number,
-  y: number,
-  clientX: number,
-  clientY: number,
-  dx: number,
-  dy: number,
-  altKey?: boolean,
-  ctrlKey?: boolean,
-  metaKey?: boolean,
-  shiftKey?: boolean
-}
-export type ViewportDragDecelerateEvent = {
-  type: 'viewportDragDecelarate',
-  dx: number,
-  dy: number,
-}
-export type ViewportWheelEvent = {
-  type: 'viewportWheel',
-  x: number,
-  y: number,
-  clientX: number,
-  clientY: number,
-  dx: number,
-  dy: number,
-  dz: number,
-}
+type Keys = { altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+type MousePosition = { x: number, y: number, clientX: number, clientY: number }
+type Position = 'nw' | 'ne' | 'se' | 'sw'
+export type NodePointerEvent = { type: 'nodePointer', target: Graph.Node, targetIdx: number } & MousePosition & Keys
+export type NodeDragEvent = { type: 'nodeDrag', dx: number, dy: number, target: Graph.Node, targetIdx: number } & MousePosition & Keys
+export type EdgePointerEvent = { type: 'edgePointer', target: Graph.Edge, targetIdx: number } & MousePosition & Keys
+export type AnnotationPointerEvent = { type: 'annotationPointer', position?: Position, target: Graph.Annotation, targetIdx: number } & MousePosition & Keys
+export type AnnotationDragEvent = { type: 'annotationDrag',  dx: number, dy: number, target: Graph.Annotation, targetIdx: number } & MousePosition & Keys
+export type AnnotationResizeEvent = { type: 'annotationResize', position: Position, target: Graph.Annotation, targetIdx: number } & MousePosition & Keys
+export type ViewportPointerEvent = { type: 'viewportPointer', target: Graph.Viewport } & MousePosition & Keys
+export type ViewportDragEvent = { type: 'viewportDrag', dx: number, dy: number } & MousePosition & Keys
+export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', dx: number, dy: number } & Keys
+export type ViewportWheelEvent = { type: 'viewportWheel', dx: number, dy: number, dz: number } & MousePosition & Keys
 export type Options = {
-  x: number, y: number, zoom: number, width: number, height: number,
+  width: number, height: number, x?: number, y?: number, zoom?: number, minZoom?: number, maxZoom?: number,
   onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void,
   onViewportWheel?: (event: ViewportWheelEvent) => void
 }
 
+export const defaultOptions = {
+  x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 5
+}
 
 const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom
 
@@ -67,27 +55,48 @@ const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom
  */
 export class StaticRenderer {
 
-  width: number
-  height: number
-  minZoom = 0.025
-  maxZoom = 5
-  debug?: Stats
+  get width() { return this.app.renderer.width }
+  get height() { return this.app.renderer.height }
+  #x!: number
+  get x() { return this.#x }
+  #y!: number
+  get y() { return this.#y }
+  get zoom() { return this.root.scale.x }
 
+  #minZoom!: number
+  get minZoom() { return this.#minZoom }
+
+  #maxZoom!: number
+  get maxZoom() { return this.#maxZoom }
+
+  #halfHeight!: number
+  get halfHeight() { return this.#halfHeight }
+
+  #halfWidth!: number
+  get halfWidth() { return this.#halfWidth }
+
+  #minX!: number
+  get minX() { return this.#minX }
+
+  #minY!: number
+  get minY() { return this.#minY }
+
+  #maxX!: number
+  get maxX() { return this.#maxX }
+
+  #maxY!: number
+  get maxY() { return this.#maxY }
+
+  debug?: Stats
   app: Application
   container: HTMLDivElement
   root = new Container()
   labelContainer = new Container()
   labelsMounted = false
-  halfWidth: number
-  halfHeight: number
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  // grid = new Grid(this, 24000, 24000, 100, { hideText: false })
+  grid = new Grid(this, 24000, 24000, 100, { hideText: false })
   circleTexture: RenderTexture
   edgesGraphic = new Graphics()
   dragInertia = 0.88
@@ -111,16 +120,14 @@ export class StaticRenderer {
     }
 
     this.container = container
-    this.width = options.width
-    this.height = options.height
     const view = document.createElement('canvas')
     view.onselectstart = () => false
     this.container.appendChild(view)
 
     this.app = new Application({
       view,
-      width: this.width,
-      height: this.height,
+      width: options.width,
+      height: options.height,
       resolution: 2,
       antialias: true,
       autoDensity: true,
@@ -129,17 +136,7 @@ export class StaticRenderer {
       forceCanvas: forceCanvas,
     })
 
-    this.halfWidth = this.width / 2
-    this.halfHeight = this.height / 2
     this.app.stage.addChild(this.root)
-    this.app.stage.x = this.halfWidth
-    this.app.stage.y = this.halfHeight
-    this.root.x = 0
-    this.root.y = 0
-    this.minX = -this.halfWidth
-    this.minY = -this.halfHeight
-    this.maxX = this.halfWidth
-    this.maxY = this.halfHeight
     this.circleTexture = createCircleTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
@@ -160,7 +157,6 @@ export class StaticRenderer {
     for (const [x, y] of sampleCoordinatePlane(100000, step, 0.5)) {
       const node = new Node(this, x, y)
       this.nodes.push(node)
-      // this.nodesById[`${x}|${y}`] = node
 
       if (coordinates[x] === undefined) {
         coordinates[x] = new Set()
@@ -172,11 +168,12 @@ export class StaticRenderer {
           if (coordinates[adjacentX]?.has(adjacentY) && !(adjacentX === x && adjacentY === y)) {
             const edge = new Edge(this, x, y, adjacentX, adjacentY)
             this.edges.push(edge)
-            // this.edgesById[`${x}|${y}|${adjacentX}|${adjacentY}`] = edge
           }
         }
       }
     }
+
+    this.update({ options })
 
     if (debug) {
       this.app.ticker.add((dt: number) => {
@@ -189,32 +186,63 @@ export class StaticRenderer {
     } else {
       this.app.ticker.add(this.render)
     }
-
-    this.update({ options })
   }
 
-  update({ options: { x, y, zoom, onViewportDrag, onViewportWheel } }: { options: Options }) {
-    this.onViewportDrag = onViewportDrag
-    this.onViewportWheel = onViewportWheel
+  setPosition(width: number, height: number, x: number, y: number, zoom: number, minZoom: number, maxZoom: number) {
+    this.#minZoom = minZoom
+    this.#maxZoom = maxZoom
+    const _zoom = Math.max(minZoom, Math.min(maxZoom, zoom))
+    this.root.scale.set(_zoom)
 
-    const _zoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom))
-    if (_zoom !== this.root.scale.x) {
-      this.root.scale.set(_zoom)
-    }
+    this.#halfWidth = width / 2
+    this.#halfHeight = height / 2
 
-    const _x = -x
-    if (_x !== this.root.x) {
-      this.root.x = _x
-      this.minX = (-this.root.x - this.halfWidth) / this.root.scale.x
-      this.maxX = (-this.root.x + this.halfWidth) / this.root.scale.x
-    }
+    /**
+     * make x,y coordinate scale relative to app.stage, ignoring zoom transforms applied to root
+     * this only positions the graph correctly when zoom === 1
+     * repositioning on wheel zoom works
+     */
+    this.#x = x
+    this.root.x = -x + this.#halfWidth
+    this.#minX = (x / _zoom) - (this.#halfWidth / _zoom)
+    this.#maxX = (x / _zoom) + (this.#halfWidth / _zoom)
 
-    const _y = -y
-    if (y !== this.root.y) {
-      this.root.y = _y
-      this.minY = (-this.root.y - this.halfHeight) / this.root.scale.x
-      this.maxY = (-this.root.y + this.halfHeight) / this.root.scale.x
-    }
+    this.#y = y
+    this.root.y = -y + this.#halfHeight
+    this.#minY = (y / _zoom) - (this.#halfHeight / _zoom)
+    this.#maxY = (y / _zoom) + (this.#halfHeight / _zoom)
+
+    /**
+     * make x,y coordinate scale relative to root
+     * this positions the graph correctly when zoom !== 1
+     * but repositioning on wheel zoom is broken
+     */
+    // this.#x = x
+    // this.root.x = (-x * _zoom) + this.#halfWidth
+    // this.#minX = x - (this.#halfWidth / _zoom)
+    // this.#maxX = x + (this.#halfWidth / _zoom)
+
+    // this.#y = y
+    // this.root.y = (-y * _zoom) + this.#halfHeight
+    // this.#minY = y - (this.#halfHeight / _zoom)
+    // this.#maxY = y + (this.#halfHeight / _zoom)
+
+    this.app.renderer.resize(width, height)
+  }
+
+  update({ options }: { options: Options }) {
+    this.onViewportDrag = options.onViewportDrag
+    this.onViewportWheel = options.onViewportWheel
+
+    this.setPosition(
+      options.width,
+      options.height,
+      options.x ?? defaultOptions.x,
+      options.y ?? defaultOptions.y,
+      options.zoom ?? defaultOptions.zoom,
+      options.minZoom ?? defaultOptions.minZoom,
+      options.maxZoom ?? defaultOptions.maxZoom,
+    )
   }
 
   render(dt: number) {
@@ -222,7 +250,7 @@ export class StaticRenderer {
 
     // let t = performance.now()
 
-    if (this.root.scale.x > 0.25) {
+    if (this.zoom > 0.25) {
       if (!this.labelsMounted) {
         this.root.addChild(this.labelContainer)
         this.labelsMounted = true
@@ -238,7 +266,7 @@ export class StaticRenderer {
       node.render()
     }
 
-    if (this.root.scale.x > 0.1) {
+    if (this.zoom > 0.1) {
       this.edgesGraphic.visible = true
       for (const edge of this.edges) {
         edge.render()
@@ -312,7 +340,6 @@ export class Node {
     this.label.anchor.set(0.5)
     this.label.x = x
     this.label.y = y + 16
-    this.label.visible = true
     this.renderer.labelContainer.addChild(this.label)
   }
 

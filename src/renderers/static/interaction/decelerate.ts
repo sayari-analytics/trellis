@@ -25,7 +25,7 @@ export class Decelerate {
       return
     }
 
-    this.saved[this.i++] = { x: -this.renderer.root.x, y: -this.renderer.root.y, time: performance.now() }
+    this.saved[this.i++] = { x: this.renderer.x, y: this.renderer.y, time: performance.now() }
 
     if (this.i > 60) {
       this.saved.splice(0, 30)
@@ -39,8 +39,8 @@ export class Decelerate {
       for (const save of this.saved) {
         if (save !== undefined && save.time >= now - 100) {
           const time = now - save.time
-          this.x = (- this.renderer.root.x - save.x) / time
-          this.y = (- this.renderer.root.y - save.y) / time
+          this.x = (this.renderer.x - save.x) / time
+          this.y = (this.renderer.y - save.y) / time
           break
         }
       }

@@ -49,14 +49,16 @@ export class Zoom {
     const globalEnd = this.renderer.root.toGlobal(localStart)
     this.renderer.root.scale.set(zoomStart)
 
+    // this.renderer.x - (this.renderer.halfWidth / zoomStart) + (globalStart.x / zoomStart) === localStart.x
+
     this.renderer.onViewportWheel?.({
       type: 'viewportWheel',
       x: localStart.x,
       y: localStart.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      dx: globalEnd.x - globalStart.x,
-      dy: globalEnd.y - globalStart.y,
+      dx: (globalEnd.x - globalStart.x),
+      dy: (globalEnd.y - globalStart.y),
       dz: zoomEnd - zoomStart,
     })
 
@@ -71,3 +73,11 @@ export class Zoom {
     this.paused = false
   }
 }
+
+
+/**
+ * +dz shifts local plane to the right
+ * +dx shifts local plane to the left
+ * 
+ * zooming in should produce a positive dx
+ */
