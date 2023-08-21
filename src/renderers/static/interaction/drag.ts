@@ -40,21 +40,8 @@ export class Drag {
       const x = event.global.x
       const y = event.global.y
 
-      /**
-       * make x,y coordinate scale relative to app.stage, ignoring zoom transforms applied to root
-       * this only positions the graph correctly when zoom === 1
-       * repositioning on wheel zoom works
-       */
-      const dx = this.last.x - x
-      const dy = this.last.y - y
-
-      /**
-       * make x,y coordinate scale relative to root
-       * this positions the graph correctly when zoom !== 1
-       * but repositioning on wheel zoom is broken
-       */
-      // const dx = (this.last.x - x) / this.renderer.zoom
-      // const dy = (this.last.y - y) / this.renderer.zoom
+      const dx = (this.last.x - x) / this.renderer.zoom
+      const dy = (this.last.y - y) / this.renderer.zoom
 
       if (this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
         this.last = { x, y }

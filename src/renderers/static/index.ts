@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Application, BitmapFont, BitmapText, Container, EventSystem, FederatedPointerEvent, Graphics,
   IBitmapTextStyle, MSAA_QUALITY, Matrix, Rectangle, RenderTexture, Renderer, Sprite,
@@ -9,6 +8,7 @@ import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
 import * as Graph from '../..'
+
 
 type Keys = { altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
 type MousePosition = { x: number, y: number, clientX: number, clientY: number }
@@ -43,7 +43,7 @@ const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom
  *   - fade labels out at low zoom
  *   - edge labels
  *   - lazily generate font, with option to pre-render
- * - move graph creation outside of renderer
+ *   - fall back on Text for non-ASCII
  * - icons
  * - viewport interpolation
  * - node events
@@ -101,19 +101,19 @@ export class StaticRenderer {
   edgesGraphic = new Graphics()
   dragInertia = 0.88
   eventSystem: EventSystem
-  nodes: Node[] = []
-  edges: Edge[] = []
-  nodesById: Record<string, Node> = {}
-  edgesById: Record<string, Edge> = {}
+  nodes: Graph.Node[] = []
+  edges: Graph.Edge[] = []
+  nodeRenderers: Node[] = []
+  edgeRenderers: Edge[] = []
 
   onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
   onViewportWheel?: (event: ViewportWheelEvent) => void
 
-  constructor ({ container, options, debug, forceCanvas }: {
-    container: HTMLDivElement,
-    options: Options,
-    debug?: boolean,
-    forceCanvas?: boolean,
+  constructor ({
+    nodes, edges, options, container, debug, forceCanvas
+  }: {
+    nodes: Graph.Node[], edges: Graph.Edge[], options: Options,
+    container: HTMLDivElement, debug?: boolean, forceCanvas?: boolean,
   }) {
     if (!(container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
@@ -151,29 +151,20 @@ export class StaticRenderer {
     this.root.addEventListener('pointercancel', this.pointerUp)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
 
-    const step = 50
-    const coordinates: Record<number, Set<number>> = {}
+    this.update({ options })
 
-    for (const [x, y] of sampleCoordinatePlane(100000, step, 0.5)) {
-      const node = new Node(this, x, y)
-      this.nodes.push(node)
-
-      if (coordinates[x] === undefined) {
-        coordinates[x] = new Set()
-      }
-      coordinates[x].add(y)
-
-      for (const adjacentX of [x - step, x]) {
-        for (const adjacentY of [y - step, y, y + step]) {
-          if (coordinates[adjacentX]?.has(adjacentY) && !(adjacentX === x && adjacentY === y)) {
-            const edge = new Edge(this, x, y, adjacentX, adjacentY)
-            this.edges.push(edge)
-          }
-        }
-      }
+    const nodesById: Record<string, Node> = {}
+    for (const node of nodes) {
+      const nodeRenderer = new Node(this, node.x, node.y)
+      nodesById[node.id] = nodeRenderer
+      this.nodeRenderers.push(nodeRenderer)
     }
 
-    this.update({ options })
+    for (const edge of edges) {
+      const { x: x0, y: y0 } = nodesById[edge.source]
+      const { x: x1, y: y1 } = nodesById[edge.target]
+      this.edgeRenderers.push(new Edge(this, x0, y0, x1, y1))
+    }
 
     if (debug) {
       this.app.ticker.add((dt: number) => {
@@ -197,35 +188,15 @@ export class StaticRenderer {
     this.#halfWidth = width / 2
     this.#halfHeight = height / 2
 
-    /**
-     * make x,y coordinate scale relative to app.stage, ignoring zoom transforms applied to root
-     * this only positions the graph correctly when zoom === 1
-     * repositioning on wheel zoom works
-     */
     this.#x = x
-    this.root.x = -x + this.#halfWidth
-    this.#minX = (x / _zoom) - (this.#halfWidth / _zoom)
-    this.#maxX = (x / _zoom) + (this.#halfWidth / _zoom)
+    this.root.x = (-x * _zoom) + this.#halfWidth
+    this.#minX = x - (this.#halfWidth / _zoom)
+    this.#maxX = x + (this.#halfWidth / _zoom)
 
     this.#y = y
-    this.root.y = -y + this.#halfHeight
-    this.#minY = (y / _zoom) - (this.#halfHeight / _zoom)
-    this.#maxY = (y / _zoom) + (this.#halfHeight / _zoom)
-
-    /**
-     * make x,y coordinate scale relative to root
-     * this positions the graph correctly when zoom !== 1
-     * but repositioning on wheel zoom is broken
-     */
-    // this.#x = x
-    // this.root.x = (-x * _zoom) + this.#halfWidth
-    // this.#minX = x - (this.#halfWidth / _zoom)
-    // this.#maxX = x + (this.#halfWidth / _zoom)
-
-    // this.#y = y
-    // this.root.y = (-y * _zoom) + this.#halfHeight
-    // this.#minY = y - (this.#halfHeight / _zoom)
-    // this.#maxY = y + (this.#halfHeight / _zoom)
+    this.root.y = (-y * _zoom) + this.#halfHeight
+    this.#minY = y - (this.#halfHeight / _zoom)
+    this.#maxY = y + (this.#halfHeight / _zoom)
 
     this.app.renderer.resize(width, height)
   }
@@ -250,7 +221,7 @@ export class StaticRenderer {
 
     // let t = performance.now()
 
-    if (this.zoom > 0.25) {
+    if (this.zoom > 0.2) {
       if (!this.labelsMounted) {
         this.root.addChild(this.labelContainer)
         this.labelsMounted = true
@@ -262,13 +233,13 @@ export class StaticRenderer {
       }
     }
 
-    for (const node of this.nodes) {
+    for (const node of this.nodeRenderers) {
       node.render()
     }
 
-    if (this.zoom > 0.1) {
+    if (this.zoom > 0.2) {
       this.edgesGraphic.visible = true
-      for (const edge of this.edges) {
+      for (const edge of this.edgeRenderers) {
         edge.render()
       }
     } else {
@@ -313,6 +284,8 @@ export class Node {
   }, { chars: BitmapFont.ASCII })
   static TEXT_STYLE: Partial<IBitmapTextStyle> = { fontName: 'Label', fontSize: Node.fontSize, align: 'center' }
 
+  x: number
+  y: number
   renderer: StaticRenderer
   circle: Sprite
   label: BitmapText
@@ -322,8 +295,11 @@ export class Node {
   maxX: number
   maxY: number
 
-  constructor(renderer: StaticRenderer, x: number, y: number) {
+  // TODO - setters/getters
+  constructor(renderer: StaticRenderer, x: number = 0, y: number = 0) {
     this.renderer = renderer
+    this.x = x
+    this.y = y
     this.circle = new Sprite(this.renderer.circleTexture)
     this.circle.anchor.set(0.5)
     this.circle.tint = 0xff4444
@@ -402,23 +378,4 @@ const createCircleTexture = (renderer: StaticRenderer) => {
   GRAPHIC.destroy(true)
 
   return renderTexture
-}
-
-
-const sampleCoordinatePlane = function* (count: number, step: number, sample: number) {
-  const side = Math.sqrt(count / sample) * step
-  let i = 0
-
-  for (let x = -(side / 2); x < (side / 2); x += step) {
-    for (let y = -(side / 2); y < (side / 2); y += step) {
-      if (i >= count) {
-        return
-      }
-
-      if (Math.random() > sample) {
-        i++
-        yield [x, y]
-      }
-    }
-  }
 }

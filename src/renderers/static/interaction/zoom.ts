@@ -29,7 +29,7 @@ export class Zoom {
 
     const step = -event.deltaY * (event.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
-    const zoomStart = this.renderer.root.scale.x
+    const zoomStart = this.renderer.zoom
     const zoomEnd = Math.max(this.renderer.minZoom, Math.min(this.renderer.maxZoom, zoomStart * change))
 
     if (
@@ -44,12 +44,9 @@ export class Zoom {
     globalStart.x /= 2
     globalStart.y /= 2
     const localStart = this.renderer.root.toLocal(globalStart)
-
     this.renderer.root.scale.set(zoomEnd)
     const globalEnd = this.renderer.root.toGlobal(localStart)
     this.renderer.root.scale.set(zoomStart)
-
-    // this.renderer.x - (this.renderer.halfWidth / zoomStart) + (globalStart.x / zoomStart) === localStart.x
 
     this.renderer.onViewportWheel?.({
       type: 'viewportWheel',
@@ -57,8 +54,8 @@ export class Zoom {
       y: localStart.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      dx: (globalEnd.x - globalStart.x),
-      dy: (globalEnd.y - globalStart.y),
+      dx: ((this.renderer.x * zoomStart) - (this.renderer.x * zoomEnd) - (globalStart.x - globalEnd.x)) / zoomEnd,
+      dy: ((this.renderer.y * zoomStart) - (this.renderer.y * zoomEnd) - (globalStart.y - globalEnd.y)) / zoomEnd,
       dz: zoomEnd - zoomStart,
     })
 
@@ -73,11 +70,3 @@ export class Zoom {
     this.paused = false
   }
 }
-
-
-/**
- * +dz shifts local plane to the right
- * +dx shifts local plane to the left
- * 
- * zooming in should produce a positive dx
- */
