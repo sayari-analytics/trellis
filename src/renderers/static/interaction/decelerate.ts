@@ -1,6 +1,10 @@
 import { StaticRenderer } from '..'
 
 
+/**
+ * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
+ * specificially, the [Decelerate Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/decelerate.js)
+ */
 export class Decelerate {
 
   private renderer: StaticRenderer
@@ -16,6 +20,10 @@ export class Decelerate {
   }
 
   down = () => {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
+      return
+    }
+
     this.saved = new Array(60)
     this.x = this.y = this.i = 0
   }

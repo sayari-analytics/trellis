@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as Static from '../../src/renderers/static'
 import * as Graph from '../../src'
 
@@ -23,11 +25,8 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
   }
 }
 
-
 const nodes: Graph.Node[] = []
 const edges: Graph.Edge[] = []
-
-
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
 for (const [x, y] of sampleCoordinatePlane(100000, step, 0.5)) {
@@ -47,26 +46,99 @@ for (const [x, y] of sampleCoordinatePlane(100000, step, 0.5)) {
   }
 }
 
-
 const container = document.querySelector('#graph') as HTMLDivElement
-const options = {
+
+const options: Static.Options = {
   x: 0,
   y: 0,
   zoom: 1,
   minZoom: 0.05,
   width: 1800,
   height: 1200,
-  onViewportDrag: ({ dx, dy }) => {
-    options.x += dx
-    options.y += dy
+  onViewportPointerEnter: (event: Static.ViewportPointerEvent) => {
+    console.log('pointer enter', `x: ${event.x}, y: ${event.y}`)
+  },
+  onViewportPointerDown: (event: Static.ViewportPointerEvent) => {
+    console.log('pointer down', `x: ${event.x}, y: ${event.y}`)
+  },
+  onViewportDragStart: (event: Static.ViewportDragEvent) => {
+    console.log('drag start', `x: ${event.dx}, y: ${event.dy}`)
+  },
+  onViewportDrag: (event: Static.ViewportDragEvent | Static.ViewportDragDecelerateEvent) => {
+    console.log('drag', `x: ${event.dx}, y: ${event.dy}`)
+
+    options.x! += event.dx
+    options.y! += event.dy
     render.update({ options })
+  },
+  onViewportDragEnd: (event: Static.ViewportDragEvent | Static.ViewportDragDecelerateEvent) => {
+    console.log('drag end', `x: ${event.dx}, y: ${event.dy}`)
+  },
+  onViewportPointerUp: (event: Static.ViewportPointerEvent) => {
+    console.log('pointer up', `x: ${event.x}, y: ${event.y}`)
+  },
+  onViewportClick: (event: Static.ViewportPointerEvent) => {
+    console.log('click', `x: ${event.x}, y: ${event.y}`)
+    render.update({ options })
+  },
+  onViewportDoubleClick: (event: Static.ViewportPointerEvent) => {
+    console.log('double click', `x: ${event.x}, y: ${event.y}`)
   },
   onViewportWheel: ({ dx, dy, dz }) => {
-    options.x += dx
-    options.y += dy
-    options.zoom += dz
+    options.x! += dx
+    options.y! += dy
+    options.zoom! += dz
     render.update({ options })
   },
+  onViewportPointerLeave: (event: Static.ViewportPointerEvent) => {
+    console.log('pointer leave', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodePointerEnter: (event: Static.NodePointerEvent) => {
+    console.log('node pointer enter', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodePointerDown: (event: Static.NodePointerEvent) => {
+    console.log('node pointer down', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDragStart: (event: Static.NodeDragEvent) => {
+    console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDrag: (event: Static.NodeDragEvent) => {
+    console.log('node drag', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDragEnd: (event: Static.NodeDragEvent) => {
+    console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodePointerUp: (event: Static.NodePointerEvent) => {
+    console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeClick: (event: Static.NodePointerEvent) => {
+    console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDoubleClick: (event: Static.NodePointerEvent) => {
+    console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodePointerLeave: (event: Static.NodePointerEvent) => {
+    console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgePointerEnter: (event: Static.EdgePointerEvent) => {
+    console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgePointerDown: (event: Static.EdgePointerEvent) => {
+    console.log('edge pointer down', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgePointerUp: (event: Static.EdgePointerEvent) => {
+    console.log('edge pointer up', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgeClick: (event: Static.EdgePointerEvent) => {
+    console.log('edge pointer click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgeDoubleClick: (event: Static.EdgePointerEvent) => {
+    console.log('edge pointer double click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgePointerLeave: (event: Static.EdgePointerEvent) => {
+    console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
+  },
 }
+
 const render = new Static.StaticRenderer({ container, nodes, edges, options, debug: true })
 ;(window as any).render = render

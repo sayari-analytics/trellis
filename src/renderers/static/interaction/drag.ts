@@ -14,7 +14,6 @@ export class Drag {
   private paused = false
   private last?: { x: number, y: number }
   private current?: number
-  private moved = false
 
   constructor(renderer: StaticRenderer) {
     this.renderer = renderer
@@ -43,11 +42,26 @@ export class Drag {
       const dx = (this.last.x - x) / this.renderer.zoom
       const dy = (this.last.y - y) / this.renderer.zoom
 
-      if (this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
+      if (this.dragging || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
         this.last = { x, y }
-        this.moved = true
         const local = this.renderer.root.toLocal(event.global)
-        this.dragging = true
+
+        if (!this.dragging) {
+          this.dragging = true
+          this.renderer.onViewportDragStart?.({
+            type: 'viewportDrag',
+            x: local.x,
+            y: local.y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            dx,
+            dy,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey,
+          })
+        }
 
         this.renderer.onViewportDrag?.({
           type: 'viewportDrag',
@@ -66,13 +80,32 @@ export class Drag {
     }
   }
 
-  up = () => {
+  up = (event: FederatedPointerEvent) => {
     if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
     this.renderer.container.style.cursor = 'auto'
-    this.dragging = this.moved = false
+
+    if (this.dragging) {
+      const { x, y } = this.renderer.root.toLocal(event.global)
+
+      this.renderer.onViewportDragEnd?.({
+        type: 'viewportDrag',
+        x,
+        y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        dx: 0,
+        dy: 0,
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    this.dragging = false
     this.last = this.current = undefined
   }
 

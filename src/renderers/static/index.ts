@@ -1,12 +1,13 @@
 import {
-  Application, BitmapFont, BitmapText, Container, EventSystem, FederatedPointerEvent, Graphics,
-  IBitmapTextStyle, MSAA_QUALITY, Matrix, Rectangle, RenderTexture, Renderer, Sprite,
+  Application, Container, EventSystem, FederatedPointerEvent, Graphics, Rectangle, RenderTexture,
 } from 'pixi.js-legacy'
 import Stats from 'stats.js'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
+import { Node, createCircleTexture } from './node'
+import { Edge } from './edge'
 import * as Graph from '../..'
 
 
@@ -25,15 +26,37 @@ export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', dx: 
 export type ViewportWheelEvent = { type: 'viewportWheel', dx: number, dy: number, dz: number } & MousePosition & Keys
 export type Options = {
   width: number, height: number, x?: number, y?: number, zoom?: number, minZoom?: number, maxZoom?: number,
-  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void,
+  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
+  onViewportPointerDown?: (event: ViewportPointerEvent) => void
+  onViewportPointerMove?: (event: ViewportPointerEvent) => void
+  onViewportDragStart?: (event: ViewportDragEvent) => void
+  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportPointerUp?: (event: ViewportPointerEvent) => void
+  onViewportClick?: (event: ViewportPointerEvent) => void
+  onViewportDoubleClick?: (event: ViewportPointerEvent) => void
+  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
   onViewportWheel?: (event: ViewportWheelEvent) => void
+  onNodePointerEnter?: (event: NodePointerEvent) => void
+  onNodePointerDown?: (event: NodePointerEvent) => void
+  onNodeDragStart?: (event: NodeDragEvent) => void
+  onNodeDrag?: (event: NodeDragEvent) => void
+  onNodeDragEnd?: (event: NodeDragEvent) => void
+  onNodePointerUp?: (event: NodePointerEvent) => void
+  onNodeClick?: (event: NodePointerEvent) => void
+  onNodeDoubleClick?: (event: NodePointerEvent) => void
+  onNodePointerLeave?: (event: NodePointerEvent) => void
+  onEdgePointerEnter?: (event: EdgePointerEvent) => void
+  onEdgePointerDown?: (event: EdgePointerEvent) => void
+  onEdgePointerUp?: (event: EdgePointerEvent) => void
+  onEdgePointerLeave?: (event: EdgePointerEvent) => void
+  onEdgeClick?: (event: EdgePointerEvent) => void
+  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
 }
 
 export const defaultOptions = {
   x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 5
 }
-
-const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom
 
 
 /**
@@ -57,6 +80,7 @@ export class StaticRenderer {
 
   get width() { return this.app.renderer.width }
   get height() { return this.app.renderer.height }
+  // get rid of private properties with public getters?
   #x!: number
   get x() { return this.#x }
   #y!: number
@@ -106,8 +130,35 @@ export class StaticRenderer {
   nodeRenderers: Node[] = []
   edgeRenderers: Edge[] = []
 
+  #doubleClickTimeout?: number
+  #doubleClick = false
+
+  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
+  onViewportPointerDown?: (event: ViewportPointerEvent) => void
+  onViewportPointerMove?: (event: ViewportPointerEvent) => void
+  onViewportDragStart?: (event: ViewportDragEvent) => void
   onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportPointerUp?: (event: ViewportPointerEvent) => void
+  onViewportClick?: (event: ViewportPointerEvent) => void
+  onViewportDoubleClick?: (event: ViewportPointerEvent) => void
+  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
   onViewportWheel?: (event: ViewportWheelEvent) => void
+  onNodePointerEnter?: (event: NodePointerEvent) => void
+  onNodePointerDown?: (event: NodePointerEvent) => void
+  onNodeDragStart?: (event: NodeDragEvent) => void
+  onNodeDrag?: (event: NodeDragEvent) => void
+  onNodeDragEnd?: (event: NodeDragEvent) => void
+  onNodePointerUp?: (event: NodePointerEvent) => void
+  onNodeClick?: (event: NodePointerEvent) => void
+  onNodeDoubleClick?: (event: NodePointerEvent) => void
+  onNodePointerLeave?: (event: NodePointerEvent) => void
+  onEdgePointerEnter?: (event: EdgePointerEvent) => void
+  onEdgePointerDown?: (event: EdgePointerEvent) => void
+  onEdgePointerUp?: (event: EdgePointerEvent) => void
+  onEdgePointerLeave?: (event: EdgePointerEvent) => void
+  onEdgeClick?: (event: EdgePointerEvent) => void
+  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
 
   constructor ({
     nodes, edges, options, container, debug, forceCanvas
@@ -144,26 +195,26 @@ export class StaticRenderer {
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
     this.root.addChild(this.edgesGraphic)
+    this.root.addEventListener('pointerenter', this.pointerEnter)
     this.root.addEventListener('pointerdown', this.pointerDown)
     this.root.addEventListener('pointermove', this.pointerMove)
     this.root.addEventListener('pointerup', this.pointerUp)
     this.root.addEventListener('pointerupoutside', this.pointerUp)
     this.root.addEventListener('pointercancel', this.pointerUp)
+    this.root.addEventListener('pointerleave', this.pointerLeave)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
 
     this.update({ options })
 
     const nodesById: Record<string, Node> = {}
     for (const node of nodes) {
-      const nodeRenderer = new Node(this, node.x, node.y)
+      const nodeRenderer = new Node(this, node)
       nodesById[node.id] = nodeRenderer
       this.nodeRenderers.push(nodeRenderer)
     }
 
     for (const edge of edges) {
-      const { x: x0, y: y0 } = nodesById[edge.source]
-      const { x: x1, y: y1 } = nodesById[edge.target]
-      this.edgeRenderers.push(new Edge(this, x0, y0, x1, y1))
+      this.edgeRenderers.push(new Edge(this, nodesById[edge.source].node, nodesById[edge.target].node))
     }
 
     if (debug) {
@@ -202,8 +253,32 @@ export class StaticRenderer {
   }
 
   update({ options }: { options: Options }) {
+    this.onViewportPointerEnter = options.onViewportPointerEnter
+    this.onViewportPointerDown = options.onViewportPointerDown
+    this.onViewportDragStart = options.onViewportDragStart
     this.onViewportDrag = options.onViewportDrag
+    this.onViewportDragEnd = options.onViewportDragEnd
+    this.onViewportPointerMove = options.onViewportPointerMove
+    this.onViewportClick = options.onViewportClick
+    this.onViewportDoubleClick = options.onViewportDoubleClick
+    this.onViewportPointerUp = options.onViewportPointerUp
+    this.onViewportPointerLeave = options.onViewportPointerLeave
     this.onViewportWheel = options.onViewportWheel
+    this.onNodePointerEnter = options.onNodePointerEnter
+    this.onNodePointerDown = options.onNodePointerDown
+    this.onNodeDragStart = options.onNodeDragStart
+    this.onNodeDrag = options.onNodeDrag
+    this.onNodeDragEnd = options.onNodeDragEnd
+    this.onNodePointerUp = options.onNodePointerUp
+    this.onNodeClick = options.onNodeClick
+    this.onNodeDoubleClick = options.onNodeDoubleClick
+    this.onNodePointerLeave = options.onNodePointerLeave
+    this.onEdgePointerEnter = options.onEdgePointerEnter
+    this.onEdgePointerDown = options.onEdgePointerDown
+    this.onEdgePointerUp = options.onEdgePointerUp
+    this.onEdgeClick = options.onEdgeClick
+    this.onEdgeDoubleClick = options.onEdgeDoubleClick
+    this.onEdgePointerLeave = options.onEdgePointerLeave
 
     this.setPosition(
       options.width,
@@ -218,8 +293,6 @@ export class StaticRenderer {
 
   render(dt: number) {
     this.decelerateInteraction.update(dt)
-
-    // let t = performance.now()
 
     if (this.zoom > 0.2) {
       if (!this.labelsMounted) {
@@ -246,136 +319,147 @@ export class StaticRenderer {
       this.edgesGraphic.visible = false
     }
 
-    // console.log(performance.now() - t)
-
     this.app.render()
   }
 
   delete() {
+    clearTimeout(this.#doubleClickTimeout)
+  }
 
+  private pointerEnter = (event: FederatedPointerEvent) => {
+    const { x, y } = this.root.toLocal(event.global)
+    this.onViewportPointerEnter?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
   }
 
   private pointerDown = (event: FederatedPointerEvent) => {
+    if (this.onViewportDoubleClick) {
+      if (this.#doubleClickTimeout === undefined) {
+        this.#doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+      } else {
+        this.#doubleClick = true
+      }
+    }
+
     this.dragInteraction.down(event)
     this.decelerateInteraction.down()
+
+    const { x, y } = this.root.toLocal(event.global)
+    this.onViewportPointerDown?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
   }
 
   private pointerMove = (event: FederatedPointerEvent) => {
     this.dragInteraction.move(event)
     this.decelerateInteraction.move()
+
+    const { x, y } = this.root.toLocal(event.global)
+
+    this.onViewportPointerMove?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
   }
 
-  private pointerUp = () => {
-    this.dragInteraction.up()
+  private pointerUp = (event: FederatedPointerEvent) => {
+    const isDragging = this.dragInteraction.dragging
+    this.dragInteraction.up(event)
     this.decelerateInteraction.up()
-  }
-}
 
+    const { x, y } = this.root.toLocal(event.global)
 
-export class Node {
+    this.onViewportPointerUp?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
 
-  static fontSize = 10
-  static font = BitmapFont.from('Label', {
-    fontFamily: 'Arial',
-    fontSize: Node.fontSize * 2 * 5, // font size * retina * minZoom
-    fill: 0x000000,
-    stroke: 0xffffff,
-    strokeThickness: 2 * 2 * 5,
-  }, { chars: BitmapFont.ASCII })
-  static TEXT_STYLE: Partial<IBitmapTextStyle> = { fontName: 'Label', fontSize: Node.fontSize, align: 'center' }
+    if (!isDragging) {
+      this.onViewportClick?.({
+        type: 'viewportPointer',
+        x,
+        y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: { x: this.x, y: this.y, zoom: this.zoom },
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
 
-  x: number
-  y: number
-  renderer: StaticRenderer
-  circle: Sprite
-  label: BitmapText
-  radius: number = 10
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
-
-  // TODO - setters/getters
-  constructor(renderer: StaticRenderer, x: number = 0, y: number = 0) {
-    this.renderer = renderer
-    this.x = x
-    this.y = y
-    this.circle = new Sprite(this.renderer.circleTexture)
-    this.circle.anchor.set(0.5)
-    this.circle.tint = 0xff4444
-    this.circle.scale.set(this.radius / NODE_RESOLUTION_RADIUS)
-    this.circle.x = x
-    this.circle.y = y
-    this.minX = this.circle.x - this.radius
-    this.minY = this.circle.y - this.radius
-    this.maxX = this.circle.x + this.radius
-    this.maxY = this.circle.y + this.radius
-    this.renderer.root.addChild(this.circle)
-
-    this.label = new BitmapText('88.26.3876', Node.TEXT_STYLE)
-    this.label.anchor.set(0.5)
-    this.label.x = x
-    this.label.y = y + 16
-    this.renderer.labelContainer.addChild(this.label)
-  }
-
-  render() {
-    if (
-      this.maxX < this.renderer.minX ||
-      this.maxY < this.renderer.minY ||
-      this.minX > this.renderer.maxX ||
-      this.minY > this.renderer.maxY
-    ) {
-      this.circle.visible = false
-      this.label.visible = false
-    } else {
-      this.circle.visible = true
-      this.label.visible = true
+      if (this.#doubleClick) {
+        this.#doubleClick = false
+        this.#doubleClickTimeout = undefined
+        this.onViewportDoubleClick?.({
+          type: 'viewportPointer',
+          x,
+          y,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          target: { x: this.x, y: this.y, zoom: this.zoom },
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          shiftKey: event.shiftKey
+        })
+      }
     }
   }
-}
 
-
-export class Edge {
-
-  renderer: StaticRenderer
-
-  constructor(renderer: StaticRenderer, x0: number, y0: number, x1: number, y1: number) {
-    this.renderer = renderer
-    this.renderer.edgesGraphic
-      .lineStyle(1, '#aaa')
-      .moveTo(x0, y0)
-      .lineTo(x1, y1)
+  private pointerLeave = (event: FederatedPointerEvent) => {
+    const { x, y } = this.root.toLocal(event.global)
+    this.onViewportPointerLeave?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
   }
 
-  render() {
-
+  private clearDoubleClick = () => {
+    this.#doubleClickTimeout = undefined
+    this.#doubleClick = false
   }
-}
-
-
-const createCircleTexture = (renderer: StaticRenderer) => {
-  const GRAPHIC = new Graphics()
-    .beginFill(0xffffff)
-    .drawCircle(0, 0, NODE_RESOLUTION_RADIUS)
-
-  const renderTexture = RenderTexture.create({
-    width: GRAPHIC.width,
-    height: GRAPHIC.height,
-    multisample: MSAA_QUALITY.HIGH,
-    resolution: 2
-  })
-
-  renderer.app.renderer.render(GRAPHIC, {
-    renderTexture,
-    transform: new Matrix(1, 0, 0, 1, GRAPHIC.width / 2, GRAPHIC.height / 2)
-  })
-
-  if (renderer.app.renderer instanceof Renderer) {
-    renderer.app.renderer.framebuffer.blit()
-  }
-
-  GRAPHIC.destroy(true)
-
-  return renderTexture
 }
