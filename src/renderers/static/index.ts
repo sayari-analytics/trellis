@@ -295,6 +295,8 @@ export class StaticRenderer {
     this.decelerateInteraction.update(dt)
 
     if (this.zoom > 0.2) {
+      this.labelContainer.alpha = this.zoom <= 0.3 ? (this.zoom - 0.2) / 0.3 : 1
+
       if (!this.labelsMounted) {
         this.root.addChild(this.labelContainer)
         this.labelsMounted = true
