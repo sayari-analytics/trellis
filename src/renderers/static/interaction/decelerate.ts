@@ -7,6 +7,8 @@ import { StaticRenderer } from '..'
  */
 export class Decelerate {
 
+  decelerating = false
+
   private renderer: StaticRenderer
   private paused = false
   private saved: { x: number, y: number, time: number }[] = []
@@ -79,11 +81,14 @@ export class Decelerate {
     }
     
     if (x || y) {
+      this.decelerating = true
       this.renderer.onViewportDrag({
         type: 'viewportDragDecelarate',
         dx: x ?? 0,
         dy: y ?? 0,
       })
+    } else {
+      this.decelerating = false
     }
   }
 

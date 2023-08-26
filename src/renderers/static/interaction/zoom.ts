@@ -8,6 +8,8 @@ import { StaticRenderer } from '..'
  */
 export class Zoom {
 
+  zooming = false
+
   private renderer: StaticRenderer
   private paused = false
 
@@ -27,6 +29,7 @@ export class Zoom {
       return
     }
 
+    this.zooming = true
     const step = -event.deltaY * (event.deltaMode ? 20 : 1) / 500
     const change = Math.pow(2, 1.1 * step)
     const zoomStart = this.renderer.zoom

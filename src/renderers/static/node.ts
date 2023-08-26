@@ -48,8 +48,9 @@ export class Node {
     this.#minY = this.#circle.y - this.node.radius
     this.#maxX = this.#circle.x + this.node.radius
     this.#maxY = this.#circle.y + this.node.radius
-    // TODO - only set eventMode if node has event handlers
-    // TODO - only set eventMode if node diameter > ~5px
+    // TODO - disable events if node has no event handlers
+    // TODO - disable events if node diameter > ~5px
+    // TODO - disable events when dragging/scrolling
     this.#circle.eventMode = 'static'
     this.#circle.addEventListener('pointerover', this.pointerEnter)
     this.#circle.addEventListener('pointerdown', this.pointerDown)
@@ -62,7 +63,7 @@ export class Node {
     this.#label = new BitmapText('88.26.3876', Node.TEXT_STYLE)
     this.#label.anchor.set(0.5, 0)
     this.#label.x = this.#circle.x
-    this.#label.y = this.#circle.y + this.node.radius + 6
+    this.#label.y = this.#circle.y + this.node.radius
     this.#renderer.labelContainer.addChild(this.#label)
   }
 

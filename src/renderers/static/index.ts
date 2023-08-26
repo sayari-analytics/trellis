@@ -9,6 +9,7 @@ import { Grid } from './grid'
 import { Node, createCircleTexture } from './node'
 import { Edge } from './edge'
 import * as Graph from '../..'
+import { interpolate } from '../../utils'
 
 
 type Keys = { altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -26,6 +27,8 @@ export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', dx: 
 export type ViewportWheelEvent = { type: 'viewportWheel', dx: number, dy: number, dz: number } & MousePosition & Keys
 export type Options = {
   width: number, height: number, x?: number, y?: number, zoom?: number, minZoom?: number, maxZoom?: number,
+  animateViewport?: number | boolean, animateNodePosition?: number | boolean, animateNodeRadius?: number | boolean,
+  dragInertia?: number
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -55,61 +58,39 @@ export type Options = {
 }
 
 export const defaultOptions = {
-  x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 5
+  x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 5,
+  animateViewport: 800, animateNodePosition: 800, animateNodeRadius: 800,
+  dragInertia: 0.88,
 }
 
 
+const MIN_LABEL_ZOOM = 0.3
 /**
  * TODO
  * - labels
  *   - correctly calculate min/max x/y when culling labels
- *   - fade labels out at low zoom
  *   - edge labels
  *   - lazily generate font, with option to pre-render
  *   - fall back on Text for non-ASCII
  * - icons
- * - viewport interpolation
  * - node events
- *   - confirm that WheelEvent and FederatedPointerEvent both use the browser's viewport
- *   - remove expectedViewport/Node and instead disable interpolation on dragging/scrolling
- *   - disable node/edge interaction when zooming/dragging
- *   - move node to front on hover only if drag handlers are implemented
+ *   - move node to front on hover if drag handlers are implemented
+ *     - transition objects within container child order, rather than between layers
  * - enter/update/exit handlers
  */
 export class StaticRenderer {
 
-  get width() { return this.app.renderer.width }
-  get height() { return this.app.renderer.height }
-  // get rid of private properties with public getters?
-  #x!: number
-  get x() { return this.#x }
-  #y!: number
-  get y() { return this.#y }
+  width: number
+  height: number
+  x!: number
+  y!: number
   get zoom() { return this.root.scale.x }
-
-  #minZoom!: number
-  get minZoom() { return this.#minZoom }
-
-  #maxZoom!: number
-  get maxZoom() { return this.#maxZoom }
-
-  #halfHeight!: number
-  get halfHeight() { return this.#halfHeight }
-
-  #halfWidth!: number
-  get halfWidth() { return this.#halfWidth }
-
-  #minX!: number
-  get minX() { return this.#minX }
-
-  #minY!: number
-  get minY() { return this.#minY }
-
-  #maxX!: number
-  get maxX() { return this.#maxX }
-
-  #maxY!: number
-  get maxY() { return this.#maxY }
+  minZoom!: number
+  maxZoom!: number
+  minX!: number
+  minY!: number
+  maxX!: number
+  maxY!: number
 
   debug?: Stats
   app: Application
@@ -123,7 +104,6 @@ export class StaticRenderer {
   grid = new Grid(this, 24000, 24000, 100, { hideText: false })
   circleTexture: RenderTexture
   edgesGraphic = new Graphics()
-  dragInertia = 0.88
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
   edges: Graph.Edge[] = []
@@ -132,7 +112,16 @@ export class StaticRenderer {
 
   #doubleClickTimeout?: number
   #doubleClick = false
+  #renderedPosition = false
+  // #renderedNodes = false
+  #interpolateX?: (dt: number) => { value: number, done: boolean }
+  #interpolateY?: (dt: number) => { value: number, done: boolean }
+  #interpolateZoom?: (dt: number) => { value: number, done: boolean }
 
+  dragInertia = defaultOptions.dragInertia
+  animateViewport: number | false = defaultOptions.animateViewport
+  animateNodePosition: number | false = defaultOptions.animateNodePosition
+  animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -187,6 +176,8 @@ export class StaticRenderer {
       forceCanvas: forceCanvas,
     })
 
+    this.width = options.width
+    this.height = options.height
     this.app.stage.addChild(this.root)
     this.circleTexture = createCircleTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
@@ -230,29 +221,17 @@ export class StaticRenderer {
     }
   }
 
-  setPosition(width: number, height: number, x: number, y: number, zoom: number, minZoom: number, maxZoom: number) {
-    this.#minZoom = minZoom
-    this.#maxZoom = maxZoom
-    const _zoom = Math.max(minZoom, Math.min(maxZoom, zoom))
-    this.root.scale.set(_zoom)
-
-    this.#halfWidth = width / 2
-    this.#halfHeight = height / 2
-
-    this.#x = x
-    this.root.x = (-x * _zoom) + this.#halfWidth
-    this.#minX = x - (this.#halfWidth / _zoom)
-    this.#maxX = x + (this.#halfWidth / _zoom)
-
-    this.#y = y
-    this.root.y = (-y * _zoom) + this.#halfHeight
-    this.#minY = y - (this.#halfHeight / _zoom)
-    this.#maxY = y + (this.#halfHeight / _zoom)
-
-    this.app.renderer.resize(width, height)
-  }
-
   update({ options }: { options: Options }) {
+    this.animateViewport = options.animateViewport === true || options.animateViewport === undefined ?
+      defaultOptions.animateViewport :
+      options.animateViewport
+    this.animateNodePosition = options.animateNodePosition === true || options.animateNodePosition === undefined ?
+      defaultOptions.animateNodePosition :
+      options.animateNodePosition
+    this.animateNodeRadius = options.animateNodeRadius === true || options.animateNodeRadius === undefined ?
+      defaultOptions.animateNodeRadius :
+      options.animateNodeRadius
+    this.dragInertia = options.dragInertia ?? defaultOptions.dragInertia
     this.onViewportPointerEnter = options.onViewportPointerEnter
     this.onViewportPointerDown = options.onViewportPointerDown
     this.onViewportDragStart = options.onViewportDragStart
@@ -279,23 +258,100 @@ export class StaticRenderer {
     this.onEdgeClick = options.onEdgeClick
     this.onEdgeDoubleClick = options.onEdgeDoubleClick
     this.onEdgePointerLeave = options.onEdgePointerLeave
+    this.minZoom = options.minZoom ?? defaultOptions.minZoom
+    this.maxZoom = options.maxZoom ?? defaultOptions.maxZoom
 
-    this.setPosition(
-      options.width,
-      options.height,
-      options.x ?? defaultOptions.x,
-      options.y ?? defaultOptions.y,
-      options.zoom ?? defaultOptions.zoom,
-      options.minZoom ?? defaultOptions.minZoom,
-      options.maxZoom ?? defaultOptions.maxZoom,
-    )
+
+    if (options.width !== this.width || options.height !== this.height) {
+      this.width = options.width
+      this.height = options.height
+      this.app.renderer.resize(this.width, this.height)
+    }
+
+    /**
+     * interpolate viewport position if all of the following are true:
+     * - not dragging/zooming
+     * - viewport position has changed
+     * - the animateViewport option is not disabled
+     * - it's not the first render
+     */
+    const zoom = Math.max(this.minZoom, Math.min(this.maxZoom, options.zoom ?? defaultOptions.zoom))
+    const x = options.x ?? defaultOptions.x
+    const y = options.y ?? defaultOptions.y
+    const xChanged = x !== this.x
+    const yChanged = y !== this.y
+    const zoomChanged = zoom !== this.zoom
+
+    if (
+      !this.dragInteraction.dragging && !this.decelerateInteraction.decelerating && !this.zoomInteraction.zooming &&
+      (xChanged || yChanged || zoomChanged) &&
+      this.animateViewport && this.#renderedPosition
+    ) {
+      if (xChanged) {
+        this.#interpolateX = interpolate(this.x, x, this.animateViewport)
+      }
+      if (yChanged) {
+        this.#interpolateY = interpolate(this.y, y, this.animateViewport)
+      }
+      if (zoomChanged) {
+        this.#interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
+      }
+    } else {
+      this.setPosition(x, y, zoom)
+      this.#renderedPosition = true
+      this.#interpolateX = undefined
+      this.#interpolateY = undefined
+      this.#interpolateZoom = undefined
+    }
+
+    // if (nodes.length > 0) {
+    //   this.#renderedNodes = true
+    // }
+
+    this.zoomInteraction.zooming = false
   }
 
   render(dt: number) {
     this.decelerateInteraction.update(dt)
 
-    if (this.zoom > 0.2) {
-      this.labelContainer.alpha = this.zoom <= 0.3 ? (this.zoom - 0.2) / 0.3 : 1
+    let _x: number | undefined
+    let _y: number | undefined
+    let _zoom: number | undefined
+
+    if (this.#interpolateX) {
+      const { value, done } = this.#interpolateX(dt)
+      _x = value
+
+      if (done) {
+        this.#interpolateX = undefined
+      }
+    }
+
+    if (this.#interpolateY) {
+      const { value, done } = this.#interpolateY(dt)
+      _y = value
+
+      if (done) {
+        this.#interpolateY = undefined
+      }
+    }
+
+    if (this.#interpolateZoom) {
+      const { value, done } = this.#interpolateZoom(dt)
+      _zoom = value
+
+      if (done) {
+        this.#interpolateZoom = undefined
+      }
+    }
+
+    if (_zoom !== undefined || _x !== undefined || _y !== undefined) {
+      this.setPosition(_x ?? this.x, _y ?? this.y, _zoom ?? this.zoom)
+    }
+
+    if (this.zoom > MIN_LABEL_ZOOM) {
+      this.labelContainer.alpha = this.zoom <= MIN_LABEL_ZOOM + 0.1 ?
+        (this.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
 
       if (!this.labelsMounted) {
         this.root.addChild(this.labelContainer)
@@ -326,6 +382,23 @@ export class StaticRenderer {
 
   delete() {
     clearTimeout(this.#doubleClickTimeout)
+  }
+
+  private setPosition(x: number, y: number, zoom: number) {
+    const halfWidth = this.width / 2
+    const halfHeight = this.height / 2
+
+    this.root.scale.set(zoom)
+
+    this.x = x
+    this.root.x = (-x * zoom) + halfWidth
+    this.minX = x - (halfWidth / zoom)
+    this.maxX = x + (halfWidth / zoom)
+
+    this.y = y
+    this.root.y = (-y * zoom) + halfHeight
+    this.minY = y - (halfHeight / zoom)
+    this.maxY = y + (halfHeight / zoom)
   }
 
   private pointerEnter = (event: FederatedPointerEvent) => {
