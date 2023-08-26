@@ -6,7 +6,7 @@ import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
-import { Node, createCircleTexture } from './node'
+import { Node } from './node'
 import { Edge } from './edge'
 import * as Graph from '../..'
 import { interpolate } from '../../utils'
@@ -179,7 +179,7 @@ export class StaticRenderer {
     this.width = options.width
     this.height = options.height
     this.app.stage.addChild(this.root)
-    this.circleTexture = createCircleTexture(this)
+    this.circleTexture = Node.createCircleTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static'

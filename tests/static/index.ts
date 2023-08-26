@@ -25,12 +25,17 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
   }
 }
 
+const NODE_STYLE: Graph.NodeStyle = {
+  color: 'red',
+  stroke: [{ width: 2, color: '#f88' }]
+}
+
 const nodes: Graph.Node[] = []
 const edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
 for (const [x, y] of sampleCoordinatePlane(100000, step, 0.5)) {
-  nodes.push({ id: `${x}|${y}`, x, y, radius: 10 })
+  nodes.push({ id: `${x}|${y}`, x, y, radius: 10, label: `${Math.round(x)}|${Math.round(y)}`, style: NODE_STYLE })
 
   if (coordinates[x] === undefined) {
     coordinates[x] = new Set()
