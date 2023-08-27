@@ -2,18 +2,28 @@ import { StaticRenderer } from '.'
 import * as Graph from '../../'
 
 
-export class Edge {
+const DEFAULT_EDGE_WIDTH = 1
+const DEFAULT_EDGE_COLOR = 0xaaaaaa
 
+
+export class EdgeRenderer {
+
+  edge: Graph.Edge
   #renderer: StaticRenderer
-  #source: Graph.Node
-  #target: Graph.Node
 
-  constructor(renderer: StaticRenderer, source: Graph.Node, target: Graph.Node) {
+  constructor(renderer: StaticRenderer, edge: Graph.Edge) {
+    this.edge = edge
     this.#renderer = renderer
-    this.#source = source
-    this.#target = target
+
+    const source = this.#renderer.nodesById[edge.source].node
+    const target = this.#renderer.nodesById[edge.target].node
+
     this.#renderer.edgesGraphic
-      .lineStyle(1, '#aaa')
+      .lineStyle(
+        this.edge.style?.width ?? DEFAULT_EDGE_WIDTH,
+        this.edge.style?.stroke ?? DEFAULT_EDGE_COLOR,
+        this.edge.style?.strokeOpacity ?? 1
+      )
       .moveTo(source.x ?? 0, source.y ?? 0)
       .lineTo(target.x ?? 0, target.y ?? 0)
   }

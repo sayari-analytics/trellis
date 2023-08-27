@@ -12,7 +12,7 @@ const DEFAULT_NODE_STROKE_WIDTH = 2
 const MIN_STROKE_ZOOM = 0.3
 
 
-export class Node {
+export class NodeRenderer {
 
   static createCircleTexture(renderer: StaticRenderer) {
     const GRAPHIC = new Graphics()
@@ -43,12 +43,12 @@ export class Node {
   static fontSize = 10
   static font = BitmapFont.from('Label', {
     fontFamily: 'Arial',
-    fontSize: Node.fontSize * 2 * 5, // font size * retina * minZoom
+    fontSize: NodeRenderer.fontSize * 2 * 5, // font size * retina * minZoom
     fill: 0x000000,
     stroke: 0xffffff,
     strokeThickness: 1.5 * 2 * 5,
   }, { chars: BitmapFont.ASCII })
-  static TEXT_STYLE: Partial<IBitmapTextStyle> = { fontName: 'Label', fontSize: Node.fontSize, align: 'center' }
+  static TEXT_STYLE: Partial<IBitmapTextStyle> = { fontName: 'Label', fontSize: NodeRenderer.fontSize, align: 'center' }
 
   node: Graph.Node
   
@@ -113,7 +113,7 @@ export class Node {
     this.#renderer.root.addChild(this.#circle)
 
     if (this.node.label) {
-      this.#label = new BitmapText(this.node.label, Node.TEXT_STYLE)
+      this.#label = new BitmapText(this.node.label, NodeRenderer.TEXT_STYLE)
       this.#label.anchor.set(0.5, 0)
       this.#label.x = this.#circle.x
       this.#label.y = this.#circle.y + fullRadius

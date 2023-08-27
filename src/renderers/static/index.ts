@@ -6,8 +6,8 @@ import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
-import { Node } from './node'
-import { Edge } from './edge'
+import { NodeRenderer } from './node'
+import { EdgeRenderer } from './edge'
 import * as Graph from '../..'
 import { interpolate } from '../../utils'
 
@@ -67,16 +67,17 @@ export const defaultOptions = {
 const MIN_LABEL_ZOOM = 0.3
 /**
  * TODO
+ * - node events
+ *   - move node to front on hover if drag handlers are implemented
+ *     - transition objects within container child order, rather than between layers. move to top on mouseenter, bottom on mouseleave
+ * - enter/update/exit handlers
  * - labels
  *   - correctly calculate min/max x/y when culling labels
  *   - edge labels
- *   - lazily generate font, with option to pre-render
  *   - fall back on Text for non-ASCII
+ *   - lazily generate font, with option to pre-render
  * - icons
- * - node events
- *   - move node to front on hover if drag handlers are implemented
- *     - transition objects within container child order, rather than between layers
- * - enter/update/exit handlers
+ * - badges
  */
 export class StaticRenderer {
 
@@ -106,9 +107,10 @@ export class StaticRenderer {
   edgesGraphic = new Graphics()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
+  nodesById: Record<string, NodeRenderer> = {}
   edges: Graph.Edge[] = []
-  nodeRenderers: Node[] = []
-  edgeRenderers: Edge[] = []
+  nodeRenderers: NodeRenderer[] = []
+  edgeRenderers: EdgeRenderer[] = []
 
   #doubleClickTimeout?: number
   #doubleClick = false
@@ -179,7 +181,7 @@ export class StaticRenderer {
     this.width = options.width
     this.height = options.height
     this.app.stage.addChild(this.root)
-    this.circleTexture = Node.createCircleTexture(this)
+    this.circleTexture = NodeRenderer.createCircleTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static'
@@ -197,15 +199,15 @@ export class StaticRenderer {
 
     this.update({ options })
 
-    const nodesById: Record<string, Node> = {}
+    this.nodesById = {}
     for (const node of nodes) {
-      const nodeRenderer = new Node(this, node)
-      nodesById[node.id] = nodeRenderer
+      const nodeRenderer = new NodeRenderer(this, node)
+      this.nodesById[node.id] = nodeRenderer
       this.nodeRenderers.push(nodeRenderer)
     }
 
     for (const edge of edges) {
-      this.edgeRenderers.push(new Edge(this, nodesById[edge.source].node, nodesById[edge.target].node))
+      this.edgeRenderers.push(new EdgeRenderer(this, edge))
     }
 
     if (debug) {
