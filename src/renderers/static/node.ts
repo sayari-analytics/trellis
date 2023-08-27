@@ -10,6 +10,7 @@ const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom -- TODO make config
 const DEFAULT_NODE_FILL = 0xaaaaaa
 const DEFAULT_NODE_STROKE_WIDTH = 2
 const MIN_STROKE_ZOOM = 0.3
+const MIN_INTERACTION_ZOOM = 0.1
 
 
 export class NodeRenderer {
@@ -95,15 +96,16 @@ export class NodeRenderer {
       }
     }
 
-    // TODO - use label + strokes to calculate min/max
-    this.#minX = this.#circle.x - this.node.radius
-    this.#minY = this.#circle.y - this.node.radius
-    this.#maxX = this.#circle.x + this.node.radius
-    this.#maxY = this.#circle.y + this.node.radius
+    // TODO - consider label to calculate min/max
+    this.#minX = this.#circle.x - fullRadius
+    this.#minY = this.#circle.y - fullRadius
+    this.#maxX = this.#circle.x + fullRadius
+    this.#maxY = this.#circle.y + fullRadius
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node diameter > ~5px
     // TODO - disable events when dragging/scrolling/low zoom
     this.#circle.eventMode = 'static'
+    // this.#circle.hitArea = new Circle(this.node.x ?? 0, this.node.y ?? 0, fullRadius) // why doesn't this work? does this need a container?
     this.#circle.addEventListener('pointerover', this.pointerEnter)
     this.#circle.addEventListener('pointerdown', this.pointerDown)
     this.#circle.addEventListener('pointerup', this.pointerUp)
@@ -122,6 +124,13 @@ export class NodeRenderer {
   }
 
   render() {
+    // TODO - enable/disable events based on node screen pixel width, not fixed zoom
+    if (this.#renderer.zoom > MIN_INTERACTION_ZOOM) {
+      this.#circle.eventMode = 'static'
+    } else {
+      this.#circle.eventMode = 'none'
+    }
+
     if (
       this.#maxX < this.#renderer.minX || this.#maxY < this.#renderer.minY ||
       this.#minX > this.#renderer.maxX || this.#minY > this.#renderer.maxY
@@ -386,3 +395,41 @@ export class NodeRenderer {
     this.#doubleClick = false
   }
 }
+
+// class Circle implements IHitArea {
+
+//   x: number
+//   y: number
+//   minX: number
+//   minY: number
+//   maxX: number
+//   maxY: number
+//   radius: number
+//   // squaredDistance: number
+
+//   constructor(x: number, y: number, radius: number) {
+//     this.x = x
+//     this.y = y
+//     this.minX = x - radius
+//     this.minY = y - radius
+//     this.maxX = x + radius
+//     this.maxY = y + radius
+//     this.radius = radius
+//     // this.squaredDistance = Math.pow(radius, 2)
+//   }
+
+//   update(x: number, y: number, radius: number) {
+//     this.x = x
+//     this.y = y
+//     this.minX = x - radius
+//     this.minY = y - radius
+//     this.maxX = x + radius
+//     this.maxY = y + radius
+//     this.radius = radius
+//   }
+
+//   contains(x: number, y: number): boolean {
+//     return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY
+//     // return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2) < this.squaredDistance
+//   }
+// }

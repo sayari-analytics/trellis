@@ -5,7 +5,7 @@ import Stats from 'stats.js'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
-import { Grid } from './grid'
+// import { Grid } from './grid'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import * as Graph from '../..'
@@ -102,7 +102,7 @@ export class StaticRenderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  grid = new Grid(this, 24000, 24000, 100, { hideText: false })
+  // grid = new Grid(this, 24000, 24000, 100, { hideText: false })
   circleTexture: RenderTexture
   edgesGraphic = new Graphics()
   eventSystem: EventSystem

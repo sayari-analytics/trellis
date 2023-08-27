@@ -34,8 +34,10 @@ const nodes: Graph.Node[] = []
 const edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [x, y] of sampleCoordinatePlane(100000, step, 0.5)) {
-  nodes.push({ id: `${x}|${y}`, x, y, radius: 10, label: `${Math.round(x)}|${Math.round(y)}`, style: NODE_STYLE })
+for (const [_x, _y] of sampleCoordinatePlane(40000, step, 0.5)) {
+  const x = Math.round(_x)
+  const y = Math.round(_y)
+  nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
 
   if (coordinates[x] === undefined) {
     coordinates[x] = new Set()
@@ -113,33 +115,33 @@ const options: Static.Options = {
   onViewportPointerLeave: (event: Static.ViewportPointerEvent) => {
     // console.log('pointer leave', `x: ${event.x}, y: ${event.y}`)
   },
-  // onNodePointerEnter: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodePointerDown: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer down', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodeDragStart: (event: Static.NodeDragEvent) => {
-  //   // console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodeDrag: (event: Static.NodeDragEvent) => {
-  //   // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodeDragEnd: (event: Static.NodeDragEvent) => {
-  //   // console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodePointerUp: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodeClick: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodeDoubleClick: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onNodePointerLeave: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
-  // },
+  onNodePointerEnter: (event: Static.NodePointerEvent) => {
+    console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
+  },
+  onNodePointerDown: (event: Static.NodePointerEvent) => {
+    // console.log('node pointer down', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDragStart: (event: Static.NodeDragEvent) => {
+    // console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDrag: (event: Static.NodeDragEvent) => {
+    // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDragEnd: (event: Static.NodeDragEvent) => {
+    // console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodePointerUp: (event: Static.NodePointerEvent) => {
+    // console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeClick: (event: Static.NodePointerEvent) => {
+    // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodeDoubleClick: (event: Static.NodePointerEvent) => {
+    // console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onNodePointerLeave: (event: Static.NodePointerEvent) => {
+    console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
+  },
   // onEdgePointerEnter: (event: Static.EdgePointerEvent) => {
   //   // console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
   // },
