@@ -30,7 +30,7 @@ export class Grid {
         coordinate.y = 0
         coordinate.anchor.set(0.5, 0.5)
         coordinate.cullable = true
-        this.renderer.labelContainer.addChild(coordinate)
+        this.renderer.labelsContainer.addChild(coordinate)
       }
     }
 
@@ -46,7 +46,7 @@ export class Grid {
         coordinate.y = y
         coordinate.anchor.set(0.5, 0.5)
         coordinate.cullable = true
-        this.renderer.labelContainer.addChild(coordinate)
+        this.renderer.labelsContainer.addChild(coordinate)
       }
     }
   }

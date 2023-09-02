@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as Static from '../../src/renderers/static'
@@ -26,15 +27,26 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
 }
 
 const NODE_STYLE: Graph.NodeStyle = {
-  color: 'red',
-  stroke: [{ width: 2, color: '#f88' }]
+  color: 'red', stroke: [{ width: 2, color: '#f88' }]
 }
 
-const nodes: Graph.Node[] = []
-const edges: Graph.Edge[] = []
+const NODE_HOVER_STYLE: Graph.NodeStyle = {
+  color: '#f66', stroke: [{ width: 2, color: '#fcc' }]
+}
+
+const EDGE_STYLE: Graph.EdgeStyle = {
+  width: 1, stroke: '#aaa'
+}
+
+const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
+  width: 2, stroke: 'blue'
+}
+
+let nodes: Graph.Node[] = []
+let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(40000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(100000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -47,7 +59,7 @@ for (const [_x, _y] of sampleCoordinatePlane(40000, step, 0.5)) {
   for (const adjacentX of [x - step, x]) {
     for (const adjacentY of [y - step, y, y + step]) {
       if (coordinates[adjacentX]?.has(adjacentY) && !(adjacentX === x && adjacentY === y)) {
-        edges.push({ id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}` })
+        edges.push({ id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}`, style: EDGE_STYLE })
       }
     }
   }
@@ -60,8 +72,8 @@ const options: Static.Options = {
   y: 0,
   zoom: 1,
   minZoom: 0.025,
-  width: 1400,
-  height: 1000,
+  width: 1200,
+  height: 800,
   onViewportPointerEnter: (event: Static.ViewportPointerEvent) => {
     // console.log('pointer enter', `x: ${event.x}, y: ${event.y}`)
   },
@@ -75,7 +87,7 @@ const options: Static.Options = {
     // console.log('drag', `x: ${event.dx}, y: ${event.dy}`)
     options.x! += event.dx
     options.y! += event.dy
-    render.update({ options })
+    render.update({ nodes, edges, options })
   },
   onViewportDragEnd: (event: Static.ViewportDragEvent | Static.ViewportDragDecelerateEvent) => {
     // console.log('drag end', `x: ${event.dx}, y: ${event.dy}`)
@@ -101,7 +113,7 @@ const options: Static.Options = {
     //   options.width = 1400
     //   options.height = 1000
     // }
-    render.update({ options })
+    render.update({ nodes, edges, options })
   },
   onViewportDoubleClick: (event: Static.ViewportPointerEvent) => {
     // console.log('double click', `x: ${event.x}, y: ${event.y}`)
@@ -110,40 +122,60 @@ const options: Static.Options = {
     options.x! += dx
     options.y! += dy
     options.zoom! += dz
-    render.update({ options })
+    render.update({ nodes, edges, options })
   },
   onViewportPointerLeave: (event: Static.ViewportPointerEvent) => {
     // console.log('pointer leave', `x: ${event.x}, y: ${event.y}`)
   },
   onNodePointerEnter: (event: Static.NodePointerEvent) => {
-    console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
+    // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
+    nodes = nodes.map((node) => (
+      node.id === event.target.id ? { ...node, style: NODE_HOVER_STYLE } : node
+    ))
+    render.update({ nodes, edges, options })
   },
-  onNodePointerDown: (event: Static.NodePointerEvent) => {
-    // console.log('node pointer down', `x: ${event.x}, y: ${event.y}`)
-  },
-  onNodeDragStart: (event: Static.NodeDragEvent) => {
-    // console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
-  },
+  // onNodePointerDown: (event: Static.NodePointerEvent) => {
+  //   // console.log('node pointer down', `x: ${event.x}, y: ${event.y}`)
+  // },
+  // onNodeDragStart: (event: Static.NodeDragEvent) => {
+  //   // console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
+  // },
   onNodeDrag: (event: Static.NodeDragEvent) => {
     // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
+    // const t = performance.now()
+    nodes = nodes.map((node) => (
+      node.id === event.target.id ?
+        { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } :
+        node
+    ))
+    // console.log(performance.now() - t)
+    render.update({ nodes, edges, options })
   },
-  onNodeDragEnd: (event: Static.NodeDragEvent) => {
-    // console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
-  },
-  onNodePointerUp: (event: Static.NodePointerEvent) => {
-    // console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
-  },
-  onNodeClick: (event: Static.NodePointerEvent) => {
-    // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
-  },
-  onNodeDoubleClick: (event: Static.NodePointerEvent) => {
-    // console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
-  },
+  // onNodeDragEnd: (event: Static.NodeDragEvent) => {
+  //   // console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
+  // },
+  // onNodePointerUp: (event: Static.NodePointerEvent) => {
+  //   // console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
+  // },
+  // onNodeClick: (event: Static.NodePointerEvent) => {
+  //   // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
+  // },
+  // onNodeDoubleClick: (event: Static.NodePointerEvent) => {
+  //   // console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
+  // },
   onNodePointerLeave: (event: Static.NodePointerEvent) => {
-    console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
+    // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
+    nodes = nodes.map((node) => (
+      node.id === event.target.id ? { ...node, style: NODE_STYLE } : node
+    ))
+    render.update({ nodes, edges, options })
   },
   // onEdgePointerEnter: (event: Static.EdgePointerEvent) => {
   //   // console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
+  //   edges = edges.map((edge) => (
+  //     edge.id === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge
+  //   ))
+  //   render.update({ nodes, edges, options })
   // },
   // onEdgePointerDown: (event: Static.EdgePointerEvent) => {
   //   // console.log('edge pointer down', `x: ${event.x}, y: ${event.y}`)
@@ -159,6 +191,8 @@ const options: Static.Options = {
   // },
   // onEdgePointerLeave: (event: Static.EdgePointerEvent) => {
   //   // console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
+  //   edges = edges.map((edge) => ({ ...edge, style: EDGE_STYLE }))
+  //   render.update({ nodes, edges, options })
   // },
 }
 

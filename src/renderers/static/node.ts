@@ -2,15 +2,13 @@ import {
   BitmapFont, BitmapText, FederatedPointerEvent, Graphics, IBitmapTextStyle,
   MSAA_QUALITY, Matrix, RenderTexture, Renderer, Sprite
 } from 'pixi.js-legacy'
-import { StaticRenderer } from '.'
+import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, StaticRenderer } from '.'
 import * as Graph from '../../'
 
 
 const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom -- TODO make configurable
 const DEFAULT_NODE_FILL = 0xaaaaaa
 const DEFAULT_NODE_STROKE_WIDTH = 2
-const MIN_STROKE_ZOOM = 0.3
-const MIN_INTERACTION_ZOOM = 0.1
 
 
 export class NodeRenderer {
@@ -47,122 +45,176 @@ export class NodeRenderer {
     fontSize: NodeRenderer.fontSize * 2 * 5, // font size * retina * minZoom
     fill: 0x000000,
     stroke: 0xffffff,
-    strokeThickness: 1.5 * 2 * 5,
+    strokeThickness: 1.5 * 2 * 5, // strokeThickness * retina * minZoom
   }, { chars: BitmapFont.ASCII })
-  static TEXT_STYLE: Partial<IBitmapTextStyle> = { fontName: 'Label', fontSize: NodeRenderer.fontSize, align: 'center' }
+  static TEXT_STYLE: Partial<IBitmapTextStyle> = {
+    fontName: 'Label', fontSize: NodeRenderer.fontSize, align: 'center'
+  }
 
   node: Graph.Node
   
   #renderer: StaticRenderer
-  #circle: Sprite
+  #fill: Sprite
   #label?: BitmapText
   #strokes?: Sprite[]
-  #minX: number
-  #minY: number
-  #maxX: number
-  #maxY: number
+  #maxStrokeRadius?: number
+  #minX!: number
+  #minY!: number
+  #maxX!: number
+  #maxY!: number
   #doubleClickTimeout: number | undefined
   #doubleClick = false
   #nodeMoveXOffset: number = 0
   #nodeMoveYOffset: number = 0
+  fillMounted = false
+  strokesMounted = false
+  labelMounted = false
 
   constructor(renderer: StaticRenderer, node: Graph.Node) {
     this.node = node
     this.#renderer = renderer
 
-    this.#circle = new Sprite(this.#renderer.circleTexture)
-    this.#circle.anchor.set(0.5)
-    this.#circle.tint = this.node.style?.color ?? DEFAULT_NODE_FILL
-    this.#circle.scale.set(this.node.radius / NODE_RESOLUTION_RADIUS)
-    this.#circle.x = this.node.x ?? 0
-    this.#circle.y = this.node.y ?? 0
-    
-    let fullRadius = this.node.radius
+    this.#fill = new Sprite(this.#renderer.circleTexture)
+    this.#fill.anchor.set(0.5)
+    this.#fill.visible = false
+    this.#renderer.nodesContainer.addChild(this.#fill)
 
-    if (this.node.style?.stroke && this.node.style.stroke.length > 0) {
-      this.#strokes = []
-
-      for (const { width, color } of this.node.style.stroke) {
-        fullRadius += width ?? DEFAULT_NODE_STROKE_WIDTH
-        const stroke = new Sprite(this.#renderer.circleTexture)
-        stroke.anchor.set(0.5)
-        stroke.tint = color ?? DEFAULT_NODE_FILL
-        stroke.scale.set(fullRadius / NODE_RESOLUTION_RADIUS)
-        stroke.x = this.node.x ?? 0
-        stroke.y = this.node.y ?? 0
-
-        this.#strokes.push(stroke)
-        this.#renderer.root.addChild(stroke)
-      }
-    }
-
-    // TODO - consider label to calculate min/max
-    this.#minX = this.#circle.x - fullRadius
-    this.#minY = this.#circle.y - fullRadius
-    this.#maxX = this.#circle.x + fullRadius
-    this.#maxY = this.#circle.y + fullRadius
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node diameter > ~5px
-    // TODO - disable events when dragging/scrolling/low zoom
-    this.#circle.eventMode = 'static'
-    // this.#circle.hitArea = new Circle(this.node.x ?? 0, this.node.y ?? 0, fullRadius) // why doesn't this work? does this need a container?
-    this.#circle.addEventListener('pointerover', this.pointerEnter)
-    this.#circle.addEventListener('pointerdown', this.pointerDown)
-    this.#circle.addEventListener('pointerup', this.pointerUp)
-    this.#circle.addEventListener('pointerupoutside', this.pointerUp)
-    this.#circle.addEventListener('pointercancel', this.pointerUp)
-    this.#circle.addEventListener('pointerout', (event) => this.pointerLeave(event))
-    this.#renderer.root.addChild(this.#circle)
+    // TODO - disable events when dragging/scrolling
+    this.#fill.eventMode = 'static'
+    // why doesn't this work? does this need a container?
+    // this.#fill.hitArea = new Circle(this.node.x ?? 0, this.node.y ?? 0, fullRadius)
+    this.#fill.addEventListener('pointerover', this.pointerEnter)
+    this.#fill.addEventListener('pointerdown', this.pointerDown)
+    this.#fill.addEventListener('pointerup', this.pointerUp)
+    this.#fill.addEventListener('pointerupoutside', this.pointerUp)
+    this.#fill.addEventListener('pointercancel', this.pointerUp)
+    this.#fill.addEventListener('pointerout', (event) => this.pointerLeave(event))
+
+    this.update(this.node)
+  }
+
+  update(node: Graph.Node) {
+    this.node = node
+    this.#fill.tint = this.node.style?.color ?? DEFAULT_NODE_FILL
+    this.#fill.scale.set(this.node.radius / NODE_RESOLUTION_RADIUS)
+    this.#fill.x = this.node.x ?? 0
+    this.#fill.y = this.node.y ?? 0
+
+
+    if (this.node.style?.stroke?.length) {
+      if (this.#strokes === undefined) {
+        // enter
+        this.#strokes = Array(this.node.style.stroke.length)
+  
+        let radius = this.node.radius
+  
+        for (let i = 0; i < this.node.style.stroke.length; i++) {
+          radius += this.node.style.stroke[i].width ?? DEFAULT_NODE_STROKE_WIDTH
+          const stroke = new Sprite(this.#renderer.circleTexture)
+          stroke.anchor.set(0.5)
+          stroke.scale.set(radius / NODE_RESOLUTION_RADIUS)
+          stroke.tint = this.node.style.stroke[i].color ?? DEFAULT_NODE_FILL
+          stroke.x = this.node.x ?? 0
+          stroke.y = this.node.y ?? 0
+          this.#strokes[i] = stroke
+          this.#maxStrokeRadius = radius
+        }
+      } else {
+        for (let i = 0; i < this.#strokes.length; i++) {
+          this.#strokes[i].x = this.node.x ?? 0
+          this.#strokes[i].y = this.node.y ?? 0
+        }
+      }
+    } else if (this.#strokes) {
+      // exit
+    }
+
 
     if (this.node.label) {
-      this.#label = new BitmapText(this.node.label, NodeRenderer.TEXT_STYLE)
-      this.#label.anchor.set(0.5, 0)
-      this.#label.x = this.#circle.x
-      this.#label.y = this.#circle.y + fullRadius
-      this.#renderer.labelContainer.addChild(this.#label)
+      if (this.#label === undefined) {
+        // enter
+        this.#label = new BitmapText(this.node.label, NodeRenderer.TEXT_STYLE)
+        this.#label.anchor.set(0.5, 0)
+      }
+
+      this.#label.x = this.#fill.x
+      this.#label.y = this.#fill.y + (this.#maxStrokeRadius ?? this.node.radius)
+    } else if (this.#label) {
+      // exit
     }
+
+    // TODO - consider label to calculate min/max // this.#label?.getBounds(true).width
+    this.#minX = this.#fill.x - (this.#maxStrokeRadius ?? this.node.radius)
+    this.#minY = this.#fill.y - (this.#maxStrokeRadius ?? this.node.radius)
+    this.#maxX = this.#fill.x + (this.#maxStrokeRadius ?? this.node.radius)
+    this.#maxY = this.#fill.y + (this.#maxStrokeRadius ?? this.node.radius)
+
+    return this
   }
 
   render() {
+    const isVisible = this.visible(this.#minX, this.#minY, this.#maxX, this.#maxY)
+
     // TODO - enable/disable events based on node screen pixel width, not fixed zoom
-    if (this.#renderer.zoom > MIN_INTERACTION_ZOOM) {
-      this.#circle.eventMode = 'static'
+    if (isVisible && this.#renderer.zoom > MIN_NODE_INTERACTION_ZOOM) {
+      this.#fill.eventMode = 'static'
     } else {
-      this.#circle.eventMode = 'none'
+      this.#fill.eventMode = 'none'
     }
 
-    if (
-      this.#maxX < this.#renderer.minX || this.#maxY < this.#renderer.minY ||
-      this.#minX > this.#renderer.maxX || this.#minY > this.#renderer.maxY
-    ) {
-      this.#circle.visible = false
+    // TODO - why is mounting/unmouting fill Sprite less efficient?
+    if (isVisible){
+      if (!this.fillMounted) {
+        this.#fill.visible = true
+        // this.#renderer.nodesContainer.addChild(this.#fill)
+        this.fillMounted = true
+      }
+    } else {
+      if (this.fillMounted) {
+        this.#fill.visible = false
+        // this.#renderer.nodesContainer.removeChild(this.#fill)
+        this.fillMounted = false
+      }
+    }
 
-      if (this.#strokes) {
-        for (const stroke of this.#strokes) {
-          stroke.visible = false
+    if (this.#strokes) {
+      if (isVisible && this.#renderer.zoom > MIN_NODE_STROKE_ZOOM) {
+        if (!this.strokesMounted) {
+          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.#fill) - 1
+
+          for (let i = this.#strokes.length - 1; i >= 0; i--) {
+            this.#renderer.nodesContainer.addChildAt(this.#strokes[i], strokeContainerIndex)
+          }
+
+          this.strokesMounted = true
+        }
+      } else {
+        if (this.strokesMounted) {
+          for (let i = this.#strokes.length - 1; i >= 0; i--) {
+            this.#renderer.nodesContainer.removeChild(this.#strokes[i])
+          }
+
+          this.strokesMounted = false
         }
       }
+    }
 
-      if (this.#label) {
-        this.#label.visible = false
-      }
-    } else  {
-      this.#circle.visible = true
+    if (this.#label) {
+      if (isVisible && this.#renderer.zoom > MIN_LABEL_ZOOM) {
+        this.#label.alpha = this.#renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
+          (this.#renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
 
-      if (this.#strokes) {
-        if (this.#renderer.zoom > MIN_STROKE_ZOOM) {
-          for (const stroke of this.#strokes) {
-            stroke.visible = true
-          }
-        } else {
-          for (const stroke of this.#strokes) {
-            stroke.visible = false
-          }
+        if (!this.labelMounted) {
+          this.#renderer.labelsContainer.addChild(this.#label)
+          this.labelMounted = true
         }
-      }
-
-      if (this.#label) {
-        this.#label.visible = true
+      } else {
+        if (this.labelMounted) {
+          this.#renderer.labelsContainer.removeChild(this.#label)
+          this.labelMounted = false
+        }
       }
     }
   }
@@ -171,7 +223,16 @@ export class NodeRenderer {
     clearTimeout(this.#doubleClickTimeout)
   }
 
+  private visible(minX: number, minY: number, maxX: number, maxY: number) {
+    return maxX >= this.#renderer.minX && minX <= this.#renderer.maxX &&
+      maxY >= this.#renderer.minY && minY <= this.#renderer.maxY
+  }
+
   private pointerEnter = (event: FederatedPointerEvent) => {
+    if (this.#renderer.dragInteraction.dragging || this.#renderer.zoomInteraction.zooming) {
+      return
+    }
+
     if (
       this.#renderer.onNodePointerDown ||
       this.#renderer.onNodeDrag ||
@@ -362,6 +423,10 @@ export class NodeRenderer {
   }
 
   private pointerLeave = (event: FederatedPointerEvent) => {
+    if (this.#renderer.dragInteraction.dragging || this.#renderer.zoomInteraction.zooming) {
+      return
+    }
+
     if (
       !this.#renderer.dragInteraction.dragging && (
         this.#renderer.onNodePointerDown ||

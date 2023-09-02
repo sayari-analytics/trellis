@@ -1,11 +1,11 @@
 import {
-  Application, Container, EventSystem, FederatedPointerEvent, Graphics, Rectangle, RenderTexture,
+  Application, Container, EventSystem, FederatedPointerEvent, Rectangle, RenderTexture,
 } from 'pixi.js-legacy'
 import Stats from 'stats.js'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
-// import { Grid } from './grid'
+import { Grid } from './grid'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import * as Graph from '../..'
@@ -64,7 +64,13 @@ export const defaultOptions = {
 }
 
 
-const MIN_LABEL_ZOOM = 0.3
+// TODO - make configurable
+export const MIN_LABEL_ZOOM = 0.3
+export const MIN_NODE_STROKE_ZOOM = 0.3
+export const MIN_EDGES_ZOOM = 0.2
+export const MIN_NODE_INTERACTION_ZOOM = 0.2
+
+
 /**
  * TODO
  * - node events
@@ -93,29 +99,28 @@ export class StaticRenderer {
   maxX!: number
   maxY!: number
 
-  debug?: Stats
+  stats?: Stats
+  grid?: Grid
   app: Application
   container: HTMLDivElement
   root = new Container()
-  labelContainer = new Container()
-  labelsMounted = false
+  edgesContainer = new Container()
+  nodesContainer = new Container()
+  labelsContainer = new Container()
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  // grid = new Grid(this, 24000, 24000, 100, { hideText: false })
   circleTexture: RenderTexture
-  edgesGraphic = new Graphics()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
-  nodesById: Record<string, NodeRenderer> = {}
+  nodeRenderersById: Record<string, NodeRenderer> = {}
   edges: Graph.Edge[] = []
-  nodeRenderers: NodeRenderer[] = []
-  edgeRenderers: EdgeRenderer[] = []
+  edgeRenderersById: Record<string, EdgeRenderer> = {}
 
   #doubleClickTimeout?: number
   #doubleClick = false
   #renderedPosition = false
-  // #renderedNodes = false
+  #renderedNodes = false
   #interpolateX?: (dt: number) => { value: number, done: boolean }
   #interpolateY?: (dt: number) => { value: number, done: boolean }
   #interpolateZoom?: (dt: number) => { value: number, done: boolean }
@@ -187,7 +192,9 @@ export class StaticRenderer {
     this.root.eventMode = 'static'
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
-    this.root.addChild(this.edgesGraphic)
+    this.root.addChild(this.edgesContainer)
+    this.root.addChild(this.nodesContainer)
+    this.root.addChild(this.labelsContainer)
     this.root.addEventListener('pointerenter', this.pointerEnter)
     this.root.addEventListener('pointerdown', this.pointerDown)
     this.root.addEventListener('pointermove', this.pointerMove)
@@ -197,33 +204,23 @@ export class StaticRenderer {
     this.root.addEventListener('pointerleave', this.pointerLeave)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
 
-    this.update({ options })
-
-    this.nodesById = {}
-    for (const node of nodes) {
-      const nodeRenderer = new NodeRenderer(this, node)
-      this.nodesById[node.id] = nodeRenderer
-      this.nodeRenderers.push(nodeRenderer)
-    }
-
-    for (const edge of edges) {
-      this.edgeRenderers.push(new EdgeRenderer(this, edge))
-    }
+    this.update({ nodes, edges, options })
 
     if (debug) {
+      // this.grid = new Grid(this, 24000, 24000, 100, { hideText: false })
+      this.stats = new Stats()
+      this.stats.showPanel(0)
+      document.body.appendChild(this.stats.dom)
       this.app.ticker.add((dt: number) => {
-        this.debug?.update()
+        this.stats?.update()
         this.render(dt)
       })
-      this.debug = new Stats()
-      this.debug.showPanel(0)
-      document.body.appendChild(this.debug.dom)
     } else {
       this.app.ticker.add(this.render)
     }
   }
 
-  update({ options }: { options: Options }) {
+  update({ nodes, edges, options }: { nodes: Graph.Node[], edges: Graph.Edge[], options: Options }) {
     this.animateViewport = options.animateViewport === true || options.animateViewport === undefined ?
       defaultOptions.animateViewport :
       options.animateViewport
@@ -264,6 +261,9 @@ export class StaticRenderer {
     this.maxZoom = options.maxZoom ?? defaultOptions.maxZoom
 
 
+    /**
+     * update dimensions
+     */
     if (options.width !== this.width || options.height !== this.height) {
       this.width = options.width
       this.height = options.height
@@ -271,7 +271,9 @@ export class StaticRenderer {
     }
 
     /**
-     * interpolate viewport position if all of the following are true:
+     * update viewport
+     * 
+     * interpolate position if all of the following are true:
      * - not dragging/zooming
      * - viewport position has changed
      * - the animateViewport option is not disabled
@@ -306,9 +308,76 @@ export class StaticRenderer {
       this.#interpolateZoom = undefined
     }
 
-    // if (nodes.length > 0) {
-    //   this.#renderedNodes = true
-    // }
+
+    const shouldUpdateNodes = this.nodes !== nodes && !(this.nodes.length === 0 && nodes.length === 0)
+    const shouldUpdateEdges = this.edges !== edges && !(this.edges.length === 0 && edges.length === 0)
+
+
+    /**
+     * update nodes
+     */
+    if (shouldUpdateNodes) {
+      const nodeRenderersById: Record<string, NodeRenderer> = {}
+
+      for (const node of nodes) {
+        if (this.nodeRenderersById[node.id] === undefined) {
+          // enter
+          nodeRenderersById[node.id] = new NodeRenderer(this, node)
+        } else if (node !== this.nodeRenderersById[node.id].node) {
+          // update
+          nodeRenderersById[node.id] = this.nodeRenderersById[node.id].update(node)
+        } else {
+          nodeRenderersById[node.id] = this.nodeRenderersById[node.id]
+        }
+      }
+
+      for (const node of this.nodes) {
+        if (nodeRenderersById[node.id] === undefined) {
+          // exit
+          this.nodeRenderersById[node.id].delete()
+        }
+      }
+
+      this.nodes = nodes
+      this.nodeRenderersById = nodeRenderersById
+      this.#renderedNodes = true
+    }
+
+
+    /**
+     * update edges
+     */
+    if (shouldUpdateEdges) {
+      const edgeRenderersById: Record<string, EdgeRenderer> = {}
+
+      for (const edge of edges) {
+        if (this.edgeRenderersById[edge.id] === undefined) {
+          // enter
+          edgeRenderersById[edge.id] = new EdgeRenderer(this, edge)
+        } else if (edge !== this.edgeRenderersById[edge.id].edge) {
+          // update
+          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge)
+        } else {
+          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
+        }
+      }
+
+      for (const edge of this.edges) {
+        if (edgeRenderersById[edge.id] === undefined) {
+          // exit
+          this.edgeRenderersById[edge.id].delete()
+        }
+      }
+
+      this.edges = edges
+      this.edgeRenderersById = edgeRenderersById
+      this.#renderedNodes = true
+    } else if (shouldUpdateNodes) {
+      // TODO - make node move/resize automatically update edge position
+      for (const edge of edges) {
+        this.edgeRenderersById[edge.id].update(edge)
+      }
+    }
 
     this.zoomInteraction.zooming = false
   }
@@ -351,32 +420,12 @@ export class StaticRenderer {
       this.setPosition(_x ?? this.x, _y ?? this.y, _zoom ?? this.zoom)
     }
 
-    if (this.zoom > MIN_LABEL_ZOOM) {
-      this.labelContainer.alpha = this.zoom <= MIN_LABEL_ZOOM + 0.1 ?
-        (this.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
-
-      if (!this.labelsMounted) {
-        this.root.addChild(this.labelContainer)
-        this.labelsMounted = true
-      }
-    } else {
-      if (this.labelsMounted) {
-        this.root.removeChild(this.labelContainer)
-        this.labelsMounted = false
-      }
+    for (const node of this.nodes) {
+      this.nodeRenderersById[node.id].render()
     }
 
-    for (const node of this.nodeRenderers) {
-      node.render()
-    }
-
-    if (this.zoom > 0.2) {
-      this.edgesGraphic.visible = true
-      for (const edge of this.edgeRenderers) {
-        edge.render()
-      }
-    } else {
-      this.edgesGraphic.visible = false
+    for (const edge of this.edges) {
+      this.edgeRenderersById[edge.id].render()
     }
 
     this.app.render()
@@ -394,13 +443,13 @@ export class StaticRenderer {
 
     this.x = x
     this.root.x = (-x * zoom) + halfWidth
-    this.minX = x - (halfWidth / zoom)
-    this.maxX = x + (halfWidth / zoom)
+    this.minX = x - (halfWidth / zoom) // + (50 / zoom)
+    this.maxX = x + (halfWidth / zoom) // - (50 / zoom)
 
     this.y = y
     this.root.y = (-y * zoom) + halfHeight
-    this.minY = y - (halfHeight / zoom)
-    this.maxY = y + (halfHeight / zoom)
+    this.minY = y - (halfHeight / zoom) // + (50 / zoom)
+    this.maxY = y + (halfHeight / zoom) // - (50 / zoom)
   }
 
   private pointerEnter = (event: FederatedPointerEvent) => {
