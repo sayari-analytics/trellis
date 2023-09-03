@@ -55,6 +55,7 @@ export class NodeRenderer {
   
   #renderer: StaticRenderer
   #fill: Sprite
+  #lowZoomFill: Sprite
   #label?: BitmapText
   #strokes?: Sprite[]
   #maxStrokeRadius?: number
@@ -76,11 +77,12 @@ export class NodeRenderer {
 
     this.#fill = new Sprite(this.#renderer.circleTexture)
     this.#fill.anchor.set(0.5)
-    this.#fill.visible = false
-    this.#renderer.nodesContainer.addChild(this.#fill)
+
+    this.#lowZoomFill = new Sprite(this.#renderer.circleTexture)
+    this.#lowZoomFill.anchor.set(0.5)
+    this.#renderer.lowZoomConatiner.addChild(this.#lowZoomFill)
 
     // TODO - disable events if node has no event handlers
-    // TODO - disable events if node diameter > ~5px
     // TODO - disable events when dragging/scrolling
     this.#fill.eventMode = 'static'
     // why doesn't this work? does this need a container?
@@ -97,10 +99,13 @@ export class NodeRenderer {
 
   update(node: Graph.Node) {
     this.node = node
-    this.#fill.tint = this.node.style?.color ?? DEFAULT_NODE_FILL
-    this.#fill.scale.set(this.node.radius / NODE_RESOLUTION_RADIUS)
-    this.#fill.x = this.node.x ?? 0
-    this.#fill.y = this.node.y ?? 0
+    this.#lowZoomFill.tint = this.#fill.tint = this.node.style?.color ?? DEFAULT_NODE_FILL
+    this.#lowZoomFill.x = this.#fill.x = this.node.x ?? 0
+    this.#lowZoomFill.y = this.#fill.y = this.node.y ?? 0
+    const scale = this.node.radius / NODE_RESOLUTION_RADIUS
+    this.#fill.scale.set(scale)
+    this.#lowZoomFill.scale.set(scale)
+    
 
 
     if (this.node.style?.stroke?.length) {
@@ -157,24 +162,15 @@ export class NodeRenderer {
   render() {
     const isVisible = this.visible(this.#minX, this.#minY, this.#maxX, this.#maxY)
 
-    // TODO - enable/disable events based on node screen pixel width, not fixed zoom
-    if (isVisible && this.#renderer.zoom > MIN_NODE_INTERACTION_ZOOM) {
-      this.#fill.eventMode = 'static'
-    } else {
-      this.#fill.eventMode = 'none'
-    }
-
     // TODO - why is mounting/unmouting fill Sprite less efficient?
-    if (isVisible){
+    if (isVisible && this.#renderer.zoom >= MIN_NODE_INTERACTION_ZOOM){
       if (!this.fillMounted) {
-        this.#fill.visible = true
-        // this.#renderer.nodesContainer.addChild(this.#fill)
+        this.#renderer.nodesContainer.addChild(this.#fill)
         this.fillMounted = true
       }
     } else {
       if (this.fillMounted) {
-        this.#fill.visible = false
-        // this.#renderer.nodesContainer.removeChild(this.#fill)
+        this.#renderer.nodesContainer.removeChild(this.#fill)
         this.fillMounted = false
       }
     }
@@ -182,7 +178,7 @@ export class NodeRenderer {
     if (this.#strokes) {
       if (isVisible && this.#renderer.zoom > MIN_NODE_STROKE_ZOOM) {
         if (!this.strokesMounted) {
-          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.#fill) - 1
+          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.#fill)
 
           for (let i = this.#strokes.length - 1; i >= 0; i--) {
             this.#renderer.nodesContainer.addChildAt(this.#strokes[i], strokeContainerIndex)
@@ -203,8 +199,7 @@ export class NodeRenderer {
 
     if (this.#label) {
       if (isVisible && this.#renderer.zoom > MIN_LABEL_ZOOM) {
-        this.#label.alpha = this.#renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
-          (this.#renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
+        this.#label.alpha = Math.min((this.#renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1, 1)
 
         if (!this.labelMounted) {
           this.#renderer.labelsContainer.addChild(this.#label)
