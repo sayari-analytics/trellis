@@ -90,7 +90,7 @@ export class EdgeRenderer {
 
   private visible(minX: number, minY: number, maxX: number, maxY: number) {
     // TODO - also calculate whether edge intersects with any of the 4 bbox edges
-    return this.renderer.zoom > MIN_EDGES_ZOOM  &&
+    return this.renderer.zoom > 0.2 &&
       maxX >= this.renderer.minX && minX <= this.renderer.maxX &&
       maxY >= this.renderer.minY && minY <= this.renderer.maxY
   }

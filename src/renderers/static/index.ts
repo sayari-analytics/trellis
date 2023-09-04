@@ -1,5 +1,5 @@
 import {
-  Application, Container, EventSystem, FederatedPointerEvent, ParticleContainer, Rectangle, RenderTexture,
+  Application, Container, EventSystem, FederatedPointerEvent, Rectangle, RenderTexture,
 } from 'pixi.js-legacy'
 import Stats from 'stats.js'
 import { Zoom } from './interaction/zoom'
@@ -65,10 +65,10 @@ export const defaultOptions = {
 
 
 // TODO - make configurable
+export const MIN_LABEL_ZOOM = 0.3
 export const MIN_NODE_STROKE_ZOOM = 0.3
-export const MIN_LABEL_ZOOM = 0.2
 export const MIN_EDGES_ZOOM = 0.2
-export const MIN_NODE_INTERACTION_ZOOM = 0.15
+export const MIN_NODE_INTERACTION_ZOOM = 0.2
 
 
 /**
@@ -104,7 +104,6 @@ export class StaticRenderer {
   app: Application
   container: HTMLDivElement
   root = new Container()
-  lowZoomConatiner = new ParticleContainer(100000)
   edgesContainer = new Container()
   nodesContainer = new Container()
   labelsContainer = new Container()
@@ -193,7 +192,6 @@ export class StaticRenderer {
     this.root.eventMode = 'static'
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
-    this.root.addChild(this.lowZoomConatiner)
     this.root.addChild(this.edgesContainer)
     this.root.addChild(this.nodesContainer)
     this.root.addChild(this.labelsContainer)
@@ -322,16 +320,14 @@ export class StaticRenderer {
       const nodeRenderersById: Record<string, NodeRenderer> = {}
 
       for (const node of nodes) {
-        const previousNode = this.nodeRenderersById[node.id]
-
-        if (previousNode === undefined) {
+        if (this.nodeRenderersById[node.id] === undefined) {
           // enter
           nodeRenderersById[node.id] = new NodeRenderer(this, node)
-        } else if (node !== previousNode.node) {
+        } else if (node !== this.nodeRenderersById[node.id].node) {
           // update
-          nodeRenderersById[node.id] = previousNode.update(node)
+          nodeRenderersById[node.id] = this.nodeRenderersById[node.id].update(node)
         } else {
-          nodeRenderersById[node.id] = previousNode
+          nodeRenderersById[node.id] = this.nodeRenderersById[node.id]
         }
       }
 
@@ -339,7 +335,6 @@ export class StaticRenderer {
         if (nodeRenderersById[node.id] === undefined) {
           // exit
           this.nodeRenderersById[node.id].delete()
-          delete this.nodeRenderersById[node.id]
         }
       }
 
@@ -356,23 +351,14 @@ export class StaticRenderer {
       const edgeRenderersById: Record<string, EdgeRenderer> = {}
 
       for (const edge of edges) {
-        // const source = this.nodeRenderersById[edge.source]
-        // const target = this.nodeRenderersById[edge.target]
-        // if (source === undefined || target === undefined) {
-        //   // eslint-disable-next-line no-console
-        //   console.error(`Can't render Edge from source Node ${source} to target Node ${target} because one or both are unknown`)
-        //   continue
-        // }
-        const previousEdge = this.edgeRenderersById[edge.id]
-
-        if (previousEdge === undefined) {
+        if (this.edgeRenderersById[edge.id] === undefined) {
           // enter
           edgeRenderersById[edge.id] = new EdgeRenderer(this, edge)
-        } else if (edge !== previousEdge.edge) {
+        } else if (edge !== this.edgeRenderersById[edge.id].edge) {
           // update
-          edgeRenderersById[edge.id] = previousEdge.update(edge)
+          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge)
         } else {
-          edgeRenderersById[edge.id] = previousEdge
+          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
         }
       }
 
@@ -380,7 +366,6 @@ export class StaticRenderer {
         if (edgeRenderersById[edge.id] === undefined) {
           // exit
           this.edgeRenderersById[edge.id].delete()
-          delete this.edgeRenderersById[edge.id]
         }
       }
 
@@ -388,6 +373,7 @@ export class StaticRenderer {
       this.edgeRenderersById = edgeRenderersById
       this.#renderedNodes = true
     } else if (shouldUpdateNodes) {
+      // TODO - make node move/resize automatically update edge position
       for (const edge of edges) {
         this.edgeRenderersById[edge.id].update(edge)
       }
@@ -432,14 +418,6 @@ export class StaticRenderer {
 
     if (_zoom !== undefined || _x !== undefined || _y !== undefined) {
       this.setPosition(_x ?? this.x, _y ?? this.y, _zoom ?? this.zoom)
-    }
-
-    if (this.zoom < MIN_NODE_INTERACTION_ZOOM) {
-      this.lowZoomConatiner.visible = true
-      this.nodesContainer.visible = false
-    } else {
-      this.lowZoomConatiner.visible = false
-      this.nodesContainer.visible = true
     }
 
     for (const node of this.nodes) {

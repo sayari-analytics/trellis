@@ -59,9 +59,7 @@ for (const [_x, _y] of sampleCoordinatePlane(100000, step, 0.5)) {
   for (const adjacentX of [x - step, x]) {
     for (const adjacentY of [y - step, y, y + step]) {
       if (coordinates[adjacentX]?.has(adjacentY) && !(adjacentX === x && adjacentY === y)) {
-        edges.push({
-          id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}`, style: EDGE_STYLE
-        })
+        edges.push({ id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}`, style: EDGE_STYLE })
       }
     }
   }
@@ -102,7 +100,7 @@ const options: Static.Options = {
     if (options.x === 0 && options.y === 0 && options.zoom === 1) {
       options.x = 1000
       options.y = -1000
-      options.zoom = 0.05
+      options.zoom = 0.2
     } else {
       options.x = 0
       options.y = 0
