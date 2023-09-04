@@ -9,7 +9,7 @@ const DEFAULT_EDGE_COLOR = 0xaaaaaa
 
 export class EdgeRenderer {
 
-  edge: Graph.Edge
+  edge!: Graph.Edge
   renderer: StaticRenderer
   graphic = new Graphics()
   source!: Graph.Node
@@ -23,18 +23,15 @@ export class EdgeRenderer {
   strokeOpacity?: number
   mounted = false
 
-  constructor(renderer: StaticRenderer, edge: Graph.Edge) {
-    this.edge = edge
+  constructor(renderer: StaticRenderer, edge: Graph.Edge, source: Graph.Node, target: Graph.Node) {
     this.renderer = renderer
-
-    this.update(edge)
+    this.update(edge, source, target)
   }
 
-  update(edge: Graph.Edge) {
+  update(edge: Graph.Edge, source: Graph.Node, target: Graph.Node) {
     this.edge = edge
-
-    this.source = this.renderer.nodeRenderersById[this.edge.source].node
-    this.target = this.renderer.nodeRenderersById[this.edge.target].node
+    this.source = source
+    this.target = target
 
     return this
   }
@@ -51,8 +48,8 @@ export class EdgeRenderer {
         this.mounted = true
       }
 
-      this.graphic.alpha = this.renderer.zoom <= MIN_EDGES_ZOOM + 0.1 ?
-        (this.renderer.zoom - MIN_EDGES_ZOOM) / MIN_EDGES_ZOOM + 0.1 : 1
+      // this.graphic.alpha = this.renderer.zoom <= MIN_EDGES_ZOOM + 0.1 ?
+      //   (this.renderer.zoom - MIN_EDGES_ZOOM) / MIN_EDGES_ZOOM + 0.1 : 1
 
       const width = this.edge.style?.width ?? DEFAULT_EDGE_WIDTH
       const stroke = this.edge.style?.stroke ?? DEFAULT_EDGE_COLOR

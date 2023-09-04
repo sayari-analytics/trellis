@@ -51,7 +51,7 @@ export class NodeRenderer {
     fontName: 'Label', fontSize: NodeRenderer.fontSize, align: 'center'
   }
 
-  node: Graph.Node
+  node?: Graph.Node
   
   #renderer: StaticRenderer
   #fill: Sprite
@@ -71,7 +71,6 @@ export class NodeRenderer {
   labelMounted = false
 
   constructor(renderer: StaticRenderer, node: Graph.Node) {
-    this.node = node
     this.#renderer = renderer
 
     this.#fill = new Sprite(this.#renderer.circleTexture)
@@ -92,64 +91,102 @@ export class NodeRenderer {
     this.#fill.addEventListener('pointercancel', this.pointerUp)
     this.#fill.addEventListener('pointerout', (event) => this.pointerLeave(event))
 
-    this.update(this.node)
+    this.update(node)
   }
 
   update(node: Graph.Node) {
-    this.node = node
-    this.#fill.tint = this.node.style?.color ?? DEFAULT_NODE_FILL
-    this.#fill.scale.set(this.node.radius / NODE_RESOLUTION_RADIUS)
-    this.#fill.x = this.node.x ?? 0
-    this.#fill.y = this.node.y ?? 0
+    if (node.style?.color !== this.node?.style?.color) {
+      this.#fill.tint = node.style?.color ?? DEFAULT_NODE_FILL
+    }
+    if (node.radius !== this.node?.radius) {
+      this.#fill.scale.set(node.radius / NODE_RESOLUTION_RADIUS)
+    }
+    if (node.x !== this.node?.x) {
+      this.#fill.x = node.x ?? 0
+    }
+    if (node.y !== this.node?.y) {
+      this.#fill.y = node.y ?? 0
+    }
 
 
-    if (this.node.style?.stroke?.length) {
-      if (this.#strokes === undefined) {
+    /**
+     * Update Stroke
+     */
+    if (node.style?.stroke !== this.node?.style?.stroke) {
+      if (this.#strokes !== undefined) {
+        // exit
+        for (let i = this.#strokes.length - 1; i >= 0; i--) {
+          this.#renderer.nodesContainer.removeChild(this.#strokes[i])
+        }
+        this.strokesMounted = false
+
+        for (const stroke of this.#strokes) {
+          stroke.destroy()
+        }
+        this.#strokes = undefined
+      }
+
+      if (node.style?.stroke?.length) {
         // enter
-        this.#strokes = Array(this.node.style.stroke.length)
+        this.#strokes = Array(node.style.stroke.length)
   
-        let radius = this.node.radius
+        let radius = node.radius
   
-        for (let i = 0; i < this.node.style.stroke.length; i++) {
-          radius += this.node.style.stroke[i].width ?? DEFAULT_NODE_STROKE_WIDTH
+        for (let i = 0; i < node.style.stroke.length; i++) {
+          radius += node.style.stroke[i].width ?? DEFAULT_NODE_STROKE_WIDTH
           const stroke = new Sprite(this.#renderer.circleTexture)
           stroke.anchor.set(0.5)
           stroke.scale.set(radius / NODE_RESOLUTION_RADIUS)
-          stroke.tint = this.node.style.stroke[i].color ?? DEFAULT_NODE_FILL
-          stroke.x = this.node.x ?? 0
-          stroke.y = this.node.y ?? 0
+          stroke.tint = node.style.stroke[i].color ?? DEFAULT_NODE_FILL
+          stroke.x = node.x ?? 0
+          stroke.y = node.y ?? 0
           this.#strokes[i] = stroke
           this.#maxStrokeRadius = radius
         }
       } else {
-        for (let i = 0; i < this.#strokes.length; i++) {
-          this.#strokes[i].x = this.node.x ?? 0
-          this.#strokes[i].y = this.node.y ?? 0
-        }
+        this.#maxStrokeRadius = node.radius
       }
     } else if (this.#strokes) {
-      // exit
+      for (let i = 0; i < this.#strokes.length; i++) {
+        this.#strokes[i].x = node.x ?? 0
+        this.#strokes[i].y = node.y ?? 0
+      }
     }
 
 
-    if (this.node.label) {
-      if (this.#label === undefined) {
-        // enter
-        this.#label = new BitmapText(this.node.label, NodeRenderer.TEXT_STYLE)
-        this.#label.anchor.set(0.5, 0)
-      }
+    /**
+     * Update Label
+     */
+    if (node.label !== this.node?.label) {
+      if (node.label) {
+        if (this.#label === undefined) {
+          // enter
+          this.#label = new BitmapText(node.label, NodeRenderer.TEXT_STYLE)
+          this.#label.anchor.set(0.5, 0)
+        }
 
-      this.#label.x = this.#fill.x
-      this.#label.y = this.#fill.y + (this.#maxStrokeRadius ?? this.node.radius)
+        this.#label.text = node.label
+        this.#label.x = this.#fill.x
+        this.#label.y = this.#fill.y + (this.#maxStrokeRadius ?? node.radius)
+      } else if (this.#label) {
+        // exit
+        this.#renderer.labelsContainer.removeChild(this.#label)
+        this.labelMounted = false
+        this.#label.destroy()
+        this.#label = undefined
+      }
     } else if (this.#label) {
-      // exit
+      this.#label.x = this.#fill.x
+      this.#label.y = this.#fill.y + (this.#maxStrokeRadius ?? node.radius)
     }
 
     // TODO - consider label to calculate min/max // this.#label?.getBounds(true).width
-    this.#minX = this.#fill.x - (this.#maxStrokeRadius ?? this.node.radius)
-    this.#minY = this.#fill.y - (this.#maxStrokeRadius ?? this.node.radius)
-    this.#maxX = this.#fill.x + (this.#maxStrokeRadius ?? this.node.radius)
-    this.#maxY = this.#fill.y + (this.#maxStrokeRadius ?? this.node.radius)
+    this.#minX = this.#fill.x - (this.#maxStrokeRadius ?? node.radius)
+    this.#minY = this.#fill.y - (this.#maxStrokeRadius ?? node.radius)
+    this.#maxX = this.#fill.x + (this.#maxStrokeRadius ?? node.radius)
+    this.#maxY = this.#fill.y + (this.#maxStrokeRadius ?? node.radius)
+
+    this.node = node
 
     return this
   }
@@ -182,7 +219,7 @@ export class NodeRenderer {
     if (this.#strokes) {
       if (isVisible && this.#renderer.zoom > MIN_NODE_STROKE_ZOOM) {
         if (!this.strokesMounted) {
-          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.#fill) - 1
+          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.#fill)
 
           for (let i = this.#strokes.length - 1; i >= 0; i--) {
             this.#renderer.nodesContainer.addChildAt(this.#strokes[i], strokeContainerIndex)
@@ -203,8 +240,8 @@ export class NodeRenderer {
 
     if (this.#label) {
       if (isVisible && this.#renderer.zoom > MIN_LABEL_ZOOM) {
-        this.#label.alpha = this.#renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
-          (this.#renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
+        // this.#label.alpha = this.#renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
+        //   (this.#renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
 
         if (!this.labelMounted) {
           this.#renderer.labelsContainer.addChild(this.#label)
@@ -250,7 +287,7 @@ export class NodeRenderer {
       y: local.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      target: this.node,
+      target: this.node!,
       targetIdx: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
@@ -277,7 +314,7 @@ export class NodeRenderer {
         y: local.y,
         clientX: event.clientX,
         clientY: event.clientY,
-        target: this.node,
+        target: this.node!,
         targetIdx: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
@@ -290,8 +327,8 @@ export class NodeRenderer {
       event.stopPropagation()
 
       this.#renderer.container.style.cursor = 'move'
-      this.#nodeMoveXOffset = local.x - (this.node.x ?? 0)
-      this.#nodeMoveYOffset = local.y - (this.node.y ?? 0)
+      this.#nodeMoveXOffset = local.x - (this.node!.x ?? 0)
+      this.#nodeMoveYOffset = local.y - (this.node!.y ?? 0)
       this.#renderer.root.addEventListener('pointermove', this.pointerMove)
       this.#renderer.zoomInteraction.pause()
       this.#renderer.dragInteraction.pause()
@@ -314,7 +351,7 @@ export class NodeRenderer {
         clientY: event.clientY,
         dx: 0,
         dy: 0,
-        target: this.node,
+        target: this.node!,
         targetIdx: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
@@ -329,9 +366,9 @@ export class NodeRenderer {
       y: local.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      dx: local.x - (this.node.x ?? 0) - this.#nodeMoveXOffset,
-      dy: local.y - (this.node.y ?? 0) - this.#nodeMoveYOffset,
-      target: this.node,
+      dx: local.x - (this.node!.x ?? 0) - this.#nodeMoveXOffset,
+      dy: local.y - (this.node!.y ?? 0) - this.#nodeMoveYOffset,
+      target: this.node!,
       targetIdx: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
@@ -364,7 +401,7 @@ export class NodeRenderer {
           clientY: event.clientY,
           dx: 0,
           dy: 0,
-          target: this.node,
+          target: this.node!,
           targetIdx: 0, // TODO
           altKey: event.altKey,
           ctrlKey: event.ctrlKey,
@@ -380,7 +417,7 @@ export class NodeRenderer {
       y: local.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      target: this.node,
+      target: this.node!,
       targetIdx: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
@@ -395,7 +432,7 @@ export class NodeRenderer {
         y: local.y,
         clientX: event.clientX,
         clientY: event.clientY,
-        target: this.node,
+        target: this.node!,
         targetIdx: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
@@ -411,7 +448,7 @@ export class NodeRenderer {
           y: local.y,
           clientX: event.clientX,
           clientY: event.clientY,
-          target: this.node,
+          target: this.node!,
           targetIdx: 0, // TODO
           altKey: event.altKey,
           ctrlKey: event.ctrlKey,
@@ -446,7 +483,7 @@ export class NodeRenderer {
       y: local.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      target: this.node,
+      target: this.node!,
       targetIdx: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,

@@ -2,14 +2,15 @@ import {
   Application, Container, EventSystem, FederatedPointerEvent, Rectangle, RenderTexture,
 } from 'pixi.js-legacy'
 import Stats from 'stats.js'
+import * as Graph from '../..'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
-import * as Graph from '../..'
 import { interpolate } from '../../utils'
+import { logUnknownEdgeError } from './utils'
 
 
 type Keys = { altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
@@ -65,10 +66,10 @@ export const defaultOptions = {
 
 
 // TODO - make configurable
-export const MIN_LABEL_ZOOM = 0.3
+export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
-export const MIN_EDGES_ZOOM = 0.2
-export const MIN_NODE_INTERACTION_ZOOM = 0.2
+export const MIN_EDGES_ZOOM = 0.25
+export const MIN_NODE_INTERACTION_ZOOM = 0.1
 
 
 /**
@@ -353,10 +354,22 @@ export class StaticRenderer {
       for (const edge of edges) {
         if (this.edgeRenderersById[edge.id] === undefined) {
           // enter
-          edgeRenderersById[edge.id] = new EdgeRenderer(this, edge)
+          const source = this.nodeRenderersById[edge.source].node
+          const target = this.nodeRenderersById[edge.target].node
+          if (source !== undefined && target !== undefined) {
+            edgeRenderersById[edge.id] = new EdgeRenderer(this, edge, source, target)
+          } else {
+            logUnknownEdgeError(source, target)
+          }
         } else if (edge !== this.edgeRenderersById[edge.id].edge) {
           // update
-          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge)
+          const source = this.nodeRenderersById[edge.source].node
+          const target = this.nodeRenderersById[edge.target].node
+          if (source !== undefined && target !== undefined) {
+            edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge, source, target)
+          } else {
+            logUnknownEdgeError(source, target)
+          }
         } else {
           edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
         }
@@ -375,7 +388,16 @@ export class StaticRenderer {
     } else if (shouldUpdateNodes) {
       // TODO - make node move/resize automatically update edge position
       for (const edge of edges) {
-        this.edgeRenderersById[edge.id].update(edge)
+        const source = this.nodeRenderersById[edge.source].node
+        const target = this.nodeRenderersById[edge.target].node
+        if (source !== undefined && target !== undefined) {
+          this.edgeRenderersById[edge.id].update(edge, source, target)
+        } else {
+          // eslint-disable-next-line no-console
+          console.error(
+            `Error: Cannot render edge ${source === undefined ? `from unknown node ${source}` : `to unknown Node ${target}`}`
+          )
+        }
       }
     }
 
