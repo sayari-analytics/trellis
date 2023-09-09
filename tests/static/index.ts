@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as Static from '../../src/renderers/static'
 import * as Graph from '../../src'
+import * as Force from '../../src/layout/force'
+import * as Hierarchy from '../../src/layout/hierarchy'
 
 
 // try { document.createElement('canvas').getContext('webgl'); console.info('browser supports webgl') } catch (err) { console.warn(err) }
@@ -31,22 +33,24 @@ const NODE_STYLE: Graph.NodeStyle = {
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
-  color: '#f66', stroke: [{ width: 2, color: '#fcc' }]
+  color: '#f66', stroke: [{ width: 4, color: '#fcc' }]
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
-  width: 1, stroke: '#aaa'
+  width: 1, stroke: '#aaa', arrow: 'forward',
 }
 
 const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
-  width: 2, stroke: 'blue'
+  width: 2, stroke: 'blue', arrow: 'forward',
 }
 
+const force = Force.Layout()
+const hierarchy = Hierarchy.Layout()
 let nodes: Graph.Node[] = []
 let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(100000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(10000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -59,7 +63,9 @@ for (const [_x, _y] of sampleCoordinatePlane(100000, step, 0.5)) {
   for (const adjacentX of [x - step, x]) {
     for (const adjacentY of [y - step, y, y + step]) {
       if (coordinates[adjacentX]?.has(adjacentY) && !(adjacentX === x && adjacentY === y)) {
-        edges.push({ id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}`, style: EDGE_STYLE })
+        edges.push({
+          id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}`, style: EDGE_STYLE
+        })
       }
     }
   }
@@ -114,6 +120,19 @@ const options: Static.Options = {
     //   options.height = 1000
     // }
     render.update({ nodes, edges, options })
+    // force({ nodes, edges }).then((graph) => {
+    //   nodes = graph.nodes
+    
+    //   const { x, y, zoom } = Graph.boundsToViewport(
+    //     Graph.getSelectionBounds(nodes, 40),
+    //     { width: options.width, height: options.height }
+    //   )
+    //   options.x = x
+    //   options.y = y
+    //   options.zoom = zoom
+    
+    //   render.update({ nodes, edges, options: options })
+    // })
   },
   onViewportDoubleClick: (event: Static.ViewportPointerEvent) => {
     // console.log('double click', `x: ${event.x}, y: ${event.y}`)
@@ -130,7 +149,14 @@ const options: Static.Options = {
   onNodePointerEnter: (event: Static.NodePointerEvent) => {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
     nodes = nodes.map((node) => (
-      node.id === event.target.id ? { ...node, style: NODE_HOVER_STYLE } : node
+      node.id === event.target.id ?
+        { ...node, label: node.label + '!', style: NODE_HOVER_STYLE } :
+        node
+    ))
+    edges = edges.map((edge) => (
+      edge.source === event.target.id || edge.target === event.target.id ?
+        { ...edge, style: EDGE_HOVER_STYLE } :
+        edge
     ))
     render.update({ nodes, edges, options })
   },
@@ -157,16 +183,27 @@ const options: Static.Options = {
   // onNodePointerUp: (event: Static.NodePointerEvent) => {
   //   // console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onNodeClick: (event: Static.NodePointerEvent) => {
-  //   // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
-  // },
+  onNodeClick: (event: Static.NodePointerEvent) => {
+    // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
+    const graph = hierarchy(event.target.id, { nodes, edges })
+    nodes = graph.nodes
+    edges = graph.edges
+    render.update({ nodes, edges, options })
+  },
   // onNodeDoubleClick: (event: Static.NodePointerEvent) => {
   //   // console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
   // },
   onNodePointerLeave: (event: Static.NodePointerEvent) => {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) => (
-      node.id === event.target.id ? { ...node, style: NODE_STYLE } : node
+      node.id === event.target.id ?
+        { ...node, label: node.label?.slice(0, node.label.length - 1), style: NODE_STYLE } :
+        node
+    ))
+    edges = edges.map((edge) => (
+      edge.source === event.target.id || edge.target === event.target.id ?
+        { ...edge, style: EDGE_STYLE } :
+        edge
     ))
     render.update({ nodes, edges, options })
   },

@@ -1,6 +1,4 @@
-import {
-  Application, Container, EventSystem, FederatedPointerEvent, Rectangle, RenderTexture,
-} from 'pixi.js-legacy'
+import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js-legacy'
 import Stats from 'stats.js'
 import * as Graph from '../..'
 import { Zoom } from './interaction/zoom'
@@ -9,6 +7,8 @@ import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
+import { ArrowTexture } from './sprites/arrow'
+import { CircleTexture } from './sprites/circle'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 
@@ -59,7 +59,7 @@ export type Options = {
 }
 
 export const defaultOptions = {
-  x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 5,
+  x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 4,
   animateViewport: 800, animateNodePosition: 800, animateNodeRadius: 800,
   dragInertia: 0.88,
 }
@@ -68,21 +68,22 @@ export const defaultOptions = {
 // TODO - make configurable
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
-export const MIN_EDGES_ZOOM = 0.25
 export const MIN_NODE_INTERACTION_ZOOM = 0.1
+export const MIN_EDGES_ZOOM = 0.2
 
 
 /**
  * TODO
+ * - node position interpolation
+ * - labels
+ *   - label origin and rotation
+ *   - fall back on Text for non-ASCII
+ *   - edge labels
+ *   - correctly calculate min/max x/y when culling labels
+ *   - lazily generate font, with option to pre-render
  * - node events
  *   - move node to front on hover if drag handlers are implemented
  *     - transition objects within container child order, rather than between layers. move to top on mouseenter, bottom on mouseleave
- * - enter/update/exit handlers
- * - labels
- *   - correctly calculate min/max x/y when culling labels
- *   - edge labels
- *   - fall back on Text for non-ASCII
- *   - lazily generate font, with option to pre-render
  * - icons
  * - badges
  */
@@ -111,13 +112,11 @@ export class StaticRenderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  circleTexture: RenderTexture
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}
   edges: Graph.Edge[] = []
   edgeRenderersById: Record<string, EdgeRenderer> = {}
-
   #doubleClickTimeout?: number
   #doubleClick = false
   #renderedPosition = false
@@ -125,11 +124,13 @@ export class StaticRenderer {
   #interpolateX?: (dt: number) => { value: number, done: boolean }
   #interpolateY?: (dt: number) => { value: number, done: boolean }
   #interpolateZoom?: (dt: number) => { value: number, done: boolean }
-
   dragInertia = defaultOptions.dragInertia
   animateViewport: number | false = defaultOptions.animateViewport
   animateNodePosition: number | false = defaultOptions.animateNodePosition
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
+  circle: CircleTexture
+  arrow: ArrowTexture
+
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -187,7 +188,8 @@ export class StaticRenderer {
     this.width = options.width
     this.height = options.height
     this.app.stage.addChild(this.root)
-    this.circleTexture = NodeRenderer.createCircleTexture(this)
+    this.circle = new CircleTexture(this)
+    this.arrow = new ArrowTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static'
@@ -354,21 +356,21 @@ export class StaticRenderer {
       for (const edge of edges) {
         if (this.edgeRenderersById[edge.id] === undefined) {
           // enter
-          const source = this.nodeRenderersById[edge.source].node
-          const target = this.nodeRenderersById[edge.target].node
+          const source = this.nodeRenderersById[edge.source]
+          const target = this.nodeRenderersById[edge.target]
           if (source !== undefined && target !== undefined) {
             edgeRenderersById[edge.id] = new EdgeRenderer(this, edge, source, target)
           } else {
-            logUnknownEdgeError(source, target)
+            logUnknownEdgeError(source.node, target.node)
           }
         } else if (edge !== this.edgeRenderersById[edge.id].edge) {
           // update
-          const source = this.nodeRenderersById[edge.source].node
-          const target = this.nodeRenderersById[edge.target].node
+          const source = this.nodeRenderersById[edge.source]
+          const target = this.nodeRenderersById[edge.target]
           if (source !== undefined && target !== undefined) {
             edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge, source, target)
           } else {
-            logUnknownEdgeError(source, target)
+            logUnknownEdgeError(source.node, target.node)
           }
         } else {
           edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
@@ -388,8 +390,8 @@ export class StaticRenderer {
     } else if (shouldUpdateNodes) {
       // TODO - make node move/resize automatically update edge position
       for (const edge of edges) {
-        const source = this.nodeRenderersById[edge.source].node
-        const target = this.nodeRenderersById[edge.target].node
+        const source = this.nodeRenderersById[edge.source]
+        const target = this.nodeRenderersById[edge.target]
         if (source !== undefined && target !== undefined) {
           this.edgeRenderersById[edge.id].update(edge, source, target)
         } else {
@@ -537,6 +539,10 @@ export class StaticRenderer {
     })
   }
 
+  // TODO - pointerupoutside doesn't work for nodes but does for viewport
+  // if node is dragging, fire onNodePointerUp on pointer up outside
+  // TODO - don't fire pointer up if it's handled by a node/edge pointerUp handler
+  // but still complete drag/decelarate event
   private pointerUp = (event: FederatedPointerEvent) => {
     const isDragging = this.dragInteraction.dragging
     this.dragInteraction.up(event)

@@ -1,44 +1,13 @@
-import {
-  BitmapFont, BitmapText, FederatedPointerEvent, Graphics, IBitmapTextStyle,
-  MSAA_QUALITY, Matrix, RenderTexture, Renderer, Sprite
-} from 'pixi.js-legacy'
+import { BitmapFont, BitmapText, FederatedPointerEvent, IBitmapTextStyle, Sprite } from 'pixi.js-legacy'
 import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, StaticRenderer } from '.'
 import * as Graph from '../../'
 
 
-const NODE_RESOLUTION_RADIUS = 10 * 5 // maxRadius * minZoom -- TODO make configurable
 const DEFAULT_NODE_FILL = 0xaaaaaa
 const DEFAULT_NODE_STROKE_WIDTH = 2
 
 
 export class NodeRenderer {
-
-  static createCircleTexture(renderer: StaticRenderer) {
-    const GRAPHIC = new Graphics()
-      .beginFill(0xffffff)
-      .drawCircle(0, 0, NODE_RESOLUTION_RADIUS)
-  
-    const renderTexture = RenderTexture.create({
-      width: GRAPHIC.width,
-      height: GRAPHIC.height,
-      multisample: MSAA_QUALITY.HIGH,
-      resolution: 2
-    })
-  
-    renderer.app.renderer.render(GRAPHIC, {
-      renderTexture,
-      transform: new Matrix(1, 0, 0, 1, GRAPHIC.width / 2, GRAPHIC.height / 2)
-    })
-  
-    if (renderer.app.renderer instanceof Renderer) {
-      renderer.app.renderer.framebuffer.blit()
-    }
-  
-    GRAPHIC.destroy(true)
-  
-    return renderTexture
-  }
-
   static fontSize = 10
   static font = BitmapFont.from('Label', {
     fontFamily: 'Arial',
@@ -57,7 +26,7 @@ export class NodeRenderer {
   #fill: Sprite
   #label?: BitmapText
   #strokes?: Sprite[]
-  #maxStrokeRadius?: number
+  maxStrokeRadius!: number
   #minX!: number
   #minY!: number
   #maxX!: number
@@ -73,7 +42,7 @@ export class NodeRenderer {
   constructor(renderer: StaticRenderer, node: Graph.Node) {
     this.#renderer = renderer
 
-    this.#fill = new Sprite(this.#renderer.circleTexture)
+    this.#fill = this.#renderer.circle.create()
     this.#fill.anchor.set(0.5)
     this.#fill.visible = false
     this.#renderer.nodesContainer.addChild(this.#fill)
@@ -84,12 +53,12 @@ export class NodeRenderer {
     this.#fill.eventMode = 'static'
     // why doesn't this work? does this need a container?
     // this.#fill.hitArea = new Circle(this.node.x ?? 0, this.node.y ?? 0, fullRadius)
-    this.#fill.addEventListener('pointerover', this.pointerEnter)
+    this.#fill.addEventListener('pointerenter', this.pointerEnter)
     this.#fill.addEventListener('pointerdown', this.pointerDown)
     this.#fill.addEventListener('pointerup', this.pointerUp)
     this.#fill.addEventListener('pointerupoutside', this.pointerUp)
     this.#fill.addEventListener('pointercancel', this.pointerUp)
-    this.#fill.addEventListener('pointerout', (event) => this.pointerLeave(event))
+    this.#fill.addEventListener('pointerleave', this.pointerLeave)
 
     this.update(node)
   }
@@ -99,7 +68,8 @@ export class NodeRenderer {
       this.#fill.tint = node.style?.color ?? DEFAULT_NODE_FILL
     }
     if (node.radius !== this.node?.radius) {
-      this.#fill.scale.set(node.radius / NODE_RESOLUTION_RADIUS)
+      this.#fill.scale.set(node.radius / this.#renderer.circle.scaleFactor)
+      this.maxStrokeRadius = node.radius
     }
     if (node.x !== this.node?.x) {
       this.#fill.x = node.x ?? 0
@@ -134,17 +104,15 @@ export class NodeRenderer {
   
         for (let i = 0; i < node.style.stroke.length; i++) {
           radius += node.style.stroke[i].width ?? DEFAULT_NODE_STROKE_WIDTH
-          const stroke = new Sprite(this.#renderer.circleTexture)
+          const stroke = this.#renderer.circle.create()
           stroke.anchor.set(0.5)
-          stroke.scale.set(radius / NODE_RESOLUTION_RADIUS)
+          stroke.scale.set(radius / this.#renderer.circle.scaleFactor)
           stroke.tint = node.style.stroke[i].color ?? DEFAULT_NODE_FILL
           stroke.x = node.x ?? 0
           stroke.y = node.y ?? 0
           this.#strokes[i] = stroke
-          this.#maxStrokeRadius = radius
+          this.maxStrokeRadius = radius
         }
-      } else {
-        this.#maxStrokeRadius = node.radius
       }
     } else if (this.#strokes) {
       for (let i = 0; i < this.#strokes.length; i++) {
@@ -167,7 +135,7 @@ export class NodeRenderer {
 
         this.#label.text = node.label
         this.#label.x = this.#fill.x
-        this.#label.y = this.#fill.y + (this.#maxStrokeRadius ?? node.radius)
+        this.#label.y = this.#fill.y + (this.maxStrokeRadius ?? node.radius)
       } else if (this.#label) {
         // exit
         this.#renderer.labelsContainer.removeChild(this.#label)
@@ -177,14 +145,14 @@ export class NodeRenderer {
       }
     } else if (this.#label) {
       this.#label.x = this.#fill.x
-      this.#label.y = this.#fill.y + (this.#maxStrokeRadius ?? node.radius)
+      this.#label.y = this.#fill.y + (this.maxStrokeRadius ?? node.radius)
     }
 
     // TODO - consider label to calculate min/max // this.#label?.getBounds(true).width
-    this.#minX = this.#fill.x - (this.#maxStrokeRadius ?? node.radius)
-    this.#minY = this.#fill.y - (this.#maxStrokeRadius ?? node.radius)
-    this.#maxX = this.#fill.x + (this.#maxStrokeRadius ?? node.radius)
-    this.#maxY = this.#fill.y + (this.#maxStrokeRadius ?? node.radius)
+    this.#minX = this.#fill.x - (this.maxStrokeRadius ?? node.radius)
+    this.#minY = this.#fill.y - (this.maxStrokeRadius ?? node.radius)
+    this.#maxX = this.#fill.x + (this.maxStrokeRadius ?? node.radius)
+    this.#maxY = this.#fill.y + (this.maxStrokeRadius ?? node.radius)
 
     this.node = node
 
@@ -380,6 +348,13 @@ export class NodeRenderer {
   private pointerUp = (event: FederatedPointerEvent) => {
     const isDragging = this.#renderer.dragInteraction.dragging
     const local = this.#renderer.root.toLocal(event.global)
+
+    // if (
+    //   this.#renderer.onNodeDrag || this.#renderer.onNodePointerUp ||
+    //   this.#renderer.onNodeClick || this.#renderer.onNodeDoubleClick
+    // ) {
+    //   event.stopPropagation()
+    // }
 
     if (this.#renderer.onNodeDrag) {
       event.stopPropagation()
