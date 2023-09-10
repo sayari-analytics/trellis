@@ -1,9 +1,10 @@
-import { FederatedPointerEvent, Sprite } from 'pixi.js-legacy'
+import { FederatedPointerEvent } from 'pixi.js-legacy'
 import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, StaticRenderer } from '.'
 import * as Graph from '../../'
 import { Label } from './objects/label'
 import { positionNodeLabel } from './utils'
 import { NodeFill } from './objects/nodeFill'
+import { NodeStrokes } from './objects/nodeStrokes'
 
 
 export class NodeRenderer {
@@ -15,8 +16,7 @@ export class NodeRenderer {
   #renderer: StaticRenderer
   fill: NodeFill
   label?: Label
-  #strokes?: Sprite[]
-  maxStrokeRadius!: number
+  strokes: NodeStrokes
   #minX!: number
   #minY!: number
   #maxX!: number
@@ -25,66 +25,20 @@ export class NodeRenderer {
   #doubleClick = false
   #nodeMoveXOffset: number = 0
   #nodeMoveYOffset: number = 0
-  strokesMounted = false
 
   constructor(renderer: StaticRenderer, node: Graph.Node) {
     this.#renderer = renderer
     this.fill = new NodeFill(this.#renderer, this, node)
+    this.strokes = new NodeStrokes(this.#renderer, this, node)
     this.update(node)
   }
 
   update(node: Graph.Node) {
-    /**
-     * Update Fill
-     */
     this.x = node.x ?? 0
     this.y = node.y ?? 0
+
     this.fill.update(node)
-    this.maxStrokeRadius = node.radius
-
-    /**
-     * Update Stroke
-     */
-    if (node.style?.stroke !== this.node?.style?.stroke) {
-      if (this.#strokes !== undefined) {
-        // exit
-        for (let i = this.#strokes.length - 1; i >= 0; i--) {
-          this.#renderer.nodesContainer.removeChild(this.#strokes[i])
-        }
-        this.strokesMounted = false
-
-        for (const stroke of this.#strokes) {
-          stroke.destroy()
-        }
-        this.#strokes = undefined
-      }
-
-      if (node.style?.stroke?.length) {
-        // enter
-        this.#strokes = Array(node.style.stroke.length)
-  
-        let radius = node.radius
-  
-        for (let i = 0; i < node.style.stroke.length; i++) {
-          radius += node.style.stroke[i].width
-          const stroke = new Sprite(this.#renderer.circle.texture)
-          stroke.anchor.set(0.5)
-          stroke.scale.set(radius / this.#renderer.circle.scaleFactor)
-          stroke.tint = node.style.stroke[i].color
-          stroke.x = node.x ?? 0
-          stroke.y = node.y ?? 0
-          this.#strokes[i] = stroke
-          this.maxStrokeRadius = radius
-        }
-      }
-    } else if (this.#strokes) {
-      // reposition
-      for (let i = 0; i < this.#strokes.length; i++) {
-        this.#strokes[i].x = this.x
-        this.#strokes[i].y = this.y
-      }
-    }
-
+    this.strokes.update(node)
 
     /**
      * Update Label
@@ -94,18 +48,14 @@ export class NodeRenderer {
         if (node.label) {
           // enter
           this.label = new Label(this.#renderer, node.label, node.style?.label)
-            .position(...positionNodeLabel(
-              this.x, this.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
-            ))
+            .position(...positionNodeLabel(this.x, this.y, this.strokes.radius, node.style?.label?.orientation))
         }
       } else {
         if (node.label) {
           // update
           this.label
             .update(node.label, node.style?.label)
-            .position(...positionNodeLabel(
-              this.x, this.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
-            ))
+            .position(...positionNodeLabel(this.x, this.y, this.strokes.radius, node.style?.label?.orientation))
         } else {
           // exit
           this.label = this.label.delete()
@@ -113,16 +63,14 @@ export class NodeRenderer {
       }
     } else if (this.label) {
       // reposition
-      this.label.position(...positionNodeLabel(
-        this.x, this.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
-      ))
+      this.label.position(...positionNodeLabel(this.x, this.y, this.strokes.radius, node.style?.label?.orientation))
     }
 
     // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    this.#minX = this.x - (this.maxStrokeRadius ?? node.radius)
-    this.#minY = this.y - (this.maxStrokeRadius ?? node.radius)
-    this.#maxX = this.x + (this.maxStrokeRadius ?? node.radius)
-    this.#maxY = this.y + (this.maxStrokeRadius ?? node.radius)
+    this.#minX = this.x - (this.strokes.radius)
+    this.#minY = this.y - (this.strokes.radius)
+    this.#maxX = this.x + (this.strokes.radius)
+    this.#maxY = this.y + (this.strokes.radius)
 
     this.node = node
 
@@ -139,32 +87,16 @@ export class NodeRenderer {
       this.fill.circle.eventMode = 'none'
     }
 
-    if (isVisible){
+    if (isVisible) {
       this.fill.mount()
     } else {
       this.fill.unmount()
     }
 
-    if (this.#strokes) {
-      if (isVisible && this.#renderer.zoom > MIN_NODE_STROKE_ZOOM) {
-        if (!this.strokesMounted) {
-          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.fill.circle)
-
-          for (let i = this.#strokes.length - 1; i >= 0; i--) {
-            this.#renderer.nodesContainer.addChildAt(this.#strokes[i], strokeContainerIndex)
-          }
-
-          this.strokesMounted = true
-        }
-      } else {
-        if (this.strokesMounted) {
-          for (let i = this.#strokes.length - 1; i >= 0; i--) {
-            this.#renderer.nodesContainer.removeChild(this.#strokes[i])
-          }
-
-          this.strokesMounted = false
-        }
-      }
+    if (isVisible && this.#renderer.zoom > MIN_NODE_STROKE_ZOOM) {
+      this.strokes.mount()
+    } else {
+      this.strokes.unmount()
     }
 
     if (this.label) {

@@ -10,6 +10,7 @@ const DEFAULT_NODE_FILL = 0xaaaaaa
 export class NodeFill {
 
   mounted = false
+  containerIndex: number
   circle: Sprite // TODO - make private
 
   private renderer: StaticRenderer
@@ -37,26 +38,25 @@ export class NodeFill {
     this.circle.addEventListener('pointerleave', this.nodeRenderer.pointerLeave)
 
     this.renderer.nodesContainer.addChild(this.circle)
+    this.containerIndex = this.renderer.nodesContainer.getChildIndex(this.circle)
 
     this.update(node)
   }
 
   update(node: Graph.Node) {
-    if (node !== this.node) {
+    if ((node.style?.color ?? DEFAULT_NODE_FILL) !== (this.node?.style?.color ?? DEFAULT_NODE_FILL)) {
       this.circle.tint = node.style?.color ?? DEFAULT_NODE_FILL
-      this.circle.scale.set(node.radius / this.renderer.circle.scaleFactor)
-      this.circle.x = node.x ?? 0
-      this.circle.y = node.y ?? 0
-
-      this.node = node
     }
 
-    return this
-  }
+    if (node.radius !== this.node?.radius) {
+      this.circle.scale.set(node.radius / this.renderer.circle.scaleFactor)
+    }
 
-  position(x: number, y: number) {
-    this.circle.x = x
-    this.circle.y = y
+    this.circle.x = node.x ?? 0
+    this.circle.y = node.y ?? 0
+
+    this.node = node
+
     return this
   }
 
@@ -82,9 +82,8 @@ export class NodeFill {
   }
 
   delete() {
-    if (this.mounted) {
-      this.unmount()
-    }
+    this.unmount()
+    this.circle.destroy()
 
     return undefined
   }

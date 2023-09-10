@@ -82,11 +82,8 @@ export class Label {
   }
 
   delete() {
-    if (this.mounted) {
-      this.unmount()
-    }
-
-    this.text.destroy({ children: true })
+    this.unmount()
+    this.text.destroy()
 
     return undefined
   }

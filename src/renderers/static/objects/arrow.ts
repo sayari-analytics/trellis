@@ -11,27 +11,22 @@ export class Arrow {
   private renderer: StaticRenderer
   private arrow: Sprite
   
-  constructor(renderer: StaticRenderer, color: string | number, opacity: number) {
+  constructor(renderer: StaticRenderer) {
     this.renderer = renderer
     this.arrow = new Sprite(this.renderer.arrow.texture)
     this.height = this.renderer.arrow.height
     this.width = this.renderer.arrow.width
     this.arrow.anchor.set(0, 0.5)
     this.arrow.scale.set(1 / this.renderer.arrow.scaleFactor)
-    this.update(color, opacity)
   }
 
-  update(color: string | number, opacity: number) {
-    this.arrow.tint = color
-    this.arrow.alpha = opacity
-
-    return this
-  }
-
-  position(x: number, y: number, rotation: number) {
+  update(x: number, y: number, rotation: number, color: string | number, opacity: number) {
     this.arrow.x = x
     this.arrow.y = y
     this.arrow.rotation = rotation
+    this.arrow.tint = color
+    this.arrow.alpha = opacity
+
     return this
   }
 
@@ -54,9 +49,8 @@ export class Arrow {
   }
 
   delete() {
-    if (this.mounted) {
-      this.unmount()
-    }
+    this.unmount()
+    this.arrow.destroy()
 
     return undefined
   }
