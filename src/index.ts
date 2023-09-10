@@ -52,13 +52,13 @@ export type NodeStyle = {
   color?: string
   icon?: TextIcon | ImageIcon
   stroke?: {
-    color?: string
-    width?: number
+    color: string
+    width: number
   }[]
   badge?: {
     position: number
-    radius?: number
-    color?: string
+    radius: number
+    color: string
     stroke?: string
     strokeWidth?: number
     icon?: TextIcon | ImageIcon

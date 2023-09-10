@@ -3,18 +3,17 @@ import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Static
 import * as Graph from '../../'
 import { Label } from './objects/label'
 import { positionNodeLabel } from './utils'
-
-
-const DEFAULT_NODE_FILL = 0xaaaaaa
-const DEFAULT_NODE_STROKE_WIDTH = 2
+import { NodeFill } from './objects/nodeFill'
 
 
 export class NodeRenderer {
 
   node?: Graph.Node
+  x!: number
+  y!: number
   
   #renderer: StaticRenderer
-  #fill: Sprite
+  fill: NodeFill
   label?: Label
   #strokes?: Sprite[]
   maxStrokeRadius!: number
@@ -26,48 +25,22 @@ export class NodeRenderer {
   #doubleClick = false
   #nodeMoveXOffset: number = 0
   #nodeMoveYOffset: number = 0
-  fillMounted = false
   strokesMounted = false
 
   constructor(renderer: StaticRenderer, node: Graph.Node) {
     this.#renderer = renderer
-
-    this.#fill = new Sprite(this.#renderer.circle.texture)
-    this.#fill.anchor.set(0.5)
-    this.#fill.visible = false
-    this.#renderer.nodesContainer.addChild(this.#fill)
-
-    // TODO - disable events if node has no event handlers
-    // TODO - disable events if node diameter > ~5px
-    // TODO - disable events when dragging/scrolling
-    this.#fill.eventMode = 'static'
-    // why doesn't this work? does this need a container?
-    // this.#fill.hitArea = new Circle(this.node.x ?? 0, this.node.y ?? 0, fullRadius)
-    this.#fill.addEventListener('pointerenter', this.pointerEnter)
-    this.#fill.addEventListener('pointerdown', this.pointerDown)
-    this.#fill.addEventListener('pointerup', this.pointerUp)
-    this.#fill.addEventListener('pointerupoutside', this.pointerUp)
-    this.#fill.addEventListener('pointercancel', this.pointerUp)
-    this.#fill.addEventListener('pointerleave', this.pointerLeave)
-
+    this.fill = new NodeFill(this.#renderer, this, node)
     this.update(node)
   }
 
   update(node: Graph.Node) {
-    if (node.style?.color !== this.node?.style?.color) {
-      this.#fill.tint = node.style?.color ?? DEFAULT_NODE_FILL
-    }
-    if (node.radius !== this.node?.radius) {
-      this.#fill.scale.set(node.radius / this.#renderer.circle.scaleFactor)
-      this.maxStrokeRadius = node.radius
-    }
-    if (node.x !== this.node?.x) {
-      this.#fill.x = node.x ?? 0
-    }
-    if (node.y !== this.node?.y) {
-      this.#fill.y = node.y ?? 0
-    }
-
+    /**
+     * Update Fill
+     */
+    this.x = node.x ?? 0
+    this.y = node.y ?? 0
+    this.fill.update(node)
+    this.maxStrokeRadius = node.radius
 
     /**
      * Update Stroke
@@ -93,11 +66,11 @@ export class NodeRenderer {
         let radius = node.radius
   
         for (let i = 0; i < node.style.stroke.length; i++) {
-          radius += node.style.stroke[i].width ?? DEFAULT_NODE_STROKE_WIDTH
+          radius += node.style.stroke[i].width
           const stroke = new Sprite(this.#renderer.circle.texture)
           stroke.anchor.set(0.5)
           stroke.scale.set(radius / this.#renderer.circle.scaleFactor)
-          stroke.tint = node.style.stroke[i].color ?? DEFAULT_NODE_FILL
+          stroke.tint = node.style.stroke[i].color
           stroke.x = node.x ?? 0
           stroke.y = node.y ?? 0
           this.#strokes[i] = stroke
@@ -107,8 +80,8 @@ export class NodeRenderer {
     } else if (this.#strokes) {
       // reposition
       for (let i = 0; i < this.#strokes.length; i++) {
-        this.#strokes[i].x = this.#fill.x
-        this.#strokes[i].y = this.#fill.y
+        this.#strokes[i].x = this.x
+        this.#strokes[i].y = this.y
       }
     }
 
@@ -122,15 +95,16 @@ export class NodeRenderer {
           // enter
           this.label = new Label(this.#renderer, node.label, node.style?.label)
             .position(...positionNodeLabel(
-              this.#fill.x, this.#fill.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
+              this.x, this.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
             ))
         }
       } else {
         if (node.label) {
           // update
-          this.label.update(node.label, node.style?.label)
+          this.label
+            .update(node.label, node.style?.label)
             .position(...positionNodeLabel(
-              this.#fill.x, this.#fill.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
+              this.x, this.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
             ))
         } else {
           // exit
@@ -140,15 +114,15 @@ export class NodeRenderer {
     } else if (this.label) {
       // reposition
       this.label.position(...positionNodeLabel(
-        this.#fill.x, this.#fill.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
+        this.x, this.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
       ))
     }
 
     // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    this.#minX = this.#fill.x - (this.maxStrokeRadius ?? node.radius)
-    this.#minY = this.#fill.y - (this.maxStrokeRadius ?? node.radius)
-    this.#maxX = this.#fill.x + (this.maxStrokeRadius ?? node.radius)
-    this.#maxY = this.#fill.y + (this.maxStrokeRadius ?? node.radius)
+    this.#minX = this.x - (this.maxStrokeRadius ?? node.radius)
+    this.#minY = this.y - (this.maxStrokeRadius ?? node.radius)
+    this.#maxX = this.x + (this.maxStrokeRadius ?? node.radius)
+    this.#maxY = this.y + (this.maxStrokeRadius ?? node.radius)
 
     this.node = node
 
@@ -160,30 +134,21 @@ export class NodeRenderer {
 
     // TODO - enable/disable events based on node screen pixel width, not fixed zoom
     if (isVisible && this.#renderer.zoom > MIN_NODE_INTERACTION_ZOOM) {
-      this.#fill.eventMode = 'static'
+      this.fill.circle.eventMode = 'static'
     } else {
-      this.#fill.eventMode = 'none'
+      this.fill.circle.eventMode = 'none'
     }
 
-    // TODO - why is mounting/unmouting fill Sprite less efficient?
     if (isVisible){
-      if (!this.fillMounted) {
-        this.#fill.visible = true
-        // this.#renderer.nodesContainer.addChild(this.#fill)
-        this.fillMounted = true
-      }
+      this.fill.mount()
     } else {
-      if (this.fillMounted) {
-        this.#fill.visible = false
-        // this.#renderer.nodesContainer.removeChild(this.#fill)
-        this.fillMounted = false
-      }
+      this.fill.unmount()
     }
 
     if (this.#strokes) {
       if (isVisible && this.#renderer.zoom > MIN_NODE_STROKE_ZOOM) {
         if (!this.strokesMounted) {
-          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.#fill)
+          const strokeContainerIndex = this.#renderer.nodesContainer.getChildIndex(this.fill.circle)
 
           for (let i = this.#strokes.length - 1; i >= 0; i--) {
             this.#renderer.nodesContainer.addChildAt(this.#strokes[i], strokeContainerIndex)
@@ -222,7 +187,7 @@ export class NodeRenderer {
       maxY >= this.#renderer.minY && minY <= this.#renderer.maxY
   }
 
-  private pointerEnter = (event: FederatedPointerEvent) => {
+  pointerEnter = (event: FederatedPointerEvent) => {
     if (this.#renderer.dragInteraction.dragging || this.#renderer.zoomInteraction.zooming) {
       return
     }
@@ -253,7 +218,7 @@ export class NodeRenderer {
     })
   }
 
-  private pointerDown = (event: FederatedPointerEvent) => {
+  pointerDown = (event: FederatedPointerEvent) => {
     const local = this.#renderer.root.toLocal(event.global)
 
     if (this.#renderer.onNodeDoubleClick) {
@@ -293,7 +258,7 @@ export class NodeRenderer {
     }
   }
 
-  private pointerMove = (event: FederatedPointerEvent) => {
+  pointerMove = (event: FederatedPointerEvent) => {
     event.stopPropagation()
 
     const local = this.#renderer.root.toLocal(event.global)
@@ -334,7 +299,7 @@ export class NodeRenderer {
     })
   }
 
-  private pointerUp = (event: FederatedPointerEvent) => {
+  pointerUp = (event: FederatedPointerEvent) => {
     const isDragging = this.#renderer.dragInteraction.dragging
     const local = this.#renderer.root.toLocal(event.global)
 
@@ -423,7 +388,7 @@ export class NodeRenderer {
     }
   }
 
-  private pointerLeave = (event: FederatedPointerEvent) => {
+  pointerLeave = (event: FederatedPointerEvent) => {
     if (this.#renderer.dragInteraction.dragging || this.#renderer.zoomInteraction.zooming) {
       return
     }
@@ -456,7 +421,7 @@ export class NodeRenderer {
     })
   }
 
-  private clearDoubleClick = () => {
+  clearDoubleClick = () => {
     this.#doubleClickTimeout = undefined
     this.#doubleClick = false
   }
