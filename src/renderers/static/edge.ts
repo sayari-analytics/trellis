@@ -59,20 +59,24 @@ export class EdgeRenderer {
       const strokeOpacity = this.edge?.style?.strokeOpacity ?? 1
 
       if (arrow === 'forward') {
-        this.arrow = { forward: this.renderer.arrow.create() }
+        this.arrow = { forward: new Sprite(this.renderer.arrow.texture) }
+        this.arrow.forward.anchor.set(0, 0.5)
         this.arrow.forward.scale.set(1 / this.renderer.arrow.scaleFactor)
         this.arrow.forward.tint = stroke
         this.arrow.forward.alpha = strokeOpacity
       } else if (arrow === 'reverse') {
-        this.arrow = { reverse: this.renderer.arrow.create() }
+        this.arrow = { reverse: new Sprite(this.renderer.arrow.texture) }
+        this.arrow.reverse.anchor.set(0, 0.5)
         this.arrow.reverse.scale.set(1 / this.renderer.arrow.scaleFactor)
         this.arrow.reverse.tint = stroke
         this.arrow.reverse.alpha = strokeOpacity
       } else if (arrow === 'both') {
         this.arrow = {
-          forward: this.renderer.arrow.create(),
-          reverse: this.renderer.arrow.create(),
+          forward: new Sprite(this.renderer.arrow.texture),
+          reverse: new Sprite(this.renderer.arrow.texture),
         }
+        this.arrow.forward.anchor.set(0, 0.5)
+        this.arrow.reverse.anchor.set(0, 0.5)
         this.arrow.forward.scale.set(1 / this.renderer.arrow.scaleFactor)
         this.arrow.reverse.scale.set(1 / this.renderer.arrow.scaleFactor)
         this.arrow.forward.tint = stroke

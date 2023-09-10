@@ -32,7 +32,7 @@ export class NodeRenderer {
   constructor(renderer: StaticRenderer, node: Graph.Node) {
     this.#renderer = renderer
 
-    this.#fill = this.#renderer.circle.create()
+    this.#fill = new Sprite(this.#renderer.circle.texture)
     this.#fill.anchor.set(0.5)
     this.#fill.visible = false
     this.#renderer.nodesContainer.addChild(this.#fill)
@@ -94,7 +94,7 @@ export class NodeRenderer {
   
         for (let i = 0; i < node.style.stroke.length; i++) {
           radius += node.style.stroke[i].width ?? DEFAULT_NODE_STROKE_WIDTH
-          const stroke = this.#renderer.circle.create()
+          const stroke = new Sprite(this.#renderer.circle.texture)
           stroke.anchor.set(0.5)
           stroke.scale.set(radius / this.#renderer.circle.scaleFactor)
           stroke.tint = node.style.stroke[i].color ?? DEFAULT_NODE_FILL

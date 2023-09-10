@@ -1,17 +1,19 @@
-import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer, Sprite } from 'pixi.js-legacy'
+import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer } from 'pixi.js-legacy'
 import { StaticRenderer } from '..'
 
 
-export class CircleTexture {
+export class ArrowTexture {
 
-  scaleFactor = 10 * 5 // maxRadius * minZoom -- TODO make configurable
-
-  private texture: RenderTexture
-
+  texture: RenderTexture
+  height = 12 // TODO - make configurable
+  width = 6 // TODO - make configurable
+  scaleFactor = 5 // minZoom -- TODO make configurable
+  
   constructor(renderer: StaticRenderer) {
     const graphic = new Graphics()
       .beginFill(0xffffff)
-      .drawCircle(0, 0, this.scaleFactor)
+      .lineTo(this.height * this.scaleFactor, this.width * this.scaleFactor * 0.5)
+      .lineTo(this.height * this.scaleFactor, - this.width * this.scaleFactor * 0.5)
   
     this.texture = RenderTexture.create({
       width: graphic.width,
@@ -22,7 +24,7 @@ export class CircleTexture {
   
     renderer.app.renderer.render(graphic, {
       renderTexture: this.texture,
-      transform: new Matrix(1, 0, 0, 1, graphic.width / 2, graphic.height / 2)
+      transform: new Matrix(1, 0, 0, 1, 0, graphic.height / 2)
     })
   
     if (renderer.app.renderer instanceof Renderer) {
@@ -30,13 +32,6 @@ export class CircleTexture {
     }
   
     graphic.destroy(true)
-  }
-
-  create() {
-    const sprite = new Sprite(this.texture)
-    sprite.anchor.set(0, 0.5)
-
-    return sprite
   }
 
   delete() {

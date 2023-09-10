@@ -17,37 +17,37 @@ export class Label {
   mounted = false
 
   private renderer: StaticRenderer
-  private display: BitmapText
+  private text: BitmapText
   private style?: LabelStyle
   
   constructor(renderer: StaticRenderer, text: string, style?: LabelStyle) {
     this.renderer = renderer
-    this.display = new BitmapText(text, { fontName: 'Label' })
+    this.text = new BitmapText(text, { fontName: 'Label' })
     this.update(text, style)
   }
 
   update(text: string, style?: LabelStyle) {
-    this.display.text = text
+    this.text.text = text
 
     if (style !== this.style) {
-      this.display.fontSize = style?.fontSize ?? DEFAULT_FONT_SIZE
+      this.text.fontSize = style?.fontSize ?? DEFAULT_FONT_SIZE
   
       switch (style?.orientation ?? DEFAULT_ORIENTATION) {
       case 'bottom':
-        this.display.align = 'center'
-        this.display.anchor.set(0.5, 0)
+        this.text.align = 'center'
+        this.text.anchor.set(0.5, 0)
         break
       case 'left':
-        this.display.align = 'left'
-        this.display.anchor.set(1, 0.5)
+        this.text.align = 'left'
+        this.text.anchor.set(1, 0.5)
         break
       case 'top':
-        this.display.align = 'center'
-        this.display.anchor.set(0.5, 1)
+        this.text.align = 'center'
+        this.text.anchor.set(0.5, 1)
         break
       case 'right':
-        this.display.align = 'right'
-        this.display.anchor.set(0, 0.5)
+        this.text.align = 'right'
+        this.text.anchor.set(0, 0.5)
         break
       }
 
@@ -58,14 +58,14 @@ export class Label {
   }
 
   position(x: number, y: number) {
-    this.display.x = x
-    this.display.y = y
+    this.text.x = x
+    this.text.y = y
     return this
   }
 
   mount() {
     if (!this.mounted) {
-      this.renderer.labelsContainer.addChild(this.display)
+      this.renderer.labelsContainer.addChild(this.text)
       this.mounted = true
     }
 
@@ -74,7 +74,7 @@ export class Label {
 
   unmount() {
     if (this.mounted) {
-      this.renderer.labelsContainer.removeChild(this.display)
+      this.renderer.labelsContainer.removeChild(this.text)
       this.mounted = false
     }
 
@@ -86,7 +86,7 @@ export class Label {
       this.unmount()
     }
 
-    this.display.destroy({ children: true })
+    this.text.destroy({ children: true })
 
     return undefined
   }
