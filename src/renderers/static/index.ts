@@ -9,6 +9,7 @@ import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import { ArrowTexture } from './sprites/arrow'
 import { CircleTexture } from './sprites/circle'
+import { Font } from './objects/font'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 
@@ -112,6 +113,7 @@ export class StaticRenderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
+  font = new Font()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}
@@ -457,6 +459,7 @@ export class StaticRenderer {
 
   delete() {
     clearTimeout(this.#doubleClickTimeout)
+    this.app.destroy(true, true)
   }
 
   private setPosition(x: number, y: number, zoom: number) {

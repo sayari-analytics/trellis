@@ -28,15 +28,15 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
   }
 }
 
-const PURPLE = '#7A5DC5' // '#927EAF'
+const PURPLE = '#7A5DC5'
 const LIGHT_PURPLE = '#CAD'
 
 const NODE_STYLE: Graph.NodeStyle = {
-  color: PURPLE, stroke: [{ width: 2, color: LIGHT_PURPLE }]
+  color: PURPLE, stroke: [{ width: 2, color: LIGHT_PURPLE }], label: { orientation: 'right' }
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
-  color: '#f66', stroke: [{ width: 2, color: '#fcc' }]
+  color: '#f66', stroke: [{ width: 4, color: '#fcc' }], label: { orientation: 'right' }
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
@@ -53,7 +53,7 @@ let nodes: Graph.Node[] = []
 let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(2000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -153,7 +153,7 @@ const options: Static.Options = {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
     nodes = nodes.map((node) => (
       node.id === event.target.id ?
-        { ...node, style: NODE_HOVER_STYLE } :
+        { ...node, label: node.label, style: NODE_HOVER_STYLE } :
         node
     ))
     edges = edges.map((edge) => (
@@ -188,7 +188,7 @@ const options: Static.Options = {
   // },
   onNodeClick: (event: Static.NodePointerEvent) => {
     // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
-    const graph = hierarchy(event.target.id, { nodes, edges, options: { separation: (a, b) => 1, nodeSize: [30, 60] } })
+    const graph = hierarchy(event.target.id, { nodes, edges, options: { separation: (a, b) => 1, nodeSize: [30, 100] } })
     nodes = graph.nodes.map((node) => ({ ...node, x: node.y, y: node.x }))
     edges = graph.edges
     render.update({ nodes, edges, options })

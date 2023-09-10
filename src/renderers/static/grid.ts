@@ -8,7 +8,6 @@ export class Grid {
   renderer: StaticRenderer
   container = new Container()
 
-
   constructor (renderer: StaticRenderer, width: number, height: number, interval: number, options?: { hideText?: boolean }) {
     this.renderer = renderer
     this.renderer.root.addChild(this.container)
@@ -49,5 +48,9 @@ export class Grid {
         this.renderer.labelsContainer.addChild(coordinate)
       }
     }
+  }
+
+  delete() {
+    this.container.destroy({ children: true })
   }
 }

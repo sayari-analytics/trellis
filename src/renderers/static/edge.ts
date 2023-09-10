@@ -149,8 +149,8 @@ export class EdgeRenderer {
           }
 
           if (this.arrow.reverse) {
-            [edgeX0, edgeY0] = movePoint(x0, y0, theta, -this.targetRadius - this.arrow.reverse.height)
-            const [arrowX0, arrowY0] = movePoint(x0, y0, theta, -this.targetRadius)
+            [edgeX0, edgeY0] = movePoint(x0, y0, theta, -this.sourceRadius - this.arrow.reverse.height)
+            const [arrowX0, arrowY0] = movePoint(x0, y0, theta, -this.sourceRadius)
             this.arrow.reverse.tint = stroke
             this.arrow.reverse.alpha = strokeOpacity
             this.arrow.reverse.x = arrowX0

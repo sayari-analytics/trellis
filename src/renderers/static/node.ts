@@ -1,6 +1,8 @@
-import { BitmapFont, BitmapText, FederatedPointerEvent, IBitmapTextStyle, Sprite } from 'pixi.js-legacy'
+import { FederatedPointerEvent, Sprite } from 'pixi.js-legacy'
 import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, StaticRenderer } from '.'
 import * as Graph from '../../'
+import { Label } from './objects/label'
+import { positionNodeLabel } from './utils'
 
 
 const DEFAULT_NODE_FILL = 0xaaaaaa
@@ -8,23 +10,12 @@ const DEFAULT_NODE_STROKE_WIDTH = 2
 
 
 export class NodeRenderer {
-  static fontSize = 10
-  static font = BitmapFont.from('Label', {
-    fontFamily: 'Arial',
-    fontSize: NodeRenderer.fontSize * 2 * 5, // font size * retina * minZoom
-    fill: 0x000000,
-    stroke: 0xffffff,
-    strokeThickness: 1.5 * 2 * 5, // strokeThickness * retina * minZoom
-  }, { chars: BitmapFont.ASCII })
-  static TEXT_STYLE: Partial<IBitmapTextStyle> = {
-    fontName: 'Label', fontSize: NodeRenderer.fontSize, align: 'center'
-  }
 
   node?: Graph.Node
   
   #renderer: StaticRenderer
   #fill: Sprite
-  #label?: BitmapText
+  label?: Label
   #strokes?: Sprite[]
   maxStrokeRadius!: number
   #minX!: number
@@ -37,7 +28,6 @@ export class NodeRenderer {
   #nodeMoveYOffset: number = 0
   fillMounted = false
   strokesMounted = false
-  labelMounted = false
 
   constructor(renderer: StaticRenderer, node: Graph.Node) {
     this.#renderer = renderer
@@ -115,9 +105,10 @@ export class NodeRenderer {
         }
       }
     } else if (this.#strokes) {
+      // reposition
       for (let i = 0; i < this.#strokes.length; i++) {
-        this.#strokes[i].x = node.x ?? 0
-        this.#strokes[i].y = node.y ?? 0
+        this.#strokes[i].x = this.#fill.x
+        this.#strokes[i].y = this.#fill.y
       }
     }
 
@@ -125,30 +116,35 @@ export class NodeRenderer {
     /**
      * Update Label
      */
-    if (node.label !== this.node?.label) {
-      if (node.label) {
-        if (this.#label === undefined) {
+    if (node.label !== this.node?.label || node.style?.label !== this.node?.style?.label) {
+      if (this.label === undefined) {
+        if (node.label) {
           // enter
-          this.#label = new BitmapText(node.label, NodeRenderer.TEXT_STYLE)
-          this.#label.anchor.set(0.5, 0)
+          this.label = new Label(this.#renderer, node.label, node.style?.label)
+            .position(...positionNodeLabel(
+              this.#fill.x, this.#fill.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
+            ))
         }
-
-        this.#label.text = node.label
-        this.#label.x = this.#fill.x
-        this.#label.y = this.#fill.y + (this.maxStrokeRadius ?? node.radius)
-      } else if (this.#label) {
-        // exit
-        this.#renderer.labelsContainer.removeChild(this.#label)
-        this.labelMounted = false
-        this.#label.destroy()
-        this.#label = undefined
+      } else {
+        if (node.label) {
+          // update
+          this.label.update(node.label, node.style?.label)
+            .position(...positionNodeLabel(
+              this.#fill.x, this.#fill.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
+            ))
+        } else {
+          // exit
+          this.label = this.label.delete()
+        }
       }
-    } else if (this.#label) {
-      this.#label.x = this.#fill.x
-      this.#label.y = this.#fill.y + (this.maxStrokeRadius ?? node.radius)
+    } else if (this.label) {
+      // reposition
+      this.label.position(...positionNodeLabel(
+        this.#fill.x, this.#fill.y, this.maxStrokeRadius ?? node.radius, node.style?.label?.orientation
+      ))
     }
 
-    // TODO - consider label to calculate min/max // this.#label?.getBounds(true).width
+    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
     this.#minX = this.#fill.x - (this.maxStrokeRadius ?? node.radius)
     this.#minY = this.#fill.y - (this.maxStrokeRadius ?? node.radius)
     this.#maxX = this.#fill.x + (this.maxStrokeRadius ?? node.radius)
@@ -206,20 +202,13 @@ export class NodeRenderer {
       }
     }
 
-    if (this.#label) {
+    if (this.label) {
       if (isVisible && this.#renderer.zoom > MIN_LABEL_ZOOM) {
-        // this.#label.alpha = this.#renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
+        // this.label.alpha = this.#renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
         //   (this.#renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
-
-        if (!this.labelMounted) {
-          this.#renderer.labelsContainer.addChild(this.#label)
-          this.labelMounted = true
-        }
+        this.label.mount()
       } else {
-        if (this.labelMounted) {
-          this.#renderer.labelsContainer.removeChild(this.#label)
-          this.labelMounted = false
-        }
+        this.label.unmount()
       }
     }
   }
