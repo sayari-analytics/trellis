@@ -28,20 +28,23 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
   }
 }
 
+const PURPLE = '#7A5DC5' // '#927EAF'
+const LIGHT_PURPLE = '#CAD'
+
 const NODE_STYLE: Graph.NodeStyle = {
-  color: 'red', stroke: [{ width: 2, color: '#f88' }]
+  color: PURPLE, stroke: [{ width: 2, color: LIGHT_PURPLE }]
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
-  color: '#f66', stroke: [{ width: 4, color: '#fcc' }]
+  color: '#f66', stroke: [{ width: 2, color: '#fcc' }]
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
-  width: 1, stroke: '#aaa', arrow: 'forward',
+  width: 1, stroke: '#aaa', arrow: 'reverse',
 }
 
 const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
-  width: 2, stroke: 'blue', arrow: 'forward',
+  width: 2, stroke: '#f66', arrow: 'reverse',
 }
 
 const force = Force.Layout()
@@ -50,7 +53,7 @@ let nodes: Graph.Node[] = []
 let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(10000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -78,8 +81,8 @@ const options: Static.Options = {
   y: 0,
   zoom: 1,
   minZoom: 0.025,
-  width: 1200,
-  height: 800,
+  width: 1250, // 1700,
+  height: 650, // 940,
   onViewportPointerEnter: (event: Static.ViewportPointerEvent) => {
     // console.log('pointer enter', `x: ${event.x}, y: ${event.y}`)
   },
@@ -150,7 +153,7 @@ const options: Static.Options = {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
     nodes = nodes.map((node) => (
       node.id === event.target.id ?
-        { ...node, label: node.label + '!', style: NODE_HOVER_STYLE } :
+        { ...node, style: NODE_HOVER_STYLE } :
         node
     ))
     edges = edges.map((edge) => (
@@ -185,8 +188,8 @@ const options: Static.Options = {
   // },
   onNodeClick: (event: Static.NodePointerEvent) => {
     // console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
-    const graph = hierarchy(event.target.id, { nodes, edges })
-    nodes = graph.nodes
+    const graph = hierarchy(event.target.id, { nodes, edges, options: { separation: (a, b) => 1, nodeSize: [30, 60] } })
+    nodes = graph.nodes.map((node) => ({ ...node, x: node.y, y: node.x }))
     edges = graph.edges
     render.update({ nodes, edges, options })
   },
@@ -197,7 +200,7 @@ const options: Static.Options = {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) => (
       node.id === event.target.id ?
-        { ...node, label: node.label?.slice(0, node.label.length - 1), style: NODE_STYLE } :
+        { ...node, style: NODE_STYLE } :
         node
     ))
     edges = edges.map((edge) => (

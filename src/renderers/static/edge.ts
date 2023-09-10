@@ -28,6 +28,8 @@ export class EdgeRenderer {
   sourceRadius?: number
   targetRadius?: number
   mounted = false
+  forwardArrowMounted = false
+  reverseArrowMounted = false
 
   private arrow?: { forward: Sprite, reverse?: undefined } |
     { forward?: undefined, reverse: Sprite } |
@@ -49,6 +51,8 @@ export class EdgeRenderer {
     if (arrow !== (this.edge?.style?.arrow ?? DEFAULT_ARROW)) {
       this.arrow?.forward?.destroy()
       this.arrow?.reverse?.destroy()
+      this.forwardArrowMounted = false
+      this.reverseArrowMounted = false
       this.arrow = undefined
 
       const stroke = this.edge?.style?.stroke ?? DEFAULT_EDGE_COLOR
@@ -86,21 +90,24 @@ export class EdgeRenderer {
   render() {
     const x0 = this.source.node?.x ?? 0
     const y0 = this.source.node?.y ?? 0
-    const sourceRadius = this.source.maxStrokeRadius
     const x1 = this.target.node?.x ?? 0
     const y1 = this.target.node?.y ?? 0
+    const sourceRadius = this.source.maxStrokeRadius
     const targetRadius = this.target.maxStrokeRadius
+    const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
 
-    if (this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))) {
+    if (this.renderer.zoom > MIN_EDGES_ZOOM && isVisible) {
       if (!this.mounted) {
         this.renderer.edgesContainer.addChild(this.edgeGraphic)
-        if (this.arrow?.forward) {
-          this.renderer.edgesContainer.addChild(this.arrow.forward)
-        }
-        if (this.arrow?.reverse) {
-          this.renderer.edgesContainer.addChild(this.arrow.reverse)
-        }
         this.mounted = true
+      }
+      if (this.arrow?.forward && !this.forwardArrowMounted) {
+        this.renderer.edgesContainer.addChild(this.arrow.forward)
+        this.forwardArrowMounted = true
+      }
+      if (this.arrow?.reverse && !this.reverseArrowMounted) {
+        this.renderer.edgesContainer.addChild(this.arrow.reverse)
+        this.reverseArrowMounted = true
       }
 
       // this.edgeGraphic.alpha = this.renderer.zoom <= MIN_EDGES_ZOOM + 0.1 ?
@@ -120,62 +127,56 @@ export class EdgeRenderer {
         this.strokeOpacity = strokeOpacity
         this.sourceRadius = sourceRadius
         this.targetRadius = targetRadius
+        this.x0 = x0
+        this.y0 = y0
+        this.x1 = x1
+        this.y1 = y1
+        let edgeX0 = this.x0
+        let edgeY0 = this.y0
+        let edgeX1 = this.x1
+        let edgeY1 = this.y1
 
-        if (!this.arrow) {
-          this.x0 = x0
-          this.y0 = y0
-          this.x1 = x1
-          this.y1 = y1
-        } else {
-          const theta = angle(x0, y0, x1, y1)
-
+        if (this.arrow) {
+          const theta = angle(this.x0, this.y0, this.x1, this.y1)
           if (this.arrow.forward) {
-            const [edgeX1, edgeY1] = movePoint(x1, y1, theta, this.targetRadius + this.arrow.forward.height)
+            [edgeX1, edgeY1] = movePoint(x1, y1, theta, this.targetRadius + this.arrow.forward.height)
             const [arrowX1, arrowY1] = movePoint(x1, y1, theta, this.targetRadius)
-            this.x1 = edgeX1
-            this.y1 = edgeY1
             this.arrow.forward.tint = stroke
             this.arrow.forward.alpha = strokeOpacity
             this.arrow.forward.x = arrowX1
             this.arrow.forward.y = arrowY1
             this.arrow.forward.rotation = theta
-          } else {
-            this.x1 = x1
-            this.y1 = y1
           }
 
           if (this.arrow.reverse) {
-            const [edgeX0, edgeY0] = movePoint(x1, y1, theta, -targetRadius - this.arrow.reverse.height)
-            const [arrowX0, arrowY0] = movePoint(x0, y0, theta, -targetRadius)
-            this.x0 = edgeX0
-            this.y0 = edgeY0
+            [edgeX0, edgeY0] = movePoint(x0, y0, theta, -this.targetRadius - this.arrow.reverse.height)
+            const [arrowX0, arrowY0] = movePoint(x0, y0, theta, -this.targetRadius)
             this.arrow.reverse.tint = stroke
             this.arrow.reverse.alpha = strokeOpacity
             this.arrow.reverse.x = arrowX0
             this.arrow.reverse.y = arrowY0
-            this.arrow.reverse.rotation = theta
-          } else {
-            this.x0 = x0
-            this.y0 = y0
+            this.arrow.reverse.rotation = theta + Math.PI
           }
         }
 
         this.edgeGraphic.clear()
         this.edgeGraphic
           .lineStyle(width, stroke, strokeOpacity)
-          .moveTo(this.x0, this.y0)
-          .lineTo(this.x1, this.y1)
+          .moveTo(edgeX0, edgeY0)
+          .lineTo(edgeX1, edgeY1)
       }
     } else {
       if (this.mounted) {
         this.renderer.edgesContainer.removeChild(this.edgeGraphic)
-        if (this.arrow?.forward) {
-          this.renderer.edgesContainer.removeChild(this.arrow.forward)
-        }
-        if (this.arrow?.reverse) {
-          this.renderer.edgesContainer.removeChild(this.arrow.reverse)
-        }
         this.mounted = false
+      }
+      if (this.arrow?.forward && this.forwardArrowMounted) {
+        this.renderer.edgesContainer.removeChild(this.arrow.forward)
+        this.forwardArrowMounted = false
+      }
+      if (this.arrow?.reverse && this.reverseArrowMounted) {
+        this.renderer.edgesContainer.removeChild(this.arrow.reverse)
+        this.reverseArrowMounted = false
       }
     }
   }

@@ -69,7 +69,7 @@ export const defaultOptions = {
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
 export const MIN_NODE_INTERACTION_ZOOM = 0.1
-export const MIN_EDGES_ZOOM = 0.2
+export const MIN_EDGES_ZOOM = 0.15
 
 
 /**
