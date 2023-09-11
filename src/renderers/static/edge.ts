@@ -67,10 +67,10 @@ export class EdgeRenderer {
   }
 
   render() {
-    const x0 = this.source.node?.x ?? 0
-    const y0 = this.source.node?.y ?? 0
-    const x1 = this.target.node?.x ?? 0
-    const y1 = this.target.node?.y ?? 0
+    const x0 = this.source.x
+    const y0 = this.source.y
+    const x1 = this.target.x
+    const y1 = this.target.y
     const sourceRadius = this.source.strokes.radius
     const targetRadius = this.target.strokes.radius
     const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))

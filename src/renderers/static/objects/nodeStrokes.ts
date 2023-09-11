@@ -12,52 +12,51 @@ export class NodeStrokes {
 
   private renderer: StaticRenderer
   private nodeRenderer: NodeRenderer
-  private node?: Graph.Node
+  private style?: Graph.NodeStyle
   
-  constructor(renderer: StaticRenderer, nodeRenderer: NodeRenderer, node: Graph.Node) {
+  constructor(renderer: StaticRenderer, nodeRenderer: NodeRenderer) {
     this.renderer = renderer
     this.nodeRenderer = nodeRenderer
-    this.update(node)
   }
 
-  update(node: Graph.Node) {
-    if (node.style?.stroke !== this.node?.style?.stroke) {
+  update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
+    if (style?.stroke !== this.style?.stroke) {
       // exit
       this.delete()
 
-      if (node.style?.stroke?.length) {
+      if (style?.stroke?.length) {
         // enter
-        this.strokes = Array(node.style.stroke.length)
+        this.strokes = Array(style.stroke.length)
   
-        this.radius = node.radius
+        this.radius = radius
   
-        for (let i = 0; i < node.style.stroke.length; i++) {
-          this.radius += node.style.stroke[i].width
+        for (let i = 0; i < style.stroke.length; i++) {
+          this.radius += style.stroke[i].width
           const circle = new Sprite(this.renderer.circle.texture)
           circle.anchor.set(0.5)
           circle.scale.set(this.radius / this.renderer.circle.scaleFactor)
-          circle.tint = node.style.stroke[i].color
-          circle.x = node.x ?? 0
-          circle.y = node.y ?? 0
+          circle.tint = style.stroke[i].color
+          circle.x = x
+          circle.y = y
           this.strokes[i] = circle
         }
       }
-    } else if (this.strokes && this.node?.style?.stroke) {
+    } else if (this.strokes && this.style?.stroke) {
       // reposition
-      this.radius = node.radius
+      this.radius = radius
 
       for (let i = 0; i < this.strokes.length; i++) {
-        this.radius += this.node.style.stroke[i].width
+        this.radius += this.style.stroke[i].width
         const scale = this.radius / this.renderer.circle.scaleFactor
         if (scale !== this.strokes[i].scale.x) {
           this.strokes[i].scale.set(this.radius / this.renderer.circle.scaleFactor)
         }
-        this.strokes[i].x = this.node.x ?? 0
-        this.strokes[i].y = this.node.y ?? 0
+        this.strokes[i].x = x
+        this.strokes[i].y = y
       }
     }
 
-    this.node = node
+    this.style = style
 
     return this
   }

@@ -18,16 +18,32 @@ export class Label {
 
   private renderer: StaticRenderer
   private text: BitmapText
+  private label: string
+  private x?: number
+  private y?: number
   private style?: LabelStyle
   
-  constructor(renderer: StaticRenderer, text: string, style?: LabelStyle) {
+  constructor(renderer: StaticRenderer, label: string) {
     this.renderer = renderer
-    this.text = new BitmapText(text, { fontName: 'Label' })
-    this.update(text, style)
+    this.label = label
+    this.text = new BitmapText(label, { fontName: 'Label' })
   }
 
-  update(text: string, style?: LabelStyle) {
-    this.text.text = text
+  update(label: string, x: number, y: number, style?: LabelStyle) {
+    if (label !== this.label) {
+      this.text.text = label
+      this.label = label
+    }
+
+    if (x !== this.x) {
+      this.text.x = x
+      this.x = x
+    }
+
+    if (y !== this.y) {
+      this.text.y = y
+      this.y = y
+    }
 
     if (style !== this.style) {
       this.text.fontSize = style?.fontSize ?? DEFAULT_FONT_SIZE
@@ -54,12 +70,6 @@ export class Label {
       this.style = style
     }
 
-    return this
-  }
-
-  position(x: number, y: number) {
-    this.text.x = x
-    this.text.y = y
     return this
   }
 

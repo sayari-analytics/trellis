@@ -61,7 +61,7 @@ export type Options = {
 
 export const defaultOptions = {
   x: 0, y: 0, zoom: 1, minZoom: 0.025, maxZoom: 4,
-  animateViewport: 800, animateNodePosition: 800, animateNodeRadius: 800,
+  animateViewport: 800, animateNodePosition: 2000, animateNodeRadius: 800,
   dragInertia: 0.88,
 }
 
@@ -122,7 +122,7 @@ export class StaticRenderer {
   #doubleClickTimeout?: number
   #doubleClick = false
   #renderedPosition = false
-  #renderedNodes = false
+  renderedNodes = false
   #interpolateX?: (dt: number) => { value: number, done: boolean }
   #interpolateY?: (dt: number) => { value: number, done: boolean }
   #interpolateZoom?: (dt: number) => { value: number, done: boolean }
@@ -279,8 +279,8 @@ export class StaticRenderer {
      * update viewport
      * 
      * interpolate position if all of the following are true:
-     * - not dragging/zooming
      * - viewport position has changed
+     * - not dragging/zooming
      * - the animateViewport option is not disabled
      * - it's not the first render
      */
@@ -292,8 +292,8 @@ export class StaticRenderer {
     const zoomChanged = zoom !== this.zoom
 
     if (
-      !this.dragInteraction.dragging && !this.decelerateInteraction.decelerating && !this.zoomInteraction.zooming &&
       (xChanged || yChanged || zoomChanged) &&
+      !this.dragInteraction.dragging && !this.decelerateInteraction.decelerating && !this.zoomInteraction.zooming &&
       this.animateViewport && this.#renderedPosition
     ) {
       if (xChanged) {
@@ -345,7 +345,7 @@ export class StaticRenderer {
 
       this.nodes = nodes
       this.nodeRenderersById = nodeRenderersById
-      this.#renderedNodes = true
+      this.renderedNodes = true
     }
 
 
@@ -388,7 +388,7 @@ export class StaticRenderer {
 
       this.edges = edges
       this.edgeRenderersById = edgeRenderersById
-      this.#renderedNodes = true
+      this.renderedNodes = true
     } else if (shouldUpdateNodes) {
       // TODO - make node move/resize automatically update edge position
       for (const edge of edges) {
@@ -447,7 +447,7 @@ export class StaticRenderer {
     }
 
     for (const node of this.nodes) {
-      this.nodeRenderersById[node.id].render()
+      this.nodeRenderersById[node.id].render(dt)
     }
 
     for (const edge of this.edges) {

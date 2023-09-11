@@ -15,9 +15,10 @@ export class NodeFill {
 
   private renderer: StaticRenderer
   private nodeRenderer: NodeRenderer
-  private node?: Graph.Node
+  private radius?: number
+  private style?: Graph.NodeStyle
   
-  constructor(renderer: StaticRenderer, nodeRenderer: NodeRenderer, node: Graph.Node) {
+  constructor(renderer: StaticRenderer, nodeRenderer: NodeRenderer) {
     this.renderer = renderer
     this.nodeRenderer = nodeRenderer
     this.circle = new Sprite(this.renderer.circle.texture)
@@ -39,23 +40,22 @@ export class NodeFill {
 
     this.renderer.nodesContainer.addChild(this.circle)
     this.containerIndex = this.renderer.nodesContainer.getChildIndex(this.circle)
-
-    this.update(node)
   }
 
-  update(node: Graph.Node) {
-    if ((node.style?.color ?? DEFAULT_NODE_FILL) !== (this.node?.style?.color ?? DEFAULT_NODE_FILL)) {
-      this.circle.tint = node.style?.color ?? DEFAULT_NODE_FILL
+  update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
+    if ((style?.color ?? DEFAULT_NODE_FILL) !== (this.style?.color ?? DEFAULT_NODE_FILL)) {
+      this.circle.tint = style?.color ?? DEFAULT_NODE_FILL
     }
 
-    if (node.radius !== this.node?.radius) {
-      this.circle.scale.set(node.radius / this.renderer.circle.scaleFactor)
+    if (radius !== this.radius) {
+      this.circle.scale.set(radius / this.renderer.circle.scaleFactor)
+      this.radius = radius
     }
 
-    this.circle.x = node.x ?? 0
-    this.circle.y = node.y ?? 0
+    this.circle.x = x
+    this.circle.y = y
 
-    this.node = node
+    this.style = style
 
     return this
   }
