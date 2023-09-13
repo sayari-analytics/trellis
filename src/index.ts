@@ -164,7 +164,7 @@ export type Viewport = { x: number; y: number; zoom: number }
 
 export const getSelectionBounds = (
   elements: (Node | Annotation)[],
-  padding: number = 0
+  padding: number = 0,
 ): Bounds => {
   let left = 0
   let top = 0
@@ -201,11 +201,7 @@ export const getSelectionBounds = (
   }
 }
 
-export const mergeBounds = (
-  a: Bounds,
-  b: Bounds,
-  padding: number = 0
-): Bounds => {
+export const mergeBounds = (a: Bounds, b: Bounds, padding: number = 0): Bounds => {
   return {
     left: Math.min(a.left, b.left) - padding,
     top: Math.min(a.top, b.top) - padding,
@@ -216,7 +212,7 @@ export const mergeBounds = (
 
 export const viewportToBounds = (
   { x, y, zoom }: Viewport,
-  { width, height }: Dimensions
+  { width, height }: Dimensions,
 ): Bounds => {
   const xOffset = width / 2 / zoom
   const yOffset = height / 2 / zoom
@@ -230,7 +226,7 @@ export const viewportToBounds = (
 
 export const boundsToViewport = (
   { left, top, right, bottom }: Bounds,
-  { width, height }: Dimensions
+  { width, height }: Dimensions,
 ): Viewport => {
   const targetWidth = right - left
   const targetHeight = bottom - top
@@ -248,7 +244,7 @@ export const boundsToViewport = (
 
 export const boundsToDimensions = (
   { left, top, right, bottom }: Bounds,
-  zoom: number
+  zoom: number,
 ): Dimensions => {
   return {
     width: (right - left) / zoom,
@@ -298,8 +294,7 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: {
   const adjacencyList: Record<string, Record<string, E[]>> = {}
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
-  const components: { nodes: Record<string, N>; edges: Record<string, E> }[] =
-    []
+  const components: { nodes: Record<string, N>; edges: Record<string, E> }[] = []
 
   for (const edge of graph.edges) {
     if (adjacencyList[edge.source] === undefined) {
@@ -365,7 +360,7 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: {
 
 export function* bfs<N extends Node, E extends Edge>(
   predicate: (node: N) => boolean,
-  graph: { nodes: N[]; edges: E[] }
+  graph: { nodes: N[]; edges: E[] },
 ): Generator<N, void, void> {
   const adjacencyList: Record<string, string[]> = {}
   const nodes: Record<string, N> = {}

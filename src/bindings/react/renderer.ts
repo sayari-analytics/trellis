@@ -2,25 +2,27 @@ import { createElement, useRef, useEffect } from 'react'
 import { Renderer as PixiRenderer, Options } from '../../renderers/webgl'
 import { Node, Edge, Annotation } from '../..'
 
-
-export type Props<N extends Node = Node, E extends Edge = Edge> =
-  Partial<Options<N, E>> &
-  {
-    nodes: N[]
-    edges: E[]
-    annotations?: Annotation[],
-    debug?: { logPerformance?: boolean, stats?: Stats }
-  }
-
+export type Props<N extends Node = Node, E extends Edge = Edge> = Partial<Options<N, E>> & {
+  nodes: N[]
+  edges: E[]
+  annotations?: Annotation[]
+  debug?: { logPerformance?: boolean; stats?: Stats }
+}
 
 const defaultNodesEqual = <N extends Node>(prev: N[], current: N[]) => prev === current
 const defaultEdgesEqual = <E extends Edge>(prev: E[], current: E[]) => prev === current
 
-
 export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
-
   const ref = useRef<HTMLDivElement>(null)
-  const renderer = useRef<(graph: { nodes: N[], edges: E[], annotations?: Annotation[], options?: Partial<Options<N, E>> }) => void>()
+  const renderer =
+    useRef<
+      (graph: {
+        nodes: N[]
+        edges: E[]
+        annotations?: Annotation[]
+        options?: Partial<Options<N, E>>
+      }) => void
+    >()
 
   useEffect(() => {
     const _renderer = PixiRenderer({ container: ref.current!, debug: props.debug })

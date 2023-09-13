@@ -2,8 +2,14 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { ViewportDragDecelerateEvent, ViewportDragEvent } from '../../renderers/webgl'
 import { Annotation, Node } from '../..'
 
-
-export type SelectionChangeEvent = { type: 'selectionChange', selection: Set<string>, altKey: boolean, ctrlKey: boolean, metaKey: boolean, shiftKey: boolean }
+export type SelectionChangeEvent = {
+  type: 'selectionChange'
+  selection: Set<string>
+  altKey: boolean
+  ctrlKey: boolean
+  metaKey: boolean
+  shiftKey: boolean
+}
 
 export type Props<N extends Node> = {
   nodes: N[]
@@ -29,7 +35,6 @@ export type ChildProps = {
   onViewportDragEnd: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
 }
 
-
 function setsAreEqual<T>(a: Set<T>, b: Set<T>) {
   if (a.size !== b.size) {
     return false
@@ -44,19 +49,23 @@ function setsAreEqual<T>(a: Set<T>, b: Set<T>) {
   return true
 }
 
-
 export const Selection = <N extends Node>(props: Props<N>) => {
-
   const [state, setState] = useState<{
     select: boolean
     cursor?: string
-    annotation?: { type: 'rectangle', x: number, y: number, width: number, height: number }
-      | { type: 'circle', x: number, y: number, radius: number }
+    annotation?:
+      | { type: 'rectangle'; x: number; y: number; width: number; height: number }
+      | { type: 'circle'; x: number; y: number; radius: number }
   }>({ select: false })
   const _state = useRef(state)
   _state.current = state
 
-  const _keys = useRef<{ altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }>({})
+  const _keys = useRef<{
+    altKey?: boolean
+    ctrlKey?: boolean
+    metaKey?: boolean
+    shiftKey?: boolean
+  }>({})
 
   const _selection = useRef<Set<string>>(new Set())
 
@@ -84,91 +93,119 @@ export const Selection = <N extends Node>(props: Props<N>) => {
     }
   })
 
-  const toggleSelect = useCallback(() => setState((state) => ({ ...state, select: !state.select })), [])
+  const toggleSelect = useCallback(
+    () => setState((state) => ({ ...state, select: !state.select })),
+    [],
+  )
 
-  const onViewportDragStart = useCallback((event: ViewportDragEvent) => {
-    if (_state.current.select) {
-      setState({
-        select: true,
-        cursor: 'copy',
-        annotation: _props.current.shape === 'circle' ?
-          { type: 'circle', x: event.x, y: event.y, radius: 0 } :
-          { type: 'rectangle', x: event.x, y: event.y, width: 0, height: 0 },
-      })
-    }
-
-    props.onViewportDragStart?.(event)
-  }, [props.onViewportDragStart])
-
-  const onViewportDrag = useCallback((event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
-    if (_state.current.select && _state.current.annotation && event.type === 'viewportDrag') {
-      const selection = new Set<string>()
-
-      if (_props.current.shape === 'circle') {
-        const radius = Math.hypot(event.x - _state.current.annotation.x, event.y - _state.current.annotation.y)
-
+  const onViewportDragStart = useCallback(
+    (event: ViewportDragEvent) => {
+      if (_state.current.select) {
         setState({
           select: true,
           cursor: 'copy',
-          annotation: { type: 'circle', x: _state.current.annotation.x, y: _state.current.annotation.y, radius },
+          annotation:
+            _props.current.shape === 'circle'
+              ? { type: 'circle', x: event.x, y: event.y, radius: 0 }
+              : { type: 'rectangle', x: event.x, y: event.y, width: 0, height: 0 },
         })
+      }
 
-        for (const node of _props.current.nodes ?? []) {
-          if (Math.hypot((node.x ?? 0) - _state.current.annotation.x, (node.y ?? 0) - _state.current.annotation.y) <= radius) {
-            selection.add(node.id)
+      props.onViewportDragStart?.(event)
+    },
+    [props.onViewportDragStart],
+  )
+
+  const onViewportDrag = useCallback(
+    (event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
+      if (_state.current.select && _state.current.annotation && event.type === 'viewportDrag') {
+        const selection = new Set<string>()
+
+        if (_props.current.shape === 'circle') {
+          const radius = Math.hypot(
+            event.x - _state.current.annotation.x,
+            event.y - _state.current.annotation.y,
+          )
+
+          setState({
+            select: true,
+            cursor: 'copy',
+            annotation: {
+              type: 'circle',
+              x: _state.current.annotation.x,
+              y: _state.current.annotation.y,
+              radius,
+            },
+          })
+
+          for (const node of _props.current.nodes ?? []) {
+            if (
+              Math.hypot(
+                (node.x ?? 0) - _state.current.annotation.x,
+                (node.y ?? 0) - _state.current.annotation.y,
+              ) <= radius
+            ) {
+              selection.add(node.id)
+            }
           }
+        } else {
+          const x1 = _state.current.annotation.x
+          const x2 = event.x
+          const y1 = _state.current.annotation.y
+          const y2 = event.y
+          const width = x2 - x1
+          const height = y2 - y1
+
+          setState({
+            select: true,
+            cursor: 'copy',
+            annotation: { type: 'rectangle', x: x1, y: y1, width, height },
+          })
+
+          for (const node of _props.current.nodes ?? []) {
+            const x = node.x ?? 0
+            const y = node.y ?? 0
+
+            if (
+              ((x > x1 && x < x2) || (x > x2 && x < x1)) &&
+              ((y > y1 && y < y2) || (y > y2 && y < y1))
+            ) {
+              selection.add(node.id)
+            }
+          }
+        }
+
+        if (!setsAreEqual(_selection.current, selection)) {
+          _selection.current = selection
+
+          props.onSelection?.({
+            type: 'selectionChange',
+            selection,
+            altKey: _keys.current.altKey ?? false,
+            ctrlKey: _keys.current.ctrlKey ?? false,
+            metaKey: _keys.current.metaKey ?? false,
+            shiftKey: _keys.current.shiftKey ?? false,
+          })
         }
       } else {
-        const x1 = _state.current.annotation.x
-        const x2 = event.x
-        const y1 = _state.current.annotation.y
-        const y2 = event.y
-        const width = x2 - x1
-        const height = y2 - y1
-
-        setState({
-          select: true,
-          cursor: 'copy',
-          annotation: { type: 'rectangle', x: x1, y: y1, width, height },
-        })
-
-        for (const node of _props.current.nodes ?? []) {
-          const x = node.x ?? 0
-          const y = node.y ?? 0
-
-          if (((x > x1 && x < x2) || (x > x2 && x < x1)) && ((y > y1 && y < y2) || (y > y2 && y < y1))) {
-            selection.add(node.id)
-          }
-        }
+        props.onViewportDrag?.(event)
       }
+    },
+    [props.onSelection, props.onViewportDrag],
+  )
 
-      if (!setsAreEqual(_selection.current, selection)) {
-        _selection.current = selection
-
-        props.onSelection?.({
-          type: 'selectionChange',
-          selection,
-          altKey: _keys.current.altKey ?? false,
-          ctrlKey: _keys.current.ctrlKey ?? false,
-          metaKey: _keys.current.metaKey ?? false,
-          shiftKey: _keys.current.shiftKey ?? false,
-        })
+  const onViewportDragEnd = useCallback(
+    (event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
+      _selection.current = new Set()
+      if (_props.current.enableOnShift !== false && _keys.current.shiftKey) {
+        setState({ select: true })
+      } else {
+        setState({ select: false })
       }
-    } else {
-      props.onViewportDrag?.(event)
-    }
-  }, [props.onSelection, props.onViewportDrag])
-
-  const onViewportDragEnd = useCallback((event: ViewportDragEvent | ViewportDragDecelerateEvent) => {
-    _selection.current = new Set()
-    if (_props.current.enableOnShift !== false && _keys.current.shiftKey) {
-      setState({ select: true })
-    } else {
-      setState({ select: false })
-    }
-    props.onViewportDragEnd?.(event)
-  }, [props.onViewportDragEnd])
-
+      props.onViewportDragEnd?.(event)
+    },
+    [props.onViewportDragEnd],
+  )
 
   return props.children({
     select: state.select,
@@ -177,33 +214,38 @@ export const Selection = <N extends Node>(props: Props<N>) => {
     onViewportDrag,
     onViewportDragEnd,
     cursor: state.cursor,
-    annotation: state.annotation?.type === 'circle' ? {
-      type: 'circle',
-      id: 'selection',
-      x: state.annotation.x,
-      y: state.annotation.y,
-      radius: state.annotation.radius,
-      style: {
-        backgroundColor: props.color ?? '#eee',
-        stroke: {
-          color: props.strokeColor ?? '#ccc',
-          width: props.strokeWidth ?? 2
-        }
-      }
-    } : state.annotation?.type === 'rectangle' ? {
-      type: 'rectangle',
-      id: 'selection',
-      x: state.annotation.x,
-      y: state.annotation.y,
-      width: state.annotation.width,
-      height: state.annotation.height,
-      style: {
-        backgroundColor: props.color ?? '#eee',
-        stroke: {
-          color: props.strokeColor ?? '#ccc',
-          width: props.strokeWidth ?? 2
-        }
-      }
-    } : undefined,
+    annotation:
+      state.annotation?.type === 'circle'
+        ? {
+            type: 'circle',
+            id: 'selection',
+            x: state.annotation.x,
+            y: state.annotation.y,
+            radius: state.annotation.radius,
+            style: {
+              backgroundColor: props.color ?? '#eee',
+              stroke: {
+                color: props.strokeColor ?? '#ccc',
+                width: props.strokeWidth ?? 2,
+              },
+            },
+          }
+        : state.annotation?.type === 'rectangle'
+        ? {
+            type: 'rectangle',
+            id: 'selection',
+            x: state.annotation.x,
+            y: state.annotation.y,
+            width: state.annotation.width,
+            height: state.annotation.height,
+            style: {
+              backgroundColor: props.color ?? '#eee',
+              stroke: {
+                color: props.strokeColor ?? '#ccc',
+                width: props.strokeWidth ?? 2,
+              },
+            },
+          }
+        : undefined,
   }) as unknown as JSX.Element
 }

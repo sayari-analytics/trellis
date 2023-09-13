@@ -1,16 +1,14 @@
 import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 
-
 /**
  * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Decelerate Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/decelerate.js)
  */
-export class Decelerate <N extends Node, E extends Edge>{
-
+export class Decelerate<N extends Node, E extends Edge> {
   private renderer: InternalRenderer<N, E>
   private paused = false
-  private saved: { x: number, y: number, time: number }[] = []
+  private saved: { x: number; y: number; time: number }[] = []
   private x?: number
   private y?: number
   private minSpeed = 0.01
@@ -85,7 +83,7 @@ export class Decelerate <N extends Node, E extends Edge>{
         type: 'viewportDragDecelarate',
         viewportX: x ?? this.renderer.x,
         viewportY: y ?? this.renderer.y,
-        target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+        target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
       })
     }
   }

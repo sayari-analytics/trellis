@@ -2,18 +2,14 @@ import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 
-
 export class CircleSprite<N extends Node, E extends Edge> {
-
   static radius = 500
 
   private texture: PIXI.RenderTexture
 
   constructor(renderer: InternalRenderer<N, E>) {
     this.texture = renderer.app.renderer.generateTexture(
-      new PIXI.Graphics()
-        .beginFill(0xffffff)
-        .drawCircle(0, 0, CircleSprite.radius),
+      new PIXI.Graphics().beginFill(0xffffff).drawCircle(0, 0, CircleSprite.radius),
       PIXI.SCALE_MODES.LINEAR,
       2,
     )
@@ -31,7 +27,6 @@ export class CircleSprite<N extends Node, E extends Edge> {
   }
 }
 
-
 /**
  * TODO - generate circle sprites on the fly scaled to the max scale they can be rendered at
  */
@@ -47,7 +42,6 @@ export class CircleSprite<N extends Node, E extends Edge> {
 //     this.scale.set(radius / this._maxRadius)
 //   }
 // }
-
 
 // export class CircleSpriteFactory<N extends Node, E extends Edge> {
 

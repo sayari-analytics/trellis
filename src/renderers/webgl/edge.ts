@@ -128,9 +128,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
      * Stroke
      */
     const stroke =
-      edge.style?.stroke === undefined
-        ? DEFAULT_EDGE_COLOR
-        : colorToNumber(edge.style?.stroke)
+      edge.style?.stroke === undefined ? DEFAULT_EDGE_COLOR : colorToNumber(edge.style?.stroke)
     if (this.stroke !== stroke) {
       this.stroke = stroke
       if (this.arrow === 'forward' && this.forwardArrow !== undefined) {
@@ -203,7 +201,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       if (this.label) {
         this.labelLoader = this.renderer.fontLoader.load(
           this.labelFamily,
-          'normal'
+          'normal',
         )((family) => {
           if (this.label === undefined || this.labelFamily !== family) return
 
@@ -230,9 +228,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
             this.labelBackgroundSprite = new PIXI.Sprite(PIXI.Texture.WHITE)
             this.labelBackgroundSprite.width = this.labelSprite.width + 4
             this.labelBackgroundSprite.height = this.labelSprite.height
-            this.labelBackgroundSprite.tint = colorToNumber(
-              this.labelBackground
-            )
+            this.labelBackgroundSprite.tint = colorToNumber(this.labelBackground)
             this.labelBackgroundSprite.alpha = this.labelBackgroundOpacity ?? 1
             this.labelBackgroundSprite.anchor.set(0.5, 0.5)
             this.labelContainer.addChild(this.labelBackgroundSprite)
@@ -247,11 +243,9 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
      * Curve
      * TODO - expose edge curve in style spec
      */
-    const parallelEdges =
-      this.renderer.edgeIndex[this.edge.source][this.edge.target]
+    const parallelEdges = this.renderer.edgeIndex[this.edge.source][this.edge.target]
     // curve will be 0 for 1 self edge and negative for the rest, making it easy to render a single self edge
-    this.curve =
-      this.edge.source === this.edge.target ? 0 : parallelEdges.size - 1
+    this.curve = this.edge.source === this.edge.target ? 0 : parallelEdges.size - 1
     for (const edgeId of parallelEdges) {
       if (edgeId === this.edge.id) {
         break
@@ -270,18 +264,8 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       targetContainer = this.renderer.nodesById[this.edge.target],
       sourceRadius = sourceContainer.radius + sourceContainer.strokeWidth,
       targetRadius = targetContainer.radius + targetContainer.strokeWidth,
-      theta = angle(
-        sourceContainer.x,
-        sourceContainer.y,
-        targetContainer.x,
-        targetContainer.y
-      ),
-      start = movePoint(
-        sourceContainer.x,
-        sourceContainer.y,
-        theta,
-        -sourceRadius
-      ),
+      theta = angle(sourceContainer.x, sourceContainer.y, targetContainer.x, targetContainer.y),
+      start = movePoint(sourceContainer.x, sourceContainer.y, theta, -sourceRadius),
       end = movePoint(targetContainer.x, targetContainer.y, theta, targetRadius)
 
     let center = midPoint(start[0], start[1], end[0], end[1])
@@ -308,8 +292,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
 
         if ((this.labelSprite?.width ?? 0) > 2 * r) {
           this.labelContainer.visible = false
-          if (this.labelBackgroundSprite)
-            this.labelBackgroundSprite.visible = false
+          if (this.labelBackgroundSprite) this.labelBackgroundSprite.visible = false
         }
 
         this.line.hitArea = circle
@@ -317,19 +300,19 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
     } else if (this.curve === 0) {
       const startArrowOffset = this.reverseArrow
         ? movePoint(
-          sourceContainer.x,
-          sourceContainer.y,
-          theta,
-          -sourceRadius - ArrowSprite.ARROW_HEIGHT
-        )
+            sourceContainer.x,
+            sourceContainer.y,
+            theta,
+            -sourceRadius - ArrowSprite.ARROW_HEIGHT,
+          )
         : start
       const endArrowOffset = this.forwardArrow
         ? movePoint(
-          targetContainer.x,
-          targetContainer.y,
-          theta,
-          targetRadius + ArrowSprite.ARROW_HEIGHT
-        )
+            targetContainer.x,
+            targetContainer.y,
+            theta,
+            targetRadius + ArrowSprite.ARROW_HEIGHT,
+          )
         : end
       /**
        * edge start/end is source/target node's center, offset by radius and, if rendered on edge source and/or target, arrow height
@@ -385,46 +368,36 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
         center[0],
         center[1],
         theta > TWO_PI || theta < 0 ? theta - HALF_PI : theta + HALF_PI,
-        this.edge.source > this.edge.target ? this.curve * 10 : this.curve * -10
+        this.edge.source > this.edge.target ? this.curve * 10 : this.curve * -10,
       )
       const thetaCurveStart = angle(
         sourceContainer.x,
         sourceContainer.y,
         this.curvePeak[0],
-        this.curvePeak[1]
+        this.curvePeak[1],
       )
       const thetaCurveEnd = angle(
         this.curvePeak[0],
         this.curvePeak[1],
         targetContainer.x,
-        targetContainer.y
+        targetContainer.y,
       )
       const curveStart = this.reverseArrow
         ? movePoint(
-          sourceContainer.x,
-          sourceContainer.y,
-          thetaCurveStart,
-          -sourceRadius - ArrowSprite.ARROW_HEIGHT
-        )
-        : movePoint(
-          sourceContainer.x,
-          sourceContainer.y,
-          thetaCurveStart,
-          -sourceRadius
-        )
+            sourceContainer.x,
+            sourceContainer.y,
+            thetaCurveStart,
+            -sourceRadius - ArrowSprite.ARROW_HEIGHT,
+          )
+        : movePoint(sourceContainer.x, sourceContainer.y, thetaCurveStart, -sourceRadius)
       const curveEnd = this.forwardArrow
         ? movePoint(
-          targetContainer.x,
-          targetContainer.y,
-          thetaCurveEnd,
-          targetRadius + ArrowSprite.ARROW_HEIGHT
-        )
-        : movePoint(
-          targetContainer.x,
-          targetContainer.y,
-          thetaCurveEnd,
-          targetRadius
-        )
+            targetContainer.x,
+            targetContainer.y,
+            thetaCurveEnd,
+            targetRadius + ArrowSprite.ARROW_HEIGHT,
+          )
+        : movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
       this.x0 = curveStart[0]
       this.y0 = curveStart[1]
       this.x1 = curveEnd[0]
@@ -435,13 +408,13 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
         this.curvePeak[0],
         this.curvePeak[1],
         theta,
-        edgeLength / 4
+        edgeLength / 4,
       )
       this.curveControlPointB = movePoint(
         this.curvePeak[0],
         this.curvePeak[1],
         theta,
-        edgeLength / -4
+        edgeLength / -4,
       )
 
       this.renderer.edgesGraphic
@@ -453,7 +426,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
           this.curveControlPointA[0],
           this.curveControlPointA[1],
           this.curvePeak[0],
-          this.curvePeak[1]
+          this.curvePeak[1],
         )
         .bezierCurveTo(
           this.curveControlPointB[0],
@@ -461,7 +434,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
           this.x1,
           this.y1,
           this.x1,
-          this.y1
+          this.y1,
         )
 
       this.labelContainer.x = this.curvePeak[0]
@@ -470,12 +443,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
         theta > HALF_PI && theta < THREE_HALF_PI ? theta - Math.PI : theta
 
       if (this.forwardArrow) {
-        const [x, y] = movePoint(
-          targetContainer.x,
-          targetContainer.y,
-          thetaCurveEnd,
-          targetRadius
-        )
+        const [x, y] = movePoint(targetContainer.x, targetContainer.y, thetaCurveEnd, targetRadius)
         this.forwardArrow.x = x
         this.forwardArrow.y = y
         this.forwardArrow.rotation = thetaCurveEnd
@@ -486,7 +454,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
           sourceContainer.x,
           sourceContainer.y,
           thetaCurveStart,
-          -sourceRadius
+          -sourceRadius,
         )
         this.reverseArrow.x = x
         this.reverseArrow.y = y
@@ -498,20 +466,10 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
        */
       const hoverRadius = Math.max(this.width, LINE_HOVER_RADIUS)
       const hitAreaVertices: number[] = new Array(12)
-      let point = movePoint(
-        this.x0,
-        this.y0,
-        thetaCurveStart + HALF_PI,
-        hoverRadius
-      )
+      let point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, hoverRadius)
       hitAreaVertices[0] = point[0]
       hitAreaVertices[1] = point[1]
-      point = movePoint(
-        this.curvePeak[0],
-        this.curvePeak[1],
-        theta + HALF_PI,
-        hoverRadius
-      )
+      point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, hoverRadius)
       hitAreaVertices[2] = point[0]
       hitAreaVertices[3] = point[1]
       point = movePoint(this.x1, this.y1, thetaCurveEnd + HALF_PI, hoverRadius)
@@ -520,20 +478,10 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       point = movePoint(this.x1, this.y1, theta + HALF_PI, -hoverRadius)
       hitAreaVertices[6] = point[0]
       hitAreaVertices[7] = point[1]
-      point = movePoint(
-        this.curvePeak[0],
-        this.curvePeak[1],
-        theta + HALF_PI,
-        -hoverRadius
-      )
+      point = movePoint(this.curvePeak[0], this.curvePeak[1], theta + HALF_PI, -hoverRadius)
       hitAreaVertices[8] = point[0]
       hitAreaVertices[9] = point[1]
-      point = movePoint(
-        this.x0,
-        this.y0,
-        thetaCurveStart + HALF_PI,
-        -hoverRadius
-      )
+      point = movePoint(this.x0, this.y0, thetaCurveStart + HALF_PI, -hoverRadius)
       hitAreaVertices[10] = point[0]
       hitAreaVertices[11] = point[1]
       this.line.hitArea = new PIXI.Polygon(hitAreaVertices)
@@ -566,17 +514,12 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
       const edgeLength = length(this.x0, this.y0, this.x1, this.y1)
       // For self edges using edgeLength like this won't work, so there is logic in the
       // if clause handling drawing self edges to hide labels when necessary
-      if (
-        this.labelSprite.width > edgeLength &&
-        this.edge.target !== this.edge.source
-      ) {
+      if (this.labelSprite.width > edgeLength && this.edge.target !== this.edge.source) {
         this.labelSprite.visible = false
-        if (this.labelBackgroundSprite)
-          this.labelBackgroundSprite.visible = false
+        if (this.labelBackgroundSprite) this.labelBackgroundSprite.visible = false
       } else {
         this.labelSprite.visible = true
-        if (this.labelBackgroundSprite)
-          this.labelBackgroundSprite.visible = true
+        if (this.labelBackgroundSprite) this.labelBackgroundSprite.visible = true
       }
     }
   }

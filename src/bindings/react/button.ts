@@ -1,6 +1,5 @@
 import { createElement, FunctionComponent, useCallback, useState } from 'react'
 
-
 export type Props = {
   selected?: boolean
   disabled?: boolean
@@ -8,7 +7,6 @@ export type Props = {
   title?: string
   onClick?: () => void
 }
-
 
 const STYLE = {
   border: '1px solid #aaa',
@@ -67,47 +65,56 @@ const DISABLED_STYLE = {
   color: '#aaa',
 }
 
-
 // TODO - memoize style computation
-const buttonStyle = (disabled?: boolean, selected?: boolean, hover?: boolean, focus?: boolean, group?: 'top' | 'middle' | 'bottom') => {
-  const _STYLE = group === undefined ? (
-    STYLE
-  ) : group === 'top' ? {
-    ...STYLE,
-    borderBottomLeftRadius: '0',
-    borderBottomRightRadius: '0',
-    marginBottom: '0',
-    borderBottom: '0',
-  } : group === 'middle' ? {
-    ...STYLE,
-    borderRadius: '0',
-    marginBottom: '0',
-    borderBottom: '0',
-  } : {
-    ...STYLE,
-    borderTopLeftRadius: '0',
-    borderTopRightRadius: '0',
-  }
+const buttonStyle = (
+  disabled?: boolean,
+  selected?: boolean,
+  hover?: boolean,
+  focus?: boolean,
+  group?: 'top' | 'middle' | 'bottom',
+) => {
+  const _STYLE =
+    group === undefined
+      ? STYLE
+      : group === 'top'
+      ? {
+          ...STYLE,
+          borderBottomLeftRadius: '0',
+          borderBottomRightRadius: '0',
+          marginBottom: '0',
+          borderBottom: '0',
+        }
+      : group === 'middle'
+      ? {
+          ...STYLE,
+          borderRadius: '0',
+          marginBottom: '0',
+          borderBottom: '0',
+        }
+      : {
+          ...STYLE,
+          borderTopLeftRadius: '0',
+          borderTopRightRadius: '0',
+        }
 
-  return disabled ? (
-    { ..._STYLE, ...DISABLED_STYLE }
-  ) : selected && hover && focus ? (
-    { ..._STYLE, ...SELECTED_HOVER_FOCUS_STYLE }
-  ) : selected && hover ? (
-    { ..._STYLE, ...SELECTED_HOVER_STYLE }
-  ) : selected && focus ? (
-    { ..._STYLE, ...SELECTED_FOCUS_STYLE }
-  ) : hover && focus ? (
-    { ..._STYLE, ...HOVER_FOCUS_STYLE }
-  ) : selected ? (
-    { ..._STYLE, ...SELECTED_STYLE }
-  ) : hover ? (
-    { ..._STYLE, ...HOVER_STYLE }
-  ) : focus ? (
-    { ..._STYLE, ...FOCUS_STYLE}
-  ) : _STYLE
+  return disabled
+    ? { ..._STYLE, ...DISABLED_STYLE }
+    : selected && hover && focus
+    ? { ..._STYLE, ...SELECTED_HOVER_FOCUS_STYLE }
+    : selected && hover
+    ? { ..._STYLE, ...SELECTED_HOVER_STYLE }
+    : selected && focus
+    ? { ..._STYLE, ...SELECTED_FOCUS_STYLE }
+    : hover && focus
+    ? { ..._STYLE, ...HOVER_FOCUS_STYLE }
+    : selected
+    ? { ..._STYLE, ...SELECTED_STYLE }
+    : hover
+    ? { ..._STYLE, ...HOVER_STYLE }
+    : focus
+    ? { ..._STYLE, ...FOCUS_STYLE }
+    : _STYLE
 }
-
 
 export const Button: FunctionComponent<Props> = (props) => {
   const [hover, setHover] = useState(false)
@@ -118,14 +125,18 @@ export const Button: FunctionComponent<Props> = (props) => {
   const onFocus = useCallback(() => setFocus(true), [])
   const onBlur = useCallback(() => setFocus(false), [])
 
-  return createElement('button', {
-    style: buttonStyle(props.disabled, props.selected, hover, focus, props.group),
-    'aria-label': props.title,
-    title: props.title,
-    onClick: props.onClick,
-    onMouseEnter,
-    onMouseLeave,
-    onFocus,
-    onBlur,
-  }, props.children)
+  return createElement(
+    'button',
+    {
+      style: buttonStyle(props.disabled, props.selected, hover, focus, props.group),
+      'aria-label': props.title,
+      title: props.title,
+      onClick: props.onClick,
+      onMouseEnter,
+      onMouseLeave,
+      onFocus,
+      onBlur,
+    },
+    props.children,
+  )
 }

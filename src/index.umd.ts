@@ -13,7 +13,6 @@ import * as NativeSelectionBindings from './bindings/native/selection'
 import * as NativeZoomBindings from './bindings/native/zoom'
 import * as Image from './renderers/image'
 
-
 export {
   getSelectionBounds,
   mergeBounds,
@@ -23,17 +22,22 @@ export {
   clamp,
   equals,
   bfs,
-  distance
+  distance,
 } from './'
-
 
 export const layout = { Cluster, Force, Hierarchy, Fisheye, Collide, Components }
 
-
 export const renderers = { WebGL, Image }
 
-
 export const bindings = {
-  react: { Renderer: ReactWebGLBindings, Selection: ReactSelectionBindings, Zoom: ReactZoomBindings },
-  native: { Download: NativeDownloadBindings, Selection: NativeSelectionBindings, Zoom: NativeZoomBindings },
+  react: {
+    Renderer: ReactWebGLBindings,
+    Selection: ReactSelectionBindings,
+    Zoom: ReactZoomBindings,
+  },
+  native: {
+    Download: NativeDownloadBindings,
+    Selection: NativeSelectionBindings,
+    Zoom: NativeZoomBindings,
+  },
 }

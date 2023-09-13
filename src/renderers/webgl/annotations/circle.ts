@@ -3,9 +3,7 @@ import { InternalRenderer } from '..'
 import { CircleAnnotation } from '../../..'
 import { colorToNumber } from '../utils'
 
-
 export class CircleAnnotationRenderer {
-
   private circle: CircleAnnotation
   private renderer: InternalRenderer<any, any>
   private circleGraphic = new PIXI.Graphics()
@@ -35,7 +33,6 @@ export class CircleAnnotationRenderer {
     this.circleGraphic.destroy()
   }
 }
-
 
 // export const CircleAnnotationRenderer: AnnotationRendererConstructor<CircleAnnotation> = (renderer: InternalRenderer<any, any>, annotation: CircleAnnotation) => {
 //   return new InternalCircleAnnotationRenderer(renderer, annotation)

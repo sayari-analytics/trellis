@@ -17,42 +17,151 @@ import { clientPositionFromEvent, pointerKeysFromEvent } from './utils'
 import { AnnotationRenderer } from './annotations'
 import { RectangleAnnotationRenderer } from './annotations/rectangle'
 
-
 install(PIXI)
 
+export type NodePointerEvent = {
+  type: 'nodePointer'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  target: Graph.Node
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
-export type NodePointerEvent = { type: 'nodePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type NodeDragEvent = {
+  type: 'nodeDrag'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  nodeX: number
+  nodeY: number
+  target: Graph.Node
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
+export type EdgePointerEvent = {
+  type: 'edgePointer'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  target: Graph.Edge
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
-export type NodeDragEvent = { type: 'nodeDrag', x: number, y: number, clientX: number, clientY: number, nodeX: number, nodeY: number, target: Graph.Node, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type AnnotationPointerEvent = {
+  type: 'annotationPointer'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  target: Graph.Annotation
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
+export type AnnotationResizePointerEvent = {
+  type: 'annotationPointer'
+  position: 'nw' | 'ne' | 'se' | 'sw'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  target: Graph.Annotation
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
-export type EdgePointerEvent = { type: 'edgePointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Edge, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type AnnotationDragEvent = {
+  type: 'annotationDrag'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  annotationX: number
+  annotationY: number
+  target: Graph.Annotation
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
+export type AnnotationResizeEvent = {
+  type: 'annotationResize'
+  position: 'nw' | 'ne' | 'se' | 'sw'
+  x: number
+  y: number
+  width: number
+  height: number
+  target: Graph.Annotation
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
-export type AnnotationPointerEvent = { type: 'annotationPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type ViewportPointerEvent = {
+  type: 'viewportPointer'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  target: Graph.Viewport
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
+export type ViewportDragEvent = {
+  type: 'viewportDrag'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  viewportX: number
+  viewportY: number
+  target: Graph.Viewport
+  altKey?: boolean
+  ctrlKey?: boolean
+  metaKey?: boolean
+  shiftKey?: boolean
+}
 
-export type AnnotationResizePointerEvent = { type: 'annotationPointer', position: 'nw' | 'ne' | 'se' | 'sw', x: number, y: number, clientX: number, clientY: number, target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type ViewportDragDecelerateEvent = {
+  type: 'viewportDragDecelarate'
+  viewportX: number
+  viewportY: number
+  target: Graph.Viewport
+}
 
-
-export type AnnotationDragEvent = { type: 'annotationDrag',  x: number, y: number, clientX: number, clientY: number, annotationX: number, annotationY: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
-
-
-export type AnnotationResizeEvent = { type: 'annotationResize', position: 'nw' | 'ne' | 'se' | 'sw',  x: number, y: number, width: number, height: number,  target: Graph.Annotation, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
-
-
-export type ViewportPointerEvent = { type: 'viewportPointer', x: number, y: number, clientX: number, clientY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
-
-
-export type ViewportDragEvent = { type: 'viewportDrag', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, target: Graph.Viewport, altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
-
-
-export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate', viewportX: number, viewportY: number, target: Graph.Viewport }
-
-
-export type ViewportWheelEvent = { type: 'viewportWheel', x: number, y: number, clientX: number, clientY: number, viewportX: number, viewportY: number, viewportZoom: number, target: Graph.Viewport }
-
+export type ViewportWheelEvent = {
+  type: 'viewportWheel'
+  x: number
+  y: number
+  clientX: number
+  clientY: number
+  viewportX: number
+  viewportY: number
+  viewportZoom: number
+  target: Graph.Viewport
+}
 
 export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> = {
   width?: number
@@ -99,13 +208,12 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
   onAnnotationClick?: (event: AnnotationPointerEvent) => void
   onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
-  
+
   onAnnotationResizePointerUp?: (event: AnnotationResizePointerEvent) => void
   onAnnotationResizePointerLeave?: (event: AnnotationResizePointerEvent) => void
   onAnnotationResize?: (event: AnnotationResizeEvent) => void
   onAnnotationResizePointerEnter?: (event: AnnotationResizePointerEvent) => void
   onAnnotationResizePointerDown?: (event: AnnotationResizePointerEvent) => void
-
 
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
@@ -120,18 +228,28 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onViewportWheel?: (event: ViewportWheelEvent) => void
 }
 
-
 export const RENDERER_OPTIONS = {
-  width: 800, height: 600, x: 0, y: 0, zoom: 1, minZoom: 0.1, maxZoom: 2.5,
-  animateViewportPosition: 600, animateViewportZoom: 600, animateNodePosition: 800, animateNodeRadius: 800, dragInertia: 0.88,
-  nodesEqual: () => false, edgesEqual: () => false, nodeIsEqual: () => false, edgeIsEqual: () => false,
+  width: 800,
+  height: 600,
+  x: 0,
+  y: 0,
+  zoom: 1,
+  minZoom: 0.1,
+  maxZoom: 2.5,
+  animateViewportPosition: 600,
+  animateViewportZoom: 600,
+  animateNodePosition: 800,
+  animateNodeRadius: 800,
+  dragInertia: 0.88,
+  nodesEqual: () => false,
+  edgesEqual: () => false,
+  nodeIsEqual: () => false,
+  edgeIsEqual: () => false,
 }
 
 PIXI.utils.skipHello()
 
-
-export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
-
+export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
   width = RENDERER_OPTIONS.width
   height = RENDERER_OPTIONS.height
   minZoom = RENDERER_OPTIONS.minZoom
@@ -191,13 +309,13 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
   private clickedContainer = false
   private previousTime = performance.now()
-  private debug?: { logPerformance?: boolean, stats?: Stats }
+  private debug?: { logPerformance?: boolean; stats?: Stats }
   private cancelAnimationLoop: () => void
-  private interpolateX?: (time: number) => { value: number, done: boolean }
+  private interpolateX?: (time: number) => { value: number; done: boolean }
   private targetX = RENDERER_OPTIONS.x
-  private interpolateY?: (time: number) => { value: number, done: boolean }
+  private interpolateY?: (time: number) => { value: number; done: boolean }
   private targetY = RENDERER_OPTIONS.y
-  private interpolateZoom?: (time: number) => { value: number, done: boolean }
+  private interpolateZoom?: (time: number) => { value: number; done: boolean }
   private targetZoom = RENDERER_OPTIONS.zoom
   private firstRender = true
   private doubleClickTimeout?: number
@@ -252,9 +370,17 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   onViewportPointerLeave?: (event: ViewportPointerEvent) => void
   onViewportWheel?: (event: ViewportWheelEvent) => void
 
-  update: (graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => void
+  update: (graph: {
+    nodes: N[]
+    edges: E[]
+    options?: Options<N, E>
+    annotations?: Graph.Annotation[]
+  }) => void
 
-  constructor(options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) {
+  constructor(options: {
+    container: HTMLDivElement
+    debug?: { logPerformance?: boolean; stats?: Stats }
+  }) {
     if (!(options.container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
     }
@@ -294,7 +420,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.zoomInteraction = new Zoom(this)
     this.dragInteraction = new Drag(this)
     this.decelerateInteraction = new Decelerate(this)
-
     ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager)
       .on('pointerenter', this.pointerEnter)
       .on('pointerdown', this.pointerDown)
@@ -328,18 +453,67 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     nodes,
     edges,
     options: {
-      width = RENDERER_OPTIONS.width, height = RENDERER_OPTIONS.height, x = RENDERER_OPTIONS.x, y = RENDERER_OPTIONS.y, zoom = RENDERER_OPTIONS.zoom,
-      minZoom = RENDERER_OPTIONS.minZoom, maxZoom = RENDERER_OPTIONS.maxZoom, cursor,
-      animateNodePosition = RENDERER_OPTIONS.animateNodePosition, animateNodeRadius = RENDERER_OPTIONS.animateNodeRadius,
-      animateViewportPosition = RENDERER_OPTIONS.animateViewportPosition, animateViewportZoom = RENDERER_OPTIONS.animateViewportZoom, dragInertia = RENDERER_OPTIONS.dragInertia,
-      nodesEqual = RENDERER_OPTIONS.nodesEqual, edgesEqual = RENDERER_OPTIONS.edgesEqual, nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual, edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
-      onNodePointerEnter, onNodePointerDown, onNodeDragStart, onNodeDrag, onNodeDragEnd, onNodePointerUp, onNodeClick, onNodeDoubleClick, onNodePointerLeave,
-      onEdgePointerEnter, onEdgePointerDown, onEdgePointerUp, onEdgeClick, onEdgeDoubleClick, onEdgePointerLeave,
-      onAnnotationPointerEnter, onAnnotationPointerDown, onAnnotationDragStart, onAnnotationDrag, onAnnotationDragEnd, onAnnotationResize, onAnnotationPointerUp, onAnnotationClick, onAnnotationDoubleClick, onAnnotationPointerLeave,
-      onViewportPointerEnter, onViewportPointerDown, onViewportDragStart, onViewportDrag, onViewportDragEnd, onViewportPointerMove, onViewportPointerUp, onViewportClick, onViewportDoubleClick, onViewportPointerLeave, onViewportWheel,
+      width = RENDERER_OPTIONS.width,
+      height = RENDERER_OPTIONS.height,
+      x = RENDERER_OPTIONS.x,
+      y = RENDERER_OPTIONS.y,
+      zoom = RENDERER_OPTIONS.zoom,
+      minZoom = RENDERER_OPTIONS.minZoom,
+      maxZoom = RENDERER_OPTIONS.maxZoom,
+      cursor,
+      animateNodePosition = RENDERER_OPTIONS.animateNodePosition,
+      animateNodeRadius = RENDERER_OPTIONS.animateNodeRadius,
+      animateViewportPosition = RENDERER_OPTIONS.animateViewportPosition,
+      animateViewportZoom = RENDERER_OPTIONS.animateViewportZoom,
+      dragInertia = RENDERER_OPTIONS.dragInertia,
+      nodesEqual = RENDERER_OPTIONS.nodesEqual,
+      edgesEqual = RENDERER_OPTIONS.edgesEqual,
+      nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual,
+      edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
+      onNodePointerEnter,
+      onNodePointerDown,
+      onNodeDragStart,
+      onNodeDrag,
+      onNodeDragEnd,
+      onNodePointerUp,
+      onNodeClick,
+      onNodeDoubleClick,
+      onNodePointerLeave,
+      onEdgePointerEnter,
+      onEdgePointerDown,
+      onEdgePointerUp,
+      onEdgeClick,
+      onEdgeDoubleClick,
+      onEdgePointerLeave,
+      onAnnotationPointerEnter,
+      onAnnotationPointerDown,
+      onAnnotationDragStart,
+      onAnnotationDrag,
+      onAnnotationDragEnd,
+      onAnnotationResize,
+      onAnnotationPointerUp,
+      onAnnotationClick,
+      onAnnotationDoubleClick,
+      onAnnotationPointerLeave,
+      onViewportPointerEnter,
+      onViewportPointerDown,
+      onViewportDragStart,
+      onViewportDrag,
+      onViewportDragEnd,
+      onViewportPointerMove,
+      onViewportPointerUp,
+      onViewportClick,
+      onViewportDoubleClick,
+      onViewportPointerLeave,
+      onViewportWheel,
     } = RENDERER_OPTIONS,
-    annotations
-  }: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
+    annotations,
+  }: {
+    nodes: N[]
+    edges: E[]
+    options?: Options<N, E>
+    annotations?: Graph.Annotation[]
+  }) => {
     this.onNodePointerEnter = onNodePointerEnter
     this.onNodePointerDown = onNodePointerDown
     this.onNodeDragStart = onNodeDragStart
@@ -376,10 +550,16 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.onViewportPointerUp = onViewportPointerUp
     this.onViewportPointerLeave = onViewportPointerLeave
     this.onViewportWheel = onViewportWheel
-    this.animateViewportPosition = animateViewportPosition === true ? RENDERER_OPTIONS.animateViewportPosition : animateViewportPosition
-    this.animateViewportZoom = animateViewportZoom === true ? RENDERER_OPTIONS.animateViewportZoom : animateViewportZoom
-    this.animateNodePosition = animateNodePosition === true ? RENDERER_OPTIONS.animateNodePosition : animateNodePosition
-    this.animateNodeRadius = animateNodeRadius === true ? RENDERER_OPTIONS.animateNodeRadius : animateNodeRadius
+    this.animateViewportPosition =
+      animateViewportPosition === true
+        ? RENDERER_OPTIONS.animateViewportPosition
+        : animateViewportPosition
+    this.animateViewportZoom =
+      animateViewportZoom === true ? RENDERER_OPTIONS.animateViewportZoom : animateViewportZoom
+    this.animateNodePosition =
+      animateNodePosition === true ? RENDERER_OPTIONS.animateNodePosition : animateNodePosition
+    this.animateNodeRadius =
+      animateNodeRadius === true ? RENDERER_OPTIONS.animateNodeRadius : animateNodeRadius
     this.dragInertia = dragInertia
     this.minZoom = minZoom
     this.maxZoom = maxZoom
@@ -410,7 +590,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (x !== this.targetX) {
-      if (x === this.expectedViewportXPosition || !this.animateViewportPosition || this.firstRender) {
+      if (
+        x === this.expectedViewportXPosition ||
+        !this.animateViewportPosition ||
+        this.firstRender
+      ) {
         this.interpolateX = undefined
         this.x = x
       } else {
@@ -423,7 +607,11 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (y !== this.targetY) {
-      if (y === this.expectedViewportYPosition || !this.animateViewportPosition || this.firstRender) {
+      if (
+        y === this.expectedViewportYPosition ||
+        !this.animateViewportPosition ||
+        this.firstRender
+      ) {
         this.interpolateY = undefined
         this.y = y
       } else {
@@ -435,8 +623,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-    this.root.x = (this.x * this.zoom) + (this.width / 2)
-    this.root.y = (this.y * this.zoom) + (this.height / 2)
+    this.root.x = this.x * this.zoom + this.width / 2
+    this.root.y = this.y * this.zoom + this.height / 2
 
     const edgesAreEqual = edgesEqual(this.edges, edges)
     const nodesAreEqual = nodesEqual(this.nodes, nodes)
@@ -445,7 +633,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
      * Build edge indices
      */
     if (!edgesAreEqual) {
-      this.edgeIndex = { }
+      this.edgeIndex = {}
 
       for (const edge of edges) {
         if (this.edgeIndex[edge.source] === undefined) {
@@ -466,7 +654,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       }
     }
 
-
     /**
      * Node enter/update/exit
      */
@@ -482,12 +669,20 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
           if (this.edgeIndex[node.id]) {
             // nodes w edges from existing positioned nodes enter from one of those nodes
-            adjacentNode = Object.keys(this.edgeIndex[node.id]).find((adjacentNodeId) => (
-              this.nodesById[adjacentNodeId]?.node.x !== undefined && this.nodesById[adjacentNodeId]?.node.y !== undefined
-            ))
+            adjacentNode = Object.keys(this.edgeIndex[node.id]).find(
+              (adjacentNodeId) =>
+                this.nodesById[adjacentNodeId]?.node.x !== undefined &&
+                this.nodesById[adjacentNodeId]?.node.y !== undefined,
+            )
           }
 
-          nodesById[node.id] = new NodeRenderer(this, node, this.nodesById[adjacentNode ?? '']?.x ?? 0, this.nodesById[adjacentNode ?? '']?.y ?? 0, node.radius)
+          nodesById[node.id] = new NodeRenderer(
+            this,
+            node,
+            this.nodesById[adjacentNode ?? '']?.x ?? 0,
+            this.nodesById[adjacentNode ?? '']?.y ?? 0,
+            node.radius,
+          )
           this.dirty = true
         } else if (!nodeIsEqual(this.nodesById[node.id].node, node)) {
           // node update
@@ -508,7 +703,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
       this.nodesById = nodesById
     }
-
 
     /**
      * Edge enter/update/exit
@@ -543,7 +737,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.edgesById = edgesById
     }
 
-
     /**
      * Annotation enter/update/exit
      */
@@ -566,9 +759,13 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       } else {
         // annotation update
         if (annotation.type === 'circle') {
-          annotationsById[id] = (this.annotationsById[id] as CircleAnnotationRenderer).update(annotation)
+          annotationsById[id] = (this.annotationsById[id] as CircleAnnotationRenderer).update(
+            annotation,
+          )
         } else if (annotation.type === 'rectangle' || annotation.type === 'text') {
-          annotationsById[id] = (this.annotationsById[id] as RectangleAnnotationRenderer).update(annotation)
+          annotationsById[id] = (this.annotationsById[id] as RectangleAnnotationRenderer).update(
+            annotation,
+          )
         }
 
         this.dirty = true
@@ -663,7 +860,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-
     let dirty = false
 
     if (this.dirty) {
@@ -691,8 +887,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     }
 
     if (this.viewportDirty || this.dirty) {
-      this.root.x = (this.x * this.zoom) + (this.width / 2)
-      this.root.y = (this.y * this.zoom) + (this.height / 2)
+      this.root.x = this.x * this.zoom + this.width / 2
+      this.root.y = this.y * this.zoom + this.height / 2
       this.app.render()
     }
 
@@ -701,7 +897,12 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   }
 
   private _measurePerformance?: true
-  private _debugUpdate = (graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
+  private _debugUpdate = (graph: {
+    nodes: N[]
+    edges: E[]
+    options?: Options<N, E>
+    annotations?: Graph.Annotation[]
+  }) => {
     if (this._measurePerformance) {
       performance.measure('external', 'external')
     }
@@ -753,7 +954,6 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       this.viewportDirty = true
     }
 
-
     let dirty = false
 
     if (this.dirty) {
@@ -774,8 +974,8 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
 
     if (this.viewportDirty || this.dirty) {
       performance.mark('draw')
-      this.root.x = (this.x * this.zoom) + (this.width / 2)
-      this.root.y = (this.y * this.zoom) + (this.height / 2)
+      this.root.x = this.x * this.zoom + this.width / 2
+      this.root.y = this.y * this.zoom + this.height / 2
       this.app.render()
       performance.measure('draw', 'draw')
     }
@@ -807,7 +1007,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
       // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
       // eslint-disable-next-line no-console
       console.log(
-        `%c${total.toFixed(1)}ms%c (update: %c${update.toFixed(1)}%c, render: %c${render.toFixed(1)}%c, draw: %c${draw.toFixed(1)}%c, external: %c${external.toFixed(1)}%c)`,
+        `%c${total.toFixed(1)}ms%c (update: %c${update.toFixed(1)}%c, render: %c${render.toFixed(
+          1,
+        )}%c, draw: %c${draw.toFixed(1)}%c, external: %c${external.toFixed(1)}%c)`,
         `color: ${total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'}`,
         'color: #666',
         `color: ${update <= 5 ? '#6c6' : update <= 10 ? '#f88' : update <= 20 ? '#e22' : '#a00'}`,
@@ -816,7 +1018,9 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         'color: #666',
         `color: ${draw <= 5 ? '#6c6' : draw <= 10 ? '#f88' : draw <= 20 ? '#e22' : '#a00'}`,
         'color: #666',
-        `color: ${external <= 5 ? '#6c6' : external <= 10 ? '#f88' : external <= 20 ? '#e22' : '#a00'}`,
+        `color: ${
+          external <= 5 ? '#6c6' : external <= 10 ? '#f88' : external <= 20 ? '#e22' : '#a00'
+        }`,
         'color: #666',
       )
     }
@@ -862,7 +1066,12 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
           // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
           const background = new PIXI.Graphics()
             .beginFill(0xffffff)
-            .drawRect((-this.x * this.zoom) - (this.width / 2), (-this.y * this.zoom) - (this.height / 2), this.width, this.height)
+            .drawRect(
+              -this.x * this.zoom - this.width / 2,
+              -this.y * this.zoom - this.height / 2,
+              this.width,
+              this.height,
+            )
             .endFill()
 
           this.root.addChildAt(background, 0)
@@ -875,7 +1084,10 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
             // new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
           )
 
-          const dataURL = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype)
+          const dataURL = (this.app.renderer.plugins.extract as PIXI.Extract).base64(
+            imageTexture,
+            mimetype,
+          )
           imageTexture.destroy()
           this.root.removeChild(background)
           background.destroy()
@@ -902,31 +1114,35 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
           // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
           const background = new PIXI.Graphics()
             .beginFill(0xffffff)
-            .drawRect((-this.x * this.zoom) - (this.width / 2), (-this.y * this.zoom) - (this.height / 2), this.width, this.height)
+            .drawRect(
+              -this.x * this.zoom - this.width / 2,
+              -this.y * this.zoom - this.height / 2,
+              this.width,
+              this.height,
+            )
             .endFill()
 
           this.root.addChildAt(background, 0)
 
           // what causes this to throw on some machines? https://github.com/sayari-analytics/graph-ui/issues/1557
-          const imageTexture = this.app.renderer.generateTexture(
-            this.root,
-            {
-              scaleMode: PIXI.SCALE_MODES.LINEAR,
-              resolution,
-              // region: new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
-            }
-          )
-
-          return (this.app.renderer.plugins.extract as PIXI.Extract).canvas(imageTexture).toBlob(blob => {
-            imageTexture.destroy()
-            this.root.removeChild(background)
-            background.destroy()
-            if (blob !== null) {
-              resolve(URL.createObjectURL(blob))
-            } else {
-              reject(new Error('failed to generate blob'))
-            }
+          const imageTexture = this.app.renderer.generateTexture(this.root, {
+            scaleMode: PIXI.SCALE_MODES.LINEAR,
+            resolution,
+            // region: new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
           })
+
+          return (this.app.renderer.plugins.extract as PIXI.Extract)
+            .canvas(imageTexture)
+            .toBlob((blob) => {
+              imageTexture.destroy()
+              this.root.removeChild(background)
+              background.destroy()
+              if (blob !== null) {
+                resolve(URL.createObjectURL(blob))
+              } else {
+                reject(new Error('failed to generate blob'))
+              }
+            })
         } catch (err) {
           reject(err)
         }
@@ -937,7 +1153,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private pointerEnter = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.onViewportPointerEnter?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.onViewportPointerEnter?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: client.x,
+      clientY: client.y,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      ...pointerKeysFromEvent(event.data.originalEvent),
+    })
   }
 
   private pointerDown = (event: PIXI.InteractionEvent) => {
@@ -950,14 +1174,26 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     this.dragInteraction.down(event)
     this.decelerateInteraction.down()
 
-    if (this.hoveredNode === undefined && this.clickedNode === undefined && 
-        this.hoveredEdge === undefined && this.clickedEdge === undefined &&
-        this.hoveredAnnotation === undefined && this.clickedAnnotation == undefined
+    if (
+      this.hoveredNode === undefined &&
+      this.clickedNode === undefined &&
+      this.hoveredEdge === undefined &&
+      this.clickedEdge === undefined &&
+      this.hoveredAnnotation === undefined &&
+      this.clickedAnnotation == undefined
     ) {
       this.clickedContainer = true
       const { x, y } = this.root.toLocal(event.data.global)
       const client = clientPositionFromEvent(event.data.originalEvent)
-      this.onViewportPointerDown?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+      this.onViewportPointerDown?.({
+        type: 'viewportPointer',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        target: { x: this.x, y: this.y, zoom: this.zoom },
+        ...pointerKeysFromEvent(event.data.originalEvent),
+      })
     }
   }
 
@@ -968,7 +1204,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
     const { x, y } = this.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
 
-    this.onViewportPointerMove?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.onViewportPointerMove?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: client.x,
+      clientY: client.y,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      ...pointerKeysFromEvent(event.data.originalEvent),
+    })
   }
 
   private pointerUp = (event: PIXI.InteractionEvent) => {
@@ -994,17 +1238,41 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
         ctrlKey: this.ctrlKey,
         metaKey: this.metaKey,
         shiftKey: this.shiftKey,
-        ...pointerKeysFromEvent(event.data.originalEvent)
+        ...pointerKeysFromEvent(event.data.originalEvent),
       })
     } else if (this.clickedContainer) {
       this.clickedContainer = false
-      this.onViewportPointerUp?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
-      this.onViewportClick?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+      this.onViewportPointerUp?.({
+        type: 'viewportPointer',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        target: { x: this.x, y: this.y, zoom: this.zoom },
+        ...pointerKeysFromEvent(event.data.originalEvent),
+      })
+      this.onViewportClick?.({
+        type: 'viewportPointer',
+        x,
+        y,
+        clientX: client.x,
+        clientY: client.y,
+        target: { x: this.x, y: this.y, zoom: this.zoom },
+        ...pointerKeysFromEvent(event.data.originalEvent),
+      })
 
       if (this.doubleClick) {
         this.doubleClick = false
         this.doubleClickTimeout = undefined
-        this.onViewportDoubleClick?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+        this.onViewportDoubleClick?.({
+          type: 'viewportPointer',
+          x,
+          y,
+          clientX: client.x,
+          clientY: client.y,
+          target: { x: this.x, y: this.y, zoom: this.zoom },
+          ...pointerKeysFromEvent(event.data.originalEvent),
+        })
       }
     }
   }
@@ -1012,7 +1280,15 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   private pointerLeave = (event: PIXI.InteractionEvent) => {
     const { x, y } = this.root.toLocal(event.data.global)
     const client = clientPositionFromEvent(event.data.originalEvent)
-    this.onViewportPointerLeave?.({ type: 'viewportPointer', x, y, clientX: client.x, clientY: client.y, target: { x: this.x, y: this.y, zoom: this.zoom }, ...pointerKeysFromEvent(event.data.originalEvent) })
+    this.onViewportPointerLeave?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: client.x,
+      clientY: client.y,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      ...pointerKeysFromEvent(event.data.originalEvent),
+    })
   }
 
   private clearDoubleClick = () => {
@@ -1021,12 +1297,19 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge>{
   }
 }
 
-
-export const Renderer = (options: { container: HTMLDivElement, debug?: { logPerformance?: boolean, stats?: Stats } }) => {
+export const Renderer = (options: {
+  container: HTMLDivElement
+  debug?: { logPerformance?: boolean; stats?: Stats }
+}) => {
   const pixiRenderer = new InternalRenderer(options)
 
-  const render = <N extends Graph.Node, E extends Graph.Edge>(graph: { nodes: N[], edges: E[], options?: Options<N, E>, annotations?: Graph.Annotation[] }) => {
-    (pixiRenderer as unknown as InternalRenderer<N, E>).update(graph)
+  const render = <N extends Graph.Node, E extends Graph.Edge>(graph: {
+    nodes: N[]
+    edges: E[]
+    options?: Options<N, E>
+    annotations?: Graph.Annotation[]
+  }) => {
+    ;(pixiRenderer as unknown as InternalRenderer<N, E>).update(graph)
   }
 
   render.delete = pixiRenderer.delete

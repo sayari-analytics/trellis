@@ -8,7 +8,6 @@ export type Options = {
   onClick?: () => Promise<string>
 }
 
-
 const DEFAULT_TOP = '20px'
 const DEFAULT_LEFT = '20px'
 const DEFAULT_BG = '#fff'
@@ -18,7 +17,6 @@ const DEFAULT_COLOR = '#666'
 // const DEFAULT_COLOR_HOVER = '#666'
 // const DEFAULT_COLOR_HOVER_SELECTED = '#222'
 // const DEFAULT_DISABLED = '#aaa'
-
 
 const styleButton = (button: HTMLButtonElement) => {
   button.style.border = '1px solid #aaa'
@@ -37,7 +35,6 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-
 export const Control = ({ container }: { container: HTMLDivElement }) => {
   const controlContainer = document.createElement('div')
   controlContainer.style.position = 'absolute'
@@ -47,10 +44,10 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
   download.textContent = 'd'
   download.setAttribute('aria-label', 'Download')
   download.setAttribute('title', 'Download')
-  download.onmouseenter = () => download.style.background = DEFAULT_BG_HOVER
-  download.onmouseleave = () => download.style.background = DEFAULT_BG
-  download.onfocus = () => download.style.boxShadow = '0px 0px 0px 1px #aaa inset'
-  download.onblur = () => download.style.boxShadow = 'none'
+  download.onmouseenter = () => (download.style.background = DEFAULT_BG_HOVER)
+  download.onmouseleave = () => (download.style.background = DEFAULT_BG)
+  download.onfocus = () => (download.style.boxShadow = '0px 0px 0px 1px #aaa inset')
+  download.onblur = () => (download.style.boxShadow = 'none')
   download.onpointerdown = () => {
     download.style.background = DEFAULT_BG
     download.style.color = DEFAULT_COLOR
@@ -59,7 +56,6 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
 
   container.style.position = 'relative'
   container.appendChild(controlContainer)
-
 
   return (options: Options) => {
     controlContainer.style.display = 'block'

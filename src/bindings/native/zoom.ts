@@ -12,10 +12,8 @@ export type ViewportChangeOptions = Partial<{
   padding: number
 }>
 
-
 const DEFAULT_TOP = '20px'
 const DEFAULT_LEFT = '20px'
-
 
 const styleButton = (button: HTMLButtonElement) => {
   button.style.border = '1px solid #aaa'
@@ -29,17 +27,16 @@ const styleButton = (button: HTMLButtonElement) => {
   button.style.boxSizing = 'border-box'
   button.style.fontWeight = 'bold'
   button.style.color = '#666'
-  button.onmouseenter = () => button.style.background = '#eee'
-  button.onmouseleave = () => button.style.background = '#fff'
-  button.onfocus = () => button.style.boxShadow = '0px 0px 0px 1px #aaa inset'
-  button.onblur = () => button.style.boxShadow = 'none'
+  button.onmouseenter = () => (button.style.background = '#eee')
+  button.onmouseleave = () => (button.style.background = '#fff')
+  button.onfocus = () => (button.style.boxShadow = '0px 0px 0px 1px #aaa inset')
+  button.onblur = () => (button.style.boxShadow = 'none')
 
   return button
 }
 
-
-export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
-
+export const clampZoom = (min: number, max: number, zoom: number) =>
+  Math.max(min, Math.min(max, zoom))
 
 /**
  * TODO
@@ -90,7 +87,6 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
     } else {
       controlContainer.style.left = DEFAULT_LEFT
     }
-
 
     zoomIn.onpointerdown = options.onZoomIn ?? null
     zoomOut.onpointerdown = options.onZoomOut ?? null

@@ -1,19 +1,23 @@
 import * as PIXI from 'pixi.js-legacy'
 import { TextStyleFontWeight } from 'pixi.js-legacy'
 
-
 export class FontIconSprite {
-
   cache: { [icon: string]: PIXI.Texture } = {}
 
-  create(text: string, fontFamily: string, fontSize: number, fontWeight: TextStyleFontWeight, fill: string) {
+  create(
+    text: string,
+    fontFamily: string,
+    fontSize: number,
+    fontWeight: TextStyleFontWeight,
+    fill: string,
+  ) {
     const icon = `${text}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
     if (this.cache[icon] === undefined) {
       const textSprite = new PIXI.Text(text, {
         fontFamily,
         fontSize: fontSize * 4,
         fontWeight,
-        fill
+        fill,
       })
       textSprite.updateText(true)
       this.cache[icon] = textSprite.texture
@@ -32,4 +36,3 @@ export class FontIconSprite {
     this.cache = {}
   }
 }
-

@@ -2,22 +2,17 @@ import * as WebGL from '../webgl'
 import { Node, Edge, Annotation } from '../../'
 
 export type Options = {
-  width?: number;
-  height?: number;
-  x?: number;
-  y?: number;
-  zoom?: number;
-  resolution?: number;
-  mimetype?: string;
-};
+  width?: number
+  height?: number
+  x?: number
+  y?: number
+  zoom?: number
+  resolution?: number
+  mimetype?: string
+}
 
 export const Renderer = <N extends Node, E extends Edge>() => {
-  return (graph: {
-    nodes: N[];
-    edges: E[];
-    annotations?: Annotation[];
-    options?: Options;
-  }) => {
+  return (graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Options }) => {
     const pixiRenderer = new WebGL.InternalRenderer({
       container: document.createElement('div'),
     })
@@ -43,10 +38,10 @@ export const Renderer = <N extends Node, E extends Edge>() => {
 
 export const BlobRenderer = <N extends Node, E extends Edge>() => {
   return (graph: {
-    nodes: N[];
-    edges: E[];
-    annotations?: Annotation[];
-    options?: Exclude<Options, 'mimetype'>;
+    nodes: N[]
+    edges: E[]
+    annotations?: Annotation[]
+    options?: Exclude<Options, 'mimetype'>
   }) => {
     const pixiRenderer = new WebGL.InternalRenderer({
       container: document.createElement('div'),
