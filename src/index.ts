@@ -13,17 +13,7 @@ import * as NativeSelectionBindings from './bindings/native/selection'
 import * as NativeZoomBindings from './bindings/native/zoom'
 import * as Image from './renderers/image'
 
-export {
-  getSelectionBounds,
-  mergeBounds,
-  viewportToBounds,
-  boundsToViewport,
-  boundsToDimensions,
-  clamp,
-  equals,
-  bfs,
-  distance,
-} from './trellis'
+export * from './trellis'
 
 export const layout = { Cluster, Force, Hierarchy, Fisheye, Collide, Components }
 
