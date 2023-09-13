@@ -12,7 +12,7 @@ import {
   clientPositionFromEvent,
   pointerKeysFromEvent,
 } from './utils'
-import { Node, Edge, EdgeStyle } from '../..'
+import { Node, Edge, EdgeStyle } from '../../trellis'
 import { ArrowSprite } from './sprites/arrowSprite'
 
 const LINE_HOVER_RADIUS = 4

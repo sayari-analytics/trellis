@@ -2,8 +2,10 @@
   "name": "@sayari/trellis",
   "version": "0.6.0",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "source": "src/index.ts",
+  "main": "./dist/main.js",
+  "module": "./dist/module.js",
+  "types": "./dist/types.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier \"src/**/**.{ts,tsx}\" --write",
@@ -13,11 +15,10 @@
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
-    "build:umd": "parcel build src/index.umd.ts --out-file dist/index.umd.min.js --global trellis",
-    "build": "rm -rf ./dist/ && npm run build:tsc && npm run build:umd && npm run docs:build",
+    "build": "npm run clean && npm run build:tsc && parcel build",
     "examples:dev": "npm run clean && parcel examples/index.html",
     "docs:dev": "npm run clean && parcel docs-src/index.html",
-    "docs:build": "rm -rf ./docs/ && parcel build docs-src/index.html --out-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
+    "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
@@ -31,6 +32,9 @@
     "pixi.js-legacy": "^6.5.5"
   },
   "devDependencies": {
+    "@parcel/packager-ts": "^2.9.3",
+    "@parcel/transformer-typescript-tsc": "^2.9.3",
+    "@parcel/transformer-typescript-types": "^2.9.3",
     "@turf/clusters-kmeans": "^6.3.0",
     "@types/d3-color": "^3.1.0",
     "@types/d3-force": "^3.0.5",
@@ -42,7 +46,7 @@
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.8",
     "@types/react-resize-detector": "^5.0.0",
-    "@types/stats": "^0.16.30",
+    "@types/stats.js": "^0.17.0",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "d3-scale": "^4.0.2",

@@ -12,7 +12,7 @@ import {
   SimulationNodeDatum,
 } from 'd3-force'
 import { Extend } from '../../types'
-import { Node, Edge } from '../../'
+import { Node, Edge } from '../../trellis'
 
 export type Options = Partial<{
   nodeStrength: number

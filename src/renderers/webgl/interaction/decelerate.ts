@@ -1,5 +1,5 @@
 import { InternalRenderer } from '..'
-import { Node, Edge } from '../../..'
+import { Node, Edge } from '../../../trellis'
 
 /**
  * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)

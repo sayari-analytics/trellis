@@ -1,5 +1,5 @@
 import { forceCollide, forceSimulation, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge } from '../../'
+import { Node, Edge } from '../../trellis'
 
 export type Options = Partial<{
   nodePadding: number

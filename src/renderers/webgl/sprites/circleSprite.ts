@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { Node, Edge } from '../../..'
+import { Node, Edge } from '../../../trellis'
 
 export class CircleSprite<N extends Node, E extends Edge> {
   static radius = 500

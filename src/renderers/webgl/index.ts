@@ -1,6 +1,7 @@
+import Stats from 'stats.js'
 import * as PIXI from 'pixi.js-legacy'
 import { install } from '@pixi/unsafe-eval'
-import * as Graph from '../..'
+import * as Graph from '../../trellis'
 import { animationFrameLoop, interpolate } from '../../utils'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'

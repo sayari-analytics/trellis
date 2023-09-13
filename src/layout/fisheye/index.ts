@@ -1,4 +1,4 @@
-import { Node } from '../..'
+import { Node } from '../../trellis'
 
 export const Layout = () => {
   return <N extends Node>(previousNodes: N[], nextNodes: N[]) => {
