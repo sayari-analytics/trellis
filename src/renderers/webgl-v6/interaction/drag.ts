@@ -3,16 +3,14 @@ import { InternalRenderer } from '..'
 import { Node, Edge } from '../../..'
 import { clientPositionFromEvent } from '../utils'
 
-
 /**
  * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
-export class Drag <N extends Node, E extends Edge>{
-
+export class Drag<N extends Node, E extends Edge> {
   private renderer: InternalRenderer<N, E>
   private paused = false
-  private last?: { x: number, y: number }
+  private last?: { x: number; y: number }
   private current?: number
   private moved = false
 
@@ -43,8 +41,8 @@ export class Drag <N extends Node, E extends Edge>{
       const dy = y - this.last.y
 
       if (this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
-        const viewportX = this.renderer.x + (dx / this.renderer.zoom)
-        const viewportY = this.renderer.y + (dy / this.renderer.zoom)
+        const viewportX = this.renderer.x + dx / this.renderer.zoom
+        const viewportY = this.renderer.y + dy / this.renderer.zoom
         this.last = { x, y }
         this.moved = true
 
@@ -68,7 +66,7 @@ export class Drag <N extends Node, E extends Edge>{
             altKey: this.renderer.altKey,
             ctrlKey: this.renderer.ctrlKey,
             metaKey: this.renderer.metaKey,
-            shiftKey: this.renderer.shiftKey,
+            shiftKey: this.renderer.shiftKey
           })
         }
 
@@ -84,7 +82,7 @@ export class Drag <N extends Node, E extends Edge>{
           altKey: this.renderer.altKey,
           ctrlKey: this.renderer.ctrlKey,
           metaKey: this.renderer.metaKey,
-          shiftKey: this.renderer.shiftKey,
+          shiftKey: this.renderer.shiftKey
         })
       }
     }

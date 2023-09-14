@@ -1,16 +1,14 @@
 import { Sprite } from 'pixi.js-legacy'
 import { Renderer } from '..'
 
-
 export class Arrow {
-
   mounted = false
   height: number
   width: number
 
   private renderer: Renderer
   private arrow: Sprite
-  
+
   constructor(renderer: Renderer) {
     this.renderer = renderer
     this.arrow = new Sprite(this.renderer.arrow.texture)

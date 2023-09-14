@@ -6,16 +6,14 @@ import * as Graph from '../../src'
 import * as Force from '../../src/layout/force'
 import * as Hierarchy from '../../src/layout/hierarchy'
 
-
 // try { document.createElement('canvas').getContext('webgl'); console.info('browser supports webgl') } catch (err) { console.warn(err) }
-
 
 const sampleCoordinatePlane = function* (count: number, step: number, sample: number) {
   const side = Math.sqrt(count / sample) * step
   let i = 0
 
-  for (let x = -(side / 2); x < (side / 2); x += step) {
-    for (let y = -(side / 2); y < (side / 2); y += step) {
+  for (let x = -(side / 2); x < side / 2; x += step) {
+    for (let y = -(side / 2); y < side / 2; y += step) {
       if (i >= count) {
         return
       }
@@ -32,19 +30,27 @@ const PURPLE = '#7A5DC5'
 const LIGHT_PURPLE = '#CAD'
 
 const NODE_STYLE: Graph.NodeStyle = {
-  color: PURPLE, stroke: [{ width: 2, color: LIGHT_PURPLE }], label: { position: 'bottom' }
+  color: PURPLE,
+  stroke: [{ width: 2, color: LIGHT_PURPLE }],
+  label: { position: 'bottom' }
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
-  color: '#f66', stroke: [{ width: 2, color: '#fcc' }], label: { position: 'bottom' }
+  color: '#f66',
+  stroke: [{ width: 2, color: '#fcc' }],
+  label: { position: 'bottom' }
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
-  width: 1, stroke: '#aaa', arrow: 'reverse',
+  width: 1,
+  stroke: '#aaa',
+  arrow: 'reverse'
 }
 
 const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
-  width: 2, stroke: '#f66', arrow: 'reverse',
+  width: 2,
+  stroke: '#f66',
+  arrow: 'reverse'
 }
 
 const force = Force.Layout()
@@ -67,7 +73,10 @@ for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
     for (const adjacentY of [y - step, y, y + step]) {
       if (coordinates[adjacentX]?.has(adjacentY) && !(adjacentX === x && adjacentY === y)) {
         edges.push({
-          id: `${x}|${y}|${adjacentX}|${adjacentY}`, source: `${x}|${y}`, target: `${adjacentX}|${adjacentY}`, style: EDGE_STYLE
+          id: `${x}|${y}|${adjacentX}|${adjacentY}`,
+          source: `${x}|${y}`,
+          target: `${adjacentX}|${adjacentY}`,
+          style: EDGE_STYLE
         })
       }
     }
@@ -125,7 +134,7 @@ const options: Renderer.Options = {
     renderer.update({ nodes, edges, options })
     // force({ nodes, edges }).then((graph) => {
     //   nodes = graph.nodes
-    
+
     //   const { x, y, zoom } = Graph.boundsToViewport(
     //     Graph.getSelectionBounds(nodes, 40),
     //     { width: options.width, height: options.height }
@@ -133,7 +142,7 @@ const options: Renderer.Options = {
     //   options.x = x
     //   options.y = y
     //   options.zoom = zoom
-    
+
     //   renderer.update({ nodes, edges, options: options })
     // })
   },
@@ -151,16 +160,10 @@ const options: Renderer.Options = {
   },
   onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
-    nodes = nodes.map((node) => (
-      node.id === event.target.id ?
-        { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } :
-        node
-    ))
-    edges = edges.map((edge) => (
-      edge.source === event.target.id || edge.target === event.target.id ?
-        { ...edge, style: EDGE_HOVER_STYLE } :
-        edge
-    ))
+    nodes = nodes.map((node) => (node.id === event.target.id ? { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node))
+    edges = edges.map((edge) =>
+      edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge
+    )
     renderer.update({ nodes, edges, options })
   },
   // onNodePointerDown: (event: Renderer.NodePointerEvent) => {
@@ -172,11 +175,9 @@ const options: Renderer.Options = {
   onNodeDrag: (event: Renderer.NodeDragEvent) => {
     // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
     // const t = performance.now()
-    nodes = nodes.map((node) => (
-      node.id === event.target.id ?
-        { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } :
-        node
-    ))
+    nodes = nodes.map((node) =>
+      node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
+    )
     // console.log(performance.now() - t)
     renderer.update({ nodes, edges, options })
   },
@@ -198,18 +199,14 @@ const options: Renderer.Options = {
   // },
   onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
-    nodes = nodes.map((node) => (
-      node.id === event.target.id ?
-        { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } :
-        node
-    ))
-    edges = edges.map((edge) => (
-      edge.source === event.target.id || edge.target === event.target.id ?
-        { ...edge, style: EDGE_STYLE } :
-        edge
-    ))
+    nodes = nodes.map((node) =>
+      node.id === event.target.id ? { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
+    )
+    edges = edges.map((edge) =>
+      edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_STYLE } : edge
+    )
     renderer.update({ nodes, edges, options })
-  },
+  }
   // onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
   //   // console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
   //   edges = edges.map((edge) => (
@@ -236,6 +233,9 @@ const options: Renderer.Options = {
   // },
 }
 
-const renderer = new Renderer.Renderer({ container, width: options.width, height: options.height, debug: true })
-  .update({ nodes, edges, options })
+const renderer = new Renderer.Renderer({ container, width: options.width, height: options.height, debug: true }).update({
+  nodes,
+  edges,
+  options
+})
 ;(window as any).renderer = renderer

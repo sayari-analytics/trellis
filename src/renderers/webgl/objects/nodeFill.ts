@@ -3,12 +3,9 @@ import * as Graph from '../../..'
 import { Renderer } from '..'
 import { NodeRenderer } from '../node'
 
-
 const DEFAULT_NODE_FILL = 0xaaaaaa
 
-
 export class NodeFill {
-
   mounted = false
   containerIndex: number
   circle: Sprite // TODO - make private
@@ -17,7 +14,7 @@ export class NodeFill {
   private nodeRenderer: NodeRenderer
   private radius?: number
   private style?: Graph.NodeStyle
-  
+
   constructor(renderer: Renderer, nodeRenderer: NodeRenderer) {
     this.renderer = renderer
     this.nodeRenderer = nodeRenderer

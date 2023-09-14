@@ -3,9 +3,7 @@ import * as Graph from '../../..'
 import { Renderer } from '..'
 import { NodeRenderer } from '../node'
 
-
 export class NodeStrokes {
-
   mounted = false
   radius = 0
   strokes?: Sprite[] // TODO - make private
@@ -13,7 +11,7 @@ export class NodeStrokes {
   private renderer: Renderer
   private nodeRenderer: NodeRenderer
   private style?: Graph.NodeStyle
-  
+
   constructor(renderer: Renderer, nodeRenderer: NodeRenderer) {
     this.renderer = renderer
     this.nodeRenderer = nodeRenderer
@@ -27,9 +25,9 @@ export class NodeStrokes {
       if (style?.stroke?.length) {
         // enter
         this.strokes = Array(style.stroke.length)
-  
+
         this.radius = radius
-  
+
         for (let i = 0; i < style.stroke.length; i++) {
           this.radius += style.stroke[i].width
           const circle = new Sprite(this.renderer.circle.texture)

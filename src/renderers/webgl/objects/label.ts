@@ -3,11 +3,9 @@ import { Renderer } from '..'
 import { isASCII } from '../utils'
 import { LabelPosition, LabelStyle } from '../../..'
 
-
 const DEFAULT_FONT_SIZE = 10
 const DEFAULT_ORIENTATION = 'bottom'
 const TEXT_OUTLINE_STYLE: Partial<TextStyle> = { lineJoin: 'round', stroke: '#fff', strokeThickness: 2 }
-
 
 /**
  * TODO
@@ -15,7 +13,6 @@ const TEXT_OUTLINE_STYLE: Partial<TextStyle> = { lineJoin: 'round', stroke: '#ff
  * - add support for background color, font color, font family
  */
 export class Label {
-
   mounted = false
 
   private renderer: Renderer
@@ -25,13 +22,11 @@ export class Label {
   private y?: number
   private fontSize?: number
   private position?: LabelPosition
-  
+
   constructor(renderer: Renderer, label: string) {
     this.renderer = renderer
     this.label = label
-    this.text = isASCII(label) ?
-      new BitmapText(label, { fontName: 'Label' }) :
-      new Text(label, TEXT_OUTLINE_STYLE)
+    this.text = isASCII(label) ? new BitmapText(label, { fontName: 'Label' }) : new Text(label, TEXT_OUTLINE_STYLE)
   }
 
   update(label: string, x: number, y: number, style?: LabelStyle) {
@@ -61,22 +56,22 @@ export class Label {
 
     if (position !== this.position) {
       switch (style?.position ?? DEFAULT_ORIENTATION) {
-      case 'bottom':
-        this.setAlign('center')
-        this.text.anchor.set(0.5, 0)
-        break
-      case 'left':
-        this.setAlign('left')
-        this.text.anchor.set(1, 0.5)
-        break
-      case 'top':
-        this.setAlign('center')
-        this.text.anchor.set(0.5, 1)
-        break
-      case 'right':
-        this.setAlign('right')
-        this.text.anchor.set(0, 0.5)
-        break
+        case 'bottom':
+          this.setAlign('center')
+          this.text.anchor.set(0.5, 0)
+          break
+        case 'left':
+          this.setAlign('left')
+          this.text.anchor.set(1, 0.5)
+          break
+        case 'top':
+          this.setAlign('center')
+          this.text.anchor.set(0.5, 1)
+          break
+        case 'right':
+          this.setAlign('right')
+          this.text.anchor.set(0, 0.5)
+          break
       }
 
       this.position = position
@@ -84,7 +79,6 @@ export class Label {
 
     return this
   }
-
 
   mount() {
     if (!this.mounted) {
