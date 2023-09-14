@@ -1,5 +1,5 @@
-import * as WebGL from '../webgl'
-import { Node, Edge, Annotation } from '../../trellis'
+import * as WebGL from '../webgl-v6'
+import { Node, Edge, Annotation } from '../../'
 
 export type Options = {
   width?: number

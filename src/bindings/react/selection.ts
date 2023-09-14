@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { ViewportDragDecelerateEvent, ViewportDragEvent } from '../../renderers/webgl'
-import { Annotation, Node } from '../../trellis'
+import { ViewportDragDecelerateEvent, ViewportDragEvent } from '../../renderers/webgl-v6'
+import { Annotation, Node } from '../..'
 
 export type SelectionChangeEvent = {
   type: 'selectionChange'

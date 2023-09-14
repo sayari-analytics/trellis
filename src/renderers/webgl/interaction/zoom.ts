@@ -1,26 +1,33 @@
-import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '..'
-import { Node, Edge } from '../../../trellis'
+import { Point } from 'pixi.js-legacy'
+import { Renderer } from '..'
 
 /**
  * zoom logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Wheel Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/wheel.js)
  */
-export class Zoom<N extends Node, E extends Edge> {
-  private renderer: InternalRenderer<N, E>
+export class Zoom {
+  zooming = false
+
+  private renderer: Renderer
   private paused = false
 
-  constructor(renderer: InternalRenderer<N, E>) {
+  constructor(renderer: Renderer) {
     this.renderer = renderer
   }
 
   wheel = (event: WheelEvent) => {
-    if (this.renderer.onViewportWheel !== undefined) event.preventDefault()
+    if (this.renderer.onViewportWheel === undefined) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
 
     if (this.paused) {
       return
     }
 
+    this.zooming = true
     const step = (-event.deltaY * (event.deltaMode ? 20 : 1)) / 500
     const change = Math.pow(2, 1.1 * step)
     const zoomStart = this.renderer.zoom
@@ -30,26 +37,14 @@ export class Zoom<N extends Node, E extends Edge> {
       return
     }
 
-    const globalStart = new PIXI.Point()
-    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(
-      globalStart,
-      event.clientX,
-      event.clientY
-    )
+    const globalStart = new Point()
+    this.renderer.eventSystem.mapPositionToPoint(globalStart, event.clientX, event.clientY)
+    globalStart.x /= 2
+    globalStart.y /= 2
     const localStart = this.renderer.root.toLocal(globalStart)
-
     this.renderer.root.scale.set(zoomEnd)
     const globalEnd = this.renderer.root.toGlobal(localStart)
-    const rootX = this.renderer.root.x + globalStart.x - globalEnd.x
-    const rootY = this.renderer.root.y + globalStart.y - globalEnd.y
     this.renderer.root.scale.set(zoomStart)
-
-    const viewportX = (rootX - this.renderer.width / 2) / zoomEnd
-    const viewportY = (rootY - this.renderer.height / 2) / zoomEnd
-
-    this.renderer.expectedViewportXPosition = viewportX
-    this.renderer.expectedViewportYPosition = viewportY
-    this.renderer.expectedViewportZoom = zoomEnd
 
     this.renderer.onViewportWheel?.({
       type: 'viewportWheel',
@@ -57,11 +52,12 @@ export class Zoom<N extends Node, E extends Edge> {
       y: localStart.y,
       clientX: event.clientX,
       clientY: event.clientY,
-      viewportX,
-      viewportY,
-      viewportZoom: zoomEnd,
-      target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+      dx: (this.renderer.x * zoomStart - this.renderer.x * zoomEnd - (globalStart.x - globalEnd.x)) / zoomEnd,
+      dy: (this.renderer.y * zoomStart - this.renderer.y * zoomEnd - (globalStart.y - globalEnd.y)) / zoomEnd,
+      dz: zoomEnd - zoomStart
     })
+
+    return false
   }
 
   pause() {

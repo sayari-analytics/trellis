@@ -38,7 +38,7 @@ export type ImageIcon = {
   offsetY?: number
 }
 
-export type Placement = 'top' | 'bottom' | 'left' | 'right'
+export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelStyle = Partial<{
   color: string
@@ -47,20 +47,20 @@ export type LabelStyle = Partial<{
   wordWrap: number
   background: string
   backgroundOpacity: number
-  placement: Placement
+  position: LabelPosition
 }>
 
 export type NodeStyle = {
   color?: string
   icon?: TextIcon | ImageIcon
   stroke?: {
-    color?: string
-    width?: number
+    color: string
+    width: number
   }[]
   badge?: {
     position: number
-    radius?: number
-    color?: string
+    radius: number
+    color: string
     stroke?: string
     strokeWidth?: number
     icon?: TextIcon | ImageIcon
