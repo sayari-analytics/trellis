@@ -19,8 +19,8 @@ const STYLE: Partial<Graph.NodeStyle> = {
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: 22,
-  },
+    size: 22
+  }
 }
 let nodes: Graph.Node[] = [
   {
@@ -31,7 +31,7 @@ let nodes: Graph.Node[] = [
     label: 'A',
     fx: 0,
     fy: 0,
-    style: STYLE,
+    style: STYLE
   },
   {
     id: 'b',
@@ -39,7 +39,7 @@ let nodes: Graph.Node[] = [
     x: -200,
     y: -85,
     label: 'B',
-    style: STYLE,
+    style: STYLE
   },
   {
     id: 'c',
@@ -47,8 +47,8 @@ let nodes: Graph.Node[] = [
     x: 100,
     y: -85,
     label: 'C',
-    style: STYLE,
-  },
+    style: STYLE
+  }
 ]
 const edges: Graph.Edge[] = []
 
@@ -60,7 +60,7 @@ const fisheye = Fisheye.Layout()
 const cluster = Cluster.Layout()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 
 /**
@@ -76,39 +76,39 @@ const renderOptions: WebGL.Options = {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`,
-          style: STYLE,
+          style: STYLE
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`,
-          style: STYLE,
+          style: STYLE
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`,
-          style: STYLE,
+          style: STYLE
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`,
-          style: STYLE,
+          style: STYLE
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`,
-          style: STYLE,
+          style: STYLE
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`,
-          style: STYLE,
-        },
-      ]),
+          style: STYLE
+        }
+      ])
     )
     const radius =
       subgraphNodes
@@ -125,13 +125,13 @@ const renderOptions: WebGL.Options = {
             style: { ...node.style, color: '#efefef', icon: undefined },
             subgraph: {
               nodes: subgraphNodes,
-              edges: [],
-            },
+              edges: []
+            }
           }
         }
 
         return node
-      }),
+      })
     )
 
     render({ nodes, edges, options: renderOptions })
@@ -143,12 +143,12 @@ const renderOptions: WebGL.Options = {
         ...node,
         radius: 18,
         style: STYLE,
-        subgraph: undefined,
-      })),
+        subgraph: undefined
+      }))
     )
 
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 
 /**

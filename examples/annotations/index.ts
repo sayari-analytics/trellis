@@ -20,7 +20,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
@@ -32,8 +32,8 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 10,
         color: '#FFF',
-        text: '15',
-      },
+        text: '15'
+      }
     },
     {
       position: 135,
@@ -44,28 +44,28 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 10,
         color: '#FFF',
-        text: '!',
-      },
-    },
-  ],
+        text: '!'
+      }
+    }
+  ]
 })
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   color: '#7CBBF3',
   label: {
     fontSize: 10,
-    wordWrap: 260,
+    wordWrap: 260
   },
   stroke: [
     { color: '#FFF', width: 2 },
-    { color: '#90D7FB', width: 1 },
+    { color: '#90D7FB', width: 1 }
   ],
   icon: {
     type: 'textIcon' as const,
     family: 'Material Icons',
     text: 'person',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
@@ -77,10 +77,10 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 10,
         color: '#FFF',
-        text: '8',
-      },
-    },
-  ],
+        text: '8'
+      }
+    }
+  ]
 })
 
 let annotations = [
@@ -98,14 +98,14 @@ let annotations = [
       backgroundColor: '#FFFFFF',
       stroke: {
         color: '#000000',
-        width: 0.5,
+        width: 0.5
       },
       text: {
         fontSize: 12,
         color: '#953838',
-        fontWeight: 'bold' as const,
-      },
-    },
+        fontWeight: 'bold' as const
+      }
+    }
   },
   {
     type: 'text' as const,
@@ -120,12 +120,12 @@ let annotations = [
       backgroundColor: '#FFFFFF',
       stroke: {
         color: '#000000',
-        width: 0.5,
+        width: 0.5
       },
       text: {
-        fontSize: 18,
-      },
-    },
+        fontSize: 18
+      }
+    }
   },
   {
     type: 'rectangle' as const,
@@ -139,10 +139,10 @@ let annotations = [
       backgroundColor: '#FFFFFF',
       stroke: {
         color: '#000000',
-        width: 0.5,
-      },
-    },
-  },
+        width: 0.5
+      }
+    }
+  }
 ]
 
 let nodes = [
@@ -162,12 +162,12 @@ let nodes = [
   { id: 'n', label: 'N' },
   { id: 'o', label: 'O' },
   { id: 'p', label: 'P' },
-  { id: 'q', label: 'Q' },
+  { id: 'q', label: 'Q' }
 ].map<Graph.Node>(({ id, label }) => ({
   id,
   label,
   radius: 18,
-  style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
+  style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18)
 }))
 
 let edges: Graph.Edge[] = [
@@ -176,92 +176,92 @@ let edges: Graph.Edge[] = [
     source: 'a',
     target: 'e',
     label: 'A to E',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'fa',
     source: 'a',
     target: 'f',
     label: 'A to F',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ga',
     source: 'a',
     target: 'g',
     label: 'A to G',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ha',
     source: 'a',
     target: 'h',
     label: 'A to H',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ia',
     source: 'a',
     target: 'i',
     label: 'A to I',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ja',
     source: 'b',
     target: 'j',
     label: 'B to J',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ka',
     source: 'b',
     target: 'k',
     label: 'K to B',
-    style: { arrow: 'reverse' },
+    style: { arrow: 'reverse' }
   },
   {
     id: 'la',
     source: 'b',
     target: 'l',
     label: 'L to B',
-    style: { arrow: 'reverse' },
+    style: { arrow: 'reverse' }
   },
   {
     id: 'ma',
     source: 'l',
     target: 'm',
     label: 'M to L',
-    style: { arrow: 'reverse' },
+    style: { arrow: 'reverse' }
   },
   {
     id: 'nc',
     source: 'n',
     target: 'c',
     label: 'N to C',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'oa',
     source: 'c',
     target: 'o',
     label: 'Both',
-    style: { arrow: 'both' },
+    style: { arrow: 'both' }
   },
   {
     id: 'pa',
     source: 'c',
     target: 'p',
     label: 'Both',
-    style: { arrow: 'both' },
+    style: { arrow: 'both' }
   },
   {
     id: 'qa',
     source: 'c',
     target: 'q',
     label: 'Both',
-    style: { arrow: 'both' },
-  },
+    style: { arrow: 'both' }
+  }
 ]
 
 /**
@@ -271,7 +271,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const imageRenderer = Png.Renderer()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 const force = Force.Layout()
 
@@ -295,17 +295,17 @@ downloadControl({
         height: dimensions.height,
         x: viewport.x,
         y: viewport.y,
-        zoom: 1,
-      },
+        zoom: 1
+      }
     })
-  },
+  }
 })
 
 /**
  * Layout and Render Graph
  */
 const layoutOptions: Force.Options = {
-  nodeStrength: -500,
+  nodeStrength: -500
 }
 const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
@@ -332,15 +332,15 @@ const renderOptions: WebGL.Options = {
                 node.id === 'a'
                   ? node.style?.stroke?.map((stroke, idx) => ({
                       ...stroke,
-                      color: idx % 2 === 0 ? '#FFF' : '#CCC',
+                      color: idx % 2 === 0 ? '#FFF' : '#CCC'
                     }))
                   : node.style?.stroke?.map((stroke) => ({
                       ...stroke,
-                      color: '#CCC',
-                    })),
-            },
+                      color: '#CCC'
+                    }))
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, annotations, options: renderOptions })
   },
@@ -351,55 +351,35 @@ const renderOptions: WebGL.Options = {
             ...node,
             style: {
               ...node.style,
-              stroke:
-                node.id === 'a' ? createCompanyStyle(48).stroke : createPersonStyle(48).stroke,
-            },
+              stroke: node.id === 'a' ? createCompanyStyle(48).stroke : createPersonStyle(48).stroke
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onEdgePointerEnter: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onEdgePointerLeave: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationDrag: ({
-    annotationX,
-    annotationY,
-    target: { id, x = 0, y = 0 },
-  }: WebGL.AnnotationDragEvent) => {
+  onAnnotationDrag: ({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: WebGL.AnnotationDragEvent) => {
     const dx = annotationX - x
     const dy = annotationY - y
 
     annotations = annotations.map((annotation) =>
-      annotation.id === id
-        ? { ...annotation, x: annotation.x + dx, y: annotation.y + dy }
-        : annotation,
+      annotation.id === id ? { ...annotation, x: annotation.x + dx, y: annotation.y + dy } : annotation
     )
 
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationResize: ({
-    position,
-    x,
-    y,
-    width,
-    height,
-    target: { id },
-  }: WebGL.AnnotationResizeEvent) => {
+  onAnnotationResize: ({ position, x, y, width, height, target: { id } }: WebGL.AnnotationResizeEvent) => {
     renderOptions.cursor = `${position}-resize`
 
-    annotations = annotations.map((annotation) =>
-      annotation.id === id ? { ...annotation, x, y, width, height } : annotation,
-    )
+    annotations = annotations.map((annotation) => (annotation.id === id ? { ...annotation, x, y, width, height } : annotation))
 
     render({ nodes, edges, annotations, options: renderOptions })
   },
@@ -408,7 +388,7 @@ const renderOptions: WebGL.Options = {
     renderOptions.y = viewportY
     renderOptions.zoom = viewportZoom
     render({ nodes, edges, annotations, options: renderOptions })
-  },
+  }
 }
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
@@ -416,7 +396,7 @@ force({ nodes, edges, options: layoutOptions }).then((graph) => {
 
   const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 40), {
     width: renderOptions.width!,
-    height: renderOptions.height!,
+    height: renderOptions.height!
   })
   renderOptions.x = x
   renderOptions.y = y
@@ -430,7 +410,7 @@ force({ nodes, edges, options: layoutOptions }).then((graph) => {
 setTimeout(() => {
   annotations[0] = {
     ...annotations[0],
-    resize: false,
+    resize: false
   }
   render({ nodes, edges, annotations, options: renderOptions })
 }, 5000)
@@ -438,7 +418,7 @@ setTimeout(() => {
 setTimeout(() => {
   annotations[0] = {
     ...annotations[0],
-    resize: true,
+    resize: true
   }
   render({ nodes, edges, annotations, options: renderOptions })
 }, 10000)

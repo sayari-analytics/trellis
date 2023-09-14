@@ -83,7 +83,7 @@ export class Decelerate<N extends Node, E extends Edge> {
         type: 'viewportDragDecelarate',
         viewportX: x ?? this.renderer.x,
         viewportY: y ?? this.renderer.y,
-        target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
+        target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
       })
     }
   }

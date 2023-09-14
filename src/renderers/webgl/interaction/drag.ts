@@ -66,7 +66,7 @@ export class Drag<N extends Node, E extends Edge> {
             altKey: this.renderer.altKey,
             ctrlKey: this.renderer.ctrlKey,
             metaKey: this.renderer.metaKey,
-            shiftKey: this.renderer.shiftKey,
+            shiftKey: this.renderer.shiftKey
           })
         }
 
@@ -82,7 +82,7 @@ export class Drag<N extends Node, E extends Edge> {
           altKey: this.renderer.altKey,
           ctrlKey: this.renderer.ctrlKey,
           metaKey: this.renderer.metaKey,
-          shiftKey: this.renderer.shiftKey,
+          shiftKey: this.renderer.shiftKey
         })
       }
     }

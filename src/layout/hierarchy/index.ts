@@ -20,11 +20,7 @@ const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
 /**
  * utils
  */
-const _graphToDFSHierarchy = (
-  edgeIndex: Record<string, string[]>,
-  id: string,
-  visited: Set<string>,
-): Hierarchy => {
+const _graphToDFSHierarchy = (edgeIndex: Record<string, string[]>, id: string, visited: Set<string>): Hierarchy => {
   visited.add(id)
 
   const children: Hierarchy[] = []
@@ -38,8 +34,7 @@ const _graphToDFSHierarchy = (
   return { id, children }
 }
 
-const graphToDFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): Hierarchy =>
-  _graphToDFSHierarchy(edgeIndex, id, new Set())
+const graphToDFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): Hierarchy => _graphToDFSHierarchy(edgeIndex, id, new Set())
 
 const graphToBFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): Hierarchy => {
   const children: Hierarchy['children'] = []
@@ -63,13 +58,13 @@ const graphToBFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): H
 
   return {
     id,
-    children,
+    children
   }
 }
 
 const _hierarchyToGraph = (
   hierarchy: HierarchyPointNode<Hierarchy>,
-  nodesById: Record<string, HierarchyPointNode<Hierarchy> | undefined>,
+  nodesById: Record<string, HierarchyPointNode<Hierarchy> | undefined>
 ) => {
   nodesById[hierarchy.data.id] = hierarchy
 
@@ -82,8 +77,7 @@ const _hierarchyToGraph = (
   return nodesById
 }
 
-const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) =>
-  _hierarchyToGraph(hierarchy, {})
+const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarchyToGraph(hierarchy, {})
 
 const containsSubgraphNode = (nodes: Node[], id: string): boolean => {
   for (const node of nodes) {
@@ -112,10 +106,7 @@ const findAncestor = (nodes: Node[], id: string): string | undefined => {
 }
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(
-    rootId: string,
-    graph: { nodes: N[]; edges: E[]; options?: Options },
-  ) => {
+  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []
@@ -130,8 +121,7 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
-    const root =
-      edgeIndex[rootId] === undefined ? findAncestor(graph.nodes, rootId) ?? rootId : rootId
+    const root = edgeIndex[rootId] === undefined ? findAncestor(graph.nodes, rootId) ?? rootId : rootId
 
     if (edgeIndex[root] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
@@ -147,13 +137,7 @@ export const Layout = () => {
     }
 
     const positionedDataById = hierarchyToGraph(
-      layout(
-        hierarchy(
-          graph.options?.bfs !== false
-            ? graphToBFSHierarchy(edgeIndex, root)
-            : graphToDFSHierarchy(edgeIndex, root),
-        ),
-      ),
+      layout(hierarchy(graph.options?.bfs !== false ? graphToBFSHierarchy(edgeIndex, root) : graphToDFSHierarchy(edgeIndex, root)))
     )
 
     // const positionedDataById = compose(
@@ -179,9 +163,9 @@ export const Layout = () => {
           : {
               ...node,
               x: positionedNode.x + xOffset,
-              y: positionedNode.y - yOffset,
+              y: positionedNode.y - yOffset
             }
-      }),
+      })
     }
   }
 }

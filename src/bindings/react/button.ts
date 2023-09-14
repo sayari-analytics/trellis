@@ -22,57 +22,51 @@ const STYLE = {
   fontWeight: 'bold',
   color: '#666',
   marginLeft: '12px',
-  marginBottom: '12px',
+  marginBottom: '12px'
 }
 
 const HOVER_STYLE = {
-  background: '#eee',
+  background: '#eee'
 }
 
 const FOCUS_STYLE = {
-  boxShadow: '0px 0px 0px 1px #aaa inset',
+  boxShadow: '0px 0px 0px 1px #aaa inset'
 }
 
 const SELECTED_STYLE = {
   background: '#ccc',
-  color: '#222',
+  color: '#222'
 }
 
 const SELECTED_HOVER_FOCUS_STYLE = {
   background: '#eee',
   color: '#222',
-  boxShadow: '0px 0px 0px 1px #aaa inset',
+  boxShadow: '0px 0px 0px 1px #aaa inset'
 }
 
 const SELECTED_HOVER_STYLE = {
   background: '#eee',
-  color: '#222',
+  color: '#222'
 }
 
 const SELECTED_FOCUS_STYLE = {
   background: '#ccc',
   color: '#222',
-  boxShadow: '0px 0px 0px 1px #aaa inset',
+  boxShadow: '0px 0px 0px 1px #aaa inset'
 }
 
 const HOVER_FOCUS_STYLE = {
   background: '#eee',
-  boxShadow: '0px 0px 0px 1px #aaa inset',
+  boxShadow: '0px 0px 0px 1px #aaa inset'
 }
 
 const DISABLED_STYLE = {
   background: '#eee',
-  color: '#aaa',
+  color: '#aaa'
 }
 
 // TODO - memoize style computation
-const buttonStyle = (
-  disabled?: boolean,
-  selected?: boolean,
-  hover?: boolean,
-  focus?: boolean,
-  group?: 'top' | 'middle' | 'bottom',
-) => {
+const buttonStyle = (disabled?: boolean, selected?: boolean, hover?: boolean, focus?: boolean, group?: 'top' | 'middle' | 'bottom') => {
   const _STYLE =
     group === undefined
       ? STYLE
@@ -82,19 +76,19 @@ const buttonStyle = (
           borderBottomLeftRadius: '0',
           borderBottomRightRadius: '0',
           marginBottom: '0',
-          borderBottom: '0',
+          borderBottom: '0'
         }
       : group === 'middle'
       ? {
           ...STYLE,
           borderRadius: '0',
           marginBottom: '0',
-          borderBottom: '0',
+          borderBottom: '0'
         }
       : {
           ...STYLE,
           borderTopLeftRadius: '0',
-          borderTopRightRadius: '0',
+          borderTopRightRadius: '0'
         }
 
   return disabled
@@ -135,8 +129,8 @@ export const Button: FunctionComponent<Props> = (props) => {
       onMouseEnter,
       onMouseLeave,
       onFocus,
-      onBlur,
+      onBlur
     },
-    props.children,
+    props.children
   )
 }

@@ -30,7 +30,7 @@ export const Layout = () => {
 
         return graph
       },
-      { nodes: [], edges: [] },
+      { nodes: [], edges: [] }
     )
   }
 }

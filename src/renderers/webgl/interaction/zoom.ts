@@ -24,15 +24,9 @@ export class Zoom<N extends Node, E extends Edge> {
     const step = (-event.deltaY * (event.deltaMode ? 20 : 1)) / 500
     const change = Math.pow(2, 1.1 * step)
     const zoomStart = this.renderer.zoom
-    const zoomEnd = Math.max(
-      this.renderer.minZoom,
-      Math.min(this.renderer.maxZoom, zoomStart * change),
-    )
+    const zoomEnd = Math.max(this.renderer.minZoom, Math.min(this.renderer.maxZoom, zoomStart * change))
 
-    if (
-      (step > 0 && zoomStart >= this.renderer.maxZoom) ||
-      (step < 0 && zoomStart <= this.renderer.minZoom)
-    ) {
+    if ((step > 0 && zoomStart >= this.renderer.maxZoom) || (step < 0 && zoomStart <= this.renderer.minZoom)) {
       return
     }
 
@@ -40,7 +34,7 @@ export class Zoom<N extends Node, E extends Edge> {
     ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(
       globalStart,
       event.clientX,
-      event.clientY,
+      event.clientY
     )
     const localStart = this.renderer.root.toLocal(globalStart)
 
@@ -66,7 +60,7 @@ export class Zoom<N extends Node, E extends Edge> {
       viewportX,
       viewportY,
       viewportZoom: zoomEnd,
-      target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
+      target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
     })
   }
 

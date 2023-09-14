@@ -22,22 +22,22 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
       position: 45,
       color: '#FFAF1D',
       stroke: '#FFF',
-      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '15' },
+      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '15' }
     },
     {
       position: 135,
       color: '#E4171B',
       stroke: '#FFF',
-      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '!' },
-    },
-  ],
+      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '!' }
+    }
+  ]
 })
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
@@ -48,21 +48,21 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'person',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
       position: 45,
       color: '#7CBBF3',
       stroke: '#FFF',
-      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '8' },
-    },
-  ],
+      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '8' }
+    }
+  ]
 })
 
 let nodes: Node[] = Object.values(graphData.nodes).map((node) => ({
   ...node,
-  style: node.type === 'company' ? createCompanyStyle(node.radius) : createPersonStyle(node.radius),
+  style: node.type === 'company' ? createCompanyStyle(node.radius) : createPersonStyle(node.radius)
 }))
 let edges: Graph.Edge[] = Object.values(graphData.edges).map((edge) => edge)
 
@@ -73,7 +73,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const collide = Collide.Layout()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 
 /**
@@ -86,7 +86,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   y: 0,
   zoom: 1,
   minZoom: 0.1,
-  maxZoom: 2.5,
+  maxZoom: 2.5
 }
 
 /**

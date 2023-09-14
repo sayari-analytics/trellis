@@ -12,10 +12,7 @@ export const colorToNumber = (colorString: string): number => {
   return parseInt(c.hex().slice(1), 16)
 }
 
-export const parentInFront = <N extends Node, E extends Edge>(
-  renderer: InternalRenderer<N, E>,
-  parent: NodeRenderer<N, E> | undefined,
-) => {
+export const parentInFront = <N extends Node, E extends Edge>(renderer: InternalRenderer<N, E>, parent: NodeRenderer<N, E> | undefined) => {
   while (parent) {
     if (renderer.hoveredNode === parent) {
       return true
@@ -26,20 +23,14 @@ export const parentInFront = <N extends Node, E extends Edge>(
   return false
 }
 
-export const movePoint = (
-  x: number,
-  y: number,
-  angle: number,
-  distance: number,
-): [number, number] => [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance]
-
-export const midPoint = (x0: number, y0: number, x1: number, y1: number): [number, number] => [
-  (x0 + x1) / 2,
-  (y0 + y1) / 2,
+export const movePoint = (x: number, y: number, angle: number, distance: number): [number, number] => [
+  x + Math.cos(angle) * distance,
+  y + Math.sin(angle) * distance
 ]
 
-export const length = (x0: number, y0: number, x1: number, y1: number) =>
-  Math.hypot(x1 - x0, y1 - y0)
+export const midPoint = (x0: number, y0: number, x1: number, y1: number): [number, number] => [(x0 + x1) / 2, (y0 + y1) / 2]
+
+export const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
 
 export const angle = (x0: number, y0: number, x1: number, y1: number) => {
   const angle = Math.atan2(y0 - y1, x0 - x1)
@@ -63,7 +54,7 @@ export const pointerKeysFromEvent = (event: MouseEvent | PointerEvent | TouchEve
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
-        shiftKey: event.shiftKey,
+        shiftKey: event.shiftKey
       }
     : {}
 

@@ -30,8 +30,8 @@ const createCompanyStyle = (): Graph.NodeStyle => ({
         family: 'Roboto',
         size: 16,
         color: '#FFF',
-        text: '15',
-      },
+        text: '15'
+      }
     },
     {
       position: 135,
@@ -44,17 +44,17 @@ const createCompanyStyle = (): Graph.NodeStyle => ({
         family: 'Roboto',
         size: 16,
         color: '#FFF',
-        text: '!',
-      },
-    },
-  ],
+        text: '!'
+      }
+    }
+  ]
 })
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 5 }],
   label: {
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto'
   },
   icon:
     radius > 30
@@ -63,7 +63,7 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
           family: 'Arial, Helvetica, monospace',
           text: 'P',
           color: '#cbedff',
-          size: radius,
+          size: radius
         }
       : { type: 'imageIcon' as const, url: person, scale: 0.05 },
   badge: [
@@ -78,10 +78,10 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Roboto',
         size: 16,
         color: '#FFF',
-        text: '8',
-      },
-    },
-  ],
+        text: '8'
+      }
+    }
+  ]
 })
 
 let nodes = [
@@ -101,12 +101,12 @@ let nodes = [
   { id: 'n', label: 'N' },
   { id: 'o', label: 'O' },
   { id: 'p', label: 'P' },
-  { id: 'q', label: 'Q' },
+  { id: 'q', label: 'Q' }
 ].map<Graph.Node>(({ id, label }, idx) => ({
   id,
   label,
   radius: id === 'a' ? 32 : (28 - idx) * 1.8,
-  style: id === 'a' ? createCompanyStyle() : createPersonStyle((28 - idx) * 1.8),
+  style: id === 'a' ? createCompanyStyle() : createPersonStyle((28 - idx) * 1.8)
 }))
 
 let edges: Graph.Edge[] = [
@@ -125,14 +125,14 @@ let edges: Graph.Edge[] = [
   { id: 'na', source: 'c', target: 'n', label: 'Related To' },
   { id: 'oa', source: 'c', target: 'o', label: 'Related To' },
   { id: 'pa', source: 'c', target: 'p', label: 'Related To' },
-  { id: 'qa', source: 'c', target: 'q', label: 'Related To' },
+  { id: 'qa', source: 'c', target: 'q', label: 'Related To' }
 ].map<Graph.Edge>((edge) => ({
   ...edge,
   style: {
     label: {
-      fontFamily: 'Roboto',
-    },
-  },
+      fontFamily: 'Roboto'
+    }
+  }
 }))
 
 /**
@@ -144,7 +144,7 @@ const fisheye = Fisheye.Layout()
 const cluster = Cluster.Layout()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 
 /**
@@ -165,9 +165,9 @@ const renderOptions: WebGL.Options = {
       node.id === id
         ? {
             ...node,
-            style: { ...node.style, stroke: [{ color: '#ddd', width: 6 }] },
+            style: { ...node.style, stroke: [{ color: '#ddd', width: 6 }] }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
@@ -178,23 +178,19 @@ const renderOptions: WebGL.Options = {
             ...node,
             style: {
               ...node.style,
-              stroke: [{ color: id === 'a' ? '#F7CA4D' : '#90D7FB', width: 6 }],
-            },
+              stroke: [{ color: id === 'a' ? '#F7CA4D' : '#90D7FB', width: 6 }]
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onNodeDoubleClick: ({ target }) => {
@@ -204,39 +200,39 @@ const renderOptions: WebGL.Options = {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`,
-          style: createCompanyStyle(),
+          style: createCompanyStyle()
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`,
-          style: createCompanyStyle(),
+          style: createCompanyStyle()
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`,
-          style: createCompanyStyle(),
+          style: createCompanyStyle()
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`,
-          style: createCompanyStyle(),
+          style: createCompanyStyle()
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 5}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 5}`,
-          style: createCompanyStyle(),
+          style: createCompanyStyle()
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 6}`,
           radius: 18,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 6}`,
-          style: createCompanyStyle(),
-        },
-      ]),
+          style: createCompanyStyle()
+        }
+      ])
     )
     const radius =
       subgraphNodes
@@ -253,13 +249,13 @@ const renderOptions: WebGL.Options = {
             style: { ...node.style, color: '#efefef', icon: undefined },
             subgraph: {
               nodes: subgraphNodes,
-              edges: [],
-            },
+              edges: []
+            }
           }
         }
 
         return node
-      }),
+      })
     )
 
     render({ nodes, edges, options: renderOptions })
@@ -271,8 +267,8 @@ const renderOptions: WebGL.Options = {
         ...node,
         radius: node.id === 'a' ? 32 : (28 - idx) * 1.8,
         style: node.id === 'a' ? createCompanyStyle() : createPersonStyle((28 - idx) * 1.8),
-        subgraph: undefined,
-      })),
+        subgraph: undefined
+      }))
     )
 
     render({ nodes, edges, options: renderOptions })
@@ -287,7 +283,7 @@ const renderOptions: WebGL.Options = {
     renderOptions.y = viewportY
     renderOptions.zoom = viewportZoom
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 
 /**

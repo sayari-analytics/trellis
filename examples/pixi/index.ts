@@ -24,7 +24,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
@@ -36,8 +36,8 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 10,
         color: '#FFF',
-        text: '15',
-      },
+        text: '15'
+      }
     },
     {
       position: 135,
@@ -48,28 +48,28 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 10,
         color: '#FFF',
-        text: '!',
-      },
-    },
-  ],
+        text: '!'
+      }
+    }
+  ]
 })
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   color: '#7CBBF3',
   label: {
     fontSize: 10,
-    wordWrap: 260,
+    wordWrap: 260
   },
   stroke: [
     { color: '#FFF', width: 2 },
-    { color: '#90D7FB', width: 1 },
+    { color: '#90D7FB', width: 1 }
   ],
   icon: {
     type: 'textIcon' as const,
     family: 'Material Icons',
     text: 'person',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
@@ -81,10 +81,10 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 10,
         color: '#FFF',
-        text: '8',
-      },
-    },
-  ],
+        text: '8'
+      }
+    }
+  ]
 })
 
 const createSubgraphStyle = (radius: number): Graph.NodeStyle => ({
@@ -95,8 +95,8 @@ const createSubgraphStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: radius * 1.2,
-  },
+    size: radius * 1.2
+  }
 })
 
 let nodes = [
@@ -116,12 +116,12 @@ let nodes = [
   { id: 'n', label: 'N' },
   { id: 'o', label: 'O' },
   { id: 'p', label: 'P' },
-  { id: 'q', label: 'Q' },
+  { id: 'q', label: 'Q' }
 ].map<Graph.Node>(({ id, label }) => ({
   id,
   label,
   radius: 18,
-  style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
+  style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18)
 }))
 
 let edges: Graph.Edge[] = [
@@ -139,108 +139,108 @@ let edges: Graph.Edge[] = [
       label: {
         wordWrap: 600,
         background: '#FFA500',
-        backgroundOpacity: 0.5,
-      },
-    },
+        backgroundOpacity: 0.5
+      }
+    }
   },
   {
     id: 'ea2',
     source: 'a',
     target: 'e',
     label: 'A to E 2',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ea3',
     source: 'a',
     target: 'e',
     label: 'A to E 3',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'fa',
     source: 'a',
     target: 'f',
     label: 'A to F',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ga',
     source: 'a',
     target: 'g',
     label: 'A to G',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ha',
     source: 'a',
     target: 'h',
     label: 'A to H',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ia',
     source: 'a',
     target: 'i',
     label: 'A to I',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ja',
     source: 'b',
     target: 'j',
     label: 'B to J',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'ka',
     source: 'b',
     target: 'k',
     label: 'K to B',
-    style: { arrow: 'reverse' },
+    style: { arrow: 'reverse' }
   },
   {
     id: 'la',
     source: 'b',
     target: 'l',
     label: 'L to B',
-    style: { arrow: 'reverse' },
+    style: { arrow: 'reverse' }
   },
   {
     id: 'ma',
     source: 'l',
     target: 'm',
     label: 'M to L',
-    style: { arrow: 'reverse' },
+    style: { arrow: 'reverse' }
   },
   {
     id: 'nc',
     source: 'n',
     target: 'c',
     label: 'N to C',
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   },
   {
     id: 'oa',
     source: 'c',
     target: 'o',
     label: 'Both',
-    style: { arrow: 'both' },
+    style: { arrow: 'both' }
   },
   {
     id: 'pa',
     source: 'c',
     target: 'p',
     label: 'Both',
-    style: { arrow: 'both' },
+    style: { arrow: 'both' }
   },
   {
     id: 'qa',
     source: 'c',
     target: 'q',
     label: 'Both',
-    style: { arrow: 'both' },
-  },
+    style: { arrow: 'both' }
+  }
 ]
 
 /**
@@ -250,7 +250,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const imageRenderer = Png.Renderer()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 const force = Force.Layout()
 const fisheye = Fisheye.Layout()
@@ -263,21 +263,13 @@ const zoomControl = Zoom.Control({ container })
 zoomControl({
   top: 140,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(
-      renderOptions.minZoom!,
-      renderOptions.maxZoom!,
-      renderOptions.zoom! / 0.5,
-    )
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.5)
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(
-      renderOptions.minZoom!,
-      renderOptions.maxZoom!,
-      renderOptions.zoom! * 0.5,
-    )
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.5)
     render({ nodes, edges, annotations, options: renderOptions })
-  },
+  }
 })
 
 /**
@@ -298,10 +290,10 @@ const { onViewportPointerDown, onViewportDrag, onViewportPointerUp } = selection
               ...node,
               radius: 18,
               style: node.id === 'a' ? createCompanyStyle(18) : createPersonStyle(18),
-              subgraph: undefined,
+              subgraph: undefined
             }
-          : node,
-      ),
+          : node
+      )
     )
 
     render({ nodes, edges, annotations, options: renderOptions })
@@ -323,14 +315,14 @@ const { onViewportPointerDown, onViewportDrag, onViewportPointerUp } = selection
           backgroundColor: '#eee',
           stroke: {
             width: 2,
-            color: '#ccc',
-          },
-        },
-      },
+            color: '#ccc'
+          }
+        }
+      }
     ]
 
     render({ nodes, edges, annotations, options: renderOptions })
-  },
+  }
 })
 
 /**
@@ -352,17 +344,17 @@ downloadControl({
         height: dimensions.height,
         x: viewport.x,
         y: viewport.y,
-        zoom: 1,
-      },
+        zoom: 1
+      }
     })
-  },
+  }
 })
 
 /**
  * Layout and Render Graph
  */
 const layoutOptions: Force.Options = {
-  nodeStrength: -500,
+  nodeStrength: -500
 }
 const renderOptions: WebGL.Options = {
   width: container.offsetWidth,
@@ -389,15 +381,15 @@ const renderOptions: WebGL.Options = {
                 node.id === 'a'
                   ? node.style?.stroke?.map((stroke, idx) => ({
                       ...stroke,
-                      color: idx % 2 === 0 ? '#FFF' : '#CCC',
+                      color: idx % 2 === 0 ? '#FFF' : '#CCC'
                     }))
                   : node.style?.stroke?.map((stroke) => ({
                       ...stroke,
-                      color: '#CCC',
-                    })),
-            },
+                      color: '#CCC'
+                    }))
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, annotations, options: renderOptions })
   },
@@ -408,24 +400,19 @@ const renderOptions: WebGL.Options = {
             ...node,
             style: {
               ...node.style,
-              stroke:
-                node.id === 'a' ? createCompanyStyle(48).stroke : createPersonStyle(48).stroke,
-            },
+              stroke: node.id === 'a' ? createCompanyStyle(48).stroke : createPersonStyle(48).stroke
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onEdgePointerEnter: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onEdgePointerLeave: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onNodeDoubleClick: ({ target }) => {
@@ -435,27 +422,27 @@ const renderOptions: WebGL.Options = {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 1}`,
           radius: 10,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 1}`,
-          style: createSubgraphStyle(10),
+          style: createSubgraphStyle(10)
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 2}`,
           radius: 10,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 2}`,
-          style: createSubgraphStyle(10),
+          style: createSubgraphStyle(10)
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 3}`,
           radius: 10,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 3}`,
-          style: createSubgraphStyle(10),
+          style: createSubgraphStyle(10)
         },
         {
           id: `${target.id}_${(target.subgraph?.nodes.length ?? 0) + 4}`,
           radius: 10,
           label: `${target.id.toUpperCase()} ${target.subgraph?.nodes.length ?? 0 + 4}`,
-          style: createSubgraphStyle(10),
-        },
-      ]),
+          style: createSubgraphStyle(10)
+        }
+      ])
     )
     const radius =
       subgraphNodes
@@ -472,11 +459,11 @@ const renderOptions: WebGL.Options = {
               style: { ...node.style, color: '#EFEFEF', icon: undefined },
               subgraph: {
                 nodes: subgraphNodes,
-                edges: [],
-              },
+                edges: []
+              }
             }
-          : node,
-      ),
+          : node
+      )
     )
 
     render({ nodes, edges, annotations, options: renderOptions })
@@ -489,7 +476,7 @@ const renderOptions: WebGL.Options = {
     renderOptions.y = viewportY
     renderOptions.zoom = viewportZoom
     render({ nodes, edges, annotations, options: renderOptions })
-  },
+  }
 }
 
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
@@ -497,7 +484,7 @@ force({ nodes, edges, options: layoutOptions }).then((graph) => {
 
   const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 40), {
     width: renderOptions.width!,
-    height: renderOptions.height!,
+    height: renderOptions.height!
   })
   renderOptions.x = x
   renderOptions.y = y

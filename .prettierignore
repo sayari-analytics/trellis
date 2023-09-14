@@ -1,1 +1,4 @@
-dist/
+dist
+docs
+package-lock.json
+/**/*.html

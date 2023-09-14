@@ -4,7 +4,6 @@
 // import { map, mergeMap, tap, take } from 'rxjs/operators'
 // import { LayoutOptions } from '../../src/simulation'
 
-
 // const nodes = Object.values(graphData.nodes)
 //   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
 //   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
@@ -31,7 +30,6 @@
 //     label: field.replace(/_/g, ' '),
 //   }))
 
-
 // const layout = (graph: Graph) => (
 //   graphData$: Observable<{ nodes: Node[], edges: Edge[], options?: Partial<LayoutOptions> }>
 // ) => {
@@ -48,10 +46,8 @@
 //   )
 // }
 
-
 // const NODES_PER_TICK = 50
 // const COUNT = Math.ceil(nodes.length / NODES_PER_TICK)
-
 
 // console.time('Initialize Graph')
 // const graph = new Graph()

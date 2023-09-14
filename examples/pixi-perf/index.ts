@@ -23,14 +23,7 @@ const data = {
   nodes: Object.values(graphData.nodes)
     .map((node, idx) => ({
       ...node,
-      label:
-        idx % 4 === 0
-          ? arabicLabel
-          : idx % 4 === 1
-          ? thaiLabel
-          : idx % 4 === 2
-          ? russianLabel
-          : node.label,
+      label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel : node.label
     }))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
     .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
@@ -50,7 +43,7 @@ const data = {
           family: 'Material Icons',
           text: 'person',
           color: '#fff',
-          size: 20,
+          size: 20
         },
         badge:
           type === 'company'
@@ -64,31 +57,22 @@ const data = {
                     family: 'Helvetica',
                     size: 10,
                     color: '#FFF',
-                    text: '8',
-                  },
-                },
+                    text: '8'
+                  }
+                }
               ]
-            : undefined,
-      },
+            : undefined
+      }
     })),
   edges: Object.entries<{ field: string; source: string; target: string }>(graphData.edges)
     .concat(
-      Object.entries(graphData.edges).map(([id, edge]) => [
-        `${id}_2`,
-        { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` },
-      ]),
+      Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }])
     )
     .concat(
-      Object.entries(graphData.edges).map(([id, edge]) => [
-        `${id}_3`,
-        { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` },
-      ]),
+      Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }])
     )
     .concat(
-      Object.entries(graphData.edges).map(([id, edge]) => [
-        `${id}_4`,
-        { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` },
-      ]),
+      Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }])
     )
     // .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
     .concat([
@@ -97,81 +81,81 @@ const data = {
         {
           field: 'related_to',
           source: Object.values(graphData.nodes)[0].id,
-          target: `${Object.values(graphData.nodes)[0].id}_2`,
-        },
+          target: `${Object.values(graphData.nodes)[0].id}_2`
+        }
       ],
       [
         'connect_d',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[15].id}`,
-          target: `${Object.values(graphData.nodes)[15].id}_2`,
-        },
+          target: `${Object.values(graphData.nodes)[15].id}_2`
+        }
       ],
       [
         'connect_g',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[30].id}`,
-          target: `${Object.values(graphData.nodes)[30].id}_2`,
-        },
+          target: `${Object.values(graphData.nodes)[30].id}_2`
+        }
       ],
       [
         'connect_b',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[5].id}_2`,
-          target: `${Object.values(graphData.nodes)[5].id}_3`,
-        },
+          target: `${Object.values(graphData.nodes)[5].id}_3`
+        }
       ],
       [
         'connect_e',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[20].id}_2`,
-          target: `${Object.values(graphData.nodes)[20].id}_3`,
-        },
+          target: `${Object.values(graphData.nodes)[20].id}_3`
+        }
       ],
       [
         'connect_h',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[35].id}_2`,
-          target: `${Object.values(graphData.nodes)[35].id}_3`,
-        },
+          target: `${Object.values(graphData.nodes)[35].id}_3`
+        }
       ],
       [
         'connect_c',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[10].id}_3`,
-          target: `${Object.values(graphData.nodes)[10].id}_4`,
-        },
+          target: `${Object.values(graphData.nodes)[10].id}_4`
+        }
       ],
       [
         'connect_f',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[25].id}_3`,
-          target: `${Object.values(graphData.nodes)[25].id}_4`,
-        },
+          target: `${Object.values(graphData.nodes)[25].id}_4`
+        }
       ],
       [
         'connect_i',
         {
           field: 'related_to',
           source: `${Object.values(graphData.nodes)[40].id}_3`,
-          target: `${Object.values(graphData.nodes)[40].id}_4`,
-        },
-      ],
+          target: `${Object.values(graphData.nodes)[40].id}_4`
+        }
+      ]
     ])
     .map<Graph.Edge>(([id, { field, source, target }]) => ({
       id,
       source,
       target,
       label: field.replace(/_/g, ' '),
-      style: { arrow: 'forward' },
-    })),
+      style: { arrow: 'forward' }
+    }))
 }
 
 let nodes: Node[] = []
@@ -184,7 +168,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const layout = Force.Layout()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 const imageRenderer = Png.Renderer()
 
@@ -195,21 +179,13 @@ const zoomControl = Zoom.Control({ container })
 const zoomOptions: Zoom.Options = {
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(
-      renderOptions.minZoom!,
-      renderOptions.maxZoom!,
-      renderOptions.zoom! / 0.6,
-    )
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(
-      renderOptions.minZoom!,
-      renderOptions.maxZoom!,
-      renderOptions.zoom! * 0.6,
-    )
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 zoomControl(zoomOptions)
 
@@ -230,10 +206,10 @@ downloadControl({
         height,
         x: 0,
         y: 0,
-        zoom: 1,
-      },
+        zoom: 1
+      }
     })
-  },
+  }
 })
 
 /**
@@ -259,9 +235,9 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
         ? {
             ...node,
             radius: node.radius * 4,
-            style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] },
+            style: { ...node.style, stroke: [{ color: '#CCC', width: 4 }] }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
@@ -273,23 +249,19 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
             radius: 18,
             style: {
               ...node.style,
-              stroke: [{ color: node.type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }],
-            },
+              stroke: [{ color: node.type === 'company' ? '#F7CA4D' : '#90D7FB', width: 4 }]
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onViewportDrag: ({ viewportX, viewportY }) => {
@@ -302,7 +274,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     renderOptions.y = viewportY
     renderOptions.zoom = viewportZoom
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 
 const NODES_PER_TICK = 20
@@ -311,7 +283,7 @@ const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
 console.log(
-  `Rendering ${NODES_PER_TICK} nodes every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`,
+  `Rendering ${NODES_PER_TICK} nodes every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`
 )
 
 const update = () => {
@@ -335,7 +307,7 @@ const update = () => {
 
       const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), {
         width: renderOptions.width!,
-        height: renderOptions.height!,
+        height: renderOptions.height!
       })
       renderOptions.x = x
       renderOptions.y = y

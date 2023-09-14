@@ -1,17 +1,24 @@
 {
   "tabWidth": 2,
-  "printWidth": 100,
+  "printWidth": 140,
   "semi": false,
   "useTabs": false,
   "singleQuote": true,
   "bracketSameLine": true,
   "jsxSingleQuote": true,
+  "trailingComma": "none",
   "parser": "typescript",
   "overrides": [
     {
-      "files": "*.json",
+      "files": ["*.json", "*rc"],
       "options": {
         "parser": "json"
+      }
+    },
+    {
+      "files": ["*.md"],
+      "options": {
+        "parser": "markdown"
       }
     }
   ]

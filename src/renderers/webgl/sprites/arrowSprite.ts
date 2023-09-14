@@ -15,7 +15,7 @@ export class ArrowSprite<N extends Node, E extends Edge> {
         .lineTo(ArrowSprite.ARROW_HEIGHT * 2, ArrowSprite.ARROW_WIDTH)
         .lineTo(ArrowSprite.ARROW_HEIGHT * 2, -ArrowSprite.ARROW_WIDTH),
       PIXI.SCALE_MODES.LINEAR,
-      2, // window.devicePixelRatio,
+      2 // window.devicePixelRatio,
     )
   }
 

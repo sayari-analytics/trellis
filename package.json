@@ -8,7 +8,7 @@
   "types": "./dist/types.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
-    "format": "prettier \"src/**/**.{ts,tsx}\" --write",
+    "format": "prettier . --write",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
@@ -67,14 +67,7 @@
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },

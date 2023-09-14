@@ -78,7 +78,7 @@ export const FontLoader = () => {
         })
       }
     },
-    loading: () => loading.size > 0,
+    loading: () => loading.size > 0
   }
 }
 
@@ -102,6 +102,6 @@ export const ImageLoader = () => {
         })
       })
     },
-    loading: () => loading.size > 0,
+    loading: () => loading.size > 0
   }
 }

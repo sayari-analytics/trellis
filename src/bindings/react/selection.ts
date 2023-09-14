@@ -93,10 +93,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
     }
   })
 
-  const toggleSelect = useCallback(
-    () => setState((state) => ({ ...state, select: !state.select })),
-    [],
-  )
+  const toggleSelect = useCallback(() => setState((state) => ({ ...state, select: !state.select })), [])
 
   const onViewportDragStart = useCallback(
     (event: ViewportDragEvent) => {
@@ -107,13 +104,13 @@ export const Selection = <N extends Node>(props: Props<N>) => {
           annotation:
             _props.current.shape === 'circle'
               ? { type: 'circle', x: event.x, y: event.y, radius: 0 }
-              : { type: 'rectangle', x: event.x, y: event.y, width: 0, height: 0 },
+              : { type: 'rectangle', x: event.x, y: event.y, width: 0, height: 0 }
         })
       }
 
       props.onViewportDragStart?.(event)
     },
-    [props.onViewportDragStart],
+    [props.onViewportDragStart]
   )
 
   const onViewportDrag = useCallback(
@@ -122,10 +119,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
         const selection = new Set<string>()
 
         if (_props.current.shape === 'circle') {
-          const radius = Math.hypot(
-            event.x - _state.current.annotation.x,
-            event.y - _state.current.annotation.y,
-          )
+          const radius = Math.hypot(event.x - _state.current.annotation.x, event.y - _state.current.annotation.y)
 
           setState({
             select: true,
@@ -134,17 +128,12 @@ export const Selection = <N extends Node>(props: Props<N>) => {
               type: 'circle',
               x: _state.current.annotation.x,
               y: _state.current.annotation.y,
-              radius,
-            },
+              radius
+            }
           })
 
           for (const node of _props.current.nodes ?? []) {
-            if (
-              Math.hypot(
-                (node.x ?? 0) - _state.current.annotation.x,
-                (node.y ?? 0) - _state.current.annotation.y,
-              ) <= radius
-            ) {
+            if (Math.hypot((node.x ?? 0) - _state.current.annotation.x, (node.y ?? 0) - _state.current.annotation.y) <= radius) {
               selection.add(node.id)
             }
           }
@@ -159,17 +148,14 @@ export const Selection = <N extends Node>(props: Props<N>) => {
           setState({
             select: true,
             cursor: 'copy',
-            annotation: { type: 'rectangle', x: x1, y: y1, width, height },
+            annotation: { type: 'rectangle', x: x1, y: y1, width, height }
           })
 
           for (const node of _props.current.nodes ?? []) {
             const x = node.x ?? 0
             const y = node.y ?? 0
 
-            if (
-              ((x > x1 && x < x2) || (x > x2 && x < x1)) &&
-              ((y > y1 && y < y2) || (y > y2 && y < y1))
-            ) {
+            if (((x > x1 && x < x2) || (x > x2 && x < x1)) && ((y > y1 && y < y2) || (y > y2 && y < y1))) {
               selection.add(node.id)
             }
           }
@@ -184,14 +170,14 @@ export const Selection = <N extends Node>(props: Props<N>) => {
             altKey: _keys.current.altKey ?? false,
             ctrlKey: _keys.current.ctrlKey ?? false,
             metaKey: _keys.current.metaKey ?? false,
-            shiftKey: _keys.current.shiftKey ?? false,
+            shiftKey: _keys.current.shiftKey ?? false
           })
         }
       } else {
         props.onViewportDrag?.(event)
       }
     },
-    [props.onSelection, props.onViewportDrag],
+    [props.onSelection, props.onViewportDrag]
   )
 
   const onViewportDragEnd = useCallback(
@@ -204,7 +190,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
       }
       props.onViewportDragEnd?.(event)
     },
-    [props.onViewportDragEnd],
+    [props.onViewportDragEnd]
   )
 
   return props.children({
@@ -226,9 +212,9 @@ export const Selection = <N extends Node>(props: Props<N>) => {
               backgroundColor: props.color ?? '#eee',
               stroke: {
                 color: props.strokeColor ?? '#ccc',
-                width: props.strokeWidth ?? 2,
-              },
-            },
+                width: props.strokeWidth ?? 2
+              }
+            }
           }
         : state.annotation?.type === 'rectangle'
         ? {
@@ -242,10 +228,10 @@ export const Selection = <N extends Node>(props: Props<N>) => {
               backgroundColor: props.color ?? '#eee',
               stroke: {
                 color: props.strokeColor ?? '#ccc',
-                width: props.strokeWidth ?? 2,
-              },
-            },
+                width: props.strokeWidth ?? 2
+              }
+            }
           }
-        : undefined,
+        : undefined
   }) as unknown as JSX.Element
 }

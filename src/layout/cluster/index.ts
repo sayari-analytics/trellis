@@ -12,8 +12,8 @@ export const Layout = () => {
         hierarchy({
           id: '_root_',
           radius: 200,
-          children: nodes.map(({ id, radius }) => ({ id, radius })),
-        }),
+          children: nodes.map(({ id, radius }) => ({ id, radius }))
+        })
       )
       .children?.forEach(({ x, y, data: { id } }) => {
         positions[id] = [x, y]

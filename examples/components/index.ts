@@ -23,7 +23,7 @@ const hierarchy = Hierarchy.Layout()
 const components = Components.Layout()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 
 /**
@@ -41,7 +41,7 @@ const graph = ['a', 'b', 'd'].reduce((graph, root) => hierarchy(root, graph), {
     { id: 'bb', label: 'bb', radius: 18, style: B_STYLE },
     { id: 'c', label: 'c', radius: 18, style: C_STYLE },
     { id: 'd', label: 'd', radius: 18, style: D_STYLE },
-    { id: 'da', label: 'da', radius: 18, style: D_STYLE },
+    { id: 'da', label: 'da', radius: 18, style: D_STYLE }
   ],
   edges: [
     { id: 'a-aa', source: 'a', target: 'aa' },
@@ -50,8 +50,8 @@ const graph = ['a', 'b', 'd'].reduce((graph, root) => hierarchy(root, graph), {
     { id: 'ab-aba', source: 'ab', target: 'aba' },
     { id: 'b-ba', source: 'b', target: 'ba' },
     { id: 'b-bb', source: 'b', target: 'bb' },
-    { id: 'd-da', source: 'd', target: 'da' },
-  ],
+    { id: 'd-da', source: 'd', target: 'da' }
+  ]
 })
 
 const { nodes, edges } = components(graph)
@@ -64,6 +64,6 @@ render({
     height: container.offsetHeight,
     x: 0,
     y: 0,
-    zoom: 1,
-  },
+    zoom: 1
+  }
 })

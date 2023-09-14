@@ -23,11 +23,11 @@ export const bindings = {
   react: {
     Renderer: ReactWebGLBindings,
     Selection: ReactSelectionBindings,
-    Zoom: ReactZoomBindings,
+    Zoom: ReactZoomBindings
   },
   native: {
     Download: NativeDownloadBindings,
     Selection: NativeSelectionBindings,
-    Zoom: NativeZoomBindings,
-  },
+    Zoom: NativeZoomBindings
+  }
 }

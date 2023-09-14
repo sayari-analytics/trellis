@@ -9,7 +9,7 @@ import {
   forceX,
   forceY,
   SimulationLinkDatum,
-  SimulationNodeDatum,
+  SimulationNodeDatum
 } from 'd3-force'
 import { Extend } from '../../types'
 import { Node, Edge } from '../../trellis'
@@ -61,7 +61,7 @@ export const LAYOUT_OPTIONS = {
   linkStrength: undefined,
   centerStrength: 0.02,
   nodePadding: 8,
-  tick: 300,
+  tick: 300
 }
 
 const d3ForceScript = `
@@ -85,8 +85,8 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
       linkStrength = DEFAULT_OPTIONS.linkStrength,
       centerStrength = DEFAULT_OPTIONS.centerStrength,
       nodePadding = DEFAULT_OPTIONS.nodePadding,
-      tick = DEFAULT_OPTIONS.tick,
-    } = DEFAULT_OPTIONS,
+      tick = DEFAULT_OPTIONS.tick
+    } = DEFAULT_OPTIONS
   }: LayoutEvent) => {
     /**
      * TODO - `forceCollide().radius(...)` should be `(node) => node.radius + node.totalStrokeWidth + this.nodePadding`
@@ -101,7 +101,7 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
       .force('charge', d3.forceManyBody().distanceMax(4000).theta(0.5).strength(nodeStrength))
       .force(
         'collision',
-        d3.forceCollide<SimulationNode>().radius((node) => node.radius + nodePadding),
+        d3.forceCollide<SimulationNode>().radius((node) => node.radius + nodePadding)
       )
       .force('x', d3.forceX(0).strength(centerStrength))
       .force('y', d3.forceY(0).strength(centerStrength))
@@ -120,7 +120,7 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
               .id((node) => node.id)
               .distance(linkDistance)
               .strength(linkStrength)
-              .links(edges),
+              .links(edges)
       )
       .stop()
       .tick(tick)
@@ -148,7 +148,7 @@ const workerScript = (DEFAULT_OPTIONS: typeof LAYOUT_OPTIONS) => {
 }
 
 const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOUT_OPTIONS)})`], {
-  type: 'application/javascript',
+  type: 'application/javascript'
 })
 
 /**
@@ -159,11 +159,7 @@ export const Layout = () => {
   const worker = new Worker(workerUrl)
   let v = 0
 
-  const layout = <N extends Node, E extends Edge>(graph: {
-    nodes: N[]
-    edges: E[]
-    options?: Options
-  }) => {
+  const layout = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     const edges = graph.edges
     const version = v++
 
@@ -171,22 +167,20 @@ export const Layout = () => {
       nodes: graph.nodes,
       edges: graph.edges,
       options: graph.options,
-      v: version,
+      v: version
     } as LayoutEvent)
 
-    return new Promise<{ nodes: Extend<N, { x: number; y: number }>[]; edges: E[] }>(
-      (resolve, reject) => {
-        const successHandler = ({ data }: Message<LayoutResultEvent<N>>) => {
-          if (data.v === version) {
-            worker.removeEventListener('message', successHandler)
-            resolve({ nodes: data.nodes, edges })
-          }
+    return new Promise<{ nodes: Extend<N, { x: number; y: number }>[]; edges: E[] }>((resolve, reject) => {
+      const successHandler = ({ data }: Message<LayoutResultEvent<N>>) => {
+        if (data.v === version) {
+          worker.removeEventListener('message', successHandler)
+          resolve({ nodes: data.nodes, edges })
         }
-        worker.addEventListener('message', successHandler)
+      }
+      worker.addEventListener('message', successHandler)
 
-        worker.onerror = reject
-      },
-    )
+      worker.onerror = reject
+    })
   }
 
   layout.delete = () => {

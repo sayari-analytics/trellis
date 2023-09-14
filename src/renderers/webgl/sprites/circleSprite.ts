@@ -11,7 +11,7 @@ export class CircleSprite<N extends Node, E extends Edge> {
     this.texture = renderer.app.renderer.generateTexture(
       new PIXI.Graphics().beginFill(0xffffff).drawCircle(0, 0, CircleSprite.radius),
       PIXI.SCALE_MODES.LINEAR,
-      2,
+      2
     )
   }
 

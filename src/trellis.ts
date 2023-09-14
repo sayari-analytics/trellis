@@ -124,20 +124,7 @@ export type TextAnnotation = {
     text: Partial<{
       fontName: string
       fontSize: number
-      fontWeight:
-        | 'normal'
-        | 'bold'
-        | 'bolder'
-        | 'lighter'
-        | '100'
-        | '200'
-        | '300'
-        | '400'
-        | '500'
-        | '600'
-        | '700'
-        | '800'
-        | '900'
+      fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
       fontStyle: 'normal' | 'italic' | 'oblique'
       weight: string
       color: string
@@ -162,10 +149,7 @@ export type Dimensions = { width: number; height: number }
 
 export type Viewport = { x: number; y: number; zoom: number }
 
-export const getSelectionBounds = (
-  elements: (Node | Annotation)[],
-  padding: number = 0,
-): Bounds => {
+export const getSelectionBounds = (elements: (Node | Annotation)[], padding: number = 0): Bounds => {
   let left = 0
   let top = 0
   let right = 0
@@ -197,7 +181,7 @@ export const getSelectionBounds = (
     left: left - padding,
     top: top - padding,
     right: right + padding,
-    bottom: bottom + padding,
+    bottom: bottom + padding
   }
 }
 
@@ -206,28 +190,22 @@ export const mergeBounds = (a: Bounds, b: Bounds, padding: number = 0): Bounds =
     left: Math.min(a.left, b.left) - padding,
     top: Math.min(a.top, b.top) - padding,
     right: Math.max(a.right, b.right) + padding,
-    bottom: Math.max(a.bottom, b.bottom) + padding,
+    bottom: Math.max(a.bottom, b.bottom) + padding
   }
 }
 
-export const viewportToBounds = (
-  { x, y, zoom }: Viewport,
-  { width, height }: Dimensions,
-): Bounds => {
+export const viewportToBounds = ({ x, y, zoom }: Viewport, { width, height }: Dimensions): Bounds => {
   const xOffset = width / 2 / zoom
   const yOffset = height / 2 / zoom
   return {
     left: -(x + xOffset),
     top: -(y + yOffset),
     right: -(x - xOffset),
-    bottom: -(y - yOffset),
+    bottom: -(y - yOffset)
   }
 }
 
-export const boundsToViewport = (
-  { left, top, right, bottom }: Bounds,
-  { width, height }: Dimensions,
-): Viewport => {
+export const boundsToViewport = ({ left, top, right, bottom }: Bounds, { width, height }: Dimensions): Viewport => {
   const targetWidth = right - left
   const targetHeight = bottom - top
   const x = targetWidth / 2 - right
@@ -242,18 +220,14 @@ export const boundsToViewport = (
   }
 }
 
-export const boundsToDimensions = (
-  { left, top, right, bottom }: Bounds,
-  zoom: number,
-): Dimensions => {
+export const boundsToDimensions = ({ left, top, right, bottom }: Bounds, zoom: number): Dimensions => {
   return {
     width: (right - left) / zoom,
-    height: (bottom - top) / zoom,
+    height: (bottom - top) / zoom
   }
 }
 
-export const clamp = (min: number, max: number, value: number) =>
-  Math.max(min, Math.min(max, value))
+export const clamp = (min: number, max: number, value: number) => Math.max(min, Math.min(max, value))
 
 export const equals = <T>(a: T, b: T) => {
   if (a === b) {
@@ -287,10 +261,7 @@ export const equals = <T>(a: T, b: T) => {
   return false
 }
 
-export const connectedComponents = <N extends Node, E extends Edge>(graph: {
-  nodes: N[]
-  edges: E[]
-}): { nodes: N[]; edges: E[] }[] => {
+export const connectedComponents = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[] }): { nodes: N[]; edges: E[] }[] => {
   const adjacencyList: Record<string, Record<string, E[]>> = {}
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
@@ -327,7 +298,7 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: {
     const toVisit = [id]
     const component: { nodes: Record<string, N>; edges: Record<string, E> } = {
       nodes: { [id]: nodes[id] },
-      edges: {},
+      edges: {}
     }
 
     while (toVisit.length > 0) {
@@ -354,13 +325,13 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: {
 
   return components.map(({ nodes, edges }) => ({
     nodes: Object.values(nodes),
-    edges: Object.values(edges),
+    edges: Object.values(edges)
   }))
 }
 
 export function* bfs<N extends Node, E extends Edge>(
   predicate: (node: N) => boolean,
-  graph: { nodes: N[]; edges: E[] },
+  graph: { nodes: N[]; edges: E[] }
 ): Generator<N, void, void> {
   const adjacencyList: Record<string, string[]> = {}
   const nodes: Record<string, N> = {}
@@ -406,5 +377,4 @@ export function* bfs<N extends Node, E extends Edge>(
   }
 }
 
-export const distance = (x0: number, y0: number, x1: number, y1: number) =>
-  Math.hypot(x1 - x0, y1 - y0)
+export const distance = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)

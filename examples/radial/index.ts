@@ -25,7 +25,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: radius * 1.25,
+    size: radius * 1.25
   },
   badge: [
     {
@@ -37,8 +37,8 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 12,
         color: '#FFF',
-        text: '15',
-      },
+        text: '15'
+      }
     },
     {
       position: 135,
@@ -49,10 +49,10 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 12,
         color: '#FFF',
-        text: '!',
-      },
-    },
-  ],
+        text: '!'
+      }
+    }
+  ]
 })
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
@@ -63,7 +63,7 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'person',
     color: '#fff',
-    size: radius * 1.25,
+    size: radius * 1.25
   },
   badge: [
     {
@@ -75,23 +75,16 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
         family: 'Helvetica',
         size: 12,
         color: '#FFF',
-        text: '8',
-      },
-    },
-  ],
+        text: '8'
+      }
+    }
+  ]
 })
 
 let nodes = Object.values(graphData.nodes)
   .map((node, idx) => ({
     ...node,
-    label:
-      idx % 4 === 0
-        ? arabicLabel
-        : idx % 4 === 1
-        ? thaiLabel
-        : idx % 4 === 2
-        ? russianLabel
-        : node.label,
+    label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel : node.label
   }))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   // .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
@@ -100,7 +93,7 @@ let nodes = Object.values(graphData.nodes)
     label,
     radius: 32,
     type,
-    style: type === 'company' ? createCompanyStyle(32) : createPersonStyle(32),
+    style: type === 'company' ? createCompanyStyle(32) : createPersonStyle(32)
   }))
 
 let edges = Object.entries<{ field: string; source: string; target: string }>(graphData.edges)
@@ -115,7 +108,7 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
     source,
     target,
     label: field.replace(/_/g, ' '),
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   }))
 
 // let nodes = [
@@ -148,7 +141,7 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
 const container = document.querySelector('#graph') as HTMLDivElement
 
 const layoutOptions: Radial.Options = {
-  radius: 1200,
+  radius: 1200
 }
 
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
@@ -165,13 +158,10 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
             ...node,
             style: {
               ...node.style,
-              stroke:
-                node.type === 'company'
-                  ? [{ color: '#FFF' }, { color: '#CCC' }]
-                  : [{ color: '#CCC' }],
-            },
+              stroke: node.type === 'company' ? [{ color: '#FFF' }, { color: '#CCC' }] : [{ color: '#CCC' }]
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
@@ -180,24 +170,20 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
       node.id === id
         ? {
             ...node,
-            style: node.type === 'company' ? createCompanyStyle(32) : createPersonStyle(32),
+            style: node.type === 'company' ? createCompanyStyle(32) : createPersonStyle(32)
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 
 /**
@@ -206,7 +192,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 const radial = Radial.Layout()
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 
 /**

@@ -15,12 +15,12 @@ const NODE_STYLE_A: Graph.NodeStyle = {
     family: 'Material Icons',
     text: 'person',
     color: '#fff',
-    size: 24,
+    size: 24
   },
   label: {
     fontSize: 10,
-    color: '#666',
-  },
+    color: '#666'
+  }
 }
 
 const NODE_STYLE_B: Graph.NodeStyle = {
@@ -31,12 +31,12 @@ const NODE_STYLE_B: Graph.NodeStyle = {
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: 24,
+    size: 24
   },
   label: {
     fontSize: 10,
-    color: '#666',
-  },
+    color: '#666'
+  }
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
@@ -45,8 +45,8 @@ const EDGE_STYLE: Graph.EdgeStyle = {
   arrow: 'forward',
   label: {
     fontSize: 10,
-    color: '#666',
-  },
+    color: '#666'
+  }
 }
 
 const container = document.querySelector('#graph') as HTMLDivElement
@@ -57,69 +57,59 @@ const nodes = raw.nodes.map<Node>((id, idx) => ({
   id: `${id}`,
   radius: 18,
   label: `${idx % 4 === 0 ? 'person' : 'company'} ${id}`,
-  style: idx % 4 === 0 ? NODE_STYLE_A : NODE_STYLE_B,
+  style: idx % 4 === 0 ? NODE_STYLE_A : NODE_STYLE_B
 }))
 const edges = raw.edges.map(([source, target], idx) => ({
   id: `${idx}`,
   source: `${source}`,
   target: `${target}`,
   label: 'linked to',
-  style: EDGE_STYLE,
+  style: EDGE_STYLE
 }))
 
-const filterGraph =
-  (predicate: (node: Node) => boolean) => (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
-    const nodeMap = graph.nodes.reduce<Record<string, Node>>(
-      (nodeMap, node) => ((nodeMap[node.id] = node), nodeMap),
-      {},
-    )
-    return {
-      nodes: graph.nodes.filter(predicate),
-      edges: graph.edges.filter(
-        ({ source, target }) => predicate(nodeMap[source]) && predicate(nodeMap[target]),
-      ),
-    }
+const filterGraph = (predicate: (node: Node) => boolean) => (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
+  const nodeMap = graph.nodes.reduce<Record<string, Node>>((nodeMap, node) => ((nodeMap[node.id] = node), nodeMap), {})
+  return {
+    nodes: graph.nodes.filter(predicate),
+    edges: graph.edges.filter(({ source, target }) => predicate(nodeMap[source]) && predicate(nodeMap[target]))
   }
+}
 
-const groupBy =
-  (grouper: (node: Node) => string) => (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
-    const idMap: Record<string, string> = {}
+const groupBy = (grouper: (node: Node) => string) => (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
+  const idMap: Record<string, string> = {}
 
-    const nodes = Object.values(
-      graph.nodes.reduce<Record<string, Node[]>>((groups, node) => {
-        const key = grouper(node)
-        if (groups[key] === undefined) groups[key] = []
-        groups[key].push(node)
-        return groups
-      }, {}),
-    ).map((nodes) => {
-      nodes.forEach((node) => {
-        idMap[node.id] = nodes[0].id
-      })
-      return { ...nodes[0], size: nodes.length }
+  const nodes = Object.values(
+    graph.nodes.reduce<Record<string, Node[]>>((groups, node) => {
+      const key = grouper(node)
+      if (groups[key] === undefined) groups[key] = []
+      groups[key].push(node)
+      return groups
+    }, {})
+  ).map((nodes) => {
+    nodes.forEach((node) => {
+      idMap[node.id] = nodes[0].id
     })
+    return { ...nodes[0], size: nodes.length }
+  })
 
-    const edges = Object.values(
-      graph.edges.reduce<Record<string, Graph.Edge>>((edges, edge) => {
-        if (edges[`${idMap[edge.source]}::${idMap[edge.target]}`] === undefined) {
-          edges[`${idMap[edge.source]}::${idMap[edge.target]}`] = {
-            ...edge,
-            source: idMap[edge.source],
-            target: idMap[edge.target],
-          }
+  const edges = Object.values(
+    graph.edges.reduce<Record<string, Graph.Edge>>((edges, edge) => {
+      if (edges[`${idMap[edge.source]}::${idMap[edge.target]}`] === undefined) {
+        edges[`${idMap[edge.source]}::${idMap[edge.target]}`] = {
+          ...edge,
+          source: idMap[edge.source],
+          target: idMap[edge.target]
         }
-        return edges
-      }, {}),
-    )
+      }
+      return edges
+    }, {})
+  )
 
-    return { nodes, edges }
-  }
+  return { nodes, edges }
+}
 
 const cluster = (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
-  const nodeMap = graph.nodes.reduce<Record<string, Node>>(
-    (nodeMap, node) => ((nodeMap[node.id] = node), nodeMap),
-    {},
-  )
+  const nodeMap = graph.nodes.reduce<Record<string, Node>>((nodeMap, node) => ((nodeMap[node.id] = node), nodeMap), {})
 
   const nodes = clustersKmeans({
     type: 'FeatureCollection',
@@ -127,10 +117,10 @@ const cluster = (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
       type: 'Feature',
       geometry: {
         type: 'Point',
-        coordinates: [x, y],
+        coordinates: [x, y]
       },
-      properties: { id },
-    })),
+      properties: { id }
+    }))
   }).features.map(({ properties }) => {
     const cluster = properties.cluster ?? 0
     const node = nodeMap[(properties as any).id]
@@ -145,11 +135,7 @@ const cluster = (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
 Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
   force({ nodes, edges })
     .then(cluster)
-    .then(
-      filterGraph(
-        ({ cluster }) => cluster !== 2 && cluster !== 3 && cluster !== 5 && cluster !== 7,
-      ),
-    )
+    .then(filterGraph(({ cluster }) => cluster !== 2 && cluster !== 3 && cluster !== 5 && cluster !== 7))
     .then(force),
   force({ nodes, edges })
     .then(cluster)
@@ -160,20 +146,20 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
   hierarchy(
     `${raw.roots[0]}`,
     groupBy((node) => (node.cluster === 0 || node.cluster === 6 ? `${node.cluster}` : node.id))(
-      cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges })),
-    ),
+      cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges }))
+    )
   ),
   hierarchy(
     `${raw.roots[0]}`,
-    groupBy((node) =>
-      node.cluster === 0 || node.cluster === 6 || node.cluster === 2 ? `${node.cluster}` : node.id,
-    )(cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges }))),
+    groupBy((node) => (node.cluster === 0 || node.cluster === 6 || node.cluster === 2 ? `${node.cluster}` : node.id))(
+      cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges }))
+    )
   ),
   force(
-    groupBy((node) =>
-      node.cluster === 0 || node.cluster === 6 || node.cluster === 2 ? `${node.cluster}` : node.id,
-    )(cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges }))),
-  ),
+    groupBy((node) => (node.cluster === 0 || node.cluster === 6 || node.cluster === 2 ? `${node.cluster}` : node.id))(
+      cluster(hierarchy(`${raw.roots[0]}`, { nodes, edges }))
+    )
+  )
 ]).then((layouts) => {
   const draw = (idx: number, animate: boolean) => {
     const nodes = layouts[idx].nodes
@@ -183,7 +169,7 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
 
     const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), {
       width,
-      height,
+      height
     })
 
     render({
@@ -197,8 +183,8 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
         zoom,
         animateNodePosition: !!animate,
         animateViewportPosition: true,
-        animateViewportZoom: true,
-      },
+        animateViewportZoom: true
+      }
     })
   }
 
@@ -222,13 +208,9 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
         return {
           roots: raw.roots,
           nodes: Object.values(nodes).map(({ id, x = 0, y = 0 }) => [idMap[id], x, y]),
-          edges: Object.values(edges).map(({ id, source, target }) => [
-            id,
-            idMap[source],
-            idMap[target],
-          ]),
+          edges: Object.values(edges).map(({ id, source, target }) => [id, idMap[source], idMap[target]])
         }
-      }),
-    ),
+      })
+    )
   )
 })

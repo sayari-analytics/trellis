@@ -27,22 +27,22 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'business',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
       position: 45,
       color: '#FFAF1D',
       stroke: '#FFF',
-      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '15' },
+      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '15' }
     },
     {
       position: 135,
       color: '#E4171B',
       stroke: '#FFF',
-      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '!' },
-    },
-  ],
+      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '!' }
+    }
+  ]
 })
 
 const createPersonStyle = (radius: number): Graph.NodeStyle => ({
@@ -53,29 +53,22 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
     family: 'Material Icons',
     text: 'person',
     color: '#fff',
-    size: radius * 1.2,
+    size: radius * 1.2
   },
   badge: [
     {
       position: 45,
       color: '#7CBBF3',
       stroke: '#FFF',
-      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '8' },
-    },
-  ],
+      icon: { type: 'textIcon', family: 'Helvetica', size: 10, color: '#FFF', text: '8' }
+    }
+  ]
 })
 
 let nodes = Object.values(graphData.nodes)
   .map((node, idx) => ({
     ...node,
-    label:
-      idx % 4 === 0
-        ? arabicLabel
-        : idx % 4 === 1
-        ? thaiLabel
-        : idx % 4 === 2
-        ? russianLabel
-        : node.label,
+    label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel : node.label
   }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
@@ -84,21 +77,15 @@ let nodes = Object.values(graphData.nodes)
     label,
     radius: 18,
     type,
-    style: type === 'company' ? createCompanyStyle(18) : createPersonStyle(18),
+    style: type === 'company' ? createCompanyStyle(18) : createPersonStyle(18)
   }))
 
 let edges = Object.entries<{ field: string; source: string; target: string }>(graphData.edges)
   .concat(
-    Object.entries(graphData.edges).map(([id, edge]) => [
-      `${id}_2`,
-      { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` },
-    ]),
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }])
   )
   .concat(
-    Object.entries(graphData.edges).map(([id, edge]) => [
-      `${id}_3`,
-      { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` },
-    ]),
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }])
   )
   .concat([
     [
@@ -106,24 +93,24 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
       {
         field: 'related_to',
         source: Object.values(graphData.nodes)[77].id,
-        target: `${Object.values(graphData.nodes)[0].id}_2`,
-      },
+        target: `${Object.values(graphData.nodes)[0].id}_2`
+      }
     ],
     [
       'connect_3',
       {
         field: 'related_to',
         source: `${Object.values(graphData.nodes)[50].id}_2`,
-        target: `${Object.values(graphData.nodes)[0].id}_3`,
-      },
-    ],
+        target: `${Object.values(graphData.nodes)[0].id}_3`
+      }
+    ]
   ])
   .map<Graph.Edge>(([id, { field, source, target }]) => ({
     id,
     source,
     target,
     label: field.replace(/_/g, ' '),
-    style: { arrow: 'forward' },
+    style: { arrow: 'forward' }
   }))
 
 let hierarchyNodes: Node[] = []
@@ -141,7 +128,7 @@ const force = Force.Layout()
 const zoomControl = Zoom.Control({ container })
 const render = WebGL.Renderer({
   container,
-  debug: { stats, logPerformance: false },
+  debug: { stats, logPerformance: false }
 })
 
 /**
@@ -149,7 +136,7 @@ const render = WebGL.Renderer({
  */
 const layoutOptions: Hierarchy.Options = {
   y: container.offsetHeight,
-  x: 600,
+  x: 600
 }
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
@@ -170,13 +157,10 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
             ...node,
             style: {
               ...node.style,
-              stroke:
-                node.type === 'company'
-                  ? [{ color: '#FFF' }, { color: '#CCC' }]
-                  : [{ color: '#CCC' }],
-            },
+              stroke: node.type === 'company' ? [{ color: '#FFF' }, { color: '#CCC' }] : [{ color: '#CCC' }]
+            }
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
@@ -185,22 +169,18 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
       node.id === id
         ? {
             ...node,
-            style: node.type === 'company' ? createCompanyStyle(18) : createPersonStyle(18),
+            style: node.type === 'company' ? createCompanyStyle(18) : createPersonStyle(18)
           }
-        : node,
+        : node
     )
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerEnter: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 3 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onEdgePointerLeave: ({ target: { id } }) => {
-    edges = edges.map((edge) =>
-      edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge,
-    )
+    edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, options: renderOptions })
   },
   onViewportPointerDown: () => {
@@ -242,7 +222,7 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     renderOptions.y = viewportY
     renderOptions.zoom = viewportZoom
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 
 /**
@@ -251,21 +231,13 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(
-      renderOptions.minZoom!,
-      renderOptions.maxZoom!,
-      renderOptions.zoom! / 0.6,
-    )
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(
-      renderOptions.minZoom!,
-      renderOptions.maxZoom!,
-      renderOptions.zoom! * 0.6,
-    )
+    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 })
 
 let layout = 'hierarchy'
@@ -278,7 +250,7 @@ force({ nodes, edges }).then((forceData) => {
 
   const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), {
     width: renderOptions.width!,
-    height: renderOptions.height!,
+    height: renderOptions.height!
   })
   renderOptions.x = x
   renderOptions.y = y

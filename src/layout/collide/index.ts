@@ -13,7 +13,7 @@ type SimulationNode = {
 
 const COLLIDE_LAYOUT_OPTIONS = {
   nodePadding: 8,
-  tick: 50,
+  tick: 50
 }
 
 export const Layout = () => {
@@ -22,10 +22,8 @@ export const Layout = () => {
       .force(
         'collide',
         forceCollide<SimulationNode>()
-          .radius(
-            (d) => d.radius + (graph.options?.nodePadding ?? COLLIDE_LAYOUT_OPTIONS.nodePadding),
-          )
-          .iterations(3),
+          .radius((d) => d.radius + (graph.options?.nodePadding ?? COLLIDE_LAYOUT_OPTIONS.nodePadding))
+          .iterations(3)
       )
       .stop()
       .tick(graph.options?.tick ?? COLLIDE_LAYOUT_OPTIONS.tick)

@@ -35,8 +35,7 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-export const clampZoom = (min: number, max: number, zoom: number) =>
-  Math.max(min, Math.min(max, zoom))
+export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
 
 /**
  * TODO

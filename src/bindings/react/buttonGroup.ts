@@ -20,21 +20,14 @@ export const ButtonGroup: FunctionComponent<Props> = (props) => {
         Button,
         {
           key: idx,
-          group:
-            props.children.length === 0
-              ? undefined
-              : idx === 0
-              ? 'top'
-              : idx === props.children.length - 1
-              ? 'bottom'
-              : 'middle',
+          group: props.children.length === 0 ? undefined : idx === 0 ? 'top' : idx === props.children.length - 1 ? 'bottom' : 'middle',
           selected,
           disabled,
           title,
-          onClick,
+          onClick
         },
-        body,
-      ),
-    ),
+        body
+      )
+    )
   )
 }
