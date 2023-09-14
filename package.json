@@ -6,6 +6,7 @@
   "main": "./dist/main.js",
   "module": "./dist/module.js",
   "types": "./dist/types.d.ts",
+  "files": ["dist"],
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
