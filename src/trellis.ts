@@ -38,13 +38,16 @@ export type ImageIcon = {
   offsetY?: number
 }
 
-type LabelStyle = Partial<{
+export type Placement = 'top' | 'bottom' | 'left' | 'right'
+
+export type LabelStyle = Partial<{
   color: string
   fontFamily: string
   fontSize: number
   wordWrap: number
   background: string
   backgroundOpacity: number
+  placement: Placement
 }>
 
 export type NodeStyle = {

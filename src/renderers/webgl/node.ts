@@ -9,11 +9,13 @@ import {
   clientPositionFromEvent,
   pointerKeysFromEvent
 } from './utils'
-import { Node, Edge, NodeStyle, equals } from '../../trellis'
+import { Node, Edge, NodeStyle, equals, Placement } from '../../trellis'
 import { interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
 
-const LABEL_Y_PADDING = 2
+const LABEL_PADDING = 4
+const VERTICAL_ANCHOR = { x: 0.5, y: 0 }
+const HORIZONTAL_ANCHOR = { x: 0, y: 0.5 }
 const DEFAULT_NODE_FILL = colorToNumber('#666')
 const DEFAULT_NODE_STROKE = colorToNumber('#aaa')
 const DEFAULT_NODE_STROKE_WIDTH = 2
@@ -51,6 +53,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
   private labelWordWrap?: number
   private labelBackground?: string
   private labelBackgroundOpacity?: number
+  private labelPlacement: Placement = 'bottom'
   private stroke?: NodeStyle['stroke']
   private icon?: NodeStyle['icon']
   private badge?: NodeStyle['badge']
@@ -175,6 +178,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
     const labelWordWrap = node.style?.label?.wordWrap
     const labelBackground = node.style?.label?.background
     const labelBackgroundOpacity = node.style?.label?.backgroundOpacity
+    const labelPlacement = node.style?.label?.placement ?? 'bottom'
 
     if (
       node.label !== this.label ||
@@ -183,7 +187,8 @@ export class NodeRenderer<N extends Node, E extends Edge> {
       labelSize !== this.labelSize ||
       labelWordWrap !== this.labelWordWrap ||
       labelBackground !== this.labelBackground ||
-      labelBackgroundOpacity !== this.labelBackgroundOpacity
+      labelBackgroundOpacity !== this.labelBackgroundOpacity ||
+      labelPlacement !== this.labelPlacement
     ) {
       this.label = node.label
       this.labelFamily = labelFamily
@@ -192,6 +197,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
       this.labelWordWrap = labelWordWrap
       this.labelBackground = labelBackground
       this.labelBackgroundOpacity = labelBackgroundOpacity
+      this.labelPlacement = labelPlacement
       this.labelContainer.removeChildren()
       this.labelSprite?.destroy()
       this.labelSprite = undefined
@@ -207,6 +213,11 @@ export class NodeRenderer<N extends Node, E extends Edge> {
           this.dirty = true
           this.renderer.dirty = true
 
+          const anchor =
+            this.labelPlacement === 'left' || this.labelPlacement === 'right'
+              ? HORIZONTAL_ANCHOR
+              : VERTICAL_ANCHOR
+
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
             fontSize: (this.labelSize ?? DEFAULT_LABEL_SIZE) * 2.5,
@@ -214,11 +225,16 @@ export class NodeRenderer<N extends Node, E extends Edge> {
             lineJoin: 'round',
             stroke: this.labelBackground === undefined ? '#fff' : undefined,
             strokeThickness: this.labelBackground === undefined ? 2.5 * 2.5 : 0,
-            align: 'center',
+            align:
+              this.labelPlacement === 'left'
+                ? 'right'
+                : this.labelPlacement === 'right'
+                ? 'left'
+                : 'center',
             wordWrap: labelWordWrap !== undefined,
             wordWrapWidth: labelWordWrap
           })
-          this.labelSprite.anchor.set(0.5, 0)
+          this.labelSprite.anchor.set(anchor.x, anchor.y)
           this.labelSprite.scale.set(0.4)
           this.labelContainer.addChild(this.labelSprite)
 
@@ -228,7 +244,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
             this.labelBackgroundSprite.height = this.labelSprite.height
             this.labelBackgroundSprite.tint = colorToNumber(this.labelBackground)
             this.labelBackgroundSprite.alpha = this.labelBackgroundOpacity ?? 1
-            this.labelBackgroundSprite.anchor.set(0.5, 0)
+            this.labelBackgroundSprite.anchor.set(anchor.x, anchor.y)
             this.labelContainer.addChild(this.labelBackgroundSprite)
           }
 
@@ -511,11 +527,31 @@ export class NodeRenderer<N extends Node, E extends Edge> {
     this.nodeContainer.hitArea = new PIXI.Circle(0, 0, this.radius + this.strokeWidth)
 
     if (this.labelSprite) {
-      this.labelSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
-    }
+      const labelPadding = this.radius + this.strokeWidth + LABEL_PADDING
 
-    if (this.labelBackgroundSprite) {
-      this.labelBackgroundSprite.y = this.radius + this.strokeWidth + LABEL_Y_PADDING
+      if (this.labelPlacement === 'left') {
+        const x = -labelPadding - (this.labelBackgroundSprite?.width ?? this.labelSprite.width)
+        this.labelSprite.x = x
+        if (this.labelBackgroundSprite) {
+          this.labelBackgroundSprite.x = x
+        }
+      } else if (this.labelPlacement === 'right') {
+        this.labelSprite.x = labelPadding
+        if (this.labelBackgroundSprite) {
+          this.labelBackgroundSprite.x = labelPadding
+        }
+      } else if (this.labelPlacement === 'top') {
+        const y = -labelPadding - (this.labelBackgroundSprite?.height ?? this.labelSprite.height)
+        this.labelSprite.y = y
+        if (this.labelBackgroundSprite) {
+          this.labelBackgroundSprite.y = y
+        }
+      } else {
+        this.labelSprite.y = labelPadding
+        if (this.labelBackgroundSprite) {
+          this.labelBackgroundSprite.y = labelPadding
+        }
+      }
     }
 
     for (const subgraphNodeId in this.subgraphNodes) {
