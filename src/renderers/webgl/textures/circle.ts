@@ -1,13 +1,13 @@
-import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer } from 'pixi.js-legacy'
-import { StaticRenderer } from '..'
+import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js-legacy'
+import { MIN_ZOOM, Renderer } from '..'
 
 
 export class CircleTexture {
 
   texture: RenderTexture
-  scaleFactor = 10 * 5 // maxRadius * minZoom -- TODO make configurable
+  scaleFactor = 10 * MIN_ZOOM // maxRadius * minZoom -- TODO make configurable
 
-  constructor(renderer: StaticRenderer) {
+  constructor(renderer: Renderer) {
     const graphic = new Graphics()
       .beginFill(0xffffff)
       .drawCircle(0, 0, this.scaleFactor)
@@ -24,7 +24,7 @@ export class CircleTexture {
       transform: new Matrix(1, 0, 0, 1, graphic.width / 2, graphic.height / 2)
     })
   
-    if (renderer.app.renderer instanceof Renderer) {
+    if (renderer.app.renderer instanceof PixiRenderer) {
       renderer.app.renderer.framebuffer.blit()
     }
   

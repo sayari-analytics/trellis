@@ -1,6 +1,6 @@
 import { Sprite } from 'pixi.js-legacy'
 import * as Graph from '../../..'
-import { StaticRenderer } from '..'
+import { Renderer } from '..'
 import { NodeRenderer } from '../node'
 
 
@@ -13,12 +13,12 @@ export class NodeFill {
   containerIndex: number
   circle: Sprite // TODO - make private
 
-  private renderer: StaticRenderer
+  private renderer: Renderer
   private nodeRenderer: NodeRenderer
   private radius?: number
   private style?: Graph.NodeStyle
   
-  constructor(renderer: StaticRenderer, nodeRenderer: NodeRenderer) {
+  constructor(renderer: Renderer, nodeRenderer: NodeRenderer) {
     this.renderer = renderer
     this.nodeRenderer = nodeRenderer
     this.circle = new Sprite(this.renderer.circle.texture)

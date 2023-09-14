@@ -1,11 +1,12 @@
 import { BitmapFont } from 'pixi.js-legacy'
+import { MIN_ZOOM } from '..'
 
 
 export class Font {
   
   private font: BitmapFont
 
-  constructor(fontFamily = 'sans-serif', maxFontSize = 10, minZoom = 5, strokeThickness = 1.5) {
+  constructor(fontFamily = 'sans-serif', maxFontSize = 10, minZoom = MIN_ZOOM, strokeThickness = 1.5) {
     this.font = BitmapFont.from('Label', {
       fontFamily,
       fontSize: maxFontSize * 2 * minZoom, // max font size * retina * minZoom

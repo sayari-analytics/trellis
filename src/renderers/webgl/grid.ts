@@ -1,14 +1,14 @@
 import { BitmapText, Container, Graphics, IBitmapTextStyle } from 'pixi.js-legacy'
-import { StaticRenderer } from '.'
+import { Renderer } from '.'
 
 
 export class Grid {
   static TEXT_STYLE: Partial<IBitmapTextStyle> = { fontName: 'Label', fontSize: 10, align: 'center' }
 
-  renderer: StaticRenderer
+  renderer: Renderer
   container = new Container()
 
-  constructor (renderer: StaticRenderer, width: number, height: number, interval: number, options?: { hideText?: boolean }) {
+  constructor (renderer: Renderer, width: number, height: number, interval: number, options?: { hideText?: boolean }) {
     this.renderer = renderer
     this.renderer.root.addChild(this.container)
     const graticules = new Graphics()

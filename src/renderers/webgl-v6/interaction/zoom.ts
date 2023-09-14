@@ -1,27 +1,23 @@
-import { Point } from 'pixi.js-legacy'
+import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
+import { Node, Edge } from '../../..'
 
 
 /**
  * zoom logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Wheel Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/wheel.js)
  */
-export class Zoom {
+export class Zoom <N extends Node, E extends Edge>{
 
-  private renderer: InternalRenderer
+  private renderer: InternalRenderer<N, E>
   private paused = false
 
-  constructor(renderer: InternalRenderer<any, any>) {
+  constructor(renderer: InternalRenderer<N, E>) {
     this.renderer = renderer
   }
 
   wheel = (event: WheelEvent) => {
-    if (this.renderer.onViewportWheel === undefined) {
-      return
-    }
-
-    event.preventDefault()
-    event.stopPropagation()
+    if (this.renderer.onViewportWheel !== undefined) event.preventDefault()
 
     if (this.paused) {
       return
@@ -39,10 +35,8 @@ export class Zoom {
       return
     }
 
-    const globalStart = new Point()
-    this.renderer.eventSystem.mapPositionToPoint(globalStart, event.clientX, event.clientY)
-    globalStart.x /= 2
-    globalStart.y /= 2
+    const globalStart = new PIXI.Point()
+    ;(this.renderer.app.renderer.plugins.interaction as PIXI.InteractionManager).mapPositionToPoint(globalStart, event.clientX, event.clientY)
     const localStart = this.renderer.root.toLocal(globalStart)
 
     this.renderer.root.scale.set(zoomEnd)
@@ -60,7 +54,7 @@ export class Zoom {
 
     this.renderer.onViewportWheel?.({
       type: 'viewportWheel',
-      x: localStart.x, // these don't really make sense do they?
+      x: localStart.x,
       y: localStart.y,
       clientX: event.clientX,
       clientY: event.clientY,
@@ -69,8 +63,6 @@ export class Zoom {
       viewportZoom: zoomEnd,
       target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
     })
-
-    return false
   }
 
   pause() {

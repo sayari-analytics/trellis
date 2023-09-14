@@ -1,74 +1,65 @@
-import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '..'
-import { Node, Edge } from '../../..'
-import { clientPositionFromEvent } from '../utils'
+import { FederatedPointerEvent } from 'pixi.js-legacy'
+import { Renderer } from '..'
 
 
 /**
  * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Drag Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/drag.js)
  */
-export class Drag <N extends Node, E extends Edge>{
+export class Drag {
 
-  private renderer: InternalRenderer<N, E>
+  dragging = false
+
+  private renderer: Renderer
   private paused = false
   private last?: { x: number, y: number }
   private current?: number
-  private moved = false
 
-  constructor(renderer: InternalRenderer<N, E>) {
+  constructor(renderer: Renderer) {
     this.renderer = renderer
   }
 
-  down = (event: PIXI.InteractionEvent) => {
-    if (this.paused) {
+  down = (event: FederatedPointerEvent) => {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
     this.renderer.container.style.cursor = 'move'
-    this.last = { x: event.data.global.x, y: event.data.global.y }
-    this.current = event.data.pointerId
+
+    this.last = { x: event.global.x, y: event.global.y }
+    this.current = event.pointerId
   }
 
-  move = (event: PIXI.InteractionEvent) => {
-    if (this.paused) {
+  move = (event: FederatedPointerEvent) => {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
-    if (this.last && this.current === event.data.pointerId) {
-      const x = event.data.global.x
-      const y = event.data.global.y
+    if (this.last && this.current === event.pointerId) {
+      const x = event.global.x
+      const y = event.global.y
 
-      const dx = x - this.last.x
-      const dy = y - this.last.y
+      const dx = (this.last.x - x) / this.renderer.zoom
+      const dy = (this.last.y - y) / this.renderer.zoom
 
-      if (this.moved || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
-        const viewportX = this.renderer.x + (dx / this.renderer.zoom)
-        const viewportY = this.renderer.y + (dy / this.renderer.zoom)
+      if (this.dragging || Math.abs(dx) >= 5 || Math.abs(dy) >= 5) {
         this.last = { x, y }
-        this.moved = true
+        const local = this.renderer.root.toLocal(event.global)
 
-        this.renderer.expectedViewportXPosition = viewportX
-        this.renderer.expectedViewportYPosition = viewportY
-
-        const local = this.renderer.root.toLocal(event.data.global)
-        const client = clientPositionFromEvent(event.data.originalEvent)
-
-        if (!this.renderer.dragging) {
-          this.renderer.dragging = true
+        if (!this.dragging) {
+          this.dragging = true
           this.renderer.onViewportDragStart?.({
             type: 'viewportDrag',
             x: local.x,
             y: local.y,
-            clientX: client.x,
-            clientY: client.y,
-            viewportX,
-            viewportY,
-            target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
-            altKey: this.renderer.altKey,
-            ctrlKey: this.renderer.ctrlKey,
-            metaKey: this.renderer.metaKey,
-            shiftKey: this.renderer.shiftKey,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            dx,
+            dy,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey,
           })
         }
 
@@ -76,28 +67,46 @@ export class Drag <N extends Node, E extends Edge>{
           type: 'viewportDrag',
           x: local.x,
           y: local.y,
-          clientX: client.x,
-          clientY: client.y,
-          viewportX,
-          viewportY,
-          target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom },
-          altKey: this.renderer.altKey,
-          ctrlKey: this.renderer.ctrlKey,
-          metaKey: this.renderer.metaKey,
-          shiftKey: this.renderer.shiftKey,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          dx,
+          dy,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          shiftKey: event.shiftKey,
         })
       }
     }
   }
 
-  up = () => {
-    if (this.paused) {
+  up = (event: FederatedPointerEvent) => {
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
       return
     }
 
     this.renderer.container.style.cursor = 'auto'
-    this.last = undefined
-    this.moved = false
+
+    if (this.dragging) {
+      const { x, y } = this.renderer.root.toLocal(event.global)
+
+      this.renderer.onViewportDragEnd?.({
+        type: 'viewportDrag',
+        x,
+        y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        dx: 0,
+        dy: 0,
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    this.dragging = false
+    this.last = this.current = undefined
   }
 
   pause() {

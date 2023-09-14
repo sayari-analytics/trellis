@@ -1,4 +1,4 @@
-import * as WebGL from '../webgl'
+import * as WebGL from '../webgl-v6'
 import { Node, Edge, Annotation } from '../../'
 
 export type Options = {

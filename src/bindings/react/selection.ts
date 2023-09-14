@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { ViewportDragDecelerateEvent, ViewportDragEvent } from '../../renderers/webgl'
+import { ViewportDragDecelerateEvent, ViewportDragEvent } from '../../renderers/webgl-v6'
 import { Annotation, Node } from '../..'
 
 

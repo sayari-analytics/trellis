@@ -1,5 +1,5 @@
 import { BitmapText, Text, TextStyle, TextStyleAlign } from 'pixi.js-legacy'
-import { StaticRenderer } from '..'
+import { Renderer } from '..'
 import { isASCII } from '../utils'
 import { LabelPosition, LabelStyle } from '../../..'
 
@@ -18,7 +18,7 @@ export class Label {
 
   mounted = false
 
-  private renderer: StaticRenderer
+  private renderer: Renderer
   private text: BitmapText | Text
   private label: string
   private x?: number
@@ -26,7 +26,7 @@ export class Label {
   private fontSize?: number
   private position?: LabelPosition
   
-  constructor(renderer: StaticRenderer, label: string) {
+  constructor(renderer: Renderer, label: string) {
     this.renderer = renderer
     this.label = label
     this.text = isASCII(label) ?

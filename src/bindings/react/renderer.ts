@@ -1,5 +1,5 @@
 import { createElement, useRef, useEffect } from 'react'
-import { Renderer as PixiRenderer, Options } from '../../renderers/webgl'
+import { Renderer as PixiRenderer, Options } from '../../renderers/webgl-v6'
 import { Node, Edge, Annotation } from '../..'
 
 

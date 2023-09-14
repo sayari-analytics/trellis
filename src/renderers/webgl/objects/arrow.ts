@@ -1,5 +1,5 @@
 import { Sprite } from 'pixi.js-legacy'
-import { StaticRenderer } from '..'
+import { Renderer } from '..'
 
 
 export class Arrow {
@@ -8,10 +8,10 @@ export class Arrow {
   height: number
   width: number
 
-  private renderer: StaticRenderer
+  private renderer: Renderer
   private arrow: Sprite
   
-  constructor(renderer: StaticRenderer) {
+  constructor(renderer: Renderer) {
     this.renderer = renderer
     this.arrow = new Sprite(this.renderer.arrow.texture)
     this.height = this.renderer.arrow.height
