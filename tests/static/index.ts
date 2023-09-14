@@ -36,7 +36,7 @@ const NODE_STYLE: Graph.NodeStyle = {
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
-  color: '#f66', stroke: [{ width: 4, color: '#fcc' }], label: { orientation: 'right' }
+  color: '#f66', stroke: [{ width: 2, color: '#fcc' }], label: { orientation: 'right' }
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
@@ -53,7 +53,7 @@ let nodes: Graph.Node[] = []
 let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(10000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -153,7 +153,7 @@ const options: Static.Options = {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
     nodes = nodes.map((node) => (
       node.id === event.target.id ?
-        { ...node, label: node.label, style: NODE_HOVER_STYLE } :
+        { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } :
         node
     ))
     edges = edges.map((edge) => (
@@ -200,7 +200,7 @@ const options: Static.Options = {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) => (
       node.id === event.target.id ?
-        { ...node, style: NODE_STYLE } :
+        { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } :
         node
     ))
     edges = edges.map((edge) => (

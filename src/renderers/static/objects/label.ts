@@ -1,10 +1,12 @@
-import { BitmapText } from 'pixi.js-legacy'
-import { LabelStyle } from '../../..'
+import { BitmapText, Text, TextStyle, TextStyleAlign } from 'pixi.js-legacy'
 import { StaticRenderer } from '..'
+import { isASCII } from '../utils'
+import { LabelStyle } from '../../..'
 
 
 const DEFAULT_FONT_SIZE = 10
 const DEFAULT_ORIENTATION = 'bottom'
+const TEXT_OUTLINE_STYLE: Partial<TextStyle> = { lineJoin: 'round', stroke: '#fff', strokeThickness: 2 }
 
 
 /**
@@ -17,21 +19,24 @@ export class Label {
   mounted = false
 
   private renderer: StaticRenderer
-  private text: BitmapText
+  private text: BitmapText | Text
   private label: string
   private x?: number
   private y?: number
-  private style?: LabelStyle
+  private fontSize?: number
+  private orientation?: 'bottom' | 'left' | 'top' | 'right'
   
   constructor(renderer: StaticRenderer, label: string) {
     this.renderer = renderer
     this.label = label
-    this.text = new BitmapText(label, { fontName: 'Label' })
+    this.text = isASCII(label) ?
+      new BitmapText(label, { fontName: 'Label' }) :
+      new Text(label, TEXT_OUTLINE_STYLE)
   }
 
   update(label: string, x: number, y: number, style?: LabelStyle) {
     if (label !== this.label) {
-      this.text.text = label
+      this.setLabel(label)
       this.label = label
     }
 
@@ -45,33 +50,41 @@ export class Label {
       this.y = y
     }
 
-    if (style !== this.style) {
-      this.text.fontSize = style?.fontSize ?? DEFAULT_FONT_SIZE
-  
+    const fontSize = style?.fontSize ?? DEFAULT_FONT_SIZE
+
+    if (fontSize !== this.fontSize) {
+      this.setFontSize(fontSize)
+      this.fontSize = fontSize
+    }
+
+    const orientation = style?.orientation ?? DEFAULT_ORIENTATION
+
+    if (orientation !== this.orientation) {
       switch (style?.orientation ?? DEFAULT_ORIENTATION) {
       case 'bottom':
-        this.text.align = 'center'
+        this.setAlign('center')
         this.text.anchor.set(0.5, 0)
         break
       case 'left':
-        this.text.align = 'left'
+        this.setAlign('left')
         this.text.anchor.set(1, 0.5)
         break
       case 'top':
-        this.text.align = 'center'
+        this.setAlign('center')
         this.text.anchor.set(0.5, 1)
         break
       case 'right':
-        this.text.align = 'right'
+        this.setAlign('right')
         this.text.anchor.set(0, 0.5)
         break
       }
 
-      this.style = style
+      this.orientation = orientation
     }
 
     return this
   }
+
 
   mount() {
     if (!this.mounted) {
@@ -96,5 +109,51 @@ export class Label {
     this.text.destroy()
 
     return undefined
+  }
+
+  private setLabel(label: string) {
+    if (this.text instanceof BitmapText) {
+      if (isASCII(label)) {
+        this.text.text = label
+      } else {
+        this.text.destroy()
+        this.unmount()
+        this.text = new Text(label, TEXT_OUTLINE_STYLE)
+        this.fontSize = undefined
+        this.orientation = undefined
+        this.x = undefined
+        this.y = undefined
+      }
+    } else {
+      if (isASCII(label)) {
+        this.text.destroy()
+        this.unmount()
+        this.text = new BitmapText(label, { fontName: 'Label' })
+        this.fontSize = undefined
+        this.orientation = undefined
+        this.x = undefined
+        this.y = undefined
+      } else {
+        this.text.text = label
+      }
+    }
+
+    this.label = label
+  }
+
+  private setFontSize(fontSize: number) {
+    if (this.text instanceof BitmapText) {
+      this.text.fontSize = fontSize
+    } else {
+      this.text.style.fontSize = fontSize
+    }
+  }
+
+  private setAlign(align: TextStyleAlign) {
+    if (this.text instanceof BitmapText) {
+      this.text.align = align
+    } else {
+      this.text.style.align = align
+    }
   }
 }

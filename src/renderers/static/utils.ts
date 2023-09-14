@@ -38,16 +38,40 @@ export const length = (
 ) => Math.hypot(x1 - x0, y1 - y0)
 
 export const positionNodeLabel = (
-  x: number, y: number, radius: number, orientation: Graph.LabelStyle['orientation'] = 'bottom'
+  x: number, y: number, label: string, radius: number, orientation: Graph.LabelStyle['orientation'] = 'bottom'
 ): [x: number, y: number] => {
-  switch (orientation) {
-  case 'bottom':
-    return [x, y + radius]
-  case 'left':
-    return [x - radius - 2, y - 2]
-  case 'top':
-    return [x, y - radius - 4]
-  case 'right':
-    return [x + radius + 2, y - 2] // TODO - why do we need to shift up 2px?
+  if (isASCII(label)) {
+    // BitmapText shifts text down 2px
+    switch (orientation) {
+    case 'bottom':
+      return [x, y + radius]
+    case 'left':
+      return [x - radius - 2, y - 2]
+    case 'top':
+      return [x, y - radius - 4]
+    case 'right':
+      return [x + radius + 2, y - 2]
+    }
+  } else {
+    switch (orientation) {
+    case 'bottom':
+      return [x, y + radius]
+    case 'left':
+      return [x - radius - 2, y]
+    case 'top':
+      return [x, y - radius]
+    case 'right':
+      return [x + radius + 2, y]
+    }
   }
+}
+
+export const isASCII = (str: string) => {
+  for (const char of str) {
+    if (char.codePointAt(0)! > 126) {
+      return false
+    }
+  }
+
+  return true
 }

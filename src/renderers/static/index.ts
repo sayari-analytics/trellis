@@ -73,21 +73,6 @@ export const MIN_NODE_INTERACTION_ZOOM = 0.1
 export const MIN_EDGES_ZOOM = 0.15
 
 
-/**
- * TODO
- * - node position interpolation
- * - labels
- *   - label origin and rotation
- *   - fall back on Text for non-ASCII
- *   - edge labels
- *   - correctly calculate min/max x/y when culling labels
- *   - lazily generate font, with option to pre-render
- * - node events
- *   - move node to front on hover if drag handlers are implemented
- *     - transition objects within container child order, rather than between layers. move to top on mouseenter, bottom on mouseleave
- * - icons
- * - badges
- */
 export class StaticRenderer {
 
   width: number
