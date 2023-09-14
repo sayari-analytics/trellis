@@ -6,20 +6,21 @@
   "singleQuote": true,
   "bracketSameLine": true,
   "jsxSingleQuote": true,
+  "endOfLine": "lf",
   "trailingComma": "none",
   "parser": "typescript",
   "overrides": [
     {
       "files": ["*.json", "*rc"],
-      "options": {
-        "parser": "json"
-      }
+      "options": { "parser": "json" }
     },
     {
-      "files": ["*.md"],
-      "options": {
-        "parser": "markdown"
-      }
+      "files": "*.md",
+      "options": { "parser": "markdown" }
+    },
+    {
+      "files": "*.html",
+      "options": { "parser": "html" }
     }
   ]
 }
