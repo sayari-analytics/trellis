@@ -162,7 +162,7 @@ export class NodeRenderer {
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
     if (this.label && node.label) {
-      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.orientation)
+      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
       this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
     }
   }

@@ -32,11 +32,11 @@ const PURPLE = '#7A5DC5'
 const LIGHT_PURPLE = '#CAD'
 
 const NODE_STYLE: Graph.NodeStyle = {
-  color: PURPLE, stroke: [{ width: 2, color: LIGHT_PURPLE }], label: { orientation: 'right' }
+  color: PURPLE, stroke: [{ width: 2, color: LIGHT_PURPLE }], label: { position: 'bottom' }
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
-  color: '#f66', stroke: [{ width: 2, color: '#fcc' }], label: { orientation: 'right' }
+  color: '#f66', stroke: [{ width: 2, color: '#fcc' }], label: { position: 'bottom' }
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {

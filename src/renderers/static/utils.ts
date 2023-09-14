@@ -38,11 +38,11 @@ export const length = (
 ) => Math.hypot(x1 - x0, y1 - y0)
 
 export const positionNodeLabel = (
-  x: number, y: number, label: string, radius: number, orientation: Graph.LabelStyle['orientation'] = 'bottom'
+  x: number, y: number, label: string, radius: number, position: Graph.LabelPosition = 'bottom'
 ): [x: number, y: number] => {
   if (isASCII(label)) {
     // BitmapText shifts text down 2px
-    switch (orientation) {
+    switch (position) {
     case 'bottom':
       return [x, y + radius]
     case 'left':
@@ -53,15 +53,15 @@ export const positionNodeLabel = (
       return [x + radius + 2, y - 2]
     }
   } else {
-    switch (orientation) {
+    switch (position) {
     case 'bottom':
       return [x, y + radius]
     case 'left':
-      return [x - radius - 2, y]
+      return [x - radius - 2, y + 1]
     case 'top':
-      return [x, y - radius]
+      return [x, y - radius + 2]
     case 'right':
-      return [x + radius + 2, y]
+      return [x + radius + 2, y + 1]
     }
   }
 }

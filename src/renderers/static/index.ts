@@ -14,9 +14,9 @@ import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 
 
-type Keys = { altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
-type MousePosition = { x: number, y: number, clientX: number, clientY: number }
-type Position = 'nw' | 'ne' | 'se' | 'sw'
+export type Keys = { altKey?: boolean, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean }
+export type MousePosition = { x: number, y: number, clientX: number, clientY: number }
+export type Position = 'nw' | 'ne' | 'se' | 'sw'
 export type NodePointerEvent = { type: 'nodePointer', target: Graph.Node, targetIdx: number } & MousePosition & Keys
 export type NodeDragEvent = { type: 'nodeDrag', dx: number, dy: number, target: Graph.Node, targetIdx: number } & MousePosition & Keys
 export type EdgePointerEvent = { type: 'edgePointer', target: Graph.Edge, targetIdx: number } & MousePosition & Keys

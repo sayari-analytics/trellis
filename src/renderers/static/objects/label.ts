@@ -1,7 +1,7 @@
 import { BitmapText, Text, TextStyle, TextStyleAlign } from 'pixi.js-legacy'
 import { StaticRenderer } from '..'
 import { isASCII } from '../utils'
-import { LabelStyle } from '../../..'
+import { LabelPosition, LabelStyle } from '../../..'
 
 
 const DEFAULT_FONT_SIZE = 10
@@ -24,7 +24,7 @@ export class Label {
   private x?: number
   private y?: number
   private fontSize?: number
-  private orientation?: 'bottom' | 'left' | 'top' | 'right'
+  private position?: LabelPosition
   
   constructor(renderer: StaticRenderer, label: string) {
     this.renderer = renderer
@@ -57,10 +57,10 @@ export class Label {
       this.fontSize = fontSize
     }
 
-    const orientation = style?.orientation ?? DEFAULT_ORIENTATION
+    const position = style?.position ?? DEFAULT_ORIENTATION
 
-    if (orientation !== this.orientation) {
-      switch (style?.orientation ?? DEFAULT_ORIENTATION) {
+    if (position !== this.position) {
+      switch (style?.position ?? DEFAULT_ORIENTATION) {
       case 'bottom':
         this.setAlign('center')
         this.text.anchor.set(0.5, 0)
@@ -79,7 +79,7 @@ export class Label {
         break
       }
 
-      this.orientation = orientation
+      this.position = position
     }
 
     return this
@@ -120,7 +120,7 @@ export class Label {
         this.unmount()
         this.text = new Text(label, TEXT_OUTLINE_STYLE)
         this.fontSize = undefined
-        this.orientation = undefined
+        this.position = undefined
         this.x = undefined
         this.y = undefined
       }
@@ -130,7 +130,7 @@ export class Label {
         this.unmount()
         this.text = new BitmapText(label, { fontName: 'Label' })
         this.fontSize = undefined
-        this.orientation = undefined
+        this.position = undefined
         this.x = undefined
         this.y = undefined
       } else {
