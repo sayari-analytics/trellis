@@ -2,11 +2,22 @@ import * as Force from '@sayari/trellis/layout/force'
 import * as WebGL from '@sayari/trellis/renderers/webgl'
 
 /* Initialize Data */
-const NODE_STYLE = { color: '#999', stroke: [{ color: '#FFF', width: 2 }, { color: '#F7CA4D', width: 2 }] }
+const NODE_STYLE = {
+  color: '#999',
+  stroke: [
+    { color: '#FFF', width: 2 },
+    { color: '#F7CA4D', width: 2 }
+  ]
+}
 const EDGE_STYLE = { arrow: 'forward', width: 2, stroke: '#CCC' }
 let nodes = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, radius: 18, style: NODE_STYLE }))
-let edges = [['a', 'b'], ['a', 'c'], ['a', 'd'], ['c', 'e'], ['c', 'f']]
-  .map(([source, target]) => ({ id: `${source}_${target}`, source, target, style: EDGE_STYLE }))
+let edges = [
+  ['a', 'b'],
+  ['a', 'c'],
+  ['a', 'd'],
+  ['c', 'e'],
+  ['c', 'f']
+].map(([source, target]) => ({ id: `${source}_${target}`, source, target, style: EDGE_STYLE }))
 
 /* Create Renderer and Layout */
 const container = document.querySelector('#graph')
@@ -35,7 +46,7 @@ const renderOptions = {
     renderOptions.x = viewportX
     renderOptions.y = viewportY
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 }
 
 /* Run layout and render graph */

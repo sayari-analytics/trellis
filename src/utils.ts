@@ -1,8 +1,6 @@
 import { interpolateBasis, interpolateNumber } from 'd3-interpolate'
 
-
 export const noop = () => {}
-
 
 export const throttle = <T extends unknown[]>(cb: (...args: T) => void, duration: number) => {
   let clear = true
@@ -18,7 +16,6 @@ export const throttle = <T extends unknown[]>(cb: (...args: T) => void, duration
     }
   }
 }
-
 
 export const batch = <T extends unknown>(cb: (args: T[]) => void, duration: number) => {
   let values: T[] = []
@@ -39,7 +36,6 @@ export const batch = <T extends unknown>(cb: (args: T[]) => void, duration: numb
   }
 }
 
-
 export const animationFrameLoop = (cb: (time: number) => void) => {
   let frame: number
 
@@ -52,7 +48,6 @@ export const animationFrameLoop = (cb: (time: number) => void) => {
 
   return () => cancelAnimationFrame(frame)
 }
-
 
 export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => void) => {
   let tailArgs: T | undefined
@@ -76,9 +71,7 @@ export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => 
   }
 }
 
-
 export const identity = <T>(value: T) => value
-
 
 export const interpolateInterval = (count: number, duration: number) => {
   let i = 0
@@ -100,7 +93,6 @@ export const interpolateInterval = (count: number, duration: number) => {
     }, duration / count) as unknown as number
   }
 }
-
 
 export const interpolateDuration = (duration: number) => {
   let start: number | undefined
@@ -131,7 +123,6 @@ export const interpolateDuration = (duration: number) => {
     frame = requestAnimationFrame(rafCallback)
   }
 }
-
 
 export const interpolate = (from: number, to: number, duration: number, time: number) => {
   let elapsed = 0

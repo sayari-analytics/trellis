@@ -1,10 +1,8 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { Node, Edge } from '../../..'
-
+import { Node, Edge } from '../../../trellis'
 
 export class ArrowSprite<N extends Node, E extends Edge> {
-
   static ARROW_HEIGHT = 12
   static ARROW_WIDTH = 6
 
@@ -15,9 +13,9 @@ export class ArrowSprite<N extends Node, E extends Edge> {
       new PIXI.Graphics()
         .beginFill(0xffffff)
         .lineTo(ArrowSprite.ARROW_HEIGHT * 2, ArrowSprite.ARROW_WIDTH)
-        .lineTo(ArrowSprite.ARROW_HEIGHT * 2, - ArrowSprite.ARROW_WIDTH),
+        .lineTo(ArrowSprite.ARROW_HEIGHT * 2, -ArrowSprite.ARROW_WIDTH),
       PIXI.SCALE_MODES.LINEAR,
-      2, // window.devicePixelRatio,
+      2 // window.devicePixelRatio,
     )
   }
 

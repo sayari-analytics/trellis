@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js-legacy'
 
-
 // export class ImageSprite {
 
 //   cache: { [url: string]: PIXI.Texture } = {}
@@ -17,13 +16,11 @@ import * as PIXI from 'pixi.js-legacy'
 //   delete() {}
 // }
 
-
 /**
  * TODO - cacheing textures doesn't always work on initial render
  * need to use pixi loader
  */
 export class ImageSprite {
-
   cache: { [url: string]: PIXI.Texture } = {}
 
   create(url: string, scale: number = 1, offsetX: number = 0, offsetY: number = 0) {

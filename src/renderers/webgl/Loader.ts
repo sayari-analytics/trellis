@@ -2,7 +2,6 @@ import * as PIXI from 'pixi.js-legacy'
 import FontFaceObserver from 'fontfaceobserver'
 import { throttle } from '../../utils'
 
-
 const warn = throttle((err) => console.warn(err), 0)
 
 /**
@@ -22,20 +21,21 @@ const warn = throttle((err) => console.warn(err), 0)
  * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
  * delay.then((message) => console.log(message))
  */
-export const Async = <T>(executor: (resolve: (result: T) => void) => void) => (onfulfilled: (result: T) => void) => {
-  let cancelled = false
+export const Async =
+  <T>(executor: (resolve: (result: T) => void) => void) =>
+  (onfulfilled: (result: T) => void) => {
+    let cancelled = false
 
-  executor((result) => {
-    if (!cancelled) {
-      onfulfilled(result)
+    executor((result) => {
+      if (!cancelled) {
+        onfulfilled(result)
+      }
+    })
+
+    return () => {
+      cancelled = true
     }
-  })
-
-  return () => {
-    cancelled = true
   }
-}
-
 
 export const FontLoader = () => {
   const fontCache: { [family: string]: boolean } = {}
@@ -51,7 +51,7 @@ export const FontLoader = () => {
         loading.add(_loadId)
 
         return Async<string>((resolve) => {
-          (document as any).fonts.load(`${weight} 1em ${family}`).then(() => {
+          ;(document as any).fonts.load(`${weight} 1em ${family}`).then(() => {
             fontCache[family] = true
             loading.delete(_loadId)
             resolve(family)
@@ -82,7 +82,6 @@ export const FontLoader = () => {
   }
 }
 
-
 export const ImageLoader = () => {
   const image_cache: { [url: string]: PIXI.Loader } = {}
   let loadId = 0
@@ -97,7 +96,6 @@ export const ImageLoader = () => {
       return Async<string>((resolve) => {
         const _loadId = loadId++
         loading.add(_loadId)
-
         ;(image_cache[url] as PIXI.Loader).load(() => {
           loading.delete(_loadId)
           resolve(url)

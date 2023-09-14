@@ -1,6 +1,5 @@
 import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../../renderers/webgl'
 
-
 const DEFAULT_TOP = '100px'
 const DEFAULT_LEFT = '20px'
 const DEFAULT_BG = '#fff'
@@ -10,9 +9,7 @@ const DEFAULT_BG_HOVER_SELECTED = '#ccc'
 const DEFAULT_COLOR = '#666'
 const DEFAULT_COLOR_SELECTED = '#222'
 
-
-export type SelectionChangeEvent = { type: 'selectionChange', x: number, y: number, radius: number }
-
+export type SelectionChangeEvent = { type: 'selectionChange'; x: number; y: number; radius: number }
 
 export type Options = Partial<{
   className: string
@@ -25,7 +22,6 @@ export type Options = Partial<{
   onViewportDrag: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
   onViewportPointerUp: (event: ViewportPointerEvent) => void
 }>
-
 
 const styleButton = (button: HTMLButtonElement) => {
   button.style.border = '1px solid #aaa'
@@ -44,7 +40,6 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-
 export const Control = ({ container }: { container: HTMLDivElement }) => {
   let select = false
   let selectionStartX: number | undefined
@@ -58,10 +53,10 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
   toggleSelection.textContent = '●'
   toggleSelection.setAttribute('aria-label', 'Select')
   toggleSelection.setAttribute('title', 'Select')
-  toggleSelection.onmouseenter = () => toggleSelection.style.background = select ? DEFAULT_BG_HOVER_SELECTED : DEFAULT_BG_HOVER
-  toggleSelection.onmouseleave = () => toggleSelection.style.background = select ? DEFAULT_BG_SELECTED : DEFAULT_BG
-  toggleSelection.onfocus = () => toggleSelection.style.boxShadow = '0px 0px 0px 1px #aaa inset'
-  toggleSelection.onblur = () => toggleSelection.style.boxShadow = 'none'
+  toggleSelection.onmouseenter = () => (toggleSelection.style.background = select ? DEFAULT_BG_HOVER_SELECTED : DEFAULT_BG_HOVER)
+  toggleSelection.onmouseleave = () => (toggleSelection.style.background = select ? DEFAULT_BG_SELECTED : DEFAULT_BG)
+  toggleSelection.onfocus = () => (toggleSelection.style.boxShadow = '0px 0px 0px 1px #aaa inset')
+  toggleSelection.onblur = () => (toggleSelection.style.boxShadow = 'none')
   const toggleButtonPointerDown = () => {
     if (select) {
       select = false
@@ -131,7 +126,7 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
           toggleButtonPointerDown()
         }
         options.onViewportPointerUp?.(event)
-      },
+      }
     }
   }
 }

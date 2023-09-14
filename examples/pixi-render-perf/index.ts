@@ -6,14 +6,11 @@ import * as WebGL from '../../src/renderers/webgl'
 import graphData from '../../data/tmp-data'
 import { throttleAnimationFrame } from '../../src/utils'
 
-
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-
 type Node = Graph.Node & { type: string }
-
 
 /**
  * Initialize Data
@@ -24,15 +21,30 @@ const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 const COMPANY = {
   color: '#ffaf1d',
   stroke: [{ color: '#F7CA4D', width: 2 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+  icon: {
+    type: 'textIcon' as const,
+    family: 'Material Icons',
+    text: 'person',
+    color: '#fff',
+    size: 32 * 0.6
+  }
 }
 const PERSON = {
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 2 }],
-  icon: { type: 'textIcon' as const, family: 'Material Icons', text: 'person', color: '#fff', size: 32 * 0.6 },
+  icon: {
+    type: 'textIcon' as const,
+    family: 'Material Icons',
+    text: 'person',
+    color: '#fff',
+    size: 32 * 0.6
+  }
 }
 let nodes = Object.values(graphData.nodes)
-  .map((node, idx) => ({ ...node, label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel: node.label }))
+  .map((node, idx) => ({
+    ...node,
+    label: idx % 4 === 0 ? arabicLabel : idx % 4 === 1 ? thaiLabel : idx % 4 === 2 ? russianLabel : node.label
+  }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_4` })))
@@ -94,55 +106,151 @@ let nodes = Object.values(graphData.nodes)
     style: type === 'person' ? PERSON : COMPANY
   }))
 
-let edges = Object.entries<{ field: string, source: string, target: string }>(graphData.edges)
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_6`, { ...edge, source: `${edge.source}_6`, target: `${edge.target}_6` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_7`, { ...edge, source: `${edge.source}_7`, target: `${edge.target}_7` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_8`, { ...edge, source: `${edge.source}_8`, target: `${edge.target}_8` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_9`, { ...edge, source: `${edge.source}_9`, target: `${edge.target}_9` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_10`, { ...edge, source: `${edge.source}_10`, target: `${edge.target}_10` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_11`, { ...edge, source: `${edge.source}_11`, target: `${edge.target}_11` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_12`, { ...edge, source: `${edge.source}_12`, target: `${edge.target}_12` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_13`, { ...edge, source: `${edge.source}_13`, target: `${edge.target}_13` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_14`, { ...edge, source: `${edge.source}_14`, target: `${edge.target}_14` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_15`, { ...edge, source: `${edge.source}_15`, target: `${edge.target}_15` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_16`, { ...edge, source: `${edge.source}_16`, target: `${edge.target}_16` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_17`, { ...edge, source: `${edge.source}_17`, target: `${edge.target}_17` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_18`, { ...edge, source: `${edge.source}_18`, target: `${edge.target}_18` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_19`, { ...edge, source: `${edge.source}_19`, target: `${edge.target}_19` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_20`, { ...edge, source: `${edge.source}_20`, target: `${edge.target}_20` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_21`, { ...edge, source: `${edge.source}_21`, target: `${edge.target}_21` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_22`, { ...edge, source: `${edge.source}_22`, target: `${edge.target}_22` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_23`, { ...edge, source: `${edge.source}_23`, target: `${edge.target}_23` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_24`, { ...edge, source: `${edge.source}_24`, target: `${edge.target}_24` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_25`, { ...edge, source: `${edge.source}_25`, target: `${edge.target}_25` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_26`, { ...edge, source: `${edge.source}_26`, target: `${edge.target}_26` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_27`, { ...edge, source: `${edge.source}_27`, target: `${edge.target}_27` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_28`, { ...edge, source: `${edge.source}_28`, target: `${edge.target}_28` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_29`, { ...edge, source: `${edge.source}_29`, target: `${edge.target}_29` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_30`, { ...edge, source: `${edge.source}_30`, target: `${edge.target}_30` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_31`, { ...edge, source: `${edge.source}_31`, target: `${edge.target}_31` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_32`, { ...edge, source: `${edge.source}_32`, target: `${edge.target}_32` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_33`, { ...edge, source: `${edge.source}_33`, target: `${edge.target}_33` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_34`, { ...edge, source: `${edge.source}_34`, target: `${edge.target}_34` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_35`, { ...edge, source: `${edge.source}_35`, target: `${edge.target}_35` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_36`, { ...edge, source: `${edge.source}_36`, target: `${edge.target}_36` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_37`, { ...edge, source: `${edge.source}_37`, target: `${edge.target}_37` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_38`, { ...edge, source: `${edge.source}_38`, target: `${edge.target}_38` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_39`, { ...edge, source: `${edge.source}_39`, target: `${edge.target}_39` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_40`, { ...edge, source: `${edge.source}_40`, target: `${edge.target}_40` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_41`, { ...edge, source: `${edge.source}_41`, target: `${edge.target}_41` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_42`, { ...edge, source: `${edge.source}_42`, target: `${edge.target}_42` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_43`, { ...edge, source: `${edge.source}_43`, target: `${edge.target}_43` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_44`, { ...edge, source: `${edge.source}_44`, target: `${edge.target}_44` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_45`, { ...edge, source: `${edge.source}_45`, target: `${edge.target}_45` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_46`, { ...edge, source: `${edge.source}_46`, target: `${edge.target}_46` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_47`, { ...edge, source: `${edge.source}_47`, target: `${edge.target}_47` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_48`, { ...edge, source: `${edge.source}_48`, target: `${edge.target}_48` }]))
-  .concat(Object.entries(graphData.edges).map(([id, edge]) => [`${id}_49`, { ...edge, source: `${edge.source}_49`, target: `${edge.target}_49` }]))
+let edges = Object.entries<{ field: string; source: string; target: string }>(graphData.edges)
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_2`, { ...edge, source: `${edge.source}_2`, target: `${edge.target}_2` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_3`, { ...edge, source: `${edge.source}_3`, target: `${edge.target}_3` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_4`, { ...edge, source: `${edge.source}_4`, target: `${edge.target}_4` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_5`, { ...edge, source: `${edge.source}_5`, target: `${edge.target}_5` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_6`, { ...edge, source: `${edge.source}_6`, target: `${edge.target}_6` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_7`, { ...edge, source: `${edge.source}_7`, target: `${edge.target}_7` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_8`, { ...edge, source: `${edge.source}_8`, target: `${edge.target}_8` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_9`, { ...edge, source: `${edge.source}_9`, target: `${edge.target}_9` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_10`, { ...edge, source: `${edge.source}_10`, target: `${edge.target}_10` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_11`, { ...edge, source: `${edge.source}_11`, target: `${edge.target}_11` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_12`, { ...edge, source: `${edge.source}_12`, target: `${edge.target}_12` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_13`, { ...edge, source: `${edge.source}_13`, target: `${edge.target}_13` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_14`, { ...edge, source: `${edge.source}_14`, target: `${edge.target}_14` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_15`, { ...edge, source: `${edge.source}_15`, target: `${edge.target}_15` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_16`, { ...edge, source: `${edge.source}_16`, target: `${edge.target}_16` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_17`, { ...edge, source: `${edge.source}_17`, target: `${edge.target}_17` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_18`, { ...edge, source: `${edge.source}_18`, target: `${edge.target}_18` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_19`, { ...edge, source: `${edge.source}_19`, target: `${edge.target}_19` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_20`, { ...edge, source: `${edge.source}_20`, target: `${edge.target}_20` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_21`, { ...edge, source: `${edge.source}_21`, target: `${edge.target}_21` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_22`, { ...edge, source: `${edge.source}_22`, target: `${edge.target}_22` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_23`, { ...edge, source: `${edge.source}_23`, target: `${edge.target}_23` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_24`, { ...edge, source: `${edge.source}_24`, target: `${edge.target}_24` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_25`, { ...edge, source: `${edge.source}_25`, target: `${edge.target}_25` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_26`, { ...edge, source: `${edge.source}_26`, target: `${edge.target}_26` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_27`, { ...edge, source: `${edge.source}_27`, target: `${edge.target}_27` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_28`, { ...edge, source: `${edge.source}_28`, target: `${edge.target}_28` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_29`, { ...edge, source: `${edge.source}_29`, target: `${edge.target}_29` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_30`, { ...edge, source: `${edge.source}_30`, target: `${edge.target}_30` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_31`, { ...edge, source: `${edge.source}_31`, target: `${edge.target}_31` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_32`, { ...edge, source: `${edge.source}_32`, target: `${edge.target}_32` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_33`, { ...edge, source: `${edge.source}_33`, target: `${edge.target}_33` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_34`, { ...edge, source: `${edge.source}_34`, target: `${edge.target}_34` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_35`, { ...edge, source: `${edge.source}_35`, target: `${edge.target}_35` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_36`, { ...edge, source: `${edge.source}_36`, target: `${edge.target}_36` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_37`, { ...edge, source: `${edge.source}_37`, target: `${edge.target}_37` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_38`, { ...edge, source: `${edge.source}_38`, target: `${edge.target}_38` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_39`, { ...edge, source: `${edge.source}_39`, target: `${edge.target}_39` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_40`, { ...edge, source: `${edge.source}_40`, target: `${edge.target}_40` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_41`, { ...edge, source: `${edge.source}_41`, target: `${edge.target}_41` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_42`, { ...edge, source: `${edge.source}_42`, target: `${edge.target}_42` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_43`, { ...edge, source: `${edge.source}_43`, target: `${edge.target}_43` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_44`, { ...edge, source: `${edge.source}_44`, target: `${edge.target}_44` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_45`, { ...edge, source: `${edge.source}_45`, target: `${edge.target}_45` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_46`, { ...edge, source: `${edge.source}_46`, target: `${edge.target}_46` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_47`, { ...edge, source: `${edge.source}_47`, target: `${edge.target}_47` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_48`, { ...edge, source: `${edge.source}_48`, target: `${edge.target}_48` }])
+  )
+  .concat(
+    Object.entries(graphData.edges).map(([id, edge]) => [`${id}_49`, { ...edge, source: `${edge.source}_49`, target: `${edge.target}_49` }])
+  )
   // .concat([
   //   ['connect_a', { field: 'related_to', source: Object.values(graphData.nodes)[0].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
   //   ['connect_d', { field: 'related_to', source: `${Object.values(graphData.nodes)[15].id}`, target: `${Object.values(graphData.nodes)[15].id}_2` }],
@@ -157,13 +265,12 @@ let edges = Object.entries<{ field: string, source: string, target: string }>(gr
   .map<Graph.Edge>(([id, { source, target }]) => ({
     id,
     source,
-    target,
+    target
     // label: field.replace(/_/g, ' '),
   }))
 
 let nodesById: Record<string, Node>
 // let edgesById: Record<string, Graph.Edge>
-
 
 /**
  * Initialize Layout and Renderer
@@ -171,24 +278,25 @@ let nodesById: Record<string, Node>
 const container = document.querySelector('#graph') as HTMLDivElement
 const layout = Force.Layout()
 const zoomControl = Zoom.Control({ container })
-const render = throttleAnimationFrame(WebGL.Renderer({
-  container,
-  debug: { stats, logPerformance: false }
-  // debug: { stats, logPerformance: true }
-}))
+const render = throttleAnimationFrame(
+  WebGL.Renderer({
+    container,
+    debug: { stats, logPerformance: false }
+    // debug: { stats, logPerformance: true }
+  })
+)
 // const render = WebGL.Renderer({
 //   container,
 //   debug: { stats, logPerformance: false }
 //   // debug: { stats, logPerformance: true }
 // })
 
-
 /**
  * Initialize Layout and Renderer Options
  */
 const layoutOptions: Force.Options = {
   nodeStrength: -600,
-  tick: 50,
+  tick: 50
 }
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   width: container.offsetWidth,
@@ -237,7 +345,6 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
   }
 }
 
-
 /**
  * Layout and Render Graph
  */
@@ -251,7 +358,7 @@ zoomControl({
   onZoomOut: () => {
     renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
-  },
+  }
 })
 
 layout({
@@ -261,10 +368,8 @@ layout({
 }).then((graph) => {
   nodes = graph.nodes
   edges = graph.edges
-  nodesById = nodes.reduce<Record<string, Node>>((nodesById, node) => (nodesById[node.id] = node, nodesById), {})
+  nodesById = nodes.reduce<Record<string, Node>>((nodesById, node) => ((nodesById[node.id] = node), nodesById), {})
   // edgesById = edges.reduce<Record<string, Graph.Edge>>((edgesById, edge) => (edgesById[edge.id] = edge, edgesById), {})
   render({ nodes, edges, options: renderOptions })
 })
-
-
 ;(window as any).render = render

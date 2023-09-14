@@ -4,10 +4,7 @@
     "es6": true,
     "node": true
   },
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/eslint-recommended", "prettier", "plugin:prettier/recommended"],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -17,28 +14,22 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "plugins": ["@typescript-eslint"],
   "rules": {
-    "no-console": ["error", { "allow": ["warn"] }],
+    "prettier/prettier": ["error"],
+    "no-console": [
+      "error",
+      {
+        "allow": ["warn"]
+      }
+    ],
     "no-unused-vars": 0,
-    "@typescript-eslint/no-unused-vars": "error",
-    "indent": [
+    "@typescript-eslint/no-unused-vars": [
       "error",
-      2
-    ],
-    "linebreak-style": [
-      "error",
-      "unix"
-    ],
-    "quotes": [
-      "error",
-      "single"
-    ],
-    "semi": [
-      "error",
-      "never"
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
     ]
   }
 }

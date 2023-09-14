@@ -1,14 +1,15 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Graph</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap');
-    /* http://meyerweb.com/eric/tools/css/reset/
+  <head>
+    <meta charset="utf-8" />
+    <title>Graph</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <!-- prettier-ignore -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inconsolata&family=Lato:wght@300;400&display=swap');
+      /* http://meyerweb.com/eric/tools/css/reset/
       v2.0 | 20110126
       License: none (public domain)
     */
@@ -113,23 +114,27 @@
       text-decoration: underline;
     }
   </style>
-</head>
-<body>
-  <header>
-    <span id="logo">
-      <img src="logo.svg" alt="Trellis Logo">
-    </span>
-    <a class="docs" href="/docs">Docs</a>
-    <a class="github" href="https://github.com/sayari-analytics/trellis">
-      <img src="GitHub-Mark-32px.png" alt="github">
-    </a>
-  </header>
-  <main>
-    <div id="graph"></div>
-    <section id="copy">
-      <p>A high performance network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases. Trellis renders to <strong>WebGL</strong>, <strong>Canvas</strong>, <strong>JPEG</strong>, and other targets.</p>
-    </section>
-  </main>
-  <script src="./index.ts"></script>
-</body>
+  </head>
+  <body>
+    <header>
+      <span id="logo">
+        <img src="logo.svg" alt="Trellis Logo" />
+      </span>
+      <a class="docs" href="/docs">Docs</a>
+      <a class="github" href="https://github.com/sayari-analytics/trellis">
+        <img src="GitHub-Mark-32px.png" alt="github" />
+      </a>
+    </header>
+    <main>
+      <div id="graph"></div>
+      <section id="copy">
+        <p>
+          A high performance network visualization library with a simple, declarative API, plugable renderers, and bindings for different
+          frameworks and use cases. Trellis renders to <strong>WebGL</strong>, <strong>Canvas</strong>, <strong>JPEG</strong>, and other
+          targets.
+        </p>
+      </section>
+    </main>
+    <script type="module" src="./index.ts"></script>
+  </body>
 </html>

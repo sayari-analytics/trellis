@@ -1,6 +1,5 @@
 import { hierarchy, HierarchyPointNode, tree } from 'd3-hierarchy'
-import { Node, Edge } from '../../'
-
+import { Node, Edge } from '../../trellis'
 
 export type Options = Partial<{
   x: number
@@ -12,13 +11,11 @@ export type Options = Partial<{
 }>
 
 type Hierarchy = {
-  id: string,
+  id: string
   children: Hierarchy[]
 }
 
-
 const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
-
 
 /**
  * utils
@@ -65,7 +62,10 @@ const graphToBFSHierarchy = (edgeIndex: Record<string, string[]>, id: string): H
   }
 }
 
-const _hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: Record<string, HierarchyPointNode<Hierarchy> | undefined>) => {
+const _hierarchyToGraph = (
+  hierarchy: HierarchyPointNode<Hierarchy>,
+  nodesById: Record<string, HierarchyPointNode<Hierarchy> | undefined>
+) => {
   nodesById[hierarchy.data.id] = hierarchy
 
   if (hierarchy.children !== undefined) {
@@ -80,7 +80,7 @@ const _hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>, nodesById: 
 const hierarchyToGraph = (hierarchy: HierarchyPointNode<Hierarchy>) => _hierarchyToGraph(hierarchy, {})
 
 const containsSubgraphNode = (nodes: Node[], id: string): boolean => {
-  for(const node of nodes) {
+  for (const node of nodes) {
     if (node.id === id) return true
 
     if (node.subgraph !== undefined) {
@@ -105,9 +105,8 @@ const findAncestor = (nodes: Node[], id: string): string | undefined => {
   return undefined
 }
 
-
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[], edges: E[], options?: Options }) => {
+  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []
@@ -122,28 +121,23 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
-    const root = edgeIndex[rootId] === undefined ? (findAncestor(graph.nodes, rootId) ?? rootId) : rootId
+    const root = edgeIndex[rootId] === undefined ? findAncestor(graph.nodes, rootId) ?? rootId : rootId
 
     if (edgeIndex[root] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
-    const layout = graph.options?.size !== undefined ?
-      tree<Hierarchy>().size(graph.options.size) :
-      tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
+    const layout =
+      graph.options?.size !== undefined
+        ? tree<Hierarchy>().size(graph.options.size)
+        : tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
 
     if (graph.options?.separation !== undefined) {
       layout.separation(graph.options.separation)
     }
 
     const positionedDataById = hierarchyToGraph(
-      layout(
-        hierarchy(
-          graph.options?.bfs !== false ?
-            graphToBFSHierarchy(edgeIndex, root) :
-            graphToDFSHierarchy(edgeIndex, root)
-        )
-      )
+      layout(hierarchy(graph.options?.bfs !== false ? graphToBFSHierarchy(edgeIndex, root) : graphToDFSHierarchy(edgeIndex, root)))
     )
 
     // const positionedDataById = compose(
@@ -159,19 +153,18 @@ export const Layout = () => {
     const xOffset = (graph.options?.x ?? 0) + (x ?? 0)
     const yOffset = (graph.options?.y ?? 0) - (y ?? 0)
 
-
     return {
       edges: graph.edges,
       nodes: graph.nodes.map((node) => {
         const positionedNode = positionedDataById[node.id]
 
-        return positionedNode === undefined ?
-          node :
-          {
-            ...node,
-            x: positionedNode.x + xOffset,
-            y: positionedNode.y - yOffset,
-          }
+        return positionedNode === undefined
+          ? node
+          : {
+              ...node,
+              x: positionedNode.x + xOffset,
+              y: positionedNode.y - yOffset
+            }
       })
     }
   }
