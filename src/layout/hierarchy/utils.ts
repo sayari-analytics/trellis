@@ -4,8 +4,6 @@ import type { Node } from '../../trellis'
 // types
 export type Hierarchy = { id: string; children: Hierarchy[] }
 
-export type SeparationFn<Datum = Hierarchy> = (a: HierarchyPointNode<Datum>, b: HierarchyPointNode<Datum>) => number
-
 // utils
 const _graphToDFSHierarchy = (edgeIndex: Record<string, string[]>, id: string, visited: Set<string>): Hierarchy => {
   visited.add(id)

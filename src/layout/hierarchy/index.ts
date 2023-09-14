@@ -1,6 +1,6 @@
-import type { Node, Edge } from '../../trellis'
-import { findAncestor, hierarchyToGraph, graphToBFSHierarchy, graphToDFSHierarchy, SeparationFn, Hierarchy } from './utils'
-import { hierarchy } from 'd3-hierarchy'
+import type { Node, Edge, Placement } from '../../trellis'
+import { findAncestor, hierarchyToGraph, graphToBFSHierarchy, graphToDFSHierarchy, Hierarchy } from './utils'
+import { HierarchyPointNode, hierarchy } from 'd3-hierarchy'
 import tree from './tree'
 
 export type Options = Partial<{
@@ -8,8 +8,10 @@ export type Options = Partial<{
   y: number
   nodeSize: [number, number]
   size: [number, number]
-  separation: SeparationFn
+  separation: (a: HierarchyPointNode<Hierarchy>, b: HierarchyPointNode<Hierarchy>) => number
   bfs: boolean
+  anchor: Placement
+  alignment: 'min' | 'mid' | 'max'
 }>
 
 export const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
@@ -45,29 +47,35 @@ export const Layout = () => {
       layout.separation(graph.options.separation)
     }
 
+    if (graph.options?.alignment !== undefined) {
+      layout.alignment(graph.options.alignment)
+    }
+
     const positionedDataById = hierarchyToGraph(
       layout(hierarchy(graph.options?.bfs !== false ? graphToBFSHierarchy(edgeIndex, root) : graphToDFSHierarchy(edgeIndex, root)))
     )
 
-    const { x, y } = graph.nodes.find((node) => node.id === rootId) ?? {
-      x: undefined,
-      y: undefined
-    }
-    const xOffset = (graph.options?.x ?? 0) + (x ?? 0)
-    const yOffset = (graph.options?.y ?? 0) - (y ?? 0)
+    const { x = 0, y = 0 } = graph.nodes.find((node) => node.id === rootId) ?? {}
+
+    const xOffset = (graph.options?.x ?? 0) + x
+    const yOffset = (graph.options?.y ?? 0) - y
 
     return {
       edges: graph.edges,
       nodes: graph.nodes.map((node) => {
         const positionedNode = positionedDataById[node.id]
 
-        return positionedNode === undefined
-          ? node
-          : {
-              ...node,
-              x: positionedNode.x + xOffset,
-              y: positionedNode.y - yOffset
-            }
+        if (positionedNode !== undefined) {
+          const x = positionedNode.x + xOffset
+          const y = positionedNode.y - yOffset
+          if (graph.options?.anchor === 'left') {
+            return { ...node, y: x, x: y }
+          } else {
+            return { ...node, x, y }
+          }
+        }
+
+        return node
       })
     }
   }

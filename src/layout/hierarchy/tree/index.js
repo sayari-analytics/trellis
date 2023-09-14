@@ -101,7 +101,8 @@ export default function () {
   var separation = defaultSeparation,
     dx = 1,
     dy = 1,
-    nodeSize = null
+    nodeSize = null,
+    alignment = 'mid'
 
   function tree(root) {
     var t = treeRoot(root)
@@ -146,12 +147,20 @@ export default function () {
       w = v.i ? siblings[v.i - 1] : null
     if (children) {
       executeShifts(v)
-      var midpoint = (children[0].z + children[children.length - 1].z) / 2
+      var point
+      if (alignment === 'min') {
+        point = Math.min(children[0].z, children[children.length - 1].z)
+      } else if (alignment === 'max') {
+        point = Math.max(children[0].z, children[children.length - 1].z)
+      } else {
+        point = (children[0].z + children[children.length - 1].z) / 2
+      }
+
       if (w) {
         v.z = w.z + separation(v._, w._)
-        v.m = v.z - midpoint
+        v.m = v.z - point
       } else {
-        v.z = midpoint
+        v.z = point
       }
     } else if (w) {
       v.z = w.z + separation(v._, w._)
@@ -230,6 +239,11 @@ export default function () {
 
   tree.nodeSize = function (x) {
     return arguments.length ? ((nodeSize = true), (dx = +x[0]), (dy = +x[1]), tree) : nodeSize ? [dx, dy] : null
+  }
+
+  tree.alignment = function (x) {
+    alignment = x
+    return tree
   }
 
   return tree
