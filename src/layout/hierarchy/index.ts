@@ -1,17 +1,18 @@
 import type { Node, Edge, Placement } from '../../trellis'
 import { findAncestor, hierarchyToGraph, graphToBFSHierarchy, graphToDFSHierarchy, Hierarchy } from './utils'
-import { HierarchyPointNode, hierarchy } from 'd3-hierarchy'
+import { HierarchyNode, HierarchyPointNode, hierarchy } from 'd3-hierarchy'
 import tree from './tree'
 
 export type Options = Partial<{
   x: number
   y: number
-  nodeSize: [number, number]
-  size: [number, number]
-  separation: (a: HierarchyPointNode<Hierarchy>, b: HierarchyPointNode<Hierarchy>) => number
   bfs: boolean
   anchor: Placement
   alignment: 'min' | 'mid' | 'max'
+  size: [number, number]
+  nodeSize: [number, number]
+  separation: (a: HierarchyPointNode<Hierarchy>, b: HierarchyPointNode<Hierarchy>) => number
+  sort: (a: HierarchyNode<Hierarchy>, b: HierarchyNode<Hierarchy>) => number
 }>
 
 export const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
@@ -56,10 +57,13 @@ export const Layout = () => {
       layout.alignment(graph.options.alignment)
     }
 
+    if (graph.options?.sort !== undefined) {
+      root.sort(graph.options.sort)
+    }
+
     const positionedDataById = hierarchyToGraph(layout(root))
 
-    const { x = 0, y = 0 } = graph.nodes.find((node) => node.id === _root) ?? {}
-
+    const { x = 0, y = 0 } = graph.nodes.find((node) => node.id === rootId) ?? {}
     const xOffset = (graph.options?.x ?? 0) + x
     const yOffset = (graph.options?.y ?? 0) - y
 
