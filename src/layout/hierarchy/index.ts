@@ -68,10 +68,10 @@ export const Layout = () => {
               return { ...node, y: x, x: y }
             case 'right':
               // rotate tree 90 degrees and flip on x axis by offsetting with tree width
-              return { ...node, y: x, x: root.height * nodeSize[1] - y }
+              return { ...node, y: x, x: hierarchy.height * nodeSize[1] - y }
             case 'bottom':
               // flip on y axis by offsetting with tree height
-              return { ...node, x, y: root.height * nodeSize[0] - y }
+              return { ...node, x, y: hierarchy.height * nodeSize[0] - y }
             default:
               // default to top
               return { ...node, x, y }
