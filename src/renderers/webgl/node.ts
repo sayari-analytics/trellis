@@ -213,10 +213,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
           this.dirty = true
           this.renderer.dirty = true
 
-          const anchor =
-            this.labelPlacement === 'left' || this.labelPlacement === 'right'
-              ? HORIZONTAL_ANCHOR
-              : VERTICAL_ANCHOR
+          const anchor = this.labelPlacement === 'left' || this.labelPlacement === 'right' ? HORIZONTAL_ANCHOR : VERTICAL_ANCHOR
 
           this.labelSprite = new PIXI.Text(this.label, {
             fontFamily: this.labelFamily,
@@ -225,12 +222,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
             lineJoin: 'round',
             stroke: this.labelBackground === undefined ? '#fff' : undefined,
             strokeThickness: this.labelBackground === undefined ? 2.5 * 2.5 : 0,
-            align:
-              this.labelPlacement === 'left'
-                ? 'right'
-                : this.labelPlacement === 'right'
-                ? 'left'
-                : 'center',
+            align: this.labelPlacement === 'left' ? 'right' : this.labelPlacement === 'right' ? 'left' : 'center',
             wordWrap: labelWordWrap !== undefined,
             wordWrapWidth: labelWordWrap
           })

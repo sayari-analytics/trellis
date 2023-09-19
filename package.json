@@ -5,10 +5,8 @@
   "source": "src/index.ts",
   "main": "./dist/main.js",
   "module": "./dist/module.js",
-  "types": "./dist/types.d.ts",
-  "files": [
-    "dist"
-  ],
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
@@ -18,7 +16,7 @@
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
-    "build": "npm run clean && npm run build:tsc && parcel build",
+    "build": "npm run clean && parcel build && npm run build:tsc",
     "examples:dev": "npm run clean && parcel examples/index.html",
     "docs:dev": "npm run clean && parcel docs-src/index.html",
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
@@ -70,14 +68,7 @@
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
