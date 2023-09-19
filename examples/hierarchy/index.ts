@@ -1,6 +1,5 @@
 import Stats from 'stats.js'
 import * as Hierarchy from '../../src/layout/hierarchy'
-import * as Force from '../../src/layout/force'
 import * as Graph from '../../src'
 import * as Zoom from '../../src/bindings/native/zoom'
 import * as WebGL from '../../src/renderers/webgl'
@@ -72,9 +71,8 @@ let nodes = Object.values(graphData.nodes)
   }))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_2` })))
   .concat(Object.values(graphData.nodes).map((node) => ({ ...node, id: `${node.id}_3` })))
-  .map<Node>(({ id, label, type }) => ({
+  .map<Node>(({ id, type }) => ({
     id,
-    label,
     radius: 18,
     type,
     style: type === 'company' ? createCompanyStyle(18) : createPersonStyle(18)
@@ -105,26 +103,17 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
       }
     ]
   ])
-  .map<Graph.Edge>(([id, { field, source, target }]) => ({
+  .map<Graph.Edge>(([id, { source, target }]) => ({
     id,
     source,
     target,
-    label: field.replace(/_/g, ' '),
     style: { arrow: 'forward' }
   }))
-
-let hierarchyNodes: Node[] = []
-let hierarchyEdges: Graph.Edge[] = []
-
-let forceNodes: Node[] = []
-let forceEdges: Graph.Edge[] = []
-
 /**
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
 const hierarchy = Hierarchy.Layout()
-const force = Force.Layout()
 const zoomControl = Zoom.Control({ container })
 const render = WebGL.Renderer({
   container,
@@ -134,13 +123,29 @@ const render = WebGL.Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Hierarchy.Options = {
-  y: container.offsetHeight,
-  x: 600
-}
+
+let index = 0
+const root = nodes[0].id
+const size = { width: container.offsetWidth, height: container.offsetHeight }
+const options: Hierarchy.Options = { x: 600, y: size.width }
+const data = [
+  hierarchy(root, { nodes, edges, options }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], alignment: 'min' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], alignment: 'max' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'min' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'mid' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'max' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'min' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'mid' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'max' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, anchor: 'bottom' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], anchor: 'bottom', alignment: 'min' } }),
+  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], anchor: 'bottom', alignment: 'max' } })
+]
+const viewport = data.map((graph) => Graph.boundsToViewport(Graph.getSelectionBounds(graph.nodes, 120), size))
+
 const renderOptions: WebGL.Options<Node, Graph.Edge> = {
-  width: container.offsetWidth,
-  height: container.offsetHeight,
+  ...size,
   x: 0,
   y: 0,
   zoom: 1,
@@ -184,33 +189,13 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
     render({ nodes, edges, options: renderOptions })
   },
   onViewportPointerDown: () => {
-    if (layout === 'hierarchy') {
-      layout = 'force'
-      nodes = forceNodes
-      edges = forceEdges
-      // const { x, y, zoom } = Graph.boundsToViewport(
-      //   Graph.getSelectionBounds(nodes, 80),
-      //   { width: renderOptions.width!, height: renderOptions.height! }
-      // )
-      // renderOptions.x = x
-      // renderOptions.y = y
-      // renderOptions.zoom = zoom
-
-      render({ nodes, edges, options: renderOptions })
-    } else {
-      layout = 'hierarchy'
-      nodes = hierarchyNodes
-      edges = hierarchyEdges
-      // const { x, y, zoom } = Graph.boundsToViewport(
-      //   Graph.getSelectionBounds(nodes, 80),
-      //   { width: renderOptions.width!, height: renderOptions.height! }
-      // )
-      // renderOptions.x = x
-      // renderOptions.y = y
-      // renderOptions.zoom = zoom
-
-      render({ nodes, edges, options: renderOptions })
-    }
+    index = index === data.length - 1 ? 0 : index + 1
+    nodes = data[index].nodes
+    edges = data[index].edges
+    renderOptions.x = viewport[index].x
+    renderOptions.y = viewport[index].y
+    renderOptions.zoom = viewport[index].zoom
+    render({ nodes, edges, options: renderOptions })
   },
   onViewportDrag: ({ viewportX, viewportY }) => {
     renderOptions.x = viewportX
@@ -240,21 +225,9 @@ zoomControl({
   }
 })
 
-let layout = 'hierarchy'
-const hierarchyData = hierarchy(nodes[0].id, { nodes, edges, options: layoutOptions })
-nodes = hierarchyNodes = hierarchyData.nodes
-edges = hierarchyEdges = hierarchyData.edges
-force({ nodes, edges }).then((forceData) => {
-  forceNodes = forceData.nodes
-  forceEdges = forceData.edges
-
-  const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), {
-    width: renderOptions.width!,
-    height: renderOptions.height!
-  })
-  renderOptions.x = x
-  renderOptions.y = y
-  renderOptions.zoom = zoom
-
-  render({ nodes, edges, options: renderOptions })
-})
+nodes = data[index].nodes
+edges = data[index].edges
+renderOptions.x = viewport[index].x
+renderOptions.y = viewport[index].y
+renderOptions.zoom = viewport[index].zoom
+render({ nodes, edges, options: renderOptions })
