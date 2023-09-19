@@ -1,6 +1,6 @@
 import type { Node, Edge, Placement } from '../../trellis'
-import { findAncestor, hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
-import { HierarchyNode, HierarchyPointNode, hierarchy } from 'd3-hierarchy'
+import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
+import { HierarchyNode, HierarchyPointNode } from 'd3-hierarchy'
 import tree from './tree'
 
 export type Options<N extends Node, E extends Edge> = Partial<{
@@ -18,33 +18,17 @@ export type Options<N extends Node, E extends Edge> = Partial<{
 const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(_root: string, graph: { nodes: N[]; edges: E[]; options?: Options<N, E> }) => {
+  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[]; edges: E[]; options?: Options<N, E> }) => {
     const index = createGraphIndex(graph)
-
-    const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
-      if (edgeIndex[edge.source] === undefined) {
-        edgeIndex[edge.source] = []
-      }
-      edgeIndex[edge.source].push(edge.target)
-
-      if (edgeIndex[edge.target] === undefined) {
-        edgeIndex[edge.target] = []
-      }
-      edgeIndex[edge.target].push(edge.source)
-
-      return edgeIndex
-    }, {})
-
-    const rootId = edgeIndex[_root] === undefined ? findAncestor(graph.nodes, _root) ?? _root : _root
 
     if (index[rootId] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
-    const root = hierarchy(graphToHierarchy(index, rootId, graph.options?.bfs))
+    const hierarchy = graphToHierarchy(index, rootId, graph.options?.bfs)
 
     if (graph.options?.sort !== undefined) {
-      root.sort(graph.options.sort)
+      hierarchy.sort(graph.options.sort)
     }
 
     const layout = tree<HierarchyData<N, E>>()
@@ -64,7 +48,7 @@ export const Layout = () => {
       layout.alignment(graph.options.alignment)
     }
 
-    const positionedDataById = hierarchyToGraph(layout(root))
+    const positionedDataById = hierarchyToGraph(layout(hierarchy))
 
     const { x = 0, y = 0 } = index[rootId].node
     const xOffset = (graph.options?.x ?? 0) + x

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { HierarchyPointNode } from 'd3-hierarchy'
+import { hierarchy, HierarchyPointNode } from 'd3-hierarchy'
 import type { Node, Edge } from '../../trellis'
 
 // types
@@ -11,20 +10,20 @@ export type HierarchyData<N extends Node, E extends Edge> = ({ root: true; node:
   children: HierarchyData<N, E>[]
 }
 
-// v1
-export type HierarchyV1 = { id: string; children: HierarchyV1[] }
-
 // utils
-export const indexById = <T extends { id: string }>(items: T[]) => {
-  const lookup: Record<string, T> = {}
-  for (const item of items) {
-    lookup[item.id] = item
-  }
+export const createNodeIndex = <N extends Node>(nodes: N[], lookup: Record<string, N> = {}) => {
+  nodes.forEach((node) => {
+    lookup[node.id] = node
+    if (node.subgraph !== undefined) {
+      createNodeIndex(node.subgraph.nodes, lookup)
+    }
+  })
+
   return lookup
 }
 
 export const createGraphIndex = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[] }) => {
-  const nodes = indexById(graph.nodes)
+  const nodes = createNodeIndex(graph.nodes)
 
   return graph.edges.reduce<GraphIndex<N, E>>((index, edge) => {
     if (nodes[edge.source] !== undefined && nodes[edge.target] !== undefined) {
@@ -83,12 +82,8 @@ export const graphToDFSHierarchy = <N extends Node, E extends Edge>(
   return edge === null ? { root: true, node, edge, children } : { root: false, node, edge, children }
 }
 
-export const graphToHierarchy = <N extends Node, E extends Edge>(
-  index: GraphIndex<N, E>,
-  rootId: string,
-  bfs = true
-): HierarchyData<N, E> => {
-  return bfs ? graphToBFSHierarchy(index, rootId) : graphToDFSHierarchy(index, index[rootId].node, null)
+export const graphToHierarchy = <N extends Node, E extends Edge>(index: GraphIndex<N, E>, rootId: string, bfs = true) => {
+  return hierarchy(bfs ? graphToBFSHierarchy(index, rootId) : graphToDFSHierarchy(index, index[rootId].node, null))
 }
 
 export const hierarchyToGraph = <N extends Node, E extends Edge>(
@@ -105,66 +100,6 @@ export const hierarchyToGraph = <N extends Node, E extends Edge>(
 
   return nodesById
 }
-
-const _graphToDFSHierarchyV1 = (edgeIndex: Record<string, string[]>, id: string, visited: Set<string>): HierarchyV1 => {
-  visited.add(id)
-
-  const children: HierarchyV1[] = []
-
-  for (const child of edgeIndex[id]) {
-    if (!visited.has(child)) {
-      children.push(_graphToDFSHierarchyV1(edgeIndex, child, visited))
-    }
-  }
-
-  return { id, children }
-}
-
-export const graphToDFSHierarchyV1 = (edgeIndex: Record<string, string[]>, id: string): HierarchyV1 =>
-  _graphToDFSHierarchyV1(edgeIndex, id, new Set())
-
-export const graphToBFSHierarchyV1 = (edgeIndex: Record<string, string[]>, id: string): HierarchyV1 => {
-  const children: HierarchyV1['children'] = []
-
-  const queue: (readonly [string, HierarchyV1['children']])[] = [[id, children]]
-
-  const visited = new Set<string>([id])
-
-  while (queue.length > 0) {
-    const [id, children] = queue.shift()!
-
-    for (const child of edgeIndex[id]) {
-      if (!visited.has(child)) {
-        visited.add(child)
-        const grandChildren: HierarchyV1['children'] = []
-        children.push({ id: child, children: grandChildren })
-        queue.push([child, grandChildren] as const)
-      }
-    }
-  }
-
-  return {
-    id,
-    children
-  }
-}
-
-const _hierarchyToGraphV1 = (
-  hierarchy: HierarchyPointNode<HierarchyV1>,
-  nodesById: Record<string, HierarchyPointNode<HierarchyV1> | undefined>
-) => {
-  nodesById[hierarchy.data.id] = hierarchy
-
-  if (hierarchy.children !== undefined) {
-    for (const child of hierarchy.children) {
-      _hierarchyToGraphV1(child, nodesById)
-    }
-  }
-
-  return nodesById
-}
-
-export const hierarchyToGraphV1 = (hierarchy: HierarchyPointNode<HierarchyV1>) => _hierarchyToGraphV1(hierarchy, {})
 
 export const containsSubgraphNode = (nodes: Node[], id: string): boolean => {
   for (const node of nodes) {
