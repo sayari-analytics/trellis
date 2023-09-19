@@ -127,7 +127,7 @@ const render = WebGL.Renderer({
 let index = 0
 const root = nodes[0].id
 const size = { width: container.offsetWidth, height: container.offsetHeight }
-const options: Hierarchy.Options = { x: 600, y: size.width }
+const options: Hierarchy.Options<Node, Graph.Edge> = { x: 600, y: size.width }
 const data = [
   hierarchy(root, { nodes, edges, options }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], alignment: 'min' } }),

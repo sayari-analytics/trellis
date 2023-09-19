@@ -1,9 +1,9 @@
 import type { Node, Edge, Placement } from '../../trellis'
-import { findAncestor, hierarchyToGraph, graphToBFSHierarchy, graphToDFSHierarchy, Hierarchy } from './utils'
+import { findAncestor, hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
 import { HierarchyNode, HierarchyPointNode, hierarchy } from 'd3-hierarchy'
 import tree from './tree'
 
-export type Options = Partial<{
+export type Options<N extends Node, E extends Edge> = Partial<{
   x: number
   y: number
   bfs: boolean
@@ -11,14 +11,16 @@ export type Options = Partial<{
   alignment: 'min' | 'mid' | 'max'
   size: [number, number]
   nodeSize: [number, number]
-  separation: (a: HierarchyPointNode<Hierarchy>, b: HierarchyPointNode<Hierarchy>) => number
-  sort: (a: HierarchyNode<Hierarchy>, b: HierarchyNode<Hierarchy>) => number
+  separation: (a: HierarchyPointNode<HierarchyData<N, E>>, b: HierarchyPointNode<HierarchyData<N, E>>) => number
+  sort: (a: HierarchyNode<HierarchyData<N, E>>, b: HierarchyNode<HierarchyData<N, E>>) => number
 }>
 
-export const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
+const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(_root: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
+  return <N extends Node, E extends Edge>(_root: string, graph: { nodes: N[]; edges: E[]; options?: Options<N, E> }) => {
+    const index = createGraphIndex(graph)
+
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []
@@ -35,12 +37,17 @@ export const Layout = () => {
 
     const rootId = edgeIndex[_root] === undefined ? findAncestor(graph.nodes, _root) ?? _root : _root
 
-    if (edgeIndex[rootId] === undefined) {
+    if (index[rootId] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
-    const root = hierarchy(graph.options?.bfs !== false ? graphToBFSHierarchy(edgeIndex, rootId) : graphToDFSHierarchy(edgeIndex, rootId))
-    const layout = tree<Hierarchy>()
+    const root = hierarchy(graphToHierarchy(index, rootId, graph.options?.bfs))
+
+    if (graph.options?.sort !== undefined) {
+      root.sort(graph.options.sort)
+    }
+
+    const layout = tree<HierarchyData<N, E>>()
 
     const nodeSize = graph.options?.nodeSize ?? DEFAULT_NODE_SIZE
     if (graph.options?.size !== undefined) {
@@ -57,13 +64,9 @@ export const Layout = () => {
       layout.alignment(graph.options.alignment)
     }
 
-    if (graph.options?.sort !== undefined) {
-      root.sort(graph.options.sort)
-    }
-
     const positionedDataById = hierarchyToGraph(layout(root))
 
-    const { x = 0, y = 0 } = graph.nodes.find((node) => node.id === rootId) ?? {}
+    const { x = 0, y = 0 } = index[rootId].node
     const xOffset = (graph.options?.x ?? 0) + x
     const yOffset = (graph.options?.y ?? 0) - y
 
