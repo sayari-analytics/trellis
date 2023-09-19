@@ -17,7 +17,7 @@ export type Options = Partial<{
 export const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
+  return <N extends Node, E extends Edge>(_root: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
         edgeIndex[edge.source] = []
@@ -32,16 +32,21 @@ export const Layout = () => {
       return edgeIndex
     }, {})
 
-    const root = edgeIndex[rootId] === undefined ? findAncestor(graph.nodes, rootId) ?? rootId : rootId
+    const rootId = edgeIndex[_root] === undefined ? findAncestor(graph.nodes, _root) ?? _root : _root
 
-    if (edgeIndex[root] === undefined) {
+    if (edgeIndex[rootId] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
-    const layout =
-      graph.options?.size !== undefined
-        ? tree<Hierarchy>().size(graph.options.size)
-        : tree<Hierarchy>().nodeSize(graph.options?.nodeSize ?? DEFAULT_NODE_SIZE)
+    const root = hierarchy(graph.options?.bfs !== false ? graphToBFSHierarchy(edgeIndex, rootId) : graphToDFSHierarchy(edgeIndex, rootId))
+    const layout = tree<Hierarchy>()
+
+    const nodeSize = graph.options?.nodeSize ?? DEFAULT_NODE_SIZE
+    if (graph.options?.size !== undefined) {
+      layout.size(graph.options.size)
+    } else {
+      layout.nodeSize(nodeSize)
+    }
 
     if (graph.options?.separation !== undefined) {
       layout.separation(graph.options.separation)
@@ -51,11 +56,9 @@ export const Layout = () => {
       layout.alignment(graph.options.alignment)
     }
 
-    const positionedDataById = hierarchyToGraph(
-      layout(hierarchy(graph.options?.bfs !== false ? graphToBFSHierarchy(edgeIndex, root) : graphToDFSHierarchy(edgeIndex, root)))
-    )
+    const positionedDataById = hierarchyToGraph(layout(root))
 
-    const { x = 0, y = 0 } = graph.nodes.find((node) => node.id === rootId) ?? {}
+    const { x = 0, y = 0 } = graph.nodes.find((node) => node.id === _root) ?? {}
 
     const xOffset = (graph.options?.x ?? 0) + x
     const yOffset = (graph.options?.y ?? 0) - y
@@ -68,10 +71,19 @@ export const Layout = () => {
         if (positionedNode !== undefined) {
           const x = positionedNode.x + xOffset
           const y = positionedNode.y - yOffset
-          if (graph.options?.anchor === 'left') {
-            return { ...node, y: x, x: y }
-          } else {
-            return { ...node, x, y }
+          switch (graph.options?.anchor) {
+            case 'left':
+              // rotate tree 90 degrees by replacing x and y
+              return { ...node, y: x, x: y }
+            case 'right':
+              // rotate tree 90 degrees and flip on x axis by offsetting with tree width
+              return { ...node, y: x, x: root.height * nodeSize[1] - y }
+            case 'bottom':
+              // flip on y axis by offsetting with tree height
+              return { ...node, x, y: root.height * nodeSize[0] - y }
+            default:
+              // default to top
+              return { ...node, x, y }
           }
         }
 
