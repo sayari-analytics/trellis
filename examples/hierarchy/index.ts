@@ -132,12 +132,28 @@ const data = [
   hierarchy(root, { nodes, edges, options }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], alignment: 'min' } }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], alignment: 'max' } }),
-  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'min' } }),
+  hierarchy(root, {
+    nodes,
+    edges,
+    options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'min', sort: (a, b) => b.height - a.height }
+  }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'mid' } }),
-  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'max' } }),
-  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'min' } }),
+  hierarchy(root, {
+    nodes,
+    edges,
+    options: { ...options, nodeSize: [50, 600], anchor: 'left', alignment: 'max', sort: (a, b) => a.height - b.height }
+  }),
+  hierarchy(root, {
+    nodes,
+    edges,
+    options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'min', sort: (a, b) => b.height - a.height }
+  }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'mid' } }),
-  hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'max' } }),
+  hierarchy(root, {
+    nodes,
+    edges,
+    options: { ...options, nodeSize: [50, 600], anchor: 'right', alignment: 'max', sort: (a, b) => a.height - b.height }
+  }),
   hierarchy(root, { nodes, edges, options: { ...options, anchor: 'bottom' } }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], anchor: 'bottom', alignment: 'min' } }),
   hierarchy(root, { nodes, edges, options: { ...options, nodeSize: [100, 300], anchor: 'bottom', alignment: 'max' } })
