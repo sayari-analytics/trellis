@@ -1,7 +1,5 @@
 import Stats from 'stats.js'
-import { Collide } from '../../src/layout'
-import * as Graph from '../../src/'
-import * as WebGL from '../../src/renderers/webgl'
+import * as Trellis from '../../src/'
 import graphData from './data'
 
 export const stats = new Stats()
@@ -12,9 +10,9 @@ document.body.appendChild(stats.dom)
  * Initialize Data
  */
 
-type Node = Graph.Node & { type: string }
+type Node = Trellis.Node & { type: string }
 
-const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
+const createCompanyStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: {
@@ -40,7 +38,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   ]
 })
 
-const createPersonStyle = (radius: number): Graph.NodeStyle => ({
+const createPersonStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB' }],
   icon: {
@@ -64,14 +62,14 @@ let nodes: Node[] = Object.values(graphData.nodes).map((node) => ({
   ...node,
   style: node.type === 'company' ? createCompanyStyle(node.radius) : createPersonStyle(node.radius)
 }))
-let edges: Graph.Edge[] = Object.values(graphData.edges).map((edge) => edge)
+let edges: Trellis.Edge[] = Object.values(graphData.edges).map((edge) => edge)
 
 /**
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const collide = Collide.Layout()
-const render = WebGL.Renderer({
+const collide = Trellis.Collide.Layout()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -79,7 +77,7 @@ const render = WebGL.Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const renderOptions: WebGL.Options<Node, Graph.Edge> = {
+const renderOptions: Trellis.RendererOptions<Node, Trellis.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,

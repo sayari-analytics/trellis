@@ -1,15 +1,10 @@
 import clustersKmeans from '@turf/clusters-kmeans'
-import * as Force from '../../src/layout/force'
-import * as Hierarchy from '../../src/layout/hierarchy'
-import * as Collide from '../../src/layout/collide'
-import * as Radial from '../../src/layout/radial'
-import * as WebGL from '../../src/renderers/webgl'
-import * as Graph from '../../src/'
+import * as Trellis from '../../src/'
 import raw from './data'
 
-type Node = Graph.Node & { cluster?: number; size?: number }
+type Node = Trellis.Node & { cluster?: number; size?: number }
 
-const NODE_STYLE_A: Graph.NodeStyle = {
+const NODE_STYLE_A: Trellis.NodeStyle = {
   color: '#0A85FF',
   stroke: [{ color: '#9CF', width: 3 }],
   icon: {
@@ -25,7 +20,7 @@ const NODE_STYLE_A: Graph.NodeStyle = {
   }
 }
 
-const NODE_STYLE_B: Graph.NodeStyle = {
+const NODE_STYLE_B: Trellis.NodeStyle = {
   color: '#FFB71B',
   stroke: [{ color: '#FEA', width: 3 }],
   icon: {
@@ -41,7 +36,7 @@ const NODE_STYLE_B: Graph.NodeStyle = {
   }
 }
 
-const NODE_STYLE_C: Graph.NodeStyle = {
+const NODE_STYLE_C: Trellis.NodeStyle = {
   color: '#7F5BCC',
   stroke: [{ color: '#967ccc', width: 3 }],
   label: {
@@ -50,7 +45,7 @@ const NODE_STYLE_C: Graph.NodeStyle = {
   }
 }
 
-const EDGE_STYLE: Graph.EdgeStyle = {
+const EDGE_STYLE: Trellis.EdgeStyle = {
   stroke: '#BBB',
   width: 1,
   arrow: 'forward',
@@ -61,11 +56,11 @@ const EDGE_STYLE: Graph.EdgeStyle = {
 }
 
 const container = document.querySelector('#graph') as HTMLDivElement
-const render = WebGL.Renderer({ container })
-const force = Force.Layout()
-const hierarchy = Hierarchy.Layout()
-const collide = Collide.Layout()
-const radial = Radial.Layout()
+const render = Trellis.Renderer({ container })
+const force = Trellis.Force.Layout()
+const hierarchy = Trellis.Hierarchy.Layout()
+const collide = Trellis.Collide.Layout()
+const radial = Trellis.Radial.Layout()
 
 const nodes = raw.nodes.map<Node>((id, idx) => ({
   id: `${id}`,
@@ -83,7 +78,7 @@ const edges = raw.edges.map(([source, target], idx) => ({
   style: EDGE_STYLE
 }))
 
-const filterGraph = (predicate: (node: Node) => boolean) => (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
+const filterGraph = (predicate: (node: Node) => boolean) => (graph: { nodes: Node[]; edges: Trellis.Edge[] }) => {
   const nodeMap = graph.nodes.reduce<Record<string, Node>>((nodeMap, node) => ((nodeMap[node.id] = node), nodeMap), {})
   return {
     nodes: graph.nodes.filter(predicate),
@@ -91,7 +86,7 @@ const filterGraph = (predicate: (node: Node) => boolean) => (graph: { nodes: Nod
   }
 }
 
-const groupBy = (grouper: (node: Node) => string) => (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
+const groupBy = (grouper: (node: Node) => string) => (graph: { nodes: Node[]; edges: Trellis.Edge[] }) => {
   const idMap: Record<string, string> = {}
 
   const nodes = Object.values(
@@ -109,7 +104,7 @@ const groupBy = (grouper: (node: Node) => string) => (graph: { nodes: Node[]; ed
   })
 
   const edges = Object.values(
-    graph.edges.reduce<Record<string, Graph.Edge>>((edges, edge) => {
+    graph.edges.reduce<Record<string, Trellis.Edge>>((edges, edge) => {
       if (edges[`${idMap[edge.source]}::${idMap[edge.target]}`] === undefined) {
         edges[`${idMap[edge.source]}::${idMap[edge.target]}`] = {
           ...edge,
@@ -124,7 +119,7 @@ const groupBy = (grouper: (node: Node) => string) => (graph: { nodes: Node[]; ed
   return { nodes, edges }
 }
 
-const cluster = (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
+const cluster = (graph: { nodes: Node[]; edges: Trellis.Edge[] }) => {
   const nodeMap = graph.nodes.reduce<Record<string, Node>>((nodeMap, node) => ((nodeMap[node.id] = node), nodeMap), {})
 
   const nodes = clustersKmeans({
@@ -147,7 +142,7 @@ const cluster = (graph: { nodes: Node[]; edges: Graph.Edge[] }) => {
   return { nodes, edges }
 }
 
-Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
+Promise.all<{ nodes: Node[]; edges: Trellis.Edge[] }>([
   force({ nodes, edges })
     .then(cluster)
     .then(filterGraph(({ cluster }) => cluster !== 2 && cluster !== 3 && cluster !== 5 && cluster !== 7))
@@ -171,7 +166,7 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
     const width = container.offsetWidth
     const height = container.offsetHeight
 
-    const { zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), { width, height })
+    const { zoom } = Trellis.boundsToViewport(Trellis.getSelectionBounds(nodes, 80), { width, height })
 
     render({
       nodes,
@@ -184,6 +179,7 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
         animateViewportPosition: true,
         animateViewportZoom: true,
         onNodeClick: ({ target: node }) => {
+          // eslint-disable-next-line no-console
           console.log(node)
         }
       }
@@ -199,6 +195,7 @@ Promise.all<{ nodes: Node[]; edges: Graph.Edge[] }>([
     draw(i, true)
   }, 3000)
 
+  // eslint-disable-next-line no-console
   console.log(
     JSON.stringify(
       layouts.map(({ nodes, edges }) => {

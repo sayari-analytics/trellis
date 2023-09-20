@@ -2,25 +2,17 @@ import { createElement, FunctionComponent, useState, useCallback, useEffect, Fra
 import { render } from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import Stats from 'stats.js'
-import { Selection, SelectionChangeEvent } from '../../src/bindings/react/selection'
-import { Button } from '../../src/bindings/react/button'
-import { Renderer } from '../../src/bindings/react/renderer'
-import { clampZoom, Zoom } from '../../src/bindings/react/zoom'
-import * as Graph from '../../src'
-import * as Force from '../../src/layout/force'
-import * as Cluster from '../../src/layout/cluster'
-import * as Fisheye from '../../src/layout/fisheye'
-import * as WebGL from '../../src/renderers/webgl'
 import graphData from '../../data/tmp-data'
+import * as Trellis from '../../src'
 
 const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-type Node = Graph.Node & { type: string }
-type Edge = Graph.Edge
+type Node = Trellis.Node & { type: string }
+type Edge = Trellis.Edge
 
-const SUBGRAPH_STYLE: Graph.NodeStyle = {
+const SUBGRAPH_STYLE: Trellis.NodeStyle = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: {
@@ -150,7 +142,7 @@ const data = {
         }
       ]
     ])
-    .map<Graph.Edge>(([id, { field, source, target }]) => ({
+    .map<Trellis.Edge>(([id, { field, source, target }]) => ({
       id,
       source,
       target,
@@ -158,9 +150,9 @@ const data = {
     }))
 }
 
-const force = Force.Layout()
-const cluster = Cluster.Layout()
-const fisheye = Fisheye.Layout()
+const force = Trellis.Force.Layout()
+const cluster = Trellis.Cluster.Layout()
+const fisheye = Trellis.Fisheye.Layout()
 const MIN_ZOOM = 0.1
 const MAX_ZOOM = 2.5
 
@@ -191,18 +183,18 @@ const App: FunctionComponent = () => {
   }, [])
 
   const onZoomIn = useCallback(() => {
-    setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom / 0.6) }))
+    setGraph((graph) => ({ ...graph, zoom: Trellis.clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom / 0.6) }))
   }, [])
   const onZoomOut = useCallback(() => {
-    setGraph((graph) => ({ ...graph, zoom: clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom * 0.6) }))
+    setGraph((graph) => ({ ...graph, zoom: Trellis.clampZoom(MIN_ZOOM, MAX_ZOOM, graph.zoom * 0.6) }))
   }, [])
-  const onNodePointerEnter = useCallback(({ target: { id } }: WebGL.NodePointerEvent) => {
+  const onNodePointerEnter = useCallback(({ target: { id } }: Trellis.NodePointerEvent) => {
     setGraph((graph) => ({ ...graph, hoverNode: id }))
   }, [])
   const onNodePointerLeave = useCallback(() => {
     setGraph((graph) => ({ ...graph, hoverNode: undefined }))
   }, [])
-  const onNodeDrag = useCallback(({ nodeX, nodeY, target: { id, x = 0, y = 0 } }: WebGL.NodeDragEvent) => {
+  const onNodeDrag = useCallback(({ nodeX, nodeY, target: { id, x = 0, y = 0 } }: Trellis.NodeDragEvent) => {
     const dx = nodeX - x
     const dy = nodeY - y
 
@@ -217,7 +209,7 @@ const App: FunctionComponent = () => {
       )
     }))
   }, [])
-  const onNodePointerUp = useCallback(({ metaKey, shiftKey, target: { id } }: WebGL.NodePointerEvent) => {
+  const onNodePointerUp = useCallback(({ metaKey, shiftKey, target: { id } }: Trellis.NodePointerEvent) => {
     setGraph((graph) => ({
       ...graph,
       selected:
@@ -239,7 +231,7 @@ const App: FunctionComponent = () => {
           : graph.selected
     }))
   }, [])
-  const onNodeDoubleClick = useCallback(({ target }: WebGL.NodePointerEvent) => {
+  const onNodeDoubleClick = useCallback(({ target }: Trellis.NodePointerEvent) => {
     const subgraphNodes = cluster(
       (target.subgraph?.nodes ?? []).concat([
         {
@@ -282,7 +274,7 @@ const App: FunctionComponent = () => {
     )
     const radius =
       subgraphNodes
-        .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+        .map(({ x = 0, y = 0, radius }) => Trellis.distance(x, y, 0, 0) + radius)
         .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
     setGraph((graph) => ({
@@ -301,7 +293,7 @@ const App: FunctionComponent = () => {
       )
     }))
   }, [])
-  const onEdgePointerEnter = useCallback(({ target: { id } }: WebGL.EdgePointerEvent) => {
+  const onEdgePointerEnter = useCallback(({ target: { id } }: Trellis.EdgePointerEvent) => {
     setGraph((graph) => ({ ...graph, hoverEdge: id }))
   }, [])
   const onEdgePointerLeave = useCallback(() => {
@@ -321,13 +313,13 @@ const App: FunctionComponent = () => {
       selected: new Set()
     }))
   }, [])
-  const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: WebGL.ViewportDragEvent | WebGL.ViewportDragDecelerateEvent) => {
+  const onViewportDrag = useCallback(({ viewportX: x, viewportY: y }: Trellis.ViewportDragEvent | Trellis.ViewportDragDecelerateEvent) => {
     setGraph((graph) => ({ ...graph, x, y }))
   }, [])
-  const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: WebGL.ViewportWheelEvent) => {
+  const onViewportWheel = useCallback(({ viewportX: x, viewportY: y, viewportZoom: zoom }: Trellis.ViewportWheelEvent) => {
     setGraph((graph) => ({ ...graph, x, y, zoom }))
   }, [])
-  const onSelection = useCallback(({ selection, shiftKey, metaKey }: SelectionChangeEvent) => {
+  const onSelection = useCallback(({ selection, shiftKey, metaKey }: Trellis.ReactSelectionChangeEvent) => {
     setGraph((graph) => ({
       ...graph,
       selected: shiftKey || metaKey ? new Set([...graph.selected, ...selection]) : selection
@@ -336,7 +328,7 @@ const App: FunctionComponent = () => {
 
   const styledNodes = useMemo(() => {
     return graph.nodes.map((node) => {
-      let style: Graph.NodeStyle
+      let style: Trellis.NodeStyle
 
       if (node.subgraph !== undefined) {
         if (graph.selected.has(node.id) && node.id === graph.hoverNode) {
@@ -461,7 +453,7 @@ const App: FunctionComponent = () => {
   }, [graph.nodes, graph.selected, graph.hoverNode])
 
   const styledEdges = useMemo(() => {
-    return graph.edges.map<Graph.Edge>((edge) => ({
+    return graph.edges.map<Trellis.Edge>((edge) => ({
       ...edge,
       style: edge.id === graph.hoverEdge ? { width: 3, arrow: 'forward' as const } : { width: 1, arrow: 'forward' as const }
     }))
@@ -471,7 +463,7 @@ const App: FunctionComponent = () => {
     createElement(
       'div',
       { style: { width: '100%', height: '100%' } },
-      createElement(Selection, {
+      createElement(Trellis.ReactSelection, {
         nodes: styledNodes,
         onViewportDrag,
         onSelection,
@@ -482,10 +474,10 @@ const App: FunctionComponent = () => {
             createElement(
               'div',
               { style: { position: 'absolute', top: 72, left: 12 } },
-              createElement(Button, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '■'),
-              createElement(Zoom, { onZoomIn, onZoomOut })
+              createElement(Trellis.ReactButton, { title: 'Select Tool', selected: select, onClick: toggleSelect }, '■'),
+              createElement(Trellis.ReactZoom, { onZoomIn, onZoomOut })
             ),
-            createElement(Renderer, {
+            createElement(Trellis.ReactRenderer, {
               width,
               height,
               nodes: styledNodes,

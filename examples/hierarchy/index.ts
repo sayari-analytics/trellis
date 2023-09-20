@@ -1,9 +1,5 @@
 import Stats from 'stats.js'
-import * as Hierarchy from '../../src/layout/hierarchy'
-import * as Force from '../../src/layout/force'
-import * as Graph from '../../src/'
-import * as Zoom from '../../src/bindings/native/zoom'
-import * as WebGL from '../../src/renderers/webgl'
+import * as Trellis from '../../src/'
 import graphData from '../../data/tmp-data'
 
 export const stats = new Stats()
@@ -13,13 +9,13 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-type Node = Graph.Node & { type: string }
+type Node = Trellis.Node & { type: string }
 
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 
-const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
+const createCompanyStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: {
@@ -45,7 +41,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   ]
 })
 
-const createPersonStyle = (radius: number): Graph.NodeStyle => ({
+const createPersonStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB' }],
   icon: {
@@ -105,7 +101,7 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
       }
     ]
   ])
-  .map<Graph.Edge>(([id, { field, source, target }]) => ({
+  .map<Trellis.Edge>(([id, { field, source, target }]) => ({
     id,
     source,
     target,
@@ -114,19 +110,19 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
   }))
 
 let hierarchyNodes: Node[] = []
-let hierarchyEdges: Graph.Edge[] = []
+let hierarchyEdges: Trellis.Edge[] = []
 
 let forceNodes: Node[] = []
-let forceEdges: Graph.Edge[] = []
+let forceEdges: Trellis.Edge[] = []
 
 /**
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const hierarchy = Hierarchy.Layout()
-const force = Force.Layout()
-const zoomControl = Zoom.Control({ container })
-const render = WebGL.Renderer({
+const hierarchy = Trellis.Hierarchy.Layout()
+const force = Trellis.Force.Layout()
+const zoomControl = Trellis.Zoom.Control({ container })
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -134,11 +130,11 @@ const render = WebGL.Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Hierarchy.Options = {
+const layoutOptions: Trellis.HierarchyOptions = {
   y: container.offsetHeight,
   x: 600
 }
-const renderOptions: WebGL.Options<Node, Graph.Edge> = {
+const renderOptions: Trellis.RendererOptions<Node, Trellis.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -231,11 +227,11 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
   }
 })
@@ -248,7 +244,7 @@ force({ nodes, edges }).then((forceData) => {
   forceNodes = forceData.nodes
   forceEdges = forceData.edges
 
-  const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), {
+  const { x, y, zoom } = Trellis.boundsToViewport(Trellis.getSelectionBounds(nodes, 80), {
     width: renderOptions.width!,
     height: renderOptions.height!
   })

@@ -1,13 +1,5 @@
 import Stats from 'stats.js'
-import * as Force from '../../src/layout/force'
-import * as Fisheye from '../../src/layout/fisheye'
-import * as Zoom from '../../src/bindings/native/zoom'
-import * as Selection from '../../src/bindings/native/selection'
-import * as Download from '../../src/bindings/native/download'
-import * as Cluster from '../../src/layout/cluster'
-import * as WebGL from '../../src/renderers/webgl'
-import * as Png from '../../src/renderers/image'
-import * as Graph from '../../src/'
+import * as Trellis from '../../src/'
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -16,7 +8,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
+const createCompanyStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
   icon: {
@@ -54,7 +46,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   ]
 })
 
-const createPersonStyle = (radius: number): Graph.NodeStyle => ({
+const createPersonStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#7CBBF3',
   label: {
     fontSize: 10,
@@ -87,7 +79,7 @@ const createPersonStyle = (radius: number): Graph.NodeStyle => ({
   ]
 })
 
-const createSubgraphStyle = (radius: number): Graph.NodeStyle => ({
+const createSubgraphStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 2 }],
   icon: {
@@ -117,14 +109,14 @@ let nodes = [
   { id: 'o', label: 'O' },
   { id: 'p', label: 'P' },
   { id: 'q', label: 'Q' }
-].map<Graph.Node>(({ id, label }) => ({
+].map<Trellis.Node>(({ id, label }) => ({
   id,
   label,
   radius: 18,
   style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18)
 }))
 
-let edges: Graph.Edge[] = [
+let edges: Trellis.Edge[] = [
   { id: 'aa', source: 'a', target: 'a', label: 'Self' },
   { id: 'ba', source: 'a', target: 'b', label: 'None' },
   { id: 'ca', source: 'a', target: 'c', label: 'None' },
@@ -247,27 +239,27 @@ let edges: Graph.Edge[] = [
  * Create Renderer and Layout
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const imageRenderer = Png.Renderer()
-const render = WebGL.Renderer({
+const imageRenderer = Trellis.ImageRenderer()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
-const force = Force.Layout()
-const fisheye = Fisheye.Layout()
-const cluster = Cluster.Layout()
+const force = Trellis.Force.Layout()
+const fisheye = Trellis.Fisheye.Layout()
+const cluster = Trellis.Cluster.Layout()
 
 /**
  * Create Zoom Controls
  */
-const zoomControl = Zoom.Control({ container })
+const zoomControl = Trellis.Zoom.Control({ container })
 zoomControl({
   top: 140,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.5)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.5)
     render({ nodes, edges, annotations, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.5)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.5)
     render({ nodes, edges, annotations, options: renderOptions })
   }
 })
@@ -275,8 +267,8 @@ zoomControl({
 /**
  * Create Selection Controls
  */
-let annotations: Graph.Annotation[] = []
-const selectionControl = Selection.Control({ container })
+let annotations: Trellis.Annotation[] = []
+const selectionControl = Trellis.Selection.Control({ container })
 const { onViewportPointerDown, onViewportDrag, onViewportPointerUp } = selectionControl({
   top: 100,
   onViewportPointerUp: () => {
@@ -328,13 +320,13 @@ const { onViewportPointerDown, onViewportDrag, onViewportPointerUp } = selection
 /**
  * Create Download Controls
  */
-const downloadControl = Download.Control({ container })
+const downloadControl = Trellis.Download.Control({ container })
 downloadControl({
   top: 210,
   onClick: () => {
-    const bounds = Graph.getSelectionBounds(nodes, 60)
-    const dimensions = Graph.boundsToDimensions(bounds, 1)
-    const viewport = Graph.boundsToViewport(bounds, dimensions)
+    const bounds = Trellis.getSelectionBounds(nodes, 60)
+    const dimensions = Trellis.boundsToDimensions(bounds, 1)
+    const viewport = Trellis.boundsToViewport(bounds, dimensions)
 
     return imageRenderer({
       nodes: nodes,
@@ -353,10 +345,10 @@ downloadControl({
 /**
  * Layout and Render Graph
  */
-const layoutOptions: Force.Options = {
+const layoutOptions: Trellis.ForceOptions = {
   nodeStrength: -500
 }
-const renderOptions: WebGL.Options = {
+const renderOptions: Trellis.RendererOptions = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -446,7 +438,7 @@ const renderOptions: WebGL.Options = {
     )
     const radius =
       subgraphNodes
-        .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+        .map(({ x = 0, y = 0, radius }) => Trellis.distance(x, y, 0, 0) + radius)
         .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
     nodes = fisheye(
@@ -482,7 +474,7 @@ const renderOptions: WebGL.Options = {
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
 
-  const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 40), {
+  const { x, y, zoom } = Trellis.boundsToViewport(Trellis.getSelectionBounds(nodes, 40), {
     width: renderOptions.width!,
     height: renderOptions.height!
   })

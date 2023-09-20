@@ -1,17 +1,12 @@
 import Stats from 'stats.js'
-import * as Force from '../../src/layout/force'
-import * as Graph from '../../src/'
-import * as Zoom from '../../src/bindings/native/zoom'
-import * as Download from '../../src/bindings/native/download'
-import * as WebGL from '../../src/renderers/webgl'
-import * as Png from '../../src/renderers/image'
+import * as Trellis from '../../src/'
 import graphData from '../../data/tmp-data'
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-type Node = Graph.Node & { type: string }
+type Node = Trellis.Node & { type: string }
 
 /**
  * Initialize Data
@@ -149,7 +144,7 @@ const data = {
         }
       ]
     ])
-    .map<Graph.Edge>(([id, { field, source, target }]) => ({
+    .map<Trellis.Edge>(([id, { field, source, target }]) => ({
       id,
       source,
       target,
@@ -159,31 +154,31 @@ const data = {
 }
 
 let nodes: Node[] = []
-let edges: Graph.Edge[] = []
+let edges: Trellis.Edge[] = []
 
 /**
  * Initialize Layout and Renderers
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const layout = Force.Layout()
-const render = WebGL.Renderer({
+const layout = Trellis.Force.Layout()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
-const imageRenderer = Png.Renderer()
+const imageRenderer = Trellis.ImageRenderer()
 
 /**
  * Initialize Zoom Control
  */
-const zoomControl = Zoom.Control({ container })
-const zoomOptions: Zoom.Options = {
+const zoomControl = Trellis.Zoom.Control({ container })
+const zoomOptions: Trellis.ZoomOptions = {
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
   }
 }
@@ -192,11 +187,11 @@ zoomControl(zoomOptions)
 /**
  * Create Download Controls
  */
-const downloadControl = Download.Control({ container })
+const downloadControl = Trellis.Download.Control({ container })
 downloadControl({
   top: 160,
   onClick: () => {
-    const { width, height } = Graph.boundsToDimensions(Graph.getSelectionBounds(nodes, 80), 1)
+    const { width, height } = Trellis.boundsToDimensions(Trellis.getSelectionBounds(nodes, 80), 1)
 
     return imageRenderer({
       nodes: nodes,
@@ -215,7 +210,7 @@ downloadControl({
 /**
  * Layout and Render Graph
  */
-const renderOptions: WebGL.Options<Node, Graph.Edge> = {
+const renderOptions: Trellis.RendererOptions<Node, Trellis.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -282,6 +277,7 @@ const INTERVAL = 2000
 const COUNT = Math.ceil(data.nodes.length / NODES_PER_TICK)
 let idx = 0
 
+// eslint-disable-next-line no-console
 console.log(
   `Rendering ${NODES_PER_TICK} nodes every ${INTERVAL}ms ${COUNT} times \nnode count: ${data.nodes.length} \nedge count ${data.edges.length}`
 )
@@ -305,7 +301,7 @@ const update = () => {
       nodes = graph.nodes
       edges = graph.edges
 
-      const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 80), {
+      const { x, y, zoom } = Trellis.boundsToViewport(Trellis.getSelectionBounds(nodes, 80), {
         width: renderOptions.width!,
         height: renderOptions.height!
       })
@@ -316,6 +312,7 @@ const update = () => {
       render({ nodes, edges, options: renderOptions })
     })
     .catch((error) => {
+      // eslint-disable-next-line no-console
       console.error(error)
     })
 }

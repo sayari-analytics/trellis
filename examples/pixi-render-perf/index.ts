@@ -1,8 +1,5 @@
 import Stats from 'stats.js'
-import * as Force from '../../src/layout/force'
-import * as Zoom from '../../src/bindings/native/zoom'
-import * as Graph from '../../src'
-import * as WebGL from '../../src/renderers/webgl'
+import * as Trellis from '../../src'
 import graphData from '../../data/tmp-data'
 import { throttleAnimationFrame } from '../../src/utils'
 
@@ -10,7 +7,7 @@ export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-type Node = Graph.Node & { type: string }
+type Node = Trellis.Node & { type: string }
 
 /**
  * Initialize Data
@@ -262,7 +259,7 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
   //   ['connect_f', { field: 'related_to', source: `${Object.values(graphData.nodes)[25].id}_3`, target: `${Object.values(graphData.nodes)[25].id}_4` }],
   //   ['connect_i', { field: 'related_to', source: `${Object.values(graphData.nodes)[40].id}_3`, target: `${Object.values(graphData.nodes)[40].id}_4` }],
   // ])
-  .map<Graph.Edge>(([id, { source, target }]) => ({
+  .map<Trellis.Edge>(([id, { source, target }]) => ({
     id,
     source,
     target
@@ -276,10 +273,10 @@ let nodesById: Record<string, Node>
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const layout = Force.Layout()
-const zoomControl = Zoom.Control({ container })
+const layout = Trellis.Force.Layout()
+const zoomControl = Trellis.Zoom.Control({ container })
 const render = throttleAnimationFrame(
-  WebGL.Renderer({
+  Trellis.Renderer({
     container,
     debug: { stats, logPerformance: false }
     // debug: { stats, logPerformance: true }
@@ -294,11 +291,11 @@ const render = throttleAnimationFrame(
 /**
  * Initialize Layout and Renderer Options
  */
-const layoutOptions: Force.Options = {
+const layoutOptions: Trellis.ForceOptions = {
   nodeStrength: -600,
   tick: 50
 }
-const renderOptions: WebGL.Options<Node, Graph.Edge> = {
+const renderOptions: Trellis.RendererOptions<Node, Trellis.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -348,15 +345,16 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 /**
  * Layout and Render Graph
  */
+// eslint-disable-next-line no-console
 console.log(`node count: ${nodes.length} \nedge count ${edges.length}`)
 zoomControl({
   top: 80,
   onZoomIn: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! / 0.6)
     render({ nodes, edges, options: renderOptions })
   },
   onZoomOut: () => {
-    renderOptions.zoom = Zoom.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
+    renderOptions.zoom = Trellis.clampZoom(renderOptions.minZoom!, renderOptions.maxZoom!, renderOptions.zoom! * 0.6)
     render({ nodes, edges, options: renderOptions })
   }
 })

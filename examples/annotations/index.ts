@@ -1,9 +1,5 @@
 import Stats from 'stats.js'
-import { Force, ForceOptions } from '../../src/layout'
-import * as Download from '../../src/bindings/native/download'
-import * as WebGL from '../../src/renderers/webgl'
-import * as Png from '../../src/renderers/image'
-import * as Graph from '../../src'
+import * as Trellis from '../../src'
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -12,7 +8,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
+const createCompanyStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF', width: 4 }, { color: '#F7CA4D' }],
   icon: {
@@ -50,7 +46,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   ]
 })
 
-const createPersonStyle = (radius: number): Graph.NodeStyle => ({
+const createPersonStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#7CBBF3',
   label: {
     fontSize: 10,
@@ -163,14 +159,14 @@ let nodes = [
   { id: 'o', label: 'O' },
   { id: 'p', label: 'P' },
   { id: 'q', label: 'Q' }
-].map<Graph.Node>(({ id, label }) => ({
+].map<Trellis.Node>(({ id, label }) => ({
   id,
   label,
   radius: 18,
   style: id === 'a' ? createCompanyStyle(18) : createPersonStyle(18)
 }))
 
-let edges: Graph.Edge[] = [
+let edges: Trellis.Edge[] = [
   {
     id: 'ea',
     source: 'a',
@@ -268,23 +264,23 @@ let edges: Graph.Edge[] = [
  * Create Renderer and Layout
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const imageRenderer = Png.Renderer()
-const render = WebGL.Renderer({
+const imageRenderer = Trellis.ImageRenderer()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
-const force = Force.Layout()
+const force = Trellis.Force.Layout()
 
 /**
  * Create Download Controls
  */
-const downloadControl = Download.Control({ container })
+const downloadControl = Trellis.Download.Control({ container })
 downloadControl({
   top: 75,
   onClick: () => {
-    const bounds = Graph.getSelectionBounds([...nodes, ...annotations], 60)
-    const dimensions = Graph.boundsToDimensions(bounds, 1)
-    const viewport = Graph.boundsToViewport(bounds, dimensions)
+    const bounds = Trellis.getSelectionBounds([...nodes, ...annotations], 60)
+    const dimensions = Trellis.boundsToDimensions(bounds, 1)
+    const viewport = Trellis.boundsToViewport(bounds, dimensions)
 
     return imageRenderer({
       nodes: nodes,
@@ -304,10 +300,10 @@ downloadControl({
 /**
  * Layout and Render Graph
  */
-const layoutOptions: ForceOptions = {
+const layoutOptions: Trellis.ForceOptions = {
   nodeStrength: -500
 }
-const renderOptions: WebGL.Options = {
+const renderOptions: Trellis.RendererOptions = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   x: 0,
@@ -366,7 +362,7 @@ const renderOptions: WebGL.Options = {
     edges = edges.map((edge) => (edge.id === id ? { ...edge, style: { ...edge.style, width: 1 } } : edge))
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationDrag: ({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: WebGL.AnnotationDragEvent) => {
+  onAnnotationDrag: ({ annotationX, annotationY, target: { id, x = 0, y = 0 } }: Trellis.AnnotationDragEvent) => {
     const dx = annotationX - x
     const dy = annotationY - y
 
@@ -376,7 +372,7 @@ const renderOptions: WebGL.Options = {
 
     render({ nodes, edges, annotations, options: renderOptions })
   },
-  onAnnotationResize: ({ position, x, y, width, height, target: { id } }: WebGL.AnnotationResizeEvent) => {
+  onAnnotationResize: ({ position, x, y, width, height, target: { id } }: Trellis.AnnotationResizeEvent) => {
     renderOptions.cursor = `${position}-resize`
 
     annotations = annotations.map((annotation) => (annotation.id === id ? { ...annotation, x, y, width, height } : annotation))
@@ -394,7 +390,7 @@ const renderOptions: WebGL.Options = {
 force({ nodes, edges, options: layoutOptions }).then((graph) => {
   nodes = graph.nodes
 
-  const { x, y, zoom } = Graph.boundsToViewport(Graph.getSelectionBounds(nodes, 40), {
+  const { x, y, zoom } = Trellis.boundsToViewport(Trellis.getSelectionBounds(nodes, 40), {
     width: renderOptions.width!,
     height: renderOptions.height!
   })

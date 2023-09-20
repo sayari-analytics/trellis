@@ -1,9 +1,5 @@
 import Stats from 'stats.js'
-import * as Force from '../../src/layout/force'
-import * as Fisheye from '../../src/layout/fisheye'
-import * as Cluster from '../../src/layout/cluster'
-import * as Graph from '../../src/'
-import * as WebGL from '../../src/renderers/webgl'
+import * as Trellis from '../../src/'
 import { company } from '../assets/icons'
 import person from '../assets/person.png'
 
@@ -14,7 +10,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const createCompanyStyle = (): Graph.NodeStyle => ({
+const createCompanyStyle = (): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 5 }],
   icon: { type: 'imageIcon', url: company, scale: 1.8 },
@@ -50,7 +46,7 @@ const createCompanyStyle = (): Graph.NodeStyle => ({
   ]
 })
 
-const createPersonStyle = (radius: number): Graph.NodeStyle => ({
+const createPersonStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB', width: 5 }],
   label: {
@@ -102,14 +98,14 @@ let nodes = [
   { id: 'o', label: 'O' },
   { id: 'p', label: 'P' },
   { id: 'q', label: 'Q' }
-].map<Graph.Node>(({ id, label }, idx) => ({
+].map<Trellis.Node>(({ id, label }, idx) => ({
   id,
   label,
   radius: id === 'a' ? 32 : (28 - idx) * 1.8,
   style: id === 'a' ? createCompanyStyle() : createPersonStyle((28 - idx) * 1.8)
 }))
 
-let edges: Graph.Edge[] = [
+let edges: Trellis.Edge[] = [
   { id: 'ba', source: 'a', target: 'b', label: 'Related To' },
   { id: 'ca', source: 'a', target: 'c', label: 'Related To' },
   { id: 'da', source: 'a', target: 'd', label: 'Related To' },
@@ -126,7 +122,7 @@ let edges: Graph.Edge[] = [
   { id: 'oa', source: 'c', target: 'o', label: 'Related To' },
   { id: 'pa', source: 'c', target: 'p', label: 'Related To' },
   { id: 'qa', source: 'c', target: 'q', label: 'Related To' }
-].map<Graph.Edge>((edge) => ({
+].map<Trellis.Edge>((edge) => ({
   ...edge,
   style: {
     label: {
@@ -139,10 +135,10 @@ let edges: Graph.Edge[] = [
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const force = Force.Layout()
-const fisheye = Fisheye.Layout()
-const cluster = Cluster.Layout()
-const render = WebGL.Renderer({
+const force = Trellis.Force.Layout()
+const fisheye = Trellis.Fisheye.Layout()
+const cluster = Trellis.Cluster.Layout()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -150,7 +146,7 @@ const render = WebGL.Renderer({
 /**
  * Initialize Renderer Options
  */
-const renderOptions: WebGL.Options = {
+const renderOptions: Trellis.RendererOptions = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   animateNodePosition: false,
@@ -236,7 +232,7 @@ const renderOptions: WebGL.Options = {
     )
     const radius =
       subgraphNodes
-        .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+        .map(({ x = 0, y = 0, radius }) => Trellis.distance(x, y, 0, 0) + radius)
         .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
     nodes = fisheye(

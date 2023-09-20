@@ -1,8 +1,5 @@
 import Stats from 'stats.js'
-import * as Cluster from '../../src/layout/cluster'
-import * as Fisheye from '../../src/layout/fisheye'
-import * as WebGL from '../../src/renderers/webgl'
-import * as Graph from '../../src/'
+import * as Trellis from '../../src/'
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -11,7 +8,7 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-const STYLE: Partial<Graph.NodeStyle> = {
+const STYLE: Partial<Trellis.NodeStyle> = {
   color: '#FFAF1D',
   stroke: [{ color: '#F7CA4D', width: 4 }],
   icon: {
@@ -22,7 +19,7 @@ const STYLE: Partial<Graph.NodeStyle> = {
     size: 22
   }
 }
-let nodes: Graph.Node[] = [
+let nodes: Trellis.Node[] = [
   {
     id: 'a',
     radius: 18,
@@ -50,15 +47,15 @@ let nodes: Graph.Node[] = [
     style: STYLE
   }
 ]
-const edges: Graph.Edge[] = []
+const edges: Trellis.Edge[] = []
 
 /**
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const fisheye = Fisheye.Layout()
-const cluster = Cluster.Layout()
-const render = WebGL.Renderer({
+const fisheye = Trellis.Fisheye.Layout()
+const cluster = Trellis.Cluster.Layout()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
@@ -66,7 +63,7 @@ const render = WebGL.Renderer({
 /**
  * Initialize Layout and Renderer Options
  */
-const renderOptions: WebGL.Options = {
+const renderOptions: Trellis.RendererOptions = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   onNodeDoubleClick: ({ target }) => {
@@ -112,7 +109,7 @@ const renderOptions: WebGL.Options = {
     )
     const radius =
       subgraphNodes
-        .map(({ x = 0, y = 0, radius }) => Graph.distance(x, y, 0, 0) + radius)
+        .map(({ x = 0, y = 0, radius }) => Trellis.distance(x, y, 0, 0) + radius)
         .reduce((maxDistance, distance) => Math.max(maxDistance, distance), target.radius) + 20
 
     nodes = fisheye(

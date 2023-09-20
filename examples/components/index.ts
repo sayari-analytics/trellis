@@ -1,6 +1,5 @@
 import Stats from 'stats.js'
-import { Hierarchy, Components } from '../../src/layout'
-import * as WebGL from '../../src/renderers/webgl'
+import * as Trellis from '../../src'
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -18,9 +17,9 @@ const D_STYLE = { color: '#C6D336', stroke: [{ color: '#E6F356' }] }
  * Initialize Layout and Renderer
  */
 const container = document.querySelector('#graph') as HTMLDivElement
-const hierarchy = Hierarchy.Layout()
-const components = Components.Layout()
-const render = WebGL.Renderer({
+const hierarchy = Trellis.Hierarchy.Layout()
+const components = Trellis.Components.Layout()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })

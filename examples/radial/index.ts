@@ -1,7 +1,5 @@
 import Stats from 'stats.js'
-import * as Radial from '../../src/layout/radial'
-import * as Graph from '../../src/'
-import * as WebGL from '../../src/renderers/webgl'
+import * as Trellis from '../../src/'
 import graphData from '../../data/tmp-data'
 
 export const stats = new Stats()
@@ -11,13 +9,13 @@ document.body.appendChild(stats.dom)
 /**
  * Initialize Data
  */
-type Node = Graph.Node & { type: string }
+type Node = Trellis.Node & { type: string }
 
 const arabicLabel = 'مدالله بن علي\nبن سهل الخالدي'
 const thaiLabel = 'บริษัท ไทยยูเนียนรับเบอร์\nจำกัด'
 const russianLabel = 'ВИКТОР ФЕЛИКСОВИЧ ВЕКСЕЛЬБЕРГ'
 
-const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
+const createCompanyStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#FFAF1D',
   stroke: [{ color: '#FFF' }, { color: '#F7CA4D' }],
   icon: {
@@ -55,7 +53,7 @@ const createCompanyStyle = (radius: number): Graph.NodeStyle => ({
   ]
 })
 
-const createPersonStyle = (radius: number): Graph.NodeStyle => ({
+const createPersonStyle = (radius: number): Trellis.NodeStyle => ({
   color: '#7CBBF3',
   stroke: [{ color: '#90D7FB' }],
   icon: {
@@ -103,7 +101,7 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
   //   ['connect_2', { field: 'related_to', source: Object.values(graphData.nodes)[77].id, target: `${Object.values(graphData.nodes)[0].id}_2` }],
   //   ['connect_3', { field: 'related_to', source: `${Object.values(graphData.nodes)[50].id}_2`, target: `${Object.values(graphData.nodes)[0].id}_3` }],
   // ])
-  .map<Graph.Edge>(([id, { field, source, target }]) => ({
+  .map<Trellis.Edge>(([id, { field, source, target }]) => ({
     id,
     source,
     target,
@@ -140,11 +138,11 @@ let edges = Object.entries<{ field: string; source: string; target: string }>(gr
  */
 const container = document.querySelector('#graph') as HTMLDivElement
 
-const layoutOptions: Radial.Options = {
+const layoutOptions: Trellis.RadialOptions = {
   radius: 1200
 }
 
-const renderOptions: WebGL.Options<Node, Graph.Edge> = {
+const renderOptions: Trellis.RendererOptions<Node, Trellis.Edge> = {
   width: container.offsetWidth,
   height: container.offsetHeight,
   onNodeDrag: ({ nodeX: x, nodeY: y, target: { id } }) => {
@@ -189,8 +187,8 @@ const renderOptions: WebGL.Options<Node, Graph.Edge> = {
 /**
  * Initialize Layout and Renderer
  */
-const radial = Radial.Layout()
-const render = WebGL.Renderer({
+const radial = Trellis.Radial.Layout()
+const render = Trellis.Renderer({
   container,
   debug: { stats, logPerformance: false }
 })
