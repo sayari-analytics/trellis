@@ -14,7 +14,7 @@
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
-    "copy": "mv main* module* index.d* dist/ && cp package* README.md dist/",
+    "copy": "mv main* module* index.d* dist/",
     "build:tsc": "tsc --project ./tsconfig.json",
     "build": "npm run clean && parcel build && npm run copy && npm run build:tsc",
     "examples:dev": "npm run clean && parcel examples/index.html",
@@ -68,14 +68,7 @@
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
