@@ -1,7 +1,9 @@
 import type { Node, Edge, Placement } from '../../trellis'
 import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
-import { HierarchyNode, HierarchyPointNode } from 'd3-hierarchy'
+import { HierarchyNode } from 'd3-hierarchy'
 import tree from './tree'
+
+type CompareFn<N extends Node, E extends Edge> = (a: HierarchyNode<HierarchyData<N, E>>, b: HierarchyNode<HierarchyData<N, E>>) => number
 
 export type Options<N extends Node, E extends Edge> = Partial<{
   x: number
@@ -11,74 +13,84 @@ export type Options<N extends Node, E extends Edge> = Partial<{
   alignment: 'min' | 'mid' | 'max'
   size: [number, number]
   nodeSize: [number, number]
-  separation: (a: HierarchyPointNode<HierarchyData<N, E>>, b: HierarchyPointNode<HierarchyData<N, E>>) => number
-  sort: (a: HierarchyNode<HierarchyData<N, E>>, b: HierarchyNode<HierarchyData<N, E>>) => number
+  separation: CompareFn<N, E>
+  sort: CompareFn<N, E> | CompareFn<N, E>[]
 }>
 
 const DEFAULT_NODE_SIZE: [number, number] = [120, 240]
 
 export const Layout = () => {
-  return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[]; edges: E[]; options?: Options<N, E> }) => {
+  return <N extends Node, E extends Edge>(
+    rootId: string,
+    { options = {}, ...graph }: { nodes: N[]; edges: E[]; options?: Options<N, E> }
+  ) => {
     const index = createGraphIndex(graph)
 
     if (index[rootId] === undefined) {
       return { nodes: graph.nodes, edges: graph.edges }
     }
 
-    const hierarchy = graphToHierarchy(index, rootId, graph.options?.bfs)
+    const hierarchy = graphToHierarchy(index, rootId, options?.bfs)
 
-    if (graph.options?.sort !== undefined) {
-      hierarchy.sort(graph.options.sort)
+    if (Array.isArray(options.sort)) {
+      options.sort.forEach((sort) => {
+        hierarchy.sort(sort)
+      })
+    } else if (options.sort !== undefined) {
+      hierarchy.sort(options.sort)
     }
 
     const layout = tree<HierarchyData<N, E>>()
+    const nodeSize = options.nodeSize ?? DEFAULT_NODE_SIZE
 
-    const nodeSize = graph.options?.nodeSize ?? DEFAULT_NODE_SIZE
-    if (graph.options?.size !== undefined) {
-      layout.size(graph.options.size)
+    if (options.size !== undefined) {
+      layout.size(options.size)
     } else {
       layout.nodeSize(nodeSize)
     }
 
-    if (graph.options?.separation !== undefined) {
-      layout.separation(graph.options.separation)
+    if (options.separation !== undefined) {
+      layout.separation(options.separation)
     }
 
-    if (graph.options?.alignment !== undefined) {
-      layout.alignment(graph.options.alignment)
+    if (options.alignment !== undefined) {
+      layout.alignment(options.alignment)
     }
 
     const positionedDataById = hierarchyToGraph(layout(hierarchy))
 
-    const { x = 0, y = 0 } = index[rootId].node
-    const xOffset = (graph.options?.x ?? 0) + x
-    const yOffset = (graph.options?.y ?? 0) - y
+    const width = options.size?.[0] ?? hierarchy.height * nodeSize[1]
+    const height = options.size?.[1] ?? hierarchy.height * nodeSize[0]
+
+    const xOffset = (options.x ?? 0) + (index[rootId].node.x ?? 0)
+    const yOffset = (options.y ?? 0) - (index[rootId].node.y ?? 0)
 
     return {
       edges: graph.edges,
       nodes: graph.nodes.map((node) => {
-        const positionedNode = positionedDataById[node.id]
+        const position = positionedDataById[node.id]
 
-        if (positionedNode !== undefined) {
-          const x = positionedNode.x + xOffset
-          const y = positionedNode.y - yOffset
-          switch (graph.options?.anchor) {
-            case 'left':
-              // rotate tree 90 degrees by replacing x and y
-              return { ...node, y: x, x: y }
-            case 'right':
-              // rotate tree 90 degrees and flip on x axis by offsetting with tree width
-              return { ...node, y: x, x: hierarchy.height * nodeSize[1] - y }
-            case 'bottom':
-              // flip on y axis by offsetting with tree height
-              return { ...node, x, y: hierarchy.height * nodeSize[0] - y }
-            default:
-              // default to top
-              return { ...node, x, y }
-          }
+        if (position === undefined) {
+          return node
         }
 
-        return node
+        const x = position.x + xOffset
+        const y = position.y - yOffset
+
+        switch (options.anchor) {
+          case 'left':
+            // rotate tree 90 degrees by replacing x and y
+            return { ...node, y: x, x: y }
+          case 'right':
+            // rotate tree 90 degrees and flip on x axis by offsetting with tree width
+            return { ...node, y: x, x: width - y }
+          case 'bottom':
+            // flip on y axis by offsetting with tree height
+            return { ...node, x, y: height - y }
+          default:
+            // default to top
+            return { ...node, x, y }
+        }
       })
     }
   }

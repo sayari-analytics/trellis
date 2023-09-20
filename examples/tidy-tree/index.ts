@@ -36,7 +36,10 @@ const options: Hierarchy.Options<Node, Edge> = {
   nodeSize,
   anchor: 'left',
   alignment: 'min',
-  sort: (a, b) => b.height - a.height
+  sort: [
+    (a, b) => b.height - a.height,
+    ({ data: a }, { data: b }) => (a.node.type === 'company' ? 1 : 0) - (b.node.type === 'company' ? 1 : 0)
+  ]
 }
 
 /**
@@ -74,6 +77,17 @@ const createEdge = (id: string, source: string, target: string, field: string): 
   field,
   style: { arrow: 'none' }
 })
+
+const getTreeViewport = (nodes: Node[]) => {
+  const bounds = Graph.getSelectionBounds(nodes, VIEWPORT_PADDING)
+  const right = bounds.right + nodeSize[1]
+  const treeWidth = right - bounds.left
+  return {
+    zoom: size.width / treeWidth,
+    x: treeWidth / 2 - right,
+    y: bounds.top - size.height / 2
+  }
+}
 
 const root = '875yxpVvxV2RsweKMRiu7g'
 const graph = data.reduce<{ nodes: Record<string, Node>; edges: Record<string, Edge> }>(
@@ -151,17 +165,13 @@ zoomControl({
   }
 })
 
-const layoutData = hierarchy(root, { nodes, edges, options })
-nodes = layoutData.nodes
-edges = layoutData.edges
+const layout = hierarchy(root, { nodes, edges, options })
+nodes = layout.nodes
+edges = layout.edges
 
-const bounds = Graph.getSelectionBounds(nodes, VIEWPORT_PADDING)
-
-const right = bounds.right + nodeSize[1]
-const treeWidth = right - bounds.left
-
-renderOptions.zoom = size.width / treeWidth
-renderOptions.x = treeWidth / 2 - right
-renderOptions.y = bounds.top - size.height / 2
+const viewport = getTreeViewport(nodes)
+renderOptions.zoom = viewport.zoom
+renderOptions.x = viewport.x
+renderOptions.y = viewport.y
 
 render({ nodes, edges, options: renderOptions })
