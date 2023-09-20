@@ -1,13 +1,13 @@
 export * from './trellis'
 
 // layout
-export { default as Cluster } from './layout/cluster'
-export { default as Collide } from './layout/collide'
-export { default as Components } from './layout/components'
-export { default as Fisheye } from './layout/fisheye'
-export { default as Force } from './layout/force'
-export { default as Hierarchy } from './layout/hierarchy'
-export { default as Radial } from './layout/radial'
+import Cluster from './layout/cluster'
+import Collide from './layout/collide'
+import Components from './layout/components'
+import Fisheye from './layout/fisheye'
+import Force from './layout/force'
+import Hierarchy from './layout/hierarchy'
+import Radial from './layout/radial'
 
 import type { Options as CollideOptions } from './layout/collide'
 import type { Options as ComponentsOptions } from './layout/components'
@@ -15,11 +15,12 @@ import type { Options as ForceOptions } from './layout/force'
 import type { Options as HierarchyOptions } from './layout/hierarchy'
 import type { Options as RadialOptions } from './layout/radial'
 
+export { Cluster, Collide, Components, Fisheye, Force, Hierarchy, Radial }
 export type { CollideOptions, ComponentsOptions, ForceOptions, HierarchyOptions, RadialOptions }
 
 // renderers
-export { default as ImageRenderer, BlobRenderer } from './renderers/image'
-export { default as Renderer } from './renderers/webgl'
+import ImageRenderer, { BlobRenderer } from './renderers/image'
+import Renderer from './renderers/webgl'
 
 import type { Options as ImageOptions } from './renderers/image'
 import type {
@@ -37,6 +38,7 @@ import type {
   Options as RendererOptions
 } from './renderers/webgl'
 
+export { ImageRenderer, BlobRenderer, Renderer }
 export type {
   ImageOptions,
   NodePointerEvent,
@@ -54,14 +56,14 @@ export type {
 }
 
 // bindings
-export { default as Download } from './bindings/native/download'
-export { default as Selection } from './bindings/native/selection'
-export { default as Zoom } from './bindings/native/zoom'
-export { default as ReactButton } from './bindings/react/button'
-export { default as ReactButtonGroup } from './bindings/react/buttonGroup'
-export { default as ReactRenderer } from './bindings/react/renderer'
-export { default as ReactSelection } from './bindings/react/selection'
-export { default as ReactZoom } from './bindings/react/zoom'
+import Download from './bindings/native/download'
+import Selection from './bindings/native/selection'
+import Zoom from './bindings/native/zoom'
+import ReactButton from './bindings/react/button'
+import ReactButtonGroup from './bindings/react/buttonGroup'
+import ReactRenderer from './bindings/react/renderer'
+import ReactSelection from './bindings/react/selection'
+import ReactZoom from './bindings/react/zoom'
 
 import type { Options as DownloadOptions } from './bindings/native/download'
 import type { Options as ZoomOptions, ViewportChangeOptions } from './bindings/native/zoom'
@@ -76,6 +78,7 @@ import type {
   SelectionChangeEvent as ReactSelectionChangeEvent
 } from './bindings/react/selection'
 
+export { Download, Selection, Zoom, ReactButton, ReactButtonGroup, ReactRenderer, ReactSelection, ReactZoom }
 export type {
   DownloadOptions,
   SelectionOptions,
