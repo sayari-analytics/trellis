@@ -1,6 +1,5 @@
 import Stats from 'stats.js'
-import * as Hierarchy from '../../src/layout/hierarchy'
-import * as Components from '../../src/layout/components'
+import { Hierarchy, Components } from '../../src/layout'
 import * as WebGL from '../../src/renderers/webgl'
 
 export const stats = new Stats()

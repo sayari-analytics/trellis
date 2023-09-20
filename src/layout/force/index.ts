@@ -55,7 +55,7 @@ type LayoutResultEvent<N extends Node> = {
   nodes: Extend<N, { x: number; y: number }>[]
 }
 
-export const LAYOUT_OPTIONS = {
+const LAYOUT_OPTIONS = {
   nodeStrength: -600,
   linkDistance: 180,
   linkStrength: undefined,
@@ -154,7 +154,7 @@ const blob = new Blob([`${d3ForceScript}(${workerScript})(${JSON.stringify(LAYOU
 /**
  * TODO - add debugging perf logs
  */
-export const Layout = () => {
+const Layout = () => {
   const workerUrl = URL.createObjectURL(blob)
   const worker = new Worker(workerUrl)
   let v = 0
@@ -190,3 +190,5 @@ export const Layout = () => {
 
   return layout
 }
+
+export default { Layout }

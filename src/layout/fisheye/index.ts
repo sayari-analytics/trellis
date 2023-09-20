@@ -1,6 +1,6 @@
 import { Node } from '../../trellis'
 
-export const Layout = () => {
+const Layout = () => {
   return <N extends Node>(previousNodes: N[], nextNodes: N[]) => {
     // eslint-disable-next-line prefer-const
     let result: N[] = nextNodes.map((node) => ({ ...node })),
@@ -65,3 +65,5 @@ export const Layout = () => {
     return result
   }
 }
+
+export default { Layout }

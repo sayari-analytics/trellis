@@ -110,7 +110,7 @@ const buttonStyle = (disabled?: boolean, selected?: boolean, hover?: boolean, fo
     : _STYLE
 }
 
-export const Button: FunctionComponent<Props> = (props) => {
+const Button: FunctionComponent<Props> = (props) => {
   const [hover, setHover] = useState(false)
   const [focus, setFocus] = useState(false)
 
@@ -134,3 +134,5 @@ export const Button: FunctionComponent<Props> = (props) => {
     props.children
   )
 }
+
+export default Button

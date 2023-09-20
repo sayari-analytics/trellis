@@ -105,7 +105,7 @@ const findAncestor = (nodes: Node[], id: string): string | undefined => {
   return undefined
 }
 
-export const Layout = () => {
+const Layout = () => {
   return <N extends Node, E extends Edge>(rootId: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     const edgeIndex = graph.edges.reduce<Record<string, string[]>>((edgeIndex, edge) => {
       if (edgeIndex[edge.source] === undefined) {
@@ -169,3 +169,5 @@ export const Layout = () => {
     }
   }
 }
+
+export default { Layout }

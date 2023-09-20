@@ -1,5 +1,5 @@
 import { createElement, useRef, useEffect } from 'react'
-import { Renderer as PixiRenderer, Options } from '../../renderers/webgl'
+import PixiRenderer, { Options } from '../../renderers/webgl'
 import { Node, Edge, Annotation } from '../../trellis'
 import Stats from 'stats.js'
 
@@ -13,7 +13,7 @@ export type Props<N extends Node = Node, E extends Edge = Edge> = Partial<Option
 const defaultNodesEqual = <N extends Node>(prev: N[], current: N[]) => prev === current
 const defaultEdgesEqual = <E extends Edge>(prev: E[], current: E[]) => prev === current
 
-export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
+const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
   const ref = useRef<HTMLDivElement>(null)
   const renderer = useRef<(graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Partial<Options<N, E>> }) => void>()
 
@@ -40,3 +40,5 @@ export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Pr
 
   return createElement('div', { ref: ref })
 }
+
+export default Renderer

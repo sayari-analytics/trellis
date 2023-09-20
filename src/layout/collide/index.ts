@@ -16,7 +16,7 @@ const COLLIDE_LAYOUT_OPTIONS = {
   tick: 50
 }
 
-export const Layout = () => {
+const Layout = () => {
   return <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     forceSimulation<SimulationNode>(graph.nodes)
       .force(
@@ -31,3 +31,5 @@ export const Layout = () => {
     return { nodes: graph.nodes, edges: graph.edges }
   }
 }
+
+export default { Layout }

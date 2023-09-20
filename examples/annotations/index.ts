@@ -1,5 +1,5 @@
 import Stats from 'stats.js'
-import * as Force from '../../src/layout/force'
+import { Force, ForceOptions } from '../../src/layout'
 import * as Download from '../../src/bindings/native/download'
 import * as WebGL from '../../src/renderers/webgl'
 import * as Png from '../../src/renderers/image'
@@ -304,7 +304,7 @@ downloadControl({
 /**
  * Layout and Render Graph
  */
-const layoutOptions: Force.Options = {
+const layoutOptions: ForceOptions = {
   nodeStrength: -500
 }
 const renderOptions: WebGL.Options = {

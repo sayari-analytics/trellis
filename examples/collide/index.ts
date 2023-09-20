@@ -1,5 +1,5 @@
 import Stats from 'stats.js'
-import * as Collide from '../../src/layout/collide'
+import { Collide } from '../../src/layout'
 import * as Graph from '../../src/'
 import * as WebGL from '../../src/renderers/webgl'
 import graphData from './data'

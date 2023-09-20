@@ -1,5 +1,5 @@
 import { createElement, Fragment, FunctionComponent, ReactNode } from 'react'
-import { Button } from './button'
+import Button from './button'
 
 export type Props = {
   children: {
@@ -11,7 +11,7 @@ export type Props = {
   }[]
 }
 
-export const ButtonGroup: FunctionComponent<Props> = (props) => {
+const ButtonGroup: FunctionComponent<Props> = (props) => {
   return createElement(
     Fragment,
     {},
@@ -31,3 +31,5 @@ export const ButtonGroup: FunctionComponent<Props> = (props) => {
     )
   )
 }
+
+export default ButtonGroup

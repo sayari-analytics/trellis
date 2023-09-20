@@ -229,7 +229,7 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onViewportWheel?: (event: ViewportWheelEvent) => void
 }
 
-export const RENDERER_OPTIONS = {
+const RENDERER_OPTIONS = {
   width: 800,
   height: 600,
   x: 0,
@@ -1249,7 +1249,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
   }
 }
 
-export const Renderer = (options: { container: HTMLDivElement; debug?: { logPerformance?: boolean; stats?: Stats } }) => {
+const Renderer = (options: { container: HTMLDivElement; debug?: { logPerformance?: boolean; stats?: Stats } }) => {
   const pixiRenderer = new InternalRenderer(options)
 
   const render = <N extends Graph.Node, E extends Graph.Edge>(graph: {
@@ -1265,3 +1265,5 @@ export const Renderer = (options: { container: HTMLDivElement; debug?: { logPerf
 
   return render
 }
+
+export default Renderer

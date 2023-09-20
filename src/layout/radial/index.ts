@@ -1,4 +1,4 @@
-import * as Hierarchy from '../hierarchy'
+import Hierarchy from '../hierarchy'
 import { Node, Edge } from '../../trellis'
 
 export type Options = Partial<{
@@ -10,7 +10,7 @@ export type Options = Partial<{
 
 const TWO_PI = Math.PI * 2
 
-export const Layout = () => {
+const Layout = () => {
   const layout = Hierarchy.Layout()
 
   return <N extends Node, E extends Edge>(root: string, graph: { nodes: N[]; edges: E[]; options?: Options }) => {
@@ -39,3 +39,5 @@ export const Layout = () => {
     }
   }
 }
+
+export default { Layout }

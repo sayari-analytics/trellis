@@ -35,7 +35,7 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-export const Control = ({ container }: { container: HTMLDivElement }) => {
+const Control = ({ container }: { container: HTMLDivElement }) => {
   const controlContainer = document.createElement('div')
   controlContainer.style.position = 'absolute'
   controlContainer.style.display = 'none'
@@ -89,3 +89,5 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
     }
   }
 }
+
+export default { Control }

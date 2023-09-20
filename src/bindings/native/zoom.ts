@@ -35,14 +35,12 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
-
 /**
  * TODO
  * - disable on min/max zoom
  * - tooltips
  */
-export const Control = ({ container }: { container: HTMLDivElement }) => {
+const Control = ({ container }: { container: HTMLDivElement }) => {
   const controlContainer = document.createElement('div')
   controlContainer.style.position = 'absolute'
   controlContainer.style.display = 'none'
@@ -91,3 +89,5 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
     zoomOut.onpointerdown = options.onZoomOut ?? null
   }
 }
+
+export default { Control }

@@ -40,7 +40,7 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-export const Control = ({ container }: { container: HTMLDivElement }) => {
+const Control = ({ container }: { container: HTMLDivElement }) => {
   let select = false
   let selectionStartX: number | undefined
   let selectionStartY: number | undefined
@@ -130,3 +130,5 @@ export const Control = ({ container }: { container: HTMLDivElement }) => {
     }
   }
 }
+
+export default { Control }

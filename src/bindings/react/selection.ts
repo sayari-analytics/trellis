@@ -49,7 +49,7 @@ function setsAreEqual<T>(a: Set<T>, b: Set<T>) {
   return true
 }
 
-export const Selection = <N extends Node>(props: Props<N>) => {
+const Selection = <N extends Node>(props: Props<N>) => {
   const [state, setState] = useState<{
     select: boolean
     cursor?: string
@@ -235,3 +235,5 @@ export const Selection = <N extends Node>(props: Props<N>) => {
         : undefined
   }) as unknown as JSX.Element
 }
+
+export default Selection

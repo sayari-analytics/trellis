@@ -7,7 +7,7 @@ export type Options = Partial<{
 
 const DEFAULT_PADDING = 18
 
-export const Layout = () => {
+const Layout = () => {
   return <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[]; options?: Options }) => {
     const padding = graph.options?.padding ?? DEFAULT_PADDING
 
@@ -34,3 +34,5 @@ export const Layout = () => {
     )
   }
 }
+
+export default { Layout }

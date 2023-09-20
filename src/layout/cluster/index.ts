@@ -1,7 +1,7 @@
 import { pack, hierarchy } from 'd3-hierarchy'
 import { Node } from '../../trellis'
 
-export const Layout = () => {
+const Layout = () => {
   return <N extends Node>(nodes: N[]) => {
     const positions: Record<string, [number, number]> = {}
 
@@ -22,3 +22,5 @@ export const Layout = () => {
     return nodes.map((node) => ({ ...node, x: positions[node.id][0], y: positions[node.id][1] }))
   }
 }
+
+export default { Layout }

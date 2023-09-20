@@ -11,7 +11,7 @@ export type Options = {
   mimetype?: string
 }
 
-export const Renderer = <N extends Node, E extends Edge>() => {
+const Renderer = <N extends Node, E extends Edge>() => {
   return (graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Options }) => {
     const pixiRenderer = new WebGL.InternalRenderer({
       container: document.createElement('div')
@@ -56,3 +56,5 @@ export const BlobRenderer = <N extends Node, E extends Edge>() => {
     })
   }
 }
+
+export default Renderer
