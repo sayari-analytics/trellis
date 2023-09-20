@@ -4,3 +4,5 @@ dist/
 .cache/
 .vscode
 .parcel-cache
+main*
+module*

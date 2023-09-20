@@ -3,22 +3,20 @@
   "version": "0.7.0-rc.0",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "source": "src/index.ts",
-  "main": "./dist/main.js",
-  "module": "./dist/module.js",
-  "types": "./dist/types.d.ts",
-  "files": [
-    "dist"
-  ],
+  "main": "./main.js",
+  "module": "./module.js",
+  "types": "./index.d.ts",
   "scripts": {
-    "clean": "rm -rf dist && rm -rf .parcel-cache",
+    "clean": "rm -rf dist && rm -rf .parcel-cache && mkdir dist",
     "format": "prettier . --write",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
+    "copy": "mv main* module* index.d* dist/ && cp package* README.md dist/",
     "build:tsc": "tsc --project ./tsconfig.json",
-    "build": "npm run clean && npm run build:tsc && parcel build",
+    "build": "npm run clean && parcel build && npm run copy && npm run build:tsc",
     "examples:dev": "npm run clean && parcel examples/index.html",
     "docs:dev": "npm run clean && parcel docs-src/index.html",
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
@@ -70,14 +68,7 @@
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
