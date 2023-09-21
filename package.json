@@ -1,6 +1,6 @@
 {
   "name": "@sayari/trellis",
-  "version": "0.7.0-rc.4",
+  "version": "0.7.0-rc.5",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
@@ -104,7 +104,14 @@
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2"
   },
-  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
+  "keywords": [
+    "graph",
+    "network",
+    "infovis",
+    "visualization",
+    "react",
+    "webgl"
+  ],
   "peerDependencies": {
     "react": ">=16.0"
   },
