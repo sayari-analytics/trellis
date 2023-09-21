@@ -1,9 +1,9 @@
 import { createElement, useRef, useEffect } from 'react'
-import PixiRenderer, { Options } from '../../renderers/webgl'
-import { Node, Edge, Annotation } from '../../trellis'
+import { Renderer as PixiRenderer, RendererOptions } from '../../renderers/webgl'
+import { Node, Edge, Annotation } from '../../api'
 import Stats from 'stats.js'
 
-export type Props<N extends Node = Node, E extends Edge = Edge> = Partial<Options<N, E>> & {
+export type Props<N extends Node = Node, E extends Edge = Edge> = Partial<RendererOptions<N, E>> & {
   nodes: N[]
   edges: E[]
   annotations?: Annotation[]
@@ -13,9 +13,16 @@ export type Props<N extends Node = Node, E extends Edge = Edge> = Partial<Option
 const defaultNodesEqual = <N extends Node>(prev: N[], current: N[]) => prev === current
 const defaultEdgesEqual = <E extends Edge>(prev: E[], current: E[]) => prev === current
 
+type Graph<N extends Node = Node, E extends Edge = Edge> = {
+  nodes: N[]
+  edges: E[]
+  annotations?: Annotation[]
+  options?: Partial<RendererOptions<N, E>>
+}
+
 const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
   const ref = useRef<HTMLDivElement>(null)
-  const renderer = useRef<(graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Partial<Options<N, E>> }) => void>()
+  const renderer = useRef<(graph: Graph<N, E>) => void>()
 
   useEffect(() => {
     const _renderer = PixiRenderer({ container: ref.current!, debug: props.debug })

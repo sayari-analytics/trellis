@@ -1,7 +1,7 @@
 import { color } from 'd3-color'
-import { InternalRenderer } from '.'
+import { InternalRenderer } from './internal'
 import { NodeRenderer } from './node'
-import { Node, Edge } from '../../trellis'
+import { Node, Edge } from '../../api'
 
 export const colorToNumber = (colorString: string): number => {
   const c = color(colorString)

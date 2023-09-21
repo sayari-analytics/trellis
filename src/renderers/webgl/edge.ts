@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '.'
+import { InternalRenderer } from './internal'
 import {
   angle,
   colorToNumber,
@@ -12,7 +12,7 @@ import {
   clientPositionFromEvent,
   pointerKeysFromEvent
 } from './utils'
-import { Node, Edge, EdgeStyle } from '../../trellis'
+import { Node, Edge, EdgeStyle } from '../../api'
 import { ArrowSprite } from './sprites/arrowSprite'
 
 const LINE_HOVER_RADIUS = 4

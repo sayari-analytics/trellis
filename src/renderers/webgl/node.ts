@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '.'
+import { InternalRenderer } from './internal'
 import {
   colorToNumber,
   RADIANS_PER_DEGREE,
@@ -9,7 +9,7 @@ import {
   clientPositionFromEvent,
   pointerKeysFromEvent
 } from './utils'
-import { Node, Edge, NodeStyle, equals, Placement } from '../../trellis'
+import { Node, Edge, NodeStyle, equals, Placement } from '../../api'
 import { interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
 

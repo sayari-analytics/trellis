@@ -1,7 +1,7 @@
-import * as WebGL from '../webgl'
-import { Node, Edge, Annotation } from '../../trellis'
+import { Node, Edge, Annotation } from '../../api'
+import { InternalRenderer } from '../webgl/internal'
 
-export type Options = {
+export type ImageOptions = {
   width?: number
   height?: number
   x?: number
@@ -11,9 +11,9 @@ export type Options = {
   mimetype?: string
 }
 
-const Renderer = <N extends Node, E extends Edge>() => {
-  return (graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Options }) => {
-    const pixiRenderer = new WebGL.InternalRenderer({
+export const ImageRenderer = <N extends Node, E extends Edge>() => {
+  return (graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: ImageOptions }) => {
+    const pixiRenderer = new InternalRenderer({
       container: document.createElement('div')
     })
     pixiRenderer.update({
@@ -35,8 +35,8 @@ const Renderer = <N extends Node, E extends Edge>() => {
 }
 
 export const BlobRenderer = <N extends Node, E extends Edge>() => {
-  return (graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Exclude<Options, 'mimetype'> }) => {
-    const pixiRenderer = new WebGL.InternalRenderer({
+  return (graph: { nodes: N[]; edges: E[]; annotations?: Annotation[]; options?: Exclude<ImageOptions, 'mimetype'> }) => {
+    const pixiRenderer = new InternalRenderer({
       container: document.createElement('div')
     })
     pixiRenderer.update({
@@ -57,4 +57,4 @@ export const BlobRenderer = <N extends Node, E extends Edge>() => {
   }
 }
 
-export default Renderer
+export default ImageRenderer

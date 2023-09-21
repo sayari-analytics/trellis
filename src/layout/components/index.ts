@@ -1,5 +1,5 @@
 import { packEnclose, packSiblings } from 'd3-hierarchy'
-import { Node, Edge, connectedComponents } from '../../trellis'
+import { Node, Edge, connectedComponents } from '../../api'
 
 export type Options = Partial<{
   padding: number

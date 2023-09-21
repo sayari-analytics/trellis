@@ -1,5 +1,5 @@
 import { pack, hierarchy } from 'd3-hierarchy'
-import { Node } from '../../trellis'
+import { Node } from '../../api'
 
 const Layout = () => {
   return <N extends Node>(nodes: N[]) => {

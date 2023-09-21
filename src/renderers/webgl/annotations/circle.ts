@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
-import { InternalRenderer } from '..'
-import { CircleAnnotation } from '../../../trellis'
+import { InternalRenderer } from '../internal'
+import { CircleAnnotation } from '../../../api'
 import { colorToNumber } from '../utils'
 
 export class CircleAnnotationRenderer {
