@@ -4,6 +4,7 @@
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
+  "types": "./src/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
@@ -21,6 +22,7 @@
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
   },
   "targets": {
+    "types": false,
     "main": {
       "source": "src/index.ts",
       "outputFormat": "commonjs",
@@ -35,24 +37,21 @@
   "exports": {
     ".": {
       "import": "./module/index.js",
-      "require": "./main/index.js",
-      "types": "./src/index.d.ts"
+      "require": "./main/index.js"
     },
-    "./react": {
-      "default": "./src/bindings/react/index.js",
-      "types": "./src/bindings/react/index.d.ts"
-    },
-    "./native": {
-      "default": "./src/bindings/native/index.js",
-      "types": "./src/bindings/native/index.d.ts"
-    },
-    "./webgl": {
-      "default": "./src/renderers/webgl/index.js",
-      "types": "./src/renderers/webgl/index.d.ts"
-    },
-    "./image": {
-      "default": "./src/renderers/image/index.js",
-      "types": "./src/renderers/image/index.d.ts"
+    "./layout": "./src/layout/index.js",
+    "./react": "./src/bindings/react/index.js",
+    "./native": "./src/bindings/native/index.js",
+    "./webgl": "./src/renderers/webgl/index.js",
+    "./image": "./src/renderers/image/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      "layout": ["./src/layout/index.d.ts"],
+      "react": ["./src/bindings/react/index.d.ts"],
+      "native": ["./src/bindings/native/index.d.ts"],
+      "webgl": ["./src/renderers/webgl/index.d.ts"],
+      "image": ["./src/renderers/image/index.d.ts"]
     }
   },
   "@parcel/resolver-default": {
@@ -104,14 +103,7 @@
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
