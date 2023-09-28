@@ -43,7 +43,8 @@
     "fontfaceobserver": "^2.1.0",
     "parcel": "^2.9.3",
     "pixi.js": "^7.2.4",
-    "pixi.js-legacy": "^7.2.4"
+    "pixi.js-legacy": "^7.2.4",
+    "stats.js": "^0.17.0"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.9.3",
@@ -78,20 +79,12 @@
     "react-dom": "^16.13.1",
     "react-resize-detector": "^5.2.0",
     "rxjs": "^6.5.5",
-    "stats.js": "^0.17.0",
     "ts-loader": "^6.2.2",
     "typescript": "^5.2.2",
     "vite": "^4.4.9",
     "vitest": "^0.34.4"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
