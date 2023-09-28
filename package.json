@@ -3,9 +3,9 @@
   "version": "0.6.0",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "source": "src/index.umd.ts",
-  "main": "./dist/main.js",
-  "module": "./dist/module.js",
-  "types": "./dist/types.d.ts",
+  "main": "./legacy/main.js",
+  "module": "./index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
@@ -15,10 +15,20 @@
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
-    "build": "npm run clean && npm run build:tsc && parcel build",
+    "build:umd": "parcel build --target legacy --dist-dir dist/legacy",
+    "build": "npm run clean && npm run build:tsc && npm run build:umd",
+    "copy": "cp package* README.md LICENSE dist/",
     "examples:dev": "npm run clean && parcel examples/index.html",
     "docs:dev": "npm run clean && parcel docs-src/index.html",
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
+  },
+  "targets": {
+    "main": false,
+    "module": false,
+    "types": false,
+    "legacy": {
+      "context": "browser"
+    }
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",

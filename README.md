@@ -66,7 +66,7 @@ npm version [premajor|preminor|prepatch|prerelease] --preid rc
 
 git push --follow-tags
 
-cp package* README.md dist/
+npm run copy
 
 npm publish dist/ --tag next
 ```
@@ -80,7 +80,7 @@ npm version [major|minor|patch]
 
 git push --follow-tags
 
-cp package* README.md dist/
+npm run copy
 
 npm publish dist/
 ```
