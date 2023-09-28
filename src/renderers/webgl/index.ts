@@ -206,7 +206,7 @@ export class Renderer {
     }
   }
 
-  update({ nodes, edges, options }: { nodes: Graph.Node[], edges: Graph.Edge[], options: Options }) {
+  update({ nodes, edges, options }: { nodes: Graph.Node[], edges: Graph.Edge[], annotations?: Graph.Annotation[], options: Options }) {
     this.animateViewport = options.animateViewport === true || options.animateViewport === undefined ?
       defaultOptions.animateViewport :
       options.animateViewport
@@ -394,6 +394,10 @@ export class Renderer {
   delete() {
     clearTimeout(this.#doubleClickTimeout)
     this.app.destroy(true, true)
+  }
+
+  image() {
+    return new Promise((resolve) => resolve(new Blob())) // TODO
   }
 
   private render(dt: number) {

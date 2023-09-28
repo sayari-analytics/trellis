@@ -1,4 +1,4 @@
-import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../../renderers/webgl-v6'
+import { ViewportDragDecelerateEvent, ViewportDragEvent, ViewportPointerEvent } from '../../renderers/webgl'
 
 
 const DEFAULT_TOP = '100px'

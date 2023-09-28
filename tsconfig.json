@@ -64,6 +64,7 @@
     "src/**/*"
   ],
   "exclude": [
-    "src/index.umd.ts"
+    "src/index.umd.ts",
+    "src/renderers/webgl-v6/**/*"
   ]
 }
