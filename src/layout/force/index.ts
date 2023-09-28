@@ -12,7 +12,7 @@ import {
   SimulationNodeDatum
 } from 'd3-force'
 import { Extend } from '../../types'
-import { Node, Edge } from '../../trellis'
+import { Node, Edge } from '../..'
 
 export type Options = Partial<{
   nodeStrength: number
@@ -57,8 +57,8 @@ type LayoutResultEvent<N extends Node> = {
 
 export const LAYOUT_OPTIONS = {
   nodeStrength: -600,
-  linkDistance: 180,
-  linkStrength: undefined,
+  linkDistance: 180, // () => 180
+  linkStrength: undefined, // (link) => 1 / Math.min(count(link.source), count(link.target))
   centerStrength: 0.02,
   nodePadding: 8,
   tick: 300
