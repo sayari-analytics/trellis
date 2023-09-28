@@ -1,14 +1,12 @@
 {
   "name": "@sayari/trellis",
-  "version": "0.7.0-rc.0",
+  "version": "v0.7.0-rc.6",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "source": "src/index.ts",
-  "main": "./dist/main.js",
-  "module": "./dist/module.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "main": "./index.js",
+  "type": "module",
+  "browser": "./browser/index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
@@ -19,7 +17,8 @@
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
-    "build": "npm run clean && parcel build && npm run build:tsc",
+    "build": "npm run clean && parcel build --target browser && npm run build:tsc",
+    "copy": "cp package* README.md dist/",
     "examples:dev": "npm run clean && parcel examples/index.html",
     "docs:dev": "npm run clean && parcel docs-src/index.html",
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/"
@@ -74,14 +73,7 @@
     "vite": "^4.4.9",
     "vitest": "^0.34.4"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
