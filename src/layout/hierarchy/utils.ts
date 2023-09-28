@@ -1,5 +1,5 @@
 import { hierarchy, HierarchyPointNode } from 'd3-hierarchy'
-import type { Node, Edge } from '../../trellis'
+import type { Node, Edge } from '../..'
 
 // types
 export type TreePath<N extends Node, E extends Edge> = { edge: E; node: N }

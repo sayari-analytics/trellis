@@ -136,7 +136,7 @@ export class Renderer {
   nodeRenderersById: Record<string, NodeRenderer> = {}
   edges: Graph.Edge[] = []
   edgeRenderersById: Record<string, EdgeRenderer> = {}
-  #doubleClickTimeout?: number
+  #doubleClickTimeout?: NodeJS.Timeout
   #doubleClick = false
   #renderedPosition = false
   renderedNodes = false
