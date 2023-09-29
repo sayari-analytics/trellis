@@ -1,6 +1,6 @@
 {
   "name": "@sayari/trellis",
-  "version": "v0.6.0",
+  "version": "0.6.1-rc.0",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "source": "src/index.ts",
   "main": "./index.js",
@@ -82,7 +82,14 @@
     "vite": "^4.4.9",
     "vitest": "^0.34.4"
   },
-  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
+  "keywords": [
+    "graph",
+    "network",
+    "infovis",
+    "visualization",
+    "react",
+    "webgl"
+  ],
   "peerDependencies": {
     "react": ">=16.0"
   },
