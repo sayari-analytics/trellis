@@ -54,7 +54,7 @@ export class EdgeRenderer<N extends Node, E extends Edge> {
   private curveControlPointA?: [number, number]
   private curveControlPointB?: [number, number]
   private curve: number = 0
-  private doubleClickTimeout: number | undefined
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
   private labelLoader?: () => void
 

@@ -319,7 +319,7 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
   private interpolateZoom?: (time: number) => { value: number; done: boolean }
   private targetZoom = RENDERER_OPTIONS.zoom
   private firstRender = true
-  private doubleClickTimeout?: number
+  private doubleClickTimeout?: NodeJS.Timeout
   private doubleClick = false
   private onKeyDown = ({ altKey, ctrlKey, metaKey, shiftKey }: KeyboardEvent) => {
     this.altKey = altKey

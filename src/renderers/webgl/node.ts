@@ -77,7 +77,7 @@ export class NodeRenderer<N extends Node, E extends Edge> {
   private labelLoader?: () => void
   private iconLoader?: () => void
   private badgeIconLoader: (() => void)[] = []
-  private doubleClickTimeout: number | undefined
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0

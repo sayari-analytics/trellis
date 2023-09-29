@@ -77,7 +77,7 @@ export class RectangleAnnotationRenderer {
 
   private moveOffsetX = 0
   private moveOffsetY = 0
-  private doubleClickTimeout: number | undefined
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
 
   constructor(renderer: InternalRenderer<any, any>, annotation: TextAnnotation | RectangleAnnotation) {
