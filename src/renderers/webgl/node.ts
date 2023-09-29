@@ -9,7 +9,7 @@ import {
   clientPositionFromEvent,
   pointerKeysFromEvent
 } from './utils'
-import { Node, Edge, NodeStyle, equals, Placement } from '../../trellis'
+import { Node, Edge, NodeStyle, equals, Placement } from '../..'
 import { interpolate } from '../../utils'
 import { CircleSprite } from './sprites/circleSprite'
 

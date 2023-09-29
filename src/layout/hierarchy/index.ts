@@ -1,4 +1,4 @@
-import type { Node, Edge, Placement } from '../../trellis'
+import type { Node, Edge, Placement } from '../..'
 import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
 import { HierarchyNode } from 'd3-hierarchy'
 import tree from './tree'

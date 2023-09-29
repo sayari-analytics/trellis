@@ -1,5 +1,5 @@
 import * as Hierarchy from '../hierarchy'
-import { Node, Edge } from '../../trellis'
+import { Node, Edge } from '../..'
 
 export type Options = Partial<{
   x: number

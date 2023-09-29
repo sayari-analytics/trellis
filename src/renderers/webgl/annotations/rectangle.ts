@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { RectangleAnnotation, TextAnnotation } from '../../../trellis'
+import { RectangleAnnotation, TextAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
 
 const DEFAULT_PADDING = 4

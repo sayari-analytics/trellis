@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { Node, Edge } from '../../../trellis'
+import { Node, Edge } from '../../..'
 
 /**
  * zoom logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)

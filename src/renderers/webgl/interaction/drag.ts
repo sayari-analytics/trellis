@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { Node, Edge } from '../../../trellis'
+import { Node, Edge } from '../../..'
 import { clientPositionFromEvent } from '../utils'
 
 /**
