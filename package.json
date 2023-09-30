@@ -14,7 +14,7 @@
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
     "build:tsc": "tsc --project ./tsconfig.json",
-    "build:umd": "parcel build --target umdg",
+    "build:umd": "parcel build --target umd",
     "build": "npm run clean && npm run build:tsc && npm run build:umd",
     "copy": "cp package* README.md LICENSE dist/",
     "examples:dev": "npm run clean && parcel examples/index.html",
@@ -28,7 +28,7 @@
     "umd": {
       "context": "browser",
       "outputFormat": "global",
-      "distDir": "./dist/umd"
+      "distDir": "./dist"
     }
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",

@@ -243,7 +243,7 @@ export class Renderer {
         this.render(dt)
       })
     } else {
-      this.app.ticker.add(this.render)
+      this.app.ticker.add(this.render.bind(this))
     }
   }
 

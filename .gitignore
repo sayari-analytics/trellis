@@ -4,3 +4,5 @@ dist/
 .cache/
 .vscode
 .parcel-cache
+tests/umd/index.umd.js
+tests/umd/index.umd.js.map
