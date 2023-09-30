@@ -265,7 +265,7 @@ export const equals = <T>(a: T, b: T) => {
 }
 
 export const connectedComponents = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[] }): { nodes: N[]; edges: E[] }[] => {
-  const adjacencyList: Record<string, Record<string, E[]>> = {}
+  const adjacencyList: Record<string, Record<string, E[]>> = Object.create(null)
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
   const components: { nodes: Record<string, N>; edges: Record<string, E> }[] = []
@@ -336,7 +336,7 @@ export function* bfs<N extends Node, E extends Edge>(
   predicate: (node: N) => boolean,
   graph: { nodes: N[]; edges: E[] }
 ): Generator<N, void, void> {
-  const adjacencyList: Record<string, string[]> = {}
+  const adjacencyList: Record<string, string[]> = Object.create(null)
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
   const queue = [graph.nodes[0].id]
