@@ -1,4 +1,4 @@
-import { Sprite } from 'pixi.js-legacy'
+import { Sprite } from 'pixi.js'
 import * as Graph from '../../..'
 import { Renderer } from '..'
 import { NodeRenderer } from '../node'

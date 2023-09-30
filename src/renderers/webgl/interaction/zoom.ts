@@ -1,4 +1,4 @@
-import { Point } from 'pixi.js-legacy'
+import { Point } from 'pixi.js'
 import { Renderer } from '..'
 
 /**

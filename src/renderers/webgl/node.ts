@@ -1,4 +1,4 @@
-import { FederatedPointerEvent } from 'pixi.js-legacy'
+import { FederatedPointerEvent } from 'pixi.js'
 import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'

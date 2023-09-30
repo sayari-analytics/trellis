@@ -1,4 +1,4 @@
-import { FederatedPointerEvent } from 'pixi.js-legacy'
+import { FederatedPointerEvent } from 'pixi.js'
 import { Renderer } from '..'
 
 /**

@@ -1,4 +1,4 @@
-import { BitmapText, Container, Graphics, IBitmapTextStyle } from 'pixi.js-legacy'
+import { BitmapText, Container, Graphics, IBitmapTextStyle } from 'pixi.js'
 import { Renderer } from '.'
 
 export class Grid {

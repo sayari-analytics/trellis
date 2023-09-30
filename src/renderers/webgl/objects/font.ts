@@ -1,4 +1,4 @@
-import { BitmapFont } from 'pixi.js-legacy'
+import { BitmapFont } from 'pixi.js'
 import { MIN_ZOOM } from '..'
 
 export class Font {

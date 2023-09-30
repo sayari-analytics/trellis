@@ -34,12 +34,11 @@
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
   "dependencies": {
-    "@pixi/events": "^6.5.10",
-    "@pixi/unsafe-eval": "^7.2.4",
+    "@pixi/events": "^7.3.1",
     "d3-force": "^3.0.0",
     "d3-hierarchy": "^3.1.2",
     "d3-interpolate": "^3.0.1",
-    "pixi.js-legacy": "^7.2.4",
+    "pixi.js": "^7.3.1",
     "stats.js": "^0.17.0"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js-legacy'
+import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
 import Stats from 'stats.js'
 import * as Graph from '../..'
 import { Zoom } from './interaction/zoom'

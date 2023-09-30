@@ -1,4 +1,4 @@
-import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js-legacy'
+import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js'
 import { MIN_ZOOM, Renderer } from '..'
 
 export class CircleTexture {

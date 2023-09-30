@@ -1,4 +1,4 @@
-import { BitmapText, Text, TextStyle, TextStyleAlign } from 'pixi.js-legacy'
+import { BitmapText, Text, TextStyle, TextStyleAlign } from 'pixi.js'
 import { Renderer } from '..'
 import { isASCII } from '../utils'
 import { LabelPosition, LabelStyle } from '../../..'

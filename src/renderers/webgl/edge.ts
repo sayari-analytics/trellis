@@ -1,4 +1,4 @@
-import { Graphics } from 'pixi.js-legacy'
+import { Graphics } from 'pixi.js'
 import { MIN_EDGES_ZOOM, Renderer } from '.'
 import { angle, movePoint } from './utils'
 import { NodeRenderer } from './node'
