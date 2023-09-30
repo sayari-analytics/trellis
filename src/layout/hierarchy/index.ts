@@ -1,5 +1,5 @@
 import { hierarchy, HierarchyPointNode, tree } from 'd3-hierarchy'
-import { Node, Edge } from '../../trellis'
+import { Node, Edge } from '../..'
 
 export type Options = Partial<{
   x: number
