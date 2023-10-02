@@ -1,221 +1,63 @@
+import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
 import Stats from 'stats.js'
-import * as PIXI from 'pixi.js-legacy'
-import { install } from '@pixi/unsafe-eval'
 import * as Graph from '../..'
-import { animationFrameLoop, interpolate } from '../../utils'
-import { NodeRenderer } from './node'
-import { EdgeRenderer } from './edge'
+import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
-import { Zoom } from './interaction/zoom'
-import { ArrowSprite } from './sprites/arrowSprite'
-import { CircleSprite } from './sprites/circleSprite'
-import { ImageSprite } from './sprites/ImageSprite'
-import { FontIconSprite } from './sprites/fontIconSprite'
-import { FontLoader, ImageLoader } from './Loader'
-import { CircleAnnotationRenderer } from './annotations/circle'
-import { clientPositionFromEvent, pointerKeysFromEvent } from './utils'
-import { AnnotationRenderer } from './annotations'
-import { RectangleAnnotationRenderer } from './annotations/rectangle'
+import { Grid } from './grid'
+import { NodeRenderer } from './node'
+import { EdgeRenderer } from './edge'
+import { ArrowTexture } from './textures/arrow'
+import { CircleTexture } from './textures/circle'
+import { Font } from './objects/font'
+import { interpolate } from '../../utils'
+import { logUnknownEdgeError } from './utils'
+import { ObjectManager } from './objectManager'
 
-install(PIXI)
-
-export type NodePointerEvent = {
-  type: 'nodePointer'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  target: Graph.Node
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
-export type NodeDragEvent = {
-  type: 'nodeDrag'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  nodeX: number
-  nodeY: number
-  target: Graph.Node
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
-export type EdgePointerEvent = {
-  type: 'edgePointer'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  target: Graph.Edge
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
+export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
+export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
+export type Position = 'nw' | 'ne' | 'se' | 'sw'
+export type NodePointerEvent = { type: 'nodePointer'; target: Graph.Node; targetIdx: number } & MousePosition & Keys
+export type NodeDragEvent = { type: 'nodeDrag'; dx: number; dy: number; target: Graph.Node; targetIdx: number } & MousePosition & Keys
+export type EdgePointerEvent = { type: 'edgePointer'; target: Graph.Edge; targetIdx: number } & MousePosition & Keys
 export type AnnotationPointerEvent = {
   type: 'annotationPointer'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
+  position?: Position
   target: Graph.Annotation
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
-export type AnnotationResizePointerEvent = {
-  type: 'annotationPointer'
-  position: 'nw' | 'ne' | 'se' | 'sw'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  target: Graph.Annotation
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
+  targetIdx: number
+} & MousePosition &
+  Keys
 export type AnnotationDragEvent = {
   type: 'annotationDrag'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  annotationX: number
-  annotationY: number
+  dx: number
+  dy: number
   target: Graph.Annotation
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
+  targetIdx: number
+} & MousePosition &
+  Keys
 export type AnnotationResizeEvent = {
   type: 'annotationResize'
-  position: 'nw' | 'ne' | 'se' | 'sw'
-  x: number
-  y: number
+  position: Position
+  target: Graph.Annotation
+  targetIdx: number
+} & MousePosition &
+  Keys
+export type ViewportPointerEvent = { type: 'viewportPointer'; target: Graph.Viewport } & MousePosition & Keys
+export type ViewportDragEvent = { type: 'viewportDrag'; dx: number; dy: number } & MousePosition & Keys
+export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate'; dx: number; dy: number } & Keys
+export type ViewportWheelEvent = { type: 'viewportWheel'; dx: number; dy: number; dz: number } & MousePosition & Keys
+export type Options = {
   width: number
   height: number
-  target: Graph.Annotation
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
-export type ViewportPointerEvent = {
-  type: 'viewportPointer'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  target: Graph.Viewport
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
-export type ViewportDragEvent = {
-  type: 'viewportDrag'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  viewportX: number
-  viewportY: number
-  target: Graph.Viewport
-  altKey?: boolean
-  ctrlKey?: boolean
-  metaKey?: boolean
-  shiftKey?: boolean
-}
-
-export type ViewportDragDecelerateEvent = {
-  type: 'viewportDragDecelarate'
-  viewportX: number
-  viewportY: number
-  target: Graph.Viewport
-}
-
-export type ViewportWheelEvent = {
-  type: 'viewportWheel'
-  x: number
-  y: number
-  clientX: number
-  clientY: number
-  viewportX: number
-  viewportY: number
-  viewportZoom: number
-  target: Graph.Viewport
-}
-
-export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Graph.Edge> = {
-  width?: number
-  height?: number
   x?: number
   y?: number
   zoom?: number
   minZoom?: number
   maxZoom?: number
-  animateViewportPosition?: number | boolean
-  animateViewportZoom?: number | boolean
+  animateViewport?: number | boolean
   animateNodePosition?: number | boolean
   animateNodeRadius?: number | boolean
-  cursor?: string
   dragInertia?: number
-  nodesEqual?: (previous: N[], current: N[]) => boolean
-  edgesEqual?: (previous: E[], current: E[]) => boolean
-  nodeIsEqual?: (previous: N, current: N) => boolean
-  edgeIsEqual?: (previous: E, current: E) => boolean
-
-  onNodePointerEnter?: (event: NodePointerEvent) => void
-  onNodePointerDown?: (event: NodePointerEvent) => void
-  onNodeDragStart?: (event: NodeDragEvent) => void
-  onNodeDrag?: (event: NodeDragEvent) => void
-  onNodeDragEnd?: (event: NodeDragEvent) => void
-  onNodePointerUp?: (event: NodePointerEvent) => void
-  onNodeClick?: (event: NodePointerEvent) => void
-  onNodeDoubleClick?: (event: NodePointerEvent) => void
-  onNodePointerLeave?: (event: NodePointerEvent) => void
-
-  onEdgePointerEnter?: (event: EdgePointerEvent) => void
-  onEdgePointerDown?: (event: EdgePointerEvent) => void
-  onEdgePointerUp?: (event: EdgePointerEvent) => void
-  onEdgePointerLeave?: (event: EdgePointerEvent) => void
-  onEdgeClick?: (event: EdgePointerEvent) => void
-  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
-
-  onAnnotationPointerEnter?: (event: AnnotationPointerEvent) => void
-  onAnnotationPointerDown?: (event: AnnotationPointerEvent) => void
-  onAnnotationDragStart?: (event: AnnotationDragEvent) => void
-  onAnnotationDrag?: (event: AnnotationDragEvent) => void
-  onAnnotationDragEnd?: (event: AnnotationDragEvent) => void
-  onAnnotationPointerUp?: (event: AnnotationPointerEvent) => void
-  onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
-  onAnnotationClick?: (event: AnnotationPointerEvent) => void
-  onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
-
-  onAnnotationResizePointerUp?: (event: AnnotationResizePointerEvent) => void
-  onAnnotationResizePointerLeave?: (event: AnnotationResizePointerEvent) => void
-  onAnnotationResize?: (event: AnnotationResizeEvent) => void
-  onAnnotationResizePointerEnter?: (event: AnnotationResizePointerEvent) => void
-  onAnnotationResizePointerDown?: (event: AnnotationResizePointerEvent) => void
-
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
   onViewportPointerMove?: (event: ViewportPointerEvent) => void
@@ -227,113 +69,102 @@ export type Options<N extends Graph.Node = Graph.Node, E extends Graph.Edge = Gr
   onViewportDoubleClick?: (event: ViewportPointerEvent) => void
   onViewportPointerLeave?: (event: ViewportPointerEvent) => void
   onViewportWheel?: (event: ViewportWheelEvent) => void
+  onNodePointerEnter?: (event: NodePointerEvent) => void
+  onNodePointerDown?: (event: NodePointerEvent) => void
+  onNodeDragStart?: (event: NodeDragEvent) => void
+  onNodeDrag?: (event: NodeDragEvent) => void
+  onNodeDragEnd?: (event: NodeDragEvent) => void
+  onNodePointerUp?: (event: NodePointerEvent) => void
+  onNodeClick?: (event: NodePointerEvent) => void
+  onNodeDoubleClick?: (event: NodePointerEvent) => void
+  onNodePointerLeave?: (event: NodePointerEvent) => void
+  onEdgePointerEnter?: (event: EdgePointerEvent) => void
+  onEdgePointerDown?: (event: EdgePointerEvent) => void
+  onEdgePointerUp?: (event: EdgePointerEvent) => void
+  onEdgePointerLeave?: (event: EdgePointerEvent) => void
+  onEdgeClick?: (event: EdgePointerEvent) => void
+  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
 }
 
-export const RENDERER_OPTIONS = {
-  width: 800,
-  height: 600,
+export const defaultOptions = {
   x: 0,
   y: 0,
   zoom: 1,
-  minZoom: 0.1,
-  maxZoom: 2.5,
-  animateViewportPosition: 600,
-  animateViewportZoom: 600,
-  animateNodePosition: 800,
+  minZoom: 0.025,
+  maxZoom: 3,
+  animateViewport: 800,
+  animateNodePosition: 2000,
   animateNodeRadius: 800,
-  dragInertia: 0.88,
-  nodesEqual: () => false,
-  edgesEqual: () => false,
-  nodeIsEqual: () => false,
-  edgeIsEqual: () => false
+  dragInertia: 0.88
 }
 
-PIXI.utils.skipHello()
+// TODO - make configurable
+export const MIN_LABEL_ZOOM = 0.25
+export const MIN_NODE_STROKE_ZOOM = 0.3
+export const MIN_NODE_INTERACTION_ZOOM = 0.1
+export const MIN_EDGES_ZOOM = 0.15
+export const MIN_ZOOM = 3
 
-export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
-  width = RENDERER_OPTIONS.width
-  height = RENDERER_OPTIONS.height
-  minZoom = RENDERER_OPTIONS.minZoom
-  maxZoom = RENDERER_OPTIONS.maxZoom
-  x = RENDERER_OPTIONS.x
-  expectedViewportXPosition?: number
-  y = RENDERER_OPTIONS.y
-  expectedViewportYPosition?: number
-  zoom = RENDERER_OPTIONS.zoom
-  expectedViewportZoom?: number
-  animateViewportPosition: number | false = RENDERER_OPTIONS.animateViewportPosition
-  animateViewportZoom: number | false = RENDERER_OPTIONS.animateViewportZoom
-  animateNodePosition: number | false = RENDERER_OPTIONS.animateNodePosition
-  animateNodeRadius: number | false = RENDERER_OPTIONS.animateNodeRadius
-  dragInertia = RENDERER_OPTIONS.dragInertia
-  hoveredNode?: NodeRenderer<N, E>
-  clickedNode?: NodeRenderer<N, E>
-  hoveredEdge?: EdgeRenderer<N, E>
-  clickedEdge?: EdgeRenderer<N, E>
-  hoveredAnnotation?: AnnotationRenderer
-  clickedAnnotation?: AnnotationRenderer
-  dragging = false
-  dirty = false
-  viewportDirty = false
-  time = performance.now()
-  annotationsBottomLayer = new PIXI.Container()
-  annotationsLayer = new PIXI.Container()
-  edgesLayer = new PIXI.Container()
-  nodesLayer = new PIXI.Container()
-  labelsLayer = new PIXI.Container()
-  frontNodeLayer = new PIXI.Container()
-  frontLabelLayer = new PIXI.Container()
-  edgesGraphic = new PIXI.Graphics()
-  nodes: N[] = []
-  edges: E[] = []
-  annotations?: Graph.Annotation[]
-  nodesById: { [id: string]: NodeRenderer<N, E> } = {}
-  edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
-  annotationsById: { [id: string]: AnnotationRenderer } = {}
-  edgeIndex: { [edgeA: string]: { [edgeB: string]: Set<string> } } = {}
-  arrow: ArrowSprite<N, E>
-  circle: CircleSprite<N, E>
-  image: ImageSprite
-  fontIcon: FontIconSprite
-  app: PIXI.Application
-  root = new PIXI.Container()
-  zoomInteraction: Zoom<N, E>
-  dragInteraction: Drag<N, E>
-  decelerateInteraction: Decelerate<N, E>
-  fontLoader = FontLoader()
-  imageLoader = ImageLoader()
-  altKey = false
-  ctrlKey = false
-  metaKey = false
-  shiftKey = false
+export class Renderer {
+  width: number
+  height: number
+  x: number = 0
+  y: number = 0
+  get zoom() {
+    return this.root.scale.x
+  }
+  minZoom: number = defaultOptions.minZoom
+  maxZoom: number = defaultOptions.maxZoom
+  minX!: number
+  minY!: number
+  maxX!: number
+  maxY!: number
+
+  stats?: Stats
+  grid?: Grid
+  app: Application
   container: HTMLDivElement
+  root = new Container()
+  edgesContainer = new Container()
+  nodesContainer = new Container()
+  labelsContainer = new Container()
+  zoomInteraction = new Zoom(this)
+  dragInteraction = new Drag(this)
+  decelerateInteraction = new Decelerate(this)
+  nodeObjectManager = new ObjectManager(4000)
+  edgeObjectManager = new ObjectManager(4000)
+  labelObjectManager = new ObjectManager(4000)
+  font = new Font()
+  eventSystem: EventSystem
+  nodes: Graph.Node[] = []
+  nodeRenderersById: Record<string, NodeRenderer> = {}
+  edges: Graph.Edge[] = []
+  edgeRenderersById: Record<string, EdgeRenderer> = {}
+  #doubleClickTimeout?: number
+  #doubleClick = false
+  #renderedPosition = false
+  renderedNodes = false
+  #interpolateX?: (dt: number) => { value: number; done: boolean }
+  #interpolateY?: (dt: number) => { value: number; done: boolean }
+  #interpolateZoom?: (dt: number) => { value: number; done: boolean }
+  dragInertia = defaultOptions.dragInertia
+  animateViewport: number | false = defaultOptions.animateViewport
+  animateNodePosition: number | false = defaultOptions.animateNodePosition
+  animateNodeRadius: number | false = defaultOptions.animateNodeRadius
+  circle: CircleTexture
+  arrow: ArrowTexture
 
-  private clickedContainer = false
-  private previousTime = performance.now()
-  private debug?: { logPerformance?: boolean; stats?: Stats }
-  private cancelAnimationLoop: () => void
-  private interpolateX?: (time: number) => { value: number; done: boolean }
-  private targetX = RENDERER_OPTIONS.x
-  private interpolateY?: (time: number) => { value: number; done: boolean }
-  private targetY = RENDERER_OPTIONS.y
-  private interpolateZoom?: (time: number) => { value: number; done: boolean }
-  private targetZoom = RENDERER_OPTIONS.zoom
-  private firstRender = true
-  private doubleClickTimeout?: NodeJS.Timeout
-  private doubleClick = false
-  private onKeyDown = ({ altKey, ctrlKey, metaKey, shiftKey }: KeyboardEvent) => {
-    this.altKey = altKey
-    this.ctrlKey = ctrlKey
-    this.metaKey = metaKey
-    this.shiftKey = shiftKey
-  }
-  private onKeyUp = () => {
-    this.altKey = false
-    this.ctrlKey = false
-    this.metaKey = false
-    this.shiftKey = false
-  }
-
+  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
+  onViewportPointerDown?: (event: ViewportPointerEvent) => void
+  onViewportPointerMove?: (event: ViewportPointerEvent) => void
+  onViewportDragStart?: (event: ViewportDragEvent) => void
+  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
+  onViewportPointerUp?: (event: ViewportPointerEvent) => void
+  onViewportClick?: (event: ViewportPointerEvent) => void
+  onViewportDoubleClick?: (event: ViewportPointerEvent) => void
+  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
+  onViewportWheel?: (event: ViewportWheelEvent) => void
   onNodePointerEnter?: (event: NodePointerEvent) => void
   onNodePointerDown?: (event: NodePointerEvent) => void
   onNodeDragStart?: (event: NodeDragEvent) => void
@@ -349,919 +180,504 @@ export class InternalRenderer<N extends Graph.Node, E extends Graph.Edge> {
   onEdgePointerLeave?: (event: EdgePointerEvent) => void
   onEdgeClick?: (event: EdgePointerEvent) => void
   onEdgeDoubleClick?: (event: EdgePointerEvent) => void
-  onAnnotationPointerEnter?: (event: AnnotationPointerEvent) => void
-  onAnnotationPointerDown?: (event: AnnotationPointerEvent) => void
-  onAnnotationDragStart?: (event: AnnotationDragEvent) => void
-  onAnnotationDrag?: (event: AnnotationDragEvent) => void
-  onAnnotationDragEnd?: (event: AnnotationDragEvent) => void
-  onAnnotationPointerUp?: (event: AnnotationPointerEvent) => void
-  onAnnotationPointerLeave?: (event: AnnotationPointerEvent) => void
-  onAnnotationClick?: (event: AnnotationPointerEvent) => void
-  onAnnotationDoubleClick?: (event: AnnotationPointerEvent) => void
-  onAnnotationResize?: (event: AnnotationResizeEvent) => void
-  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
-  onViewportPointerDown?: (event: ViewportPointerEvent) => void
-  onViewportPointerMove?: (event: ViewportPointerEvent) => void
-  onViewportDragStart?: (event: ViewportDragEvent) => void
-  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
-  onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
-  onViewportPointerUp?: (event: ViewportPointerEvent) => void
-  onViewportClick?: (event: ViewportPointerEvent) => void
-  onViewportDoubleClick?: (event: ViewportPointerEvent) => void
-  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
-  onViewportWheel?: (event: ViewportWheelEvent) => void
 
-  update: (graph: { nodes: N[]; edges: E[]; options?: Options<N, E>; annotations?: Graph.Annotation[] }) => void
-
-  constructor(options: { container: HTMLDivElement; debug?: { logPerformance?: boolean; stats?: Stats } }) {
-    if (!(options.container instanceof HTMLDivElement)) {
+  constructor({
+    container,
+    width,
+    height,
+    debug,
+    forceCanvas
+  }: {
+    container: HTMLDivElement
+    width: number
+    height: number
+    debug?: boolean
+    forceCanvas?: boolean
+  }) {
+    if (!(container instanceof HTMLDivElement)) {
       throw new Error('container must be an instance of HTMLDivElement')
     }
 
+    this.container = container
     const view = document.createElement('canvas')
     view.onselectstart = () => false
-    options.container.appendChild(view)
-    this.container = options.container
+    this.container.appendChild(view)
 
-    this.app = new PIXI.Application({
+    this.app = new Application({
       view,
-      width: this.width,
-      height: this.height,
-      resolution: 2, // window.devicePixelRatio,
+      width: width,
+      height: height,
+      resolution: 2,
       antialias: true,
       autoDensity: true,
-      autoStart: false,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: false,
-      transparent: true
+      backgroundAlpha: 0,
+      forceCanvas: forceCanvas
     })
 
-    this.labelsLayer.interactiveChildren = false
-    this.nodesLayer.sortableChildren = true // TODO - perf test
-    this.annotationsBottomLayer.sortableChildren = true
-
+    this.width = width
+    this.height = height
     this.app.stage.addChild(this.root)
-    this.root.addChild(this.annotationsBottomLayer)
-    this.root.addChild(this.annotationsLayer)
-    this.root.addChild(this.edgesGraphic)
-    this.root.addChild(this.edgesLayer)
-    this.root.addChild(this.nodesLayer)
-    this.root.addChild(this.labelsLayer)
-    this.root.addChild(this.frontNodeLayer)
-    this.root.addChild(this.frontLabelLayer)
+    this.circle = new CircleTexture(this)
+    this.arrow = new ArrowTexture(this)
+    this.eventSystem = new EventSystem(this.app.renderer)
+    this.eventSystem.domElement = view
+    this.root.eventMode = 'static'
+    const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
+    this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
+    this.root.addChild(this.edgesContainer)
+    this.root.addChild(this.nodesContainer)
+    this.root.addChild(this.labelsContainer)
+    this.root.addEventListener('pointerenter', this.pointerEnter)
+    this.root.addEventListener('pointerdown', this.pointerDown)
+    this.root.addEventListener('pointermove', this.pointerMove)
+    this.root.addEventListener('pointerup', this.pointerUp)
+    this.root.addEventListener('pointerupoutside', this.pointerUp)
+    this.root.addEventListener('pointercancel', this.pointerUp)
+    this.root.addEventListener('pointerleave', this.pointerLeave)
+    view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
 
-    this.zoomInteraction = new Zoom(this)
-    this.dragInteraction = new Drag(this)
-    this.decelerateInteraction = new Decelerate(this)
-    ;(this.app.renderer.plugins.interaction as PIXI.InteractionManager)
-      .on('pointerenter', this.pointerEnter)
-      .on('pointerdown', this.pointerDown)
-      .on('pointermove', this.pointerMove)
-      .on('pointerup', this.pointerUp)
-      .on('pointerupoutside', this.pointerUp)
-      .on('pointercancel', this.pointerUp)
-      .on('pointerleave', this.pointerLeave)
-
-    this.app.view.addEventListener('wheel', this.zoomInteraction.wheel)
-
-    this.arrow = new ArrowSprite<N, E>(this)
-    this.circle = new CircleSprite<N, E>(this)
-    this.image = new ImageSprite()
-    this.fontIcon = new FontIconSprite()
-
-    document.body.addEventListener('keydown', this.onKeyDown)
-    document.body.addEventListener('keyup', this.onKeyUp)
-
-    this.debug = options.debug
-    if (this.debug) {
-      this.cancelAnimationLoop = animationFrameLoop(this.debugRender)
-      this.update = this._debugUpdate
+    if (debug) {
+      // this.grid = new Grid(this, 24000, 24000, 100, { hideText: false })
+      this.stats = new Stats()
+      this.stats.showPanel(0)
+      document.body.appendChild(this.stats.dom)
+      this.app.ticker.add((dt: number) => {
+        this.stats?.update()
+        this.render(dt)
+      })
     } else {
-      this.cancelAnimationLoop = animationFrameLoop(this.render)
-      this.update = this._update
+      this.app.ticker.add(this.render.bind(this))
     }
   }
 
-  private _update = ({
-    nodes,
-    edges,
-    options: {
-      width = RENDERER_OPTIONS.width,
-      height = RENDERER_OPTIONS.height,
-      x = RENDERER_OPTIONS.x,
-      y = RENDERER_OPTIONS.y,
-      zoom = RENDERER_OPTIONS.zoom,
-      minZoom = RENDERER_OPTIONS.minZoom,
-      maxZoom = RENDERER_OPTIONS.maxZoom,
-      cursor,
-      animateNodePosition = RENDERER_OPTIONS.animateNodePosition,
-      animateNodeRadius = RENDERER_OPTIONS.animateNodeRadius,
-      animateViewportPosition = RENDERER_OPTIONS.animateViewportPosition,
-      animateViewportZoom = RENDERER_OPTIONS.animateViewportZoom,
-      dragInertia = RENDERER_OPTIONS.dragInertia,
-      nodesEqual = RENDERER_OPTIONS.nodesEqual,
-      edgesEqual = RENDERER_OPTIONS.edgesEqual,
-      nodeIsEqual = RENDERER_OPTIONS.nodeIsEqual,
-      edgeIsEqual = RENDERER_OPTIONS.edgeIsEqual,
-      onNodePointerEnter,
-      onNodePointerDown,
-      onNodeDragStart,
-      onNodeDrag,
-      onNodeDragEnd,
-      onNodePointerUp,
-      onNodeClick,
-      onNodeDoubleClick,
-      onNodePointerLeave,
-      onEdgePointerEnter,
-      onEdgePointerDown,
-      onEdgePointerUp,
-      onEdgeClick,
-      onEdgeDoubleClick,
-      onEdgePointerLeave,
-      onAnnotationPointerEnter,
-      onAnnotationPointerDown,
-      onAnnotationDragStart,
-      onAnnotationDrag,
-      onAnnotationDragEnd,
-      onAnnotationResize,
-      onAnnotationPointerUp,
-      onAnnotationClick,
-      onAnnotationDoubleClick,
-      onAnnotationPointerLeave,
-      onViewportPointerEnter,
-      onViewportPointerDown,
-      onViewportDragStart,
-      onViewportDrag,
-      onViewportDragEnd,
-      onViewportPointerMove,
-      onViewportPointerUp,
-      onViewportClick,
-      onViewportDoubleClick,
-      onViewportPointerLeave,
-      onViewportWheel
-    } = RENDERER_OPTIONS,
-    annotations
-  }: {
-    nodes: N[]
-    edges: E[]
-    options?: Options<N, E>
-    annotations?: Graph.Annotation[]
-  }) => {
-    this.onNodePointerEnter = onNodePointerEnter
-    this.onNodePointerDown = onNodePointerDown
-    this.onNodeDragStart = onNodeDragStart
-    this.onNodeDrag = onNodeDrag
-    this.onNodeDragEnd = onNodeDragEnd
-    this.onNodePointerUp = onNodePointerUp
-    this.onNodeClick = onNodeClick
-    this.onNodeDoubleClick = onNodeDoubleClick
-    this.onNodePointerLeave = onNodePointerLeave
-    this.onEdgePointerEnter = onEdgePointerEnter
-    this.onEdgePointerDown = onEdgePointerDown
-    this.onEdgePointerUp = onEdgePointerUp
-    this.onEdgeClick = onEdgeClick
-    this.onEdgeDoubleClick = onEdgeDoubleClick
-    this.onEdgePointerLeave = onEdgePointerLeave
-    this.onAnnotationPointerEnter = onAnnotationPointerEnter
-    this.onAnnotationPointerDown = onAnnotationPointerDown
-    this.onAnnotationDragStart = onAnnotationDragStart
-    this.onAnnotationDrag = onAnnotationDrag
-    this.onAnnotationDragEnd = onAnnotationDragEnd
-    this.onAnnotationResize = onAnnotationResize
-    this.onAnnotationPointerUp = onAnnotationPointerUp
-    this.onAnnotationPointerLeave = onAnnotationPointerLeave
-    this.onAnnotationClick = onAnnotationClick
-    this.onAnnotationDoubleClick = onAnnotationDoubleClick
-    this.onViewportPointerEnter = onViewportPointerEnter
-    this.onViewportPointerDown = onViewportPointerDown
-    this.onViewportDragStart = onViewportDragStart
-    this.onViewportDrag = onViewportDrag
-    this.onViewportDragEnd = onViewportDragEnd
-    this.onViewportPointerMove = onViewportPointerMove
-    this.onViewportClick = onViewportClick
-    this.onViewportDoubleClick = onViewportDoubleClick
-    this.onViewportPointerUp = onViewportPointerUp
-    this.onViewportPointerLeave = onViewportPointerLeave
-    this.onViewportWheel = onViewportWheel
-    this.animateViewportPosition = animateViewportPosition === true ? RENDERER_OPTIONS.animateViewportPosition : animateViewportPosition
-    this.animateViewportZoom = animateViewportZoom === true ? RENDERER_OPTIONS.animateViewportZoom : animateViewportZoom
-    this.animateNodePosition = animateNodePosition === true ? RENDERER_OPTIONS.animateNodePosition : animateNodePosition
-    this.animateNodeRadius = animateNodeRadius === true ? RENDERER_OPTIONS.animateNodeRadius : animateNodeRadius
-    this.dragInertia = dragInertia
-    this.minZoom = minZoom
-    this.maxZoom = maxZoom
+  update({ nodes, edges, options }: { nodes: Graph.Node[]; edges: Graph.Edge[]; annotations?: Graph.Annotation[]; options: Options }) {
+    this.animateViewport =
+      options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
+    this.animateNodePosition =
+      options.animateNodePosition === true || options.animateNodePosition === undefined
+        ? defaultOptions.animateNodePosition
+        : options.animateNodePosition
+    this.animateNodeRadius =
+      options.animateNodeRadius === true || options.animateNodeRadius === undefined
+        ? defaultOptions.animateNodeRadius
+        : options.animateNodeRadius
+    this.dragInertia = options.dragInertia ?? defaultOptions.dragInertia
+    this.onViewportPointerEnter = options.onViewportPointerEnter
+    this.onViewportPointerDown = options.onViewportPointerDown
+    this.onViewportDragStart = options.onViewportDragStart
+    this.onViewportDrag = options.onViewportDrag
+    this.onViewportDragEnd = options.onViewportDragEnd
+    this.onViewportPointerMove = options.onViewportPointerMove
+    this.onViewportClick = options.onViewportClick
+    this.onViewportDoubleClick = options.onViewportDoubleClick
+    this.onViewportPointerUp = options.onViewportPointerUp
+    this.onViewportPointerLeave = options.onViewportPointerLeave
+    this.onViewportWheel = options.onViewportWheel
+    this.onNodePointerEnter = options.onNodePointerEnter
+    this.onNodePointerDown = options.onNodePointerDown
+    this.onNodeDragStart = options.onNodeDragStart
+    this.onNodeDrag = options.onNodeDrag
+    this.onNodeDragEnd = options.onNodeDragEnd
+    this.onNodePointerUp = options.onNodePointerUp
+    this.onNodeClick = options.onNodeClick
+    this.onNodeDoubleClick = options.onNodeDoubleClick
+    this.onNodePointerLeave = options.onNodePointerLeave
+    this.onEdgePointerEnter = options.onEdgePointerEnter
+    this.onEdgePointerDown = options.onEdgePointerDown
+    this.onEdgePointerUp = options.onEdgePointerUp
+    this.onEdgeClick = options.onEdgeClick
+    this.onEdgeDoubleClick = options.onEdgeDoubleClick
+    this.onEdgePointerLeave = options.onEdgePointerLeave
+    this.minZoom = options.minZoom ?? defaultOptions.minZoom
+    this.maxZoom = options.maxZoom ?? defaultOptions.maxZoom
 
-    if (cursor !== undefined) {
-      this.container.style.cursor = cursor
-    }
-
-    if (width !== this.width || height !== this.height) {
-      this.width = width
-      this.height = height
+    /**
+     * update dimensions
+     */
+    if (options.width !== this.width || options.height !== this.height) {
+      this.width = options.width
+      this.height = options.height
       this.app.renderer.resize(this.width, this.height)
-      this.viewportDirty = true
-    }
-
-    if (zoom !== this.targetZoom) {
-      if (zoom === this.expectedViewportZoom || !this.animateViewportZoom || this.firstRender) {
-        this.interpolateZoom = undefined
-        this.zoom = zoom
-        this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
-      } else {
-        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewportZoom, this.time)
-      }
-
-      this.expectedViewportZoom = undefined
-      this.targetZoom = zoom
-      this.viewportDirty = true
-    }
-
-    if (x !== this.targetX) {
-      if (x === this.expectedViewportXPosition || !this.animateViewportPosition || this.firstRender) {
-        this.interpolateX = undefined
-        this.x = x
-      } else {
-        this.interpolateX = interpolate(this.x, x, this.animateViewportPosition, this.time)
-      }
-
-      this.expectedViewportXPosition = undefined
-      this.targetX = x
-      this.viewportDirty = true
-    }
-
-    if (y !== this.targetY) {
-      if (y === this.expectedViewportYPosition || !this.animateViewportPosition || this.firstRender) {
-        this.interpolateY = undefined
-        this.y = y
-      } else {
-        this.interpolateY = interpolate(this.y, y, this.animateViewportPosition, this.time)
-      }
-
-      this.expectedViewportYPosition = undefined
-      this.targetY = y
-      this.viewportDirty = true
-    }
-
-    this.root.x = this.x * this.zoom + this.width / 2
-    this.root.y = this.y * this.zoom + this.height / 2
-
-    const edgesAreEqual = edgesEqual(this.edges, edges)
-    const nodesAreEqual = nodesEqual(this.nodes, nodes)
-
-    /**
-     * Build edge indices
-     */
-    if (!edgesAreEqual) {
-      this.edgeIndex = {}
-
-      for (const edge of edges) {
-        if (this.edgeIndex[edge.source] === undefined) {
-          this.edgeIndex[edge.source] = {}
-        }
-        if (this.edgeIndex[edge.target] === undefined) {
-          this.edgeIndex[edge.target] = {}
-        }
-        if (this.edgeIndex[edge.source][edge.target] === undefined) {
-          this.edgeIndex[edge.source][edge.target] = new Set()
-        }
-        if (this.edgeIndex[edge.target][edge.source] === undefined) {
-          this.edgeIndex[edge.target][edge.source] = new Set()
-        }
-
-        this.edgeIndex[edge.source][edge.target].add(edge.id)
-        this.edgeIndex[edge.target][edge.source].add(edge.id)
-      }
     }
 
     /**
-     * Node enter/update/exit
+     * update viewport
+     *
+     * interpolate position if all of the following are true:
+     * - viewport position has changed
+     * - not dragging/zooming
+     * - the animateViewport option is not disabled
+     * - it's not the first render
      */
-    if (!nodesAreEqual) {
-      this.nodes = nodes
+    const zoom = Math.max(this.minZoom, Math.min(this.maxZoom, options.zoom ?? defaultOptions.zoom))
+    const x = options.x ?? defaultOptions.x
+    const y = options.y ?? defaultOptions.y
+    const xChanged = x !== this.x
+    const yChanged = y !== this.y
+    const zoomChanged = zoom !== this.zoom
 
-      const nodesById: { [id: string]: NodeRenderer<N, E> } = {}
+    if (
+      (xChanged || yChanged || zoomChanged) &&
+      !this.dragInteraction.dragging &&
+      !this.decelerateInteraction.decelerating &&
+      !this.zoomInteraction.zooming &&
+      this.animateViewport &&
+      this.#renderedPosition
+    ) {
+      if (xChanged) {
+        this.#interpolateX = interpolate(this.x, x, this.animateViewport)
+      }
+      if (yChanged) {
+        this.#interpolateY = interpolate(this.y, y, this.animateViewport)
+      }
+      if (zoomChanged) {
+        this.#interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
+      }
+    } else {
+      this.setPosition(x, y, zoom)
+      this.#renderedPosition = true
+      this.#interpolateX = undefined
+      this.#interpolateY = undefined
+      this.#interpolateZoom = undefined
+    }
+
+    const shouldUpdateNodes = this.nodes !== nodes && !(this.nodes.length === 0 && nodes.length === 0)
+    const shouldUpdateEdges = this.edges !== edges && !(this.edges.length === 0 && edges.length === 0)
+
+    /**
+     * update nodes
+     */
+    if (shouldUpdateNodes) {
+      const nodeRenderersById: Record<string, NodeRenderer> = {}
 
       for (const node of nodes) {
-        if (this.nodesById[node.id] === undefined) {
-          // node enter
-          let adjacentNode: string | undefined
-
-          if (this.edgeIndex[node.id]) {
-            // nodes w edges from existing positioned nodes enter from one of those nodes
-            adjacentNode = Object.keys(this.edgeIndex[node.id]).find(
-              (adjacentNodeId) =>
-                this.nodesById[adjacentNodeId]?.node.x !== undefined && this.nodesById[adjacentNodeId]?.node.y !== undefined
-            )
-          }
-
-          nodesById[node.id] = new NodeRenderer(
-            this,
-            node,
-            this.nodesById[adjacentNode ?? '']?.x ?? 0,
-            this.nodesById[adjacentNode ?? '']?.y ?? 0,
-            node.radius
-          )
-          this.dirty = true
-        } else if (!nodeIsEqual(this.nodesById[node.id].node, node)) {
-          // node update
-          nodesById[node.id] = this.nodesById[node.id].update(node)
-          this.dirty = true
+        if (this.nodeRenderersById[node.id] === undefined) {
+          // enter
+          nodeRenderersById[node.id] = new NodeRenderer(this, node)
+        } else if (node !== this.nodeRenderersById[node.id].node) {
+          // update
+          nodeRenderersById[node.id] = this.nodeRenderersById[node.id].update(node)
         } else {
-          nodesById[node.id] = this.nodesById[node.id]
+          nodeRenderersById[node.id] = this.nodeRenderersById[node.id]
         }
       }
 
-      for (const nodeId in this.nodesById) {
-        if (nodesById[nodeId] === undefined) {
-          // node exit
-          this.nodesById[nodeId].delete()
-          this.dirty = true
+      for (const node of this.nodes) {
+        if (nodeRenderersById[node.id] === undefined) {
+          // exit
+          this.nodeRenderersById[node.id].delete()
         }
       }
 
-      this.nodesById = nodesById
+      this.nodes = nodes
+      this.nodeRenderersById = nodeRenderersById
+      this.renderedNodes = true
     }
 
     /**
-     * Edge enter/update/exit
+     * update edges
      */
-    if (!edgesAreEqual) {
-      this.edges = edges
-
-      const edgesById: { [id: string]: EdgeRenderer<N, E> } = {}
+    if (shouldUpdateEdges) {
+      const edgeRenderersById: Record<string, EdgeRenderer> = {}
 
       for (const edge of edges) {
-        if (this.edgesById[edge.id] === undefined) {
-          // edge enter
-          edgesById[edge.id] = new EdgeRenderer(this, edge)
-          this.dirty = true
-        } else if (!edgeIsEqual(this.edgesById[edge.id].edge, edge)) {
-          // edge update
-          edgesById[edge.id] = this.edgesById[edge.id].update(edge)
-          this.dirty = true
+        if (this.edgeRenderersById[edge.id] === undefined) {
+          // enter
+          const source = this.nodeRenderersById[edge.source]
+          const target = this.nodeRenderersById[edge.target]
+          if (source !== undefined && target !== undefined) {
+            edgeRenderersById[edge.id] = new EdgeRenderer(this, edge, source, target)
+          } else {
+            logUnknownEdgeError(source.node, target.node)
+          }
+        } else if (edge !== this.edgeRenderersById[edge.id].edge) {
+          // update
+          const source = this.nodeRenderersById[edge.source]
+          const target = this.nodeRenderersById[edge.target]
+          if (source !== undefined && target !== undefined) {
+            edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge, source, target)
+          } else {
+            logUnknownEdgeError(source.node, target.node)
+          }
         } else {
-          edgesById[edge.id] = this.edgesById[edge.id]
+          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
         }
       }
 
-      for (const edgeId in this.edgesById) {
-        if (edgesById[edgeId] === undefined) {
-          // edge exit
-          this.edgesById[edgeId].delete()
-          this.dirty = true
+      for (const edge of this.edges) {
+        if (edgeRenderersById[edge.id] === undefined) {
+          // exit
+          this.edgeRenderersById[edge.id].delete()
         }
       }
 
-      this.edgesById = edgesById
-    }
-
-    /**
-     * Annotation enter/update/exit
-     */
-    this.annotations = annotations
-
-    const annotationsById: { [id: string]: AnnotationRenderer } = {}
-
-    for (const annotation of this.annotations ?? []) {
-      const id = `${annotation.type}${annotation.id}`
-
-      if (this.annotationsById[id] === undefined) {
-        // annotation enter
-        if (annotation.type === 'circle') {
-          annotationsById[id] = new CircleAnnotationRenderer(this, annotation)
-        } else if (annotation.type === 'rectangle' || annotation.type === 'text') {
-          annotationsById[id] = new RectangleAnnotationRenderer(this, annotation)
+      this.edges = edges
+      this.edgeRenderersById = edgeRenderersById
+      this.renderedNodes = true
+    } else if (shouldUpdateNodes) {
+      // TODO - make node move/resize automatically update edge position
+      for (const edge of edges) {
+        const source = this.nodeRenderersById[edge.source]
+        const target = this.nodeRenderersById[edge.target]
+        if (source !== undefined && target !== undefined) {
+          this.edgeRenderersById[edge.id].update(edge, source, target)
+        } else {
+          // eslint-disable-next-line no-console
+          console.error(`Error: Cannot render edge ${source === undefined ? `from unknown node ${source}` : `to unknown Node ${target}`}`)
         }
-
-        this.dirty = true
-      } else {
-        // annotation update
-        if (annotation.type === 'circle') {
-          annotationsById[id] = (this.annotationsById[id] as CircleAnnotationRenderer).update(annotation)
-        } else if (annotation.type === 'rectangle' || annotation.type === 'text') {
-          annotationsById[id] = (this.annotationsById[id] as RectangleAnnotationRenderer).update(annotation)
-        }
-
-        this.dirty = true
       }
     }
 
-    for (const annotationId in this.annotationsById) {
-      if (annotationsById[annotationId] === undefined) {
-        // annotation exit
-        this.annotationsById[annotationId].delete()
-        this.dirty = true
-      }
-    }
-
-    this.annotationsById = annotationsById
-
-    // this.root.getChildByName('bbox')?.destroy()
-    // const bounds = Graph.getSelectionBounds(this.nodes, 0)
-    // const bbox = new PIXI.Graphics()
-    //   .lineStyle(1, 0xff0000, 0.5)
-    //   .drawPolygon(new PIXI.Polygon([bounds.left, bounds.top, bounds.right, bounds.top, bounds.right, bounds.bottom, bounds.left, bounds.bottom]))
-    // bbox.name = 'bbox'
-    // this.root.addChild(bbox)
-
-    // this.root.getChildByName('bboxCenter')?.destroy()
-    // const viewport = Graph.boundsToViewport(bounds, { width: this.width, height: this.height })
-    // const bboxCenter = new PIXI.Graphics().lineStyle(2, 0xff0000, 0.5).drawCircle(-viewport.x, -viewport.y, 5)
-    // bboxCenter.name = 'bboxCenter'
-    // this.root.addChild(bboxCenter)
-
-    // this.root.getChildByName('origin')?.destroy()
-    // const origin = new PIXI.Graphics().lineStyle(6, 0x000000, 1).drawCircle(0, 0, 3)
-    // origin.name = 'origin'
-    // this.root.addChild(origin)
-
-    // this.root.getChildByName('screenCenter')?.destroy()
-    // const screenCenter = new PIXI.Graphics().lineStyle(2, 0x0000ff, 0.5).drawCircle(-this.x, -this.y, 10)
-    // screenCenter.name = 'screenCenter'
-    // this.root.addChild(screenCenter)
-
-    // this.root.getChildByName('viewportBbox')?.destroy()
-    // const viewPortBounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
-    // const viewportBbox = new PIXI.Graphics()
-    //   .lineStyle(4, 0xff00ff, 0.5)
-    //   .drawPolygon(new PIXI.Polygon([viewPortBounds.left, viewPortBounds.top, viewPortBounds.right, viewPortBounds.top, viewPortBounds.right, viewPortBounds.bottom, viewPortBounds.left, viewPortBounds.bottom]))
-    // viewportBbox.name = 'viewportBbox'
-    // this.root.addChild(viewportBbox)
-
-    this.firstRender = false
+    this.zoomInteraction.zooming = false
 
     return this
   }
 
-  private render = (time: number) => {
-    this.time = time
-    const elapsedTime = this.time - this.previousTime
-    this.previousTime = this.time
-
-    this.decelerateInteraction.update(elapsedTime)
-
-    if (this.interpolateZoom) {
-      const { value, done } = this.interpolateZoom(this.time)
-      this.zoom = value
-      this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
-
-      if (done) {
-        this.interpolateZoom = undefined
-      }
-
-      this.viewportDirty = true
-    }
-
-    if (this.interpolateX) {
-      const { value, done } = this.interpolateX(this.time)
-      this.x = value
-
-      if (done) {
-        this.interpolateX = undefined
-      }
-
-      this.viewportDirty = true
-    }
-
-    if (this.interpolateY) {
-      const { value, done } = this.interpolateY(this.time)
-      this.y = value
-
-      if (done) {
-        this.interpolateY = undefined
-      }
-
-      this.viewportDirty = true
-    }
-
-    let dirty = false
-
-    if (this.dirty) {
-      for (const nodeId in this.nodesById) {
-        if (this.nodesById[nodeId].dirty) {
-          this.nodesById[nodeId].render()
-          dirty = dirty || this.nodesById[nodeId].dirty
-        }
-      }
-
-      this.edgesGraphic.clear()
-      for (const edgeId in this.edgesById) {
-        /**
-         * TODO - only render dirty edges [this is a harder thing to check than a node's dirty status]
-         * an edge is dirty if:
-         * - it has been added/updated
-         * - any multiedge (edge that shares source/target) has been added/updated/deleted
-         * - the position or radius of its source/target node has been updated
-         * additionally, the way edges are drawn will need to change:
-         * rather than clearing all edges via `this.edgesGraphic.clear()` and rerendering each,
-         * each edge might need to be its own PIXI.Graphics object
-         */
-        this.edgesById[edgeId].render()
-      }
-    }
-
-    if (this.viewportDirty || this.dirty) {
-      this.root.x = this.x * this.zoom + this.width / 2
-      this.root.y = this.y * this.zoom + this.height / 2
-      this.app.render()
-    }
-
-    this.viewportDirty = false
-    this.dirty = dirty
+  delete() {
+    clearTimeout(this.#doubleClickTimeout)
+    this.app.destroy(true, true)
   }
 
-  private _measurePerformance?: true
-  private _debugUpdate = (graph: { nodes: N[]; edges: E[]; options?: Options<N, E>; annotations?: Graph.Annotation[] }) => {
-    if (this._measurePerformance) {
-      performance.measure('external', 'external')
-    }
-
-    performance.mark('update')
-    this._update(graph)
-    performance.measure('update', 'update')
+  image() {
+    return new Promise((resolve) => resolve(new Blob())) // TODO
   }
 
-  private debugRender = (time: number) => {
-    this.debug?.stats?.update()
-    this.time = time
-    const elapsedTime = this.time - this.previousTime
-    this.previousTime = this.time
+  private render(dt: number) {
+    this.decelerateInteraction.update(dt)
 
-    this.decelerateInteraction.update(elapsedTime)
+    let _x: number | undefined
+    let _y: number | undefined
+    let _zoom: number | undefined
 
-    if (this.interpolateZoom) {
-      const { value, done } = this.interpolateZoom(this.time)
-      this.zoom = value
-      this.root.scale.set(Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom)))
+    if (this.#interpolateX) {
+      const { value, done } = this.#interpolateX(dt)
+      _x = value
 
       if (done) {
-        this.interpolateZoom = undefined
+        this.#interpolateX = undefined
       }
-
-      this.viewportDirty = true
     }
 
-    if (this.interpolateX) {
-      const { value, done } = this.interpolateX(this.time)
-      this.x = value
+    if (this.#interpolateY) {
+      const { value, done } = this.#interpolateY(dt)
+      _y = value
 
       if (done) {
-        this.interpolateX = undefined
+        this.#interpolateY = undefined
       }
-
-      this.viewportDirty = true
     }
 
-    if (this.interpolateY) {
-      const { value, done } = this.interpolateY(this.time)
-      this.y = value
+    if (this.#interpolateZoom) {
+      const { value, done } = this.#interpolateZoom(dt)
+      _zoom = value
 
       if (done) {
-        this.interpolateY = undefined
+        this.#interpolateZoom = undefined
       }
-
-      this.viewportDirty = true
     }
 
-    let dirty = false
-
-    if (this.dirty) {
-      performance.mark('render')
-      for (const nodeId in this.nodesById) {
-        if (this.nodesById[nodeId].dirty) {
-          this.nodesById[nodeId].render()
-          dirty = dirty || this.nodesById[nodeId].dirty
-        }
-      }
-
-      this.edgesGraphic.clear()
-      for (const edgeId in this.edgesById) {
-        this.edgesById[edgeId].render()
-      }
-      performance.measure('render', 'render')
+    if (_zoom !== undefined || _x !== undefined || _y !== undefined) {
+      this.setPosition(_x ?? this.x, _y ?? this.y, _zoom ?? this.zoom)
     }
 
-    if (this.viewportDirty || this.dirty) {
-      performance.mark('draw')
-      this.root.x = this.x * this.zoom + this.width / 2
-      this.root.y = this.y * this.zoom + this.height / 2
-      this.app.render()
-      performance.measure('draw', 'draw')
+    for (const node of this.nodes) {
+      this.nodeRenderersById[node.id].render(dt)
     }
 
-    if (this._measurePerformance) {
-      performance.measure('total', 'total')
+    for (const edge of this.edges) {
+      this.edgeRenderersById[edge.id].render()
     }
 
-    if (this.debug?.logPerformance && (this.dirty || this.viewportDirty)) {
-      let external = 0
-      let update = 0
-      let render = 0
-      let draw = 0
-      let total = 0
-      for (const measurement of performance.getEntriesByType('measure')) {
-        if (measurement.name === 'update') {
-          update = measurement.duration
-        } else if (measurement.name === 'render') {
-          render = measurement.duration
-        } else if (measurement.name === 'draw') {
-          draw = measurement.duration
-        } else if (measurement.name === 'external') {
-          external = measurement.duration
-        } else if (measurement.name === 'total') {
-          total = measurement.duration
-        }
-      }
+    this.nodeObjectManager.render()
+    this.edgeObjectManager.render()
+    this.labelObjectManager.render()
 
-      // green: 50+ frames/sec, pink: 30 frames/sec, red: 20 frames/sec
-      // eslint-disable-next-line no-console
-      console.log(
-        `%c${total.toFixed(1)}ms%c (update: %c${update.toFixed(1)}%c, render: %c${render.toFixed(1)}%c, draw: %c${draw.toFixed(
-          1
-        )}%c, external: %c${external.toFixed(1)}%c)`,
-        `color: ${total <= 20 ? '#6c6' : total <= 33 ? '#f88' : total <= 50 ? '#e22' : '#a00'}`,
-        'color: #666',
-        `color: ${update <= 5 ? '#6c6' : update <= 10 ? '#f88' : update <= 20 ? '#e22' : '#a00'}`,
-        'color: #666',
-        `color: ${render <= 5 ? '#6c6' : render <= 10 ? '#f88' : render <= 20 ? '#e22' : '#a00'}`,
-        'color: #666',
-        `color: ${draw <= 5 ? '#6c6' : draw <= 10 ? '#f88' : draw <= 20 ? '#e22' : '#a00'}`,
-        'color: #666',
-        `color: ${external <= 5 ? '#6c6' : external <= 10 ? '#f88' : external <= 20 ? '#e22' : '#a00'}`,
-        'color: #666'
-      )
-    }
-
-    this.viewportDirty = false
-    this.dirty = dirty
-
-    performance.clearMarks()
-    performance.clearMeasures()
-    performance.mark('external')
-    performance.mark('total')
-    this._measurePerformance = true
+    this.app.render()
   }
 
-  delete = () => {
-    if (this.doubleClickTimeout) {
-      clearTimeout(this.doubleClickTimeout)
-      this.doubleClickTimeout = undefined
-    }
+  private setPosition(x: number, y: number, zoom: number) {
+    const halfWidth = this.width / 2
+    const halfHeight = this.height / 2
 
-    document.body.removeEventListener('keydown', this.onKeyDown)
-    document.body.removeEventListener('keyup', this.onKeyUp)
+    this.root.scale.set(zoom)
 
-    this.cancelAnimationLoop()
-    this.app.destroy(true, { children: true, texture: true, baseTexture: true })
-    this.circle.delete()
-    this.arrow.delete()
-    this.image.delete()
-    this.fontIcon.delete()
+    this.x = x
+    this.root.x = -x * zoom + halfWidth
+    this.minX = x - halfWidth / zoom // + (50 / zoom)
+    this.maxX = x + halfWidth / zoom // - (50 / zoom)
+
+    this.y = y
+    this.root.y = -y * zoom + halfHeight
+    this.minY = y - halfHeight / zoom // + (50 / zoom)
+    this.maxY = y + halfHeight / zoom // - (50 / zoom)
   }
 
-  base64 = (resolution: number = 2, mimetype: string = 'image/jpeg') => {
-    return new Promise<string>((resolve, reject) => {
-      const cancelAnimationFrame = animationFrameLoop((time) => {
-        if (this.fontLoader.loading() || this.imageLoader.loading()) {
-          return
-        }
-
-        cancelAnimationFrame()
-
-        try {
-          this.render(time)
-          // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
-          const background = new PIXI.Graphics()
-            .beginFill(0xffffff)
-            .drawRect(-this.x * this.zoom - this.width / 2, -this.y * this.zoom - this.height / 2, this.width, this.height)
-            .endFill()
-
-          this.root.addChildAt(background, 0)
-
-          // what causes this to throw on some machines? https://github.com/sayari-analytics/graph-ui/issues/1557
-          const imageTexture = this.app.renderer.generateTexture(
-            this.root,
-            PIXI.SCALE_MODES.LINEAR,
-            resolution ?? 2
-            // new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
-          )
-
-          const dataURL = (this.app.renderer.plugins.extract as PIXI.Extract).base64(imageTexture, mimetype)
-          imageTexture.destroy()
-          this.root.removeChild(background)
-          background.destroy()
-
-          resolve(dataURL)
-        } catch (err) {
-          reject(err)
-        }
-      })
-    })
-  }
-
-  blob = (resolution: number = 2) => {
-    return new Promise<string>((resolve, reject) => {
-      const cancelAnimationFrame = animationFrameLoop((time) => {
-        if (this.fontLoader.loading() || this.imageLoader.loading()) {
-          return
-        }
-
-        cancelAnimationFrame()
-
-        try {
-          this.render(time)
-          // const bounds = Graph.viewportToBounds({ x: this.x, y: this.y, zoom: this.zoom }, { width: this.width, height: this.height })
-          const background = new PIXI.Graphics()
-            .beginFill(0xffffff)
-            .drawRect(-this.x * this.zoom - this.width / 2, -this.y * this.zoom - this.height / 2, this.width, this.height)
-            .endFill()
-
-          this.root.addChildAt(background, 0)
-
-          // what causes this to throw on some machines? https://github.com/sayari-analytics/graph-ui/issues/1557
-          const imageTexture = this.app.renderer.generateTexture(this.root, {
-            scaleMode: PIXI.SCALE_MODES.LINEAR,
-            resolution
-            // region: new PIXI.Rectangle(this.x, this.y, this.width, this.height) // TODO - crop to background
-          })
-
-          return (this.app.renderer.plugins.extract as PIXI.Extract).canvas(imageTexture).toBlob((blob) => {
-            imageTexture.destroy()
-            this.root.removeChild(background)
-            background.destroy()
-            if (blob !== null) {
-              resolve(URL.createObjectURL(blob))
-            } else {
-              reject(new Error('failed to generate blob'))
-            }
-          })
-        } catch (err) {
-          reject(err)
-        }
-      })
-    })
-  }
-
-  private pointerEnter = (event: PIXI.InteractionEvent) => {
-    const { x, y } = this.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
+  private pointerEnter = (event: FederatedPointerEvent) => {
+    const { x, y } = this.root.toLocal(event.global)
     this.onViewportPointerEnter?.({
       type: 'viewportPointer',
       x,
       y,
-      clientX: client.x,
-      clientY: client.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
       target: { x: this.x, y: this.y, zoom: this.zoom },
-      ...pointerKeysFromEvent(event.data.originalEvent)
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
     })
   }
 
-  private pointerDown = (event: PIXI.InteractionEvent) => {
-    if (this.doubleClickTimeout === undefined) {
-      this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
-    } else {
-      this.doubleClick = true
+  private pointerDown = (event: FederatedPointerEvent) => {
+    if (this.onViewportDoubleClick) {
+      if (this.#doubleClickTimeout === undefined) {
+        this.#doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+      } else {
+        this.#doubleClick = true
+      }
     }
 
     this.dragInteraction.down(event)
     this.decelerateInteraction.down()
 
-    if (
-      this.hoveredNode === undefined &&
-      this.clickedNode === undefined &&
-      this.hoveredEdge === undefined &&
-      this.clickedEdge === undefined &&
-      this.hoveredAnnotation === undefined &&
-      this.clickedAnnotation == undefined
-    ) {
-      this.clickedContainer = true
-      const { x, y } = this.root.toLocal(event.data.global)
-      const client = clientPositionFromEvent(event.data.originalEvent)
-      this.onViewportPointerDown?.({
-        type: 'viewportPointer',
-        x,
-        y,
-        clientX: client.x,
-        clientY: client.y,
-        target: { x: this.x, y: this.y, zoom: this.zoom },
-        ...pointerKeysFromEvent(event.data.originalEvent)
-      })
-    }
+    const { x, y } = this.root.toLocal(event.global)
+    this.onViewportPointerDown?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
   }
 
-  private pointerMove = (event: PIXI.InteractionEvent) => {
+  private pointerMove = (event: FederatedPointerEvent) => {
     this.dragInteraction.move(event)
     this.decelerateInteraction.move()
 
-    const { x, y } = this.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
+    const { x, y } = this.root.toLocal(event.global)
 
     this.onViewportPointerMove?.({
       type: 'viewportPointer',
       x,
       y,
-      clientX: client.x,
-      clientY: client.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
       target: { x: this.x, y: this.y, zoom: this.zoom },
-      ...pointerKeysFromEvent(event.data.originalEvent)
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
     })
   }
 
-  private pointerUp = (event: PIXI.InteractionEvent) => {
-    this.dragInteraction.up()
+  // TODO - pointerupoutside doesn't work for nodes but does for viewport
+  // if node is dragging, fire onNodePointerUp on pointer up outside
+  // TODO - don't fire pointer up if it's handled by a node/edge pointerUp handler
+  // but still complete drag/decelarate event
+  private pointerUp = (event: FederatedPointerEvent) => {
+    const isDragging = this.dragInteraction.dragging
+    this.dragInteraction.up(event)
     this.decelerateInteraction.up()
 
-    const { x, y } = this.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
+    const { x, y } = this.root.toLocal(event.global)
 
-    if (this.dragging) {
-      this.dragging = false
-      this.clickedContainer = false
-      this.onViewportDragEnd?.({
-        type: 'viewportDrag',
-        x,
-        y,
-        clientX: client.x,
-        clientY: client.y,
-        viewportX: this.x,
-        viewportY: this.y,
-        target: { x: this.x, y: this.y, zoom: this.zoom },
-        altKey: this.altKey,
-        ctrlKey: this.ctrlKey,
-        metaKey: this.metaKey,
-        shiftKey: this.shiftKey,
-        ...pointerKeysFromEvent(event.data.originalEvent)
-      })
-    } else if (this.clickedContainer) {
-      this.clickedContainer = false
-      this.onViewportPointerUp?.({
-        type: 'viewportPointer',
-        x,
-        y,
-        clientX: client.x,
-        clientY: client.y,
-        target: { x: this.x, y: this.y, zoom: this.zoom },
-        ...pointerKeysFromEvent(event.data.originalEvent)
-      })
+    this.onViewportPointerUp?.({
+      type: 'viewportPointer',
+      x,
+      y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: { x: this.x, y: this.y, zoom: this.zoom },
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
+
+    if (!isDragging) {
       this.onViewportClick?.({
         type: 'viewportPointer',
         x,
         y,
-        clientX: client.x,
-        clientY: client.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
         target: { x: this.x, y: this.y, zoom: this.zoom },
-        ...pointerKeysFromEvent(event.data.originalEvent)
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
       })
 
-      if (this.doubleClick) {
-        this.doubleClick = false
-        this.doubleClickTimeout = undefined
+      if (this.#doubleClick) {
+        this.#doubleClick = false
+        this.#doubleClickTimeout = undefined
         this.onViewportDoubleClick?.({
           type: 'viewportPointer',
           x,
           y,
-          clientX: client.x,
-          clientY: client.y,
+          clientX: event.clientX,
+          clientY: event.clientY,
           target: { x: this.x, y: this.y, zoom: this.zoom },
-          ...pointerKeysFromEvent(event.data.originalEvent)
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          shiftKey: event.shiftKey
         })
       }
     }
   }
 
-  private pointerLeave = (event: PIXI.InteractionEvent) => {
-    const { x, y } = this.root.toLocal(event.data.global)
-    const client = clientPositionFromEvent(event.data.originalEvent)
+  private pointerLeave = (event: FederatedPointerEvent) => {
+    const { x, y } = this.root.toLocal(event.global)
     this.onViewportPointerLeave?.({
       type: 'viewportPointer',
       x,
       y,
-      clientX: client.x,
-      clientY: client.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
       target: { x: this.x, y: this.y, zoom: this.zoom },
-      ...pointerKeysFromEvent(event.data.originalEvent)
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
     })
   }
 
   private clearDoubleClick = () => {
-    this.doubleClickTimeout = undefined
-    this.doubleClick = false
+    this.#doubleClickTimeout = undefined
+    this.#doubleClick = false
   }
 }
 
-export const Renderer = (options: { container: HTMLDivElement; debug?: { logPerformance?: boolean; stats?: Stats } }) => {
-  const pixiRenderer = new InternalRenderer(options)
+// export const Renderer = (options: { container: HTMLDivElement, debug?: boolean }) => {
+//   let renderer: _Renderer
 
-  const render = <N extends Graph.Node, E extends Graph.Edge>(graph: {
-    nodes: N[]
-    edges: E[]
-    options?: Options<N, E>
-    annotations?: Graph.Annotation[]
-  }) => {
-    ;(pixiRenderer as unknown as InternalRenderer<N, E>).update(graph)
-  }
-
-  render.delete = pixiRenderer.delete
-
-  return render
-}
+//   return {
+//     update(graph: { nodes: Graph.Node[], edges: Graph.Edge[], options: Options }) {
+//       if (renderer === undefined) {
+//         renderer = new _Renderer({
+//           nodes: graph.nodes,
+//           edges: graph.edges,
+//           options: graph.options,
+//           container: options.container,
+//           debug: options.debug
+//         })
+//       } else {
+//         renderer.update({
+//           nodes: graph.nodes,
+//           edges: graph.edges,
+//           options: graph.options,
+//         })
+//       }
+//     },
+//     delete() {
+//       renderer.delete()
+//     }
+//   }
+// }

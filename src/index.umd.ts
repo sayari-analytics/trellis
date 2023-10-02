@@ -12,22 +12,22 @@ import * as NativeDownloadBindings from './bindings/native/download'
 import * as NativeSelectionBindings from './bindings/native/selection'
 import * as NativeZoomBindings from './bindings/native/zoom'
 import * as Image from './renderers/image'
+import * as utils from '.'
 
-export * from '.'
-
-export const layout = { Cluster, Force, Hierarchy, Fisheye, Collide, Components }
-
-export const renderers = { WebGL, Image }
-
-export const bindings = {
-  react: {
-    Renderer: ReactWebGLBindings,
-    Selection: ReactSelectionBindings,
-    Zoom: ReactZoomBindings
+;(window as any).trellis = {
+  layout: { Cluster, Force, Hierarchy, Fisheye, Collide, Components },
+  renderers: { WebGL, Image },
+  bindings: {
+    react: {
+      Renderer: ReactWebGLBindings,
+      Selection: ReactSelectionBindings,
+      Zoom: ReactZoomBindings
+    },
+    native: {
+      Download: NativeDownloadBindings,
+      Selection: NativeSelectionBindings,
+      Zoom: NativeZoomBindings
+    }
   },
-  native: {
-    Download: NativeDownloadBindings,
-    Selection: NativeSelectionBindings,
-    Zoom: NativeZoomBindings
-  }
+  utils
 }

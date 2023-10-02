@@ -15,7 +15,7 @@ npm install @sayari/trellis
 or alternatively import via HTML
 
 ```html
-<script src="https://unpkg.com/@sayari/trellis@{VERSION}/index.umd.min.js"></script>
+<script src="https://unpkg.com/@sayari/trellis@{VERSION}/index.umd.js"></script>
 ```
 
 ## Examples

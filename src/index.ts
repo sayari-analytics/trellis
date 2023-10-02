@@ -1,3 +1,5 @@
+import { TWO_PI } from './renderers/webgl/utils'
+
 export type Node = {
   id: string
   radius: number
@@ -38,7 +40,7 @@ export type ImageIcon = {
   offsetY?: number
 }
 
-export type Placement = 'top' | 'bottom' | 'left' | 'right'
+export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelStyle = Partial<{
   color: string
@@ -47,20 +49,20 @@ export type LabelStyle = Partial<{
   wordWrap: number
   background: string
   backgroundOpacity: number
-  placement: Placement
+  position: LabelPosition
 }>
 
 export type NodeStyle = {
   color?: string
   icon?: TextIcon | ImageIcon
   stroke?: {
-    color?: string
-    width?: number
+    color: string
+    width: number
   }[]
   badge?: {
     position: number
-    radius?: number
-    color?: string
+    radius: number
+    color: string
     stroke?: string
     strokeWidth?: number
     icon?: TextIcon | ImageIcon
@@ -265,7 +267,7 @@ export const equals = <T>(a: T, b: T) => {
 }
 
 export const connectedComponents = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[] }): { nodes: N[]; edges: E[] }[] => {
-  const adjacencyList: Record<string, Record<string, E[]>> = {}
+  const adjacencyList: Record<string, Record<string, E[]>> = Object.create(null)
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
   const components: { nodes: Record<string, N>; edges: Record<string, E> }[] = []
@@ -336,7 +338,7 @@ export function* bfs<N extends Node, E extends Edge>(
   predicate: (node: N) => boolean,
   graph: { nodes: N[]; edges: E[] }
 ): Generator<N, void, void> {
-  const adjacencyList: Record<string, string[]> = {}
+  const adjacencyList: Record<string, string[]> = Object.create(null)
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
   const queue = [graph.nodes[0].id]
@@ -381,3 +383,8 @@ export function* bfs<N extends Node, E extends Edge>(
 }
 
 export const distance = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
+
+export const angle = (x0: number, y0: number, x1: number, y1: number) => {
+  const angle = Math.atan2(y0 - y1, x0 - x1)
+  return angle < 0 ? angle + TWO_PI : angle
+}

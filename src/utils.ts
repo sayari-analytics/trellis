@@ -73,67 +73,64 @@ export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => 
 
 export const identity = <T>(value: T) => value
 
-export const interpolateInterval = (count: number, duration: number) => {
-  let i = 0
-  let interval: number | undefined = undefined
+// export const interpolateInterval = (count: number, duration: number) => {
+//   let i = 0
+//   let interval: number | undefined = undefined
 
-  return (cb: (n: number) => void) => {
-    if (interval !== undefined) {
-      clearInterval(interval)
-      i = 0
-    }
+//   return (cb: (n: number) => void) => {
+//     if (interval !== undefined) {
+//       clearInterval(interval)
+//       i = 0
+//     }
 
-    interval = setInterval(() => {
-      if (i++ >= count - 1) {
-        clearInterval(interval)
-        interval = undefined
-      }
+//     interval = setInterval(() => {
+//       if (i++ >= count - 1) {
+//         clearInterval(interval)
+//         interval = undefined
+//       }
 
-      cb(i / count)
-    }, duration / count) as unknown as number
-  }
-}
+//       cb(i / count)
+//     }, duration / count) as unknown as number
+//   }
+// }
 
-export const interpolateDuration = (duration: number) => {
-  let start: number | undefined
-  let end: number | undefined
-  let frame: number | undefined
+// export const interpolateDuration = (duration: number) => {
+//   let start: number | undefined
+//   let end: number | undefined
+//   let frame: number | undefined
 
-  return (cb: (n: number) => void) => {
-    if (frame !== undefined) {
-      cancelAnimationFrame(frame)
-    }
+//   return (cb: (n: number) => void) => {
+//     if (frame !== undefined) {
+//       cancelAnimationFrame(frame)
+//     }
 
-    start = performance.now()
-    end = start + duration
+//     start = performance.now()
+//     end = start + duration
 
-    const rafCallback = () => {
-      const now = performance.now()
-      if (now > end!) {
-        cancelAnimationFrame(frame!)
-        frame = undefined
-        cb(1)
-        return
-      }
+//     const rafCallback = () => {
+//       const now = performance.now()
+//       if (now > end!) {
+//         cancelAnimationFrame(frame!)
+//         frame = undefined
+//         cb(1)
+//         return
+//       }
 
-      cb((now - start!) / (end! - start!))
-      frame = requestAnimationFrame(rafCallback)
-    }
+//       cb((now - start!) / (end! - start!))
+//       frame = requestAnimationFrame(rafCallback)
+//     }
 
-    frame = requestAnimationFrame(rafCallback)
-  }
-}
+//     frame = requestAnimationFrame(rafCallback)
+//   }
+// }
 
-export const interpolate = (from: number, to: number, duration: number, time: number) => {
+export const interpolate = (from: number, to: number, duration: number) => {
   let elapsed = 0
-  let t1 = time
   const interpolator = interpolateNumber(from, to)
-  const ease = interpolateBasis([from, interpolator(0.7), interpolator(0.95), to])
+  const ease = interpolateBasis([from, interpolator(0.3), interpolator(0.8), interpolator(0.95), to])
 
-  return (time: number) => {
-    const diff = Math.max(20, time - t1)
-    elapsed += diff
-    t1 = time
+  return (dt: number) => {
+    elapsed += Math.max(20, dt)
 
     if (elapsed >= duration) {
       return { done: true, value: to }

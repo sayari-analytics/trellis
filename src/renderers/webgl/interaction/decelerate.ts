@@ -1,29 +1,31 @@
-import { InternalRenderer } from '..'
-import { Node, Edge } from '../../..'
+import { Renderer } from '..'
 
 /**
  * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)
  * specificially, the [Decelerate Plugin](https://github.com/davidfig/pixi-viewport/blob/eb00aafebca6f9d9233a6b537d7d418616bb866e/src/plugins/decelerate.js)
  */
-export class Decelerate<N extends Node, E extends Edge> {
-  private renderer: InternalRenderer<N, E>
+export class Decelerate {
+  decelerating = false
+
+  private renderer: Renderer
   private paused = false
   private saved: { x: number; y: number; time: number }[] = []
-  private x?: number
-  private y?: number
+  private i: number = 0
+  private x: number = 0
+  private y: number = 0
   private minSpeed = 0.01
-  private percentChangeX: number
-  private percentChangeY: number
 
-  constructor(renderer: InternalRenderer<N, E>) {
+  constructor(renderer: Renderer) {
     this.renderer = renderer
-    this.percentChangeX = renderer.dragInertia
-    this.percentChangeY = renderer.dragInertia
   }
 
   down = () => {
-    this.saved = []
-    this.x = this.y = undefined
+    if (this.renderer.onViewportDrag === undefined || this.paused) {
+      return
+    }
+
+    this.saved = new Array(60)
+    this.x = this.y = this.i = 0
   }
 
   move = () => {
@@ -31,21 +33,22 @@ export class Decelerate<N extends Node, E extends Edge> {
       return
     }
 
-    this.saved.push({ x: this.renderer.x, y: this.renderer.y, time: performance.now() })
-    if (this.saved.length > 60) {
+    this.saved[this.i++] = { x: this.renderer.x, y: this.renderer.y, time: performance.now() }
+
+    if (this.i > 60) {
       this.saved.splice(0, 30)
+      this.i = 30
     }
   }
 
   up = () => {
-    if (this.saved.length) {
+    if (this.i > 0) {
       const now = performance.now()
       for (const save of this.saved) {
-        if (save.time >= now - 100) {
+        if (save !== undefined && save.time >= now - 100) {
           const time = now - save.time
           this.x = (this.renderer.x - save.x) / time
           this.y = (this.renderer.y - save.y) / time
-          this.percentChangeX = this.percentChangeY = this.renderer.dragInertia
           break
         }
       }
@@ -53,38 +56,37 @@ export class Decelerate<N extends Node, E extends Edge> {
   }
 
   update = (elapsed: number) => {
-    if (this.paused || this.renderer.dragInertia === 0) {
+    if (this.renderer.onViewportDrag === undefined || this.paused || this.renderer.dragInertia === 0) {
       return
     }
 
-    let x
-    let y
+    let x: number | undefined, y: number | undefined
 
     if (this.x) {
-      x = this.renderer.x + this.x * elapsed
-      this.x *= this.percentChangeX
+      x = this.x * elapsed * 8
+      this.x *= this.renderer.dragInertia
       if (Math.abs(this.x) < this.minSpeed) {
         this.x = 0
       }
     }
 
     if (this.y) {
-      y = this.renderer.y + this.y * elapsed
-      this.y *= this.percentChangeY
+      y = this.y * elapsed * 8
+      this.y *= this.renderer.dragInertia
       if (Math.abs(this.y) < this.minSpeed) {
         this.y = 0
       }
     }
 
     if (x || y) {
-      this.renderer.expectedViewportXPosition = x ?? this.renderer.x
-      this.renderer.expectedViewportYPosition = y ?? this.renderer.y
-      this.renderer.onViewportDrag?.({
+      this.decelerating = true
+      this.renderer.onViewportDrag({
         type: 'viewportDragDecelarate',
-        viewportX: x ?? this.renderer.x,
-        viewportY: y ?? this.renderer.y,
-        target: { x: this.renderer.x, y: this.renderer.y, zoom: this.renderer.zoom }
+        dx: x ?? 0,
+        dy: y ?? 0
       })
+    } else {
+      this.decelerating = false
     }
   }
 
