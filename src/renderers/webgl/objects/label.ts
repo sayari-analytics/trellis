@@ -9,8 +9,8 @@ const TEXT_OUTLINE_STYLE: Partial<TextStyle> = { lineJoin: 'round', stroke: '#ff
 
 /**
  * TODO
- * - support non-ASCII character sets via Text
  * - add support for background color, font color, font family
+ * - moving/scaling labels is slow. render ASCII text characters as sprites to partical container?
  */
 export class Label {
   mounted = false

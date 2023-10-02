@@ -1,9 +1,9 @@
-import { Graphics } from 'pixi.js'
 import { MIN_EDGES_ZOOM, Renderer } from '.'
-import { angle, movePoint } from './utils'
+import { movePoint } from './utils'
 import { NodeRenderer } from './node'
 import * as Graph from '../..'
 import { Arrow } from './objects/arrow'
+import { LineSegment } from './objects/lineSegment'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -13,7 +13,7 @@ export class EdgeRenderer {
   edge?: Graph.Edge
 
   renderer: Renderer
-  edgeGraphic = new Graphics()
+  lineSegment: LineSegment
   source!: NodeRenderer
   target!: NodeRenderer
   x0?: number
@@ -25,12 +25,12 @@ export class EdgeRenderer {
   strokeOpacity?: number
   sourceRadius?: number
   targetRadius?: number
-  mounted = false
 
   private arrow?: { forward: Arrow; reverse?: undefined } | { forward?: undefined; reverse: Arrow } | { forward: Arrow; reverse: Arrow }
 
   constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
+    this.lineSegment = new LineSegment(this.renderer.edgesContainer)
     this.update(edge, source, target)
   }
 
@@ -71,10 +71,7 @@ export class EdgeRenderer {
     const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
 
     if (this.renderer.zoom > MIN_EDGES_ZOOM && isVisible) {
-      if (!this.mounted) {
-        this.renderer.edgesContainer.addChild(this.edgeGraphic)
-        this.mounted = true
-      }
+      this.lineSegment.mount()
       this.arrow?.forward?.mount()
       this.arrow?.reverse?.mount()
 
@@ -111,7 +108,7 @@ export class EdgeRenderer {
         let edgeY1 = this.y1
 
         if (this.arrow) {
-          const theta = angle(this.x0, this.y0, this.x1, this.y1)
+          const theta = Graph.angle(this.x0, this.y0, this.x1, this.y1)
 
           if (this.arrow.forward) {
             const edgePoint = movePoint(x1, y1, theta, this.targetRadius + this.arrow.forward.height)
@@ -130,20 +127,17 @@ export class EdgeRenderer {
           }
         }
 
-        this.edgeGraphic.clear()
-        this.edgeGraphic.lineStyle(width, stroke, strokeOpacity).moveTo(edgeX0, edgeY0).lineTo(edgeX1, edgeY1)
+        this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, width, stroke, strokeOpacity)
       }
     } else {
-      if (this.mounted) {
-        this.renderer.edgesContainer.removeChild(this.edgeGraphic)
-        this.mounted = false
-      }
+      this.lineSegment.unmount()
       this.arrow?.forward?.unmount()
       this.arrow?.reverse?.unmount()
     }
   }
 
   delete() {
+    this.lineSegment.delete()
     this.arrow?.forward?.delete()
     this.arrow?.reverse?.delete()
   }

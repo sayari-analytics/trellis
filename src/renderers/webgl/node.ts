@@ -152,6 +152,9 @@ export class NodeRenderer {
 
   delete() {
     clearTimeout(this.doubleClickTimeout)
+    this.fill.delete()
+    this.strokes.delete()
+    this.label?.delete()
   }
 
   private setPosition(node: Graph.Node, x: number, y: number, radius: number) {

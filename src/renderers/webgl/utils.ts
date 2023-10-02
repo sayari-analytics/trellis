@@ -19,11 +19,6 @@ export const logUnknownEdgeError = (source: Graph.Node | undefined, target: Grap
   }
 }
 
-export const angle = (x0: number, y0: number, x1: number, y1: number) => {
-  const angle = Math.atan2(y0 - y1, x0 - x1)
-  return angle < 0 ? angle + TWO_PI : angle
-}
-
 export const movePoint = (x: number, y: number, angle: number, distance: number) =>
   [x + Math.cos(angle) * distance, y + Math.sin(angle) * distance] as const
 
