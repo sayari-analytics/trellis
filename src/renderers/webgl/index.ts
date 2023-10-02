@@ -125,8 +125,8 @@ export class Renderer {
   app: Application
   container: HTMLDivElement
   root = new Container()
-  edgesContainer = new Container()
-  nodesContainer = new Container()
+  edgesContainer = new Container() // new ParticleContainer(undefined, undefined, undefined, true)
+  nodesContainer = new Container() // new ParticleContainer(undefined, undefined, undefined, true)
   labelsContainer = new Container()
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
