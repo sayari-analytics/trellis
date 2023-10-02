@@ -27,6 +27,9 @@ export class EdgeRenderer {
   targetRadius?: number
 
   private arrow?: { forward: Arrow; reverse?: undefined } | { forward?: undefined; reverse: Arrow } | { forward: Arrow; reverse: Arrow }
+  private lineMounted = false
+  private forwardArrowMounted = false
+  private reverseArrowMounted = false
 
   constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
@@ -42,6 +45,8 @@ export class EdgeRenderer {
     if (arrow !== (this.edge?.style?.arrow ?? DEFAULT_ARROW)) {
       this.arrow?.forward?.delete()
       this.arrow?.reverse?.delete()
+      this.forwardArrowMounted = false
+      this.reverseArrowMounted = false
       this.arrow = undefined
 
       switch (arrow) {
@@ -71,9 +76,18 @@ export class EdgeRenderer {
     const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
 
     if (this.renderer.zoom > MIN_EDGES_ZOOM && isVisible) {
-      this.lineSegment.mount()
-      this.arrow?.forward?.mount()
-      this.arrow?.reverse?.mount()
+      if (!this.lineMounted) {
+        this.renderer.edgeObjectManager.mount(this.lineSegment)
+        this.lineMounted = true
+      }
+      if (this.arrow?.forward && !this.forwardArrowMounted) {
+        this.renderer.edgeObjectManager.mount(this.arrow.forward)
+        this.forwardArrowMounted = true
+      }
+      if (this.arrow?.reverse && !this.reverseArrowMounted) {
+        this.renderer.edgeObjectManager.mount(this.arrow.reverse)
+        this.reverseArrowMounted = true
+      }
 
       // this.edgeGraphic.alpha = this.renderer.zoom <= MIN_EDGES_ZOOM + 0.1 ?
       //   (this.renderer.zoom - MIN_EDGES_ZOOM) / MIN_EDGES_ZOOM + 0.1 : 1
@@ -130,16 +144,29 @@ export class EdgeRenderer {
         this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, width, stroke, strokeOpacity)
       }
     } else {
-      this.lineSegment.unmount()
-      this.arrow?.forward?.unmount()
-      this.arrow?.reverse?.unmount()
+      if (this.lineMounted) {
+        this.renderer.edgeObjectManager.unmount(this.lineSegment)
+        this.lineMounted = false
+      }
+      if (this.arrow?.forward && this.forwardArrowMounted) {
+        this.renderer.edgeObjectManager.unmount(this.arrow.forward)
+        this.forwardArrowMounted = false
+      }
+      if (this.arrow?.reverse && this.reverseArrowMounted) {
+        this.renderer.edgeObjectManager.unmount(this.arrow.reverse)
+        this.reverseArrowMounted = false
+      }
     }
   }
 
   delete() {
-    this.lineSegment.delete()
-    this.arrow?.forward?.delete()
-    this.arrow?.reverse?.delete()
+    this.renderer.edgeObjectManager.delete(this.lineSegment)
+    if (this.arrow?.forward) {
+      this.renderer.edgeObjectManager.delete(this.arrow.forward)
+    }
+    if (this.arrow?.reverse) {
+      this.renderer.edgeObjectManager.delete(this.arrow.reverse)
+    }
   }
 
   private visible(minX: number, minY: number, maxX: number, maxY: number) {

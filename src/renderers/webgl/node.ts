@@ -23,6 +23,9 @@ export class NodeRenderer {
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
   private interpolateRadius?: (dt: number) => { value: number; done: boolean }
+  private fillMounted = false
+  private strokeMounted = false
+  private labelMounted = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -38,7 +41,9 @@ export class NodeRenderer {
       }
     } else {
       if (node.label === undefined) {
-        this.label = this.label.delete()
+        this.renderer.labelObjectManager.delete(this.label)
+        this.labelMounted = false
+        this.label = undefined
       }
     }
 
@@ -128,33 +133,51 @@ export class NodeRenderer {
     }
 
     if (isVisible) {
-      this.fill.mount()
+      if (!this.fillMounted) {
+        this.renderer.nodeObjectManager.mount(this.fill)
+        this.fillMounted = true
+      }
     } else {
-      this.fill.unmount()
+      if (!this.fillMounted) {
+        this.renderer.nodeObjectManager.unmount(this.fill)
+        this.fillMounted = false
+      }
     }
 
     if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
-      this.strokes.mount()
+      if (!this.strokeMounted) {
+        this.renderer.nodeObjectManager.mount(this.strokes)
+        this.strokeMounted = true
+      }
     } else {
-      this.strokes.unmount()
+      if (this.strokeMounted) {
+        this.renderer.nodeObjectManager.unmount(this.strokes)
+        this.strokeMounted = false
+      }
     }
 
     if (this.label) {
       if (isVisible && this.renderer.zoom > MIN_LABEL_ZOOM) {
-        // this.label.alpha = this.renderer.zoom <= MIN_LABEL_ZOOM + 0.1 ?
-        //   (this.renderer.zoom - MIN_LABEL_ZOOM) / MIN_LABEL_ZOOM + 0.1 : 1
-        this.label.mount()
+        if (!this.labelMounted) {
+          this.renderer.labelObjectManager.mount(this.label)
+          this.labelMounted = true
+        }
       } else {
-        this.label.unmount()
+        if (this.labelMounted) {
+          this.renderer.labelObjectManager.unmount(this.label)
+          this.labelMounted = false
+        }
       }
     }
   }
 
   delete() {
     clearTimeout(this.doubleClickTimeout)
-    this.fill.delete()
-    this.strokes.delete()
-    this.label?.delete()
+    this.renderer.nodeObjectManager.delete(this.fill)
+    this.renderer.nodeObjectManager.delete(this.strokes)
+    if (this.label) {
+      this.renderer.labelObjectManager.delete(this.label)
+    }
   }
 
   private setPosition(node: Graph.Node, x: number, y: number, radius: number) {

@@ -12,6 +12,7 @@ import { CircleTexture } from './textures/circle'
 import { Font } from './objects/font'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
+import { ObjectManager } from './objectManager'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -130,6 +131,9 @@ export class Renderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
+  nodeObjectManager = new ObjectManager(4000)
+  edgeObjectManager = new ObjectManager(4000)
+  labelObjectManager = new ObjectManager(4000)
   font = new Font()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
@@ -208,7 +212,7 @@ export class Renderer {
       autoDensity: true,
       powerPreference: 'high-performance',
       backgroundAlpha: 0,
-      forceCanvas: forceCanvas
+      forceCanvas: forceCanvas,
     })
 
     this.width = width
@@ -484,6 +488,10 @@ export class Renderer {
     for (const edge of this.edges) {
       this.edgeRenderersById[edge.id].render()
     }
+
+    this.nodeObjectManager.render()
+    this.edgeObjectManager.render()
+    this.labelObjectManager.render()
 
     this.app.render()
   }

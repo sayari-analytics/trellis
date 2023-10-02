@@ -20,10 +20,12 @@ export class NodeStrokes {
   update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
     if (style?.stroke !== this.style?.stroke) {
       // exit
+      const isMounted = this.mounted
       this.delete()
 
       if (style?.stroke?.length) {
         // enter
+
         this.strokes = Array(style.stroke.length)
 
         this.radius = radius
@@ -37,6 +39,9 @@ export class NodeStrokes {
           circle.x = x
           circle.y = y
           this.strokes[i] = circle
+        }
+        if (isMounted) {
+          this.mount()
         }
       }
     } else if (this.strokes && this.style?.stroke) {

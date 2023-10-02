@@ -31,7 +31,7 @@ export class Label {
 
   update(label: string, x: number, y: number, style?: LabelStyle) {
     if (label !== this.label) {
-      this.setLabel(label)
+      this.setText(label)
       this.label = label
     }
 
@@ -105,28 +105,40 @@ export class Label {
     return undefined
   }
 
-  private setLabel(label: string) {
+  private setText(label: string) {
     if (this.text instanceof BitmapText) {
       if (isASCII(label)) {
         this.text.text = label
       } else {
+        const isMounted = this.mounted
         this.text.destroy()
-        this.unmount()
+        if (isMounted) {
+          this.unmount()
+        }
         this.text = new Text(label, TEXT_OUTLINE_STYLE)
         this.fontSize = undefined
         this.position = undefined
         this.x = undefined
         this.y = undefined
+        if (isMounted) {
+          this.mount()
+        }
       }
     } else {
       if (isASCII(label)) {
+        const isMounted = this.mounted
         this.text.destroy()
-        this.unmount()
+        if (isMounted) {
+          this.unmount()
+        }
         this.text = new BitmapText(label, { fontName: 'Label' })
         this.fontSize = undefined
         this.position = undefined
         this.x = undefined
         this.y = undefined
+        if (isMounted) {
+          this.mount()
+        }
       } else {
         this.text.text = label
       }
