@@ -1,4 +1,4 @@
-import type { Node, Edge, Placement } from '../..'
+import type { Node, Edge } from '../..'
 import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
 import { HierarchyNode } from 'd3-hierarchy'
 import tree from './tree'
@@ -9,7 +9,7 @@ export type Options<N extends Node, E extends Edge> = Partial<{
   x: number
   y: number
   bfs: boolean
-  anchor: Placement
+  anchor: 'bottom' | 'left' | 'top' | 'right'
   alignment: 'min' | 'mid' | 'max'
   size: [number, number]
   nodeSize: [number, number]
