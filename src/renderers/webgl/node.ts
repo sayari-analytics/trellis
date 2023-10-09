@@ -134,12 +134,12 @@ export class NodeRenderer {
 
     if (isVisible) {
       if (!this.fillMounted) {
-        this.renderer.nodeObjectManager.mount(this.fill)
+        this.fill.mount()
         this.fillMounted = true
       }
     } else {
       if (!this.fillMounted) {
-        this.renderer.nodeObjectManager.unmount(this.fill)
+        this.fill.unmount()
         this.fillMounted = false
       }
     }

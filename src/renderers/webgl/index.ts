@@ -102,7 +102,7 @@ export const defaultOptions = {
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
 export const MIN_NODE_INTERACTION_ZOOM = 0.1
-export const MIN_EDGES_ZOOM = 0.15
+export const MIN_EDGES_ZOOM = 0.1
 export const MIN_ZOOM = 3
 
 export class Renderer {
@@ -131,9 +131,9 @@ export class Renderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  nodeObjectManager = new ObjectManager(4000)
-  edgeObjectManager = new ObjectManager(4000)
-  labelObjectManager = new ObjectManager(4000)
+  nodeObjectManager = new ObjectManager(3000)
+  edgeObjectManager = new ObjectManager(3000)
+  labelObjectManager = new ObjectManager(3000)
   font = new Font()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
@@ -212,7 +212,7 @@ export class Renderer {
       autoDensity: true,
       powerPreference: 'high-performance',
       backgroundAlpha: 0,
-      forceCanvas: forceCanvas,
+      forceCanvas: forceCanvas
     })
 
     this.width = width
