@@ -138,7 +138,7 @@ export class NodeRenderer {
         this.fillMounted = true
       }
     } else {
-      if (!this.fillMounted) {
+      if (this.fillMounted) {
         this.fill.unmount()
         this.fillMounted = false
       }
