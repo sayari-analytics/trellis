@@ -1,56 +1,58 @@
-import { Sprite } from 'pixi.js'
+import { Container, Sprite } from 'pixi.js'
 import * as Graph from '../../..'
-import { Renderer } from '..'
 import { NodeRenderer } from '../node'
+import { CircleTexture } from '../textures/circle'
 
 const DEFAULT_NODE_FILL = 0xaaaaaa
 
 export class NodeFill {
   mounted = false
   containerIndex: number
-  circle: Sprite // TODO - make private
+  fill: Sprite // TODO - make private
 
-  private renderer: Renderer
+  private container: Container
+  private circleTexture: CircleTexture
   private nodeRenderer: NodeRenderer
   private radius?: number
   private style?: Graph.NodeStyle
 
-  constructor(renderer: Renderer, nodeRenderer: NodeRenderer) {
-    this.renderer = renderer
+  constructor(container: Container, circleTexture: CircleTexture, nodeRenderer: NodeRenderer) {
+    this.container = container
+    this.circleTexture = circleTexture
     this.nodeRenderer = nodeRenderer
-    this.circle = new Sprite(this.renderer.circle.texture)
-    this.circle.anchor.set(0.5)
-    this.circle.visible = false
+    this.fill = new Sprite(this.circleTexture.texture)
+    this.fill.anchor.set(0.5)
+    this.fill.visible = false
 
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node diameter > ~5px
     // TODO - disable events when dragging/scrolling
-    this.circle.eventMode = 'static'
+    this.fill.eventMode = 'static'
     // why doesn't this work? does this need a container?
     // this.#fill.hitArea = new Circle(this.node.x ?? 0, this.node.y ?? 0, fullRadius)
-    this.circle.addEventListener('pointerenter', this.nodeRenderer.pointerEnter)
-    this.circle.addEventListener('pointerdown', this.nodeRenderer.pointerDown)
-    this.circle.addEventListener('pointerup', this.nodeRenderer.pointerUp)
-    this.circle.addEventListener('pointerupoutside', this.nodeRenderer.pointerUp)
-    this.circle.addEventListener('pointercancel', this.nodeRenderer.pointerUp)
-    this.circle.addEventListener('pointerleave', this.nodeRenderer.pointerLeave)
+    this.fill.addEventListener('pointerenter', this.nodeRenderer.pointerEnter)
+    this.fill.addEventListener('pointerdown', this.nodeRenderer.pointerDown)
+    this.fill.addEventListener('pointerup', this.nodeRenderer.pointerUp)
+    this.fill.addEventListener('pointerupoutside', this.nodeRenderer.pointerUp)
+    this.fill.addEventListener('pointercancel', this.nodeRenderer.pointerUp)
+    this.fill.addEventListener('pointerleave', this.nodeRenderer.pointerLeave)
 
-    this.renderer.nodesContainer.addChild(this.circle)
-    this.containerIndex = this.renderer.nodesContainer.getChildIndex(this.circle)
+    this.container.addChild(this.fill)
+    this.containerIndex = this.container.getChildIndex(this.fill)
   }
 
   update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
     if ((style?.color ?? DEFAULT_NODE_FILL) !== (this.style?.color ?? DEFAULT_NODE_FILL)) {
-      this.circle.tint = style?.color ?? DEFAULT_NODE_FILL
+      this.fill.tint = style?.color ?? DEFAULT_NODE_FILL
     }
 
     if (radius !== this.radius) {
-      this.circle.scale.set(radius / this.renderer.circle.scaleFactor)
+      this.fill.scale.set(radius / this.circleTexture.scaleFactor)
       this.radius = radius
     }
 
-    this.circle.x = x
-    this.circle.y = y
+    this.fill.x = x
+    this.fill.y = y
 
     this.style = style
 
@@ -60,8 +62,8 @@ export class NodeFill {
   mount() {
     if (!this.mounted) {
       // TODO - why is mounting/unmouting fill Sprite less efficient?
-      this.circle.visible = true
-      // this.renderer.nodesContainer.addChild(this.circle)
+      this.fill.visible = true
+      // this.container.addChild(this.fill)
       this.mounted = true
     }
 
@@ -70,8 +72,8 @@ export class NodeFill {
 
   unmount() {
     if (this.mounted) {
-      this.circle.visible = false
-      // this.renderer.nodesContainer.removeChild(this.circle)
+      this.fill.visible = false
+      // this.container.removeChild(this.fill)
       this.mounted = false
     }
 
@@ -80,7 +82,7 @@ export class NodeFill {
 
   delete() {
     this.unmount()
-    this.circle.destroy()
+    this.fill.destroy()
 
     return undefined
   }

@@ -1,5 +1,4 @@
-import { BitmapText, Text, TextStyle, TextStyleAlign } from 'pixi.js'
-import { Renderer } from '..'
+import { BitmapText, Container, Text, TextStyle, TextStyleAlign } from 'pixi.js'
 import { isASCII } from '../utils'
 import { LabelPosition, LabelStyle } from '../../..'
 
@@ -15,7 +14,7 @@ const TEXT_OUTLINE_STYLE: Partial<TextStyle> = { lineJoin: 'round', stroke: '#ff
 export class Label {
   mounted = false
 
-  private renderer: Renderer
+  private container: Container
   private text: BitmapText | Text
   private label: string
   private x?: number
@@ -23,8 +22,8 @@ export class Label {
   private fontSize?: number
   private position?: LabelPosition
 
-  constructor(renderer: Renderer, label: string) {
-    this.renderer = renderer
+  constructor(container: Container, label: string) {
+    this.container = container
     this.label = label
     this.text = isASCII(label) ? new BitmapText(label, { fontName: 'Label' }) : new Text(label, TEXT_OUTLINE_STYLE)
   }
@@ -82,7 +81,7 @@ export class Label {
 
   mount() {
     if (!this.mounted) {
-      this.renderer.labelsContainer.addChild(this.text)
+      this.container.addChild(this.text)
       this.mounted = true
     }
 
@@ -91,7 +90,7 @@ export class Label {
 
   unmount() {
     if (this.mounted) {
-      this.renderer.labelsContainer.removeChild(this.text)
+      this.container.removeChild(this.text)
       this.mounted = false
     }
 

@@ -29,15 +29,15 @@ export class NodeRenderer {
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
-    this.fill = new NodeFill(this.renderer, this)
-    this.strokes = new NodeStrokes(this.renderer, this)
+    this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle, this)
+    this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this)
     this.update(node)
   }
 
   update(node: Graph.Node) {
     if (this.label === undefined) {
       if (node.label) {
-        this.label = new Label(this.renderer, node.label)
+        this.label = new Label(this.renderer.labelsContainer, node.label)
       }
     } else {
       if (node.label === undefined) {
@@ -127,9 +127,9 @@ export class NodeRenderer {
 
     // TODO - enable/disable events based on node screen pixel width, not fixed zoom
     if (isVisible && this.renderer.zoom > MIN_NODE_INTERACTION_ZOOM) {
-      this.fill.circle.eventMode = 'static'
+      this.fill.fill.eventMode = 'static'
     } else {
-      this.fill.circle.eventMode = 'none'
+      this.fill.fill.eventMode = 'none'
     }
 
     if (isVisible) {

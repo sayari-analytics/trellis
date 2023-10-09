@@ -51,13 +51,16 @@ export class EdgeRenderer {
 
       switch (arrow) {
         case 'forward':
-          this.arrow = { forward: new Arrow(this.renderer) }
+          this.arrow = { forward: new Arrow(this.renderer.edgesContainer, this.renderer.arrow) }
           break
         case 'reverse':
-          this.arrow = { reverse: new Arrow(this.renderer) }
+          this.arrow = { reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow) }
           break
         case 'both':
-          this.arrow = { forward: new Arrow(this.renderer), reverse: new Arrow(this.renderer) }
+          this.arrow = {
+            forward: new Arrow(this.renderer.edgesContainer, this.renderer.arrow),
+            reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
+          }
       }
     }
 
