@@ -1,11 +1,12 @@
 import { FederatedPointerEvent } from 'pixi.js'
-import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer } from '.'
+import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'
 import { positionNodeLabel } from './utils'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { interpolate } from '../../utils'
+import { NodeHitArea } from './interaction/nodeHitArea'
 
 export class NodeRenderer {
   node!: Graph.Node
@@ -15,6 +16,7 @@ export class NodeRenderer {
   label?: Label
   strokes: NodeStrokes
 
+  private hitArea: NodeHitArea
   private renderer: Renderer
   private doubleClickTimeout: number | undefined
   private doubleClick = false
@@ -29,8 +31,9 @@ export class NodeRenderer {
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
-    this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle, this)
+    this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
     this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this)
+    this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
     this.update(node)
   }
 
@@ -125,11 +128,13 @@ export class NodeRenderer {
 
     const isVisible = this.visible()
 
-    // TODO - enable/disable events based on node screen pixel width, not fixed zoom
-    if (isVisible && this.renderer.zoom > MIN_NODE_INTERACTION_ZOOM) {
-      this.fill.fill.eventMode = 'static'
+    // TODO - disable events if node has no event handlers
+    // TODO - disable events if node pixel width < ~5px
+    // TODO - disable events when dragging/scrolling
+    if (isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM) {
+      this.renderer.interactionObjectManager.mount(this.hitArea)
     } else {
-      this.fill.fill.eventMode = 'none'
+      this.renderer.interactionObjectManager.unmount(this.hitArea)
     }
 
     if (isVisible) {
@@ -146,12 +151,12 @@ export class NodeRenderer {
 
     if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
       if (!this.strokeMounted) {
-        this.renderer.nodeObjectManager.mount(this.strokes)
+        this.renderer.nodeStrokeObjectManager.mount(this.strokes)
         this.strokeMounted = true
       }
     } else {
       if (this.strokeMounted) {
-        this.renderer.nodeObjectManager.unmount(this.strokes)
+        this.renderer.nodeStrokeObjectManager.unmount(this.strokes)
         this.strokeMounted = false
       }
     }
@@ -173,33 +178,12 @@ export class NodeRenderer {
 
   delete() {
     clearTimeout(this.doubleClickTimeout)
-    this.renderer.nodeObjectManager.delete(this.fill)
-    this.renderer.nodeObjectManager.delete(this.strokes)
+    this.fill.delete()
+    this.renderer.nodeStrokeObjectManager.delete(this.strokes)
+    this.renderer.interactionObjectManager.delete(this.hitArea)
     if (this.label) {
       this.renderer.labelObjectManager.delete(this.label)
     }
-  }
-
-  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
-    this.x = x
-    this.y = y
-
-    this.fill.update(this.x, this.y, radius, node.style)
-    this.strokes.update(this.x, this.y, radius, node.style)
-    if (this.label && node.label) {
-      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
-      this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
-    }
-  }
-
-  private visible() {
-    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    return (
-      this.x + this.strokes.radius >= this.renderer.minX &&
-      this.x - this.strokes.radius <= this.renderer.maxX &&
-      this.y + this.strokes.radius >= this.renderer.minY &&
-      this.y - this.strokes.radius <= this.renderer.maxY
-    )
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
@@ -244,21 +228,19 @@ export class NodeRenderer {
       }
     }
 
-    if (this.renderer.onNodePointerDown) {
-      this.renderer.onNodePointerDown?.({
-        type: 'nodePointer',
-        x: local.x,
-        y: local.y,
-        clientX: event.clientX,
-        clientY: event.clientY,
-        target: this.node!,
-        targetIdx: 0, // TODO
-        altKey: event.altKey,
-        ctrlKey: event.ctrlKey,
-        metaKey: event.metaKey,
-        shiftKey: event.shiftKey
-      })
-    }
+    this.renderer.onNodePointerDown?.({
+      type: 'nodePointer',
+      x: local.x,
+      y: local.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: this.node!,
+      targetIdx: 0, // TODO
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
 
     if (this.renderer.onNodeDrag) {
       event.stopPropagation()
@@ -435,46 +417,31 @@ export class NodeRenderer {
     })
   }
 
-  clearDoubleClick = () => {
+  private clearDoubleClick = () => {
     this.doubleClickTimeout = undefined
     this.doubleClick = false
   }
+
+  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
+    this.x = x
+    this.y = y
+
+    this.fill.update(this.x, this.y, radius, node.style)
+    this.strokes.update(this.x, this.y, radius, node.style)
+    if (this.label && node.label) {
+      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
+      this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
+    }
+    this.hitArea.update(x, y, radius)
+  }
+
+  private visible() {
+    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
+    return (
+      this.x + this.strokes.radius >= this.renderer.minX &&
+      this.x - this.strokes.radius <= this.renderer.maxX &&
+      this.y + this.strokes.radius >= this.renderer.minY &&
+      this.y - this.strokes.radius <= this.renderer.maxY
+    )
+  }
 }
-
-// class Circle implements IHitArea {
-
-//   x: number
-//   y: number
-//   minX: number
-//   minY: number
-//   maxX: number
-//   maxY: number
-//   radius: number
-//   // squaredDistance: number
-
-//   constructor(x: number, y: number, radius: number) {
-//     this.x = x
-//     this.y = y
-//     this.minX = x - radius
-//     this.minY = y - radius
-//     this.maxX = x + radius
-//     this.maxY = y + radius
-//     this.radius = radius
-//     // this.squaredDistance = Math.pow(radius, 2)
-//   }
-
-//   update(x: number, y: number, radius: number) {
-//     this.x = x
-//     this.y = y
-//     this.minX = x - radius
-//     this.minY = y - radius
-//     this.maxX = x + radius
-//     this.maxY = y + radius
-//     this.radius = radius
-//   }
-
-//   contains(x: number, y: number): boolean {
-//     return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY
-//     // return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2) < this.squaredDistance
-//   }
-// }

@@ -59,7 +59,7 @@ let nodes: Graph.Node[] = []
 let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(20000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -88,7 +88,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const options: Renderer.Options = {
   x: 0,
   y: 0,
-  zoom: 1,
+  zoom: 0.5,
   minZoom: 0.025,
   width: 1250, // 1700,
   height: 650, // 940,
@@ -206,31 +206,29 @@ const options: Renderer.Options = {
       edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_STYLE } : edge
     )
     renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
+    edges = edges.map((edge) => (edge.id === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge))
+    renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerDown: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer down', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgePointerUp: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer up', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgeClick: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgeDoubleClick: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer double click', `x: ${event.x}, y: ${event.y}`)
+  },
+  onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
+    edges = edges.map((edge) => ({ ...edge, style: EDGE_STYLE }))
+    renderer.update({ nodes, edges, options })
   }
-  // onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
-  //   // console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
-  //   edges = edges.map((edge) => (
-  //     edge.id === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge
-  //   ))
-  //   renderer.update({ nodes, edges, options })
-  // },
-  // onEdgePointerDown: (event: Renderer.EdgePointerEvent) => {
-  //   // console.log('edge pointer down', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onEdgePointerUp: (event: Renderer.EdgePointerEvent) => {
-  //   // console.log('edge pointer up', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onEdgeClick: (event: Renderer.EdgePointerEvent) => {
-  //   // console.log('edge pointer click', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onEdgeDoubleClick: (event: Renderer.EdgePointerEvent) => {
-  //   // console.log('edge pointer double click', `x: ${event.x}, y: ${event.y}`)
-  // },
-  // onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
-  //   // console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
-  //   edges = edges.map((edge) => ({ ...edge, style: EDGE_STYLE }))
-  //   renderer.update({ nodes, edges, options })
-  // },
 }
 
 const renderer = new Renderer.Renderer({ container, width: options.width, height: options.height, debug: true }).update({

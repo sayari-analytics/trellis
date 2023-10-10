@@ -101,7 +101,7 @@ export const defaultOptions = {
 // TODO - make configurable
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
-export const MIN_NODE_INTERACTION_ZOOM = 0.1
+export const MIN_INTERACTION_ZOOM = 0.15
 export const MIN_EDGES_ZOOM = 0.1
 export const MIN_ZOOM = 3
 
@@ -128,12 +128,15 @@ export class Renderer {
   edgesContainer = new Container() // new ParticleContainer(undefined, undefined, undefined, true)
   nodesContainer = new Container() // new ParticleContainer(undefined, undefined, undefined, true)
   labelsContainer = new Container()
+  interactionContainer = new Container()
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  nodeObjectManager = new ObjectManager(3000)
+  nodeStrokeObjectManager = new ObjectManager(1000)
   edgeObjectManager = new ObjectManager(3000)
+  edgeArrowObjectManager = new ObjectManager(1000)
   labelObjectManager = new ObjectManager(3000)
+  interactionObjectManager = new ObjectManager(2000)
   font = new Font()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
@@ -222,12 +225,17 @@ export class Renderer {
     this.arrow = new ArrowTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
-    this.root.eventMode = 'static'
+    this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer
+    this.edgesContainer.eventMode = 'none'
+    this.nodesContainer.eventMode = 'none'
+    this.labelsContainer.eventMode = 'none'
+    this.interactionContainer.eventMode = 'passive'
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
     this.root.addChild(this.edgesContainer)
     this.root.addChild(this.nodesContainer)
     this.root.addChild(this.labelsContainer)
+    this.root.addChild(this.interactionContainer)
     this.root.addEventListener('pointerenter', this.pointerEnter)
     this.root.addEventListener('pointerdown', this.pointerDown)
     this.root.addEventListener('pointermove', this.pointerMove)
@@ -489,9 +497,11 @@ export class Renderer {
       this.edgeRenderersById[edge.id].render()
     }
 
-    this.nodeObjectManager.render()
+    this.nodeStrokeObjectManager.render()
     this.edgeObjectManager.render()
+    this.edgeArrowObjectManager.render()
     this.labelObjectManager.render()
+    this.interactionObjectManager.render()
 
     this.app.render()
   }
