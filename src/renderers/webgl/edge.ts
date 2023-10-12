@@ -241,59 +241,9 @@ export class EdgeRenderer {
       }
     }
 
-    this.renderer.onEdgePointerDown?.({
-      type: 'edgePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.edge!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
-  }
-
-  pointerUp = (event: FederatedPointerEvent) => {
-    const local = this.renderer.root.toLocal(event.global)
-    this.renderer.zoomInteraction.resume()
-    this.renderer.dragInteraction.resume()
-    this.renderer.decelerateInteraction.resume()
-
-    this.renderer.onEdgePointerUp?.({
-      type: 'edgePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.edge!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
-
-    this.renderer.onEdgeClick?.({
-      type: 'edgePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.edge!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
-
-    if (this.doubleClick) {
-      this.doubleClick = false
-      this.doubleClickTimeout = undefined
-      this.renderer.onEdgeDoubleClick?.({
+    if (this.renderer.onEdgePointerDown) {
+      event.stopPropagation()
+      this.renderer.onEdgePointerDown({
         type: 'edgePointer',
         x: local.x,
         y: local.y,
@@ -306,6 +256,68 @@ export class EdgeRenderer {
         metaKey: event.metaKey,
         shiftKey: event.shiftKey
       })
+    }
+  }
+
+  pointerUp = (event: FederatedPointerEvent) => {
+    const local = this.renderer.root.toLocal(event.global)
+    this.renderer.zoomInteraction.resume()
+    this.renderer.dragInteraction.resume()
+    this.renderer.decelerateInteraction.resume()
+
+    if (this.renderer.onEdgePointerUp) {
+      event.stopPropagation()
+      this.renderer.onEdgePointerUp({
+        type: 'edgePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.edge!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    if (this.renderer.onEdgeClick) {
+      event.stopPropagation()
+      this.renderer.onEdgeClick({
+        type: 'edgePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.edge!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    if (this.doubleClick) {
+      this.doubleClick = false
+      this.doubleClickTimeout = undefined
+      if (this.renderer.onEdgeDoubleClick) {
+        event.stopPropagation()
+        this.renderer.onEdgeDoubleClick({
+          type: 'edgePointer',
+          x: local.x,
+          y: local.y,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          target: this.edge!,
+          targetIdx: 0, // TODO
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          shiftKey: event.shiftKey
+        })
+      }
     }
   }
 

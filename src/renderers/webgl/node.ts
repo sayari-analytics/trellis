@@ -228,23 +228,25 @@ export class NodeRenderer {
       }
     }
 
-    this.renderer.onNodePointerDown?.({
-      type: 'nodePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.node!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
+    if (this.renderer.onNodePointerDown) {
+      event.stopPropagation()
+      this.renderer.onNodePointerDown({
+        type: 'nodePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.node!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
 
     if (this.renderer.onNodeDrag) {
       event.stopPropagation()
-
       this.renderer.container.style.cursor = 'move'
       this.nodeMoveXOffset = local.x - (this.node!.x ?? 0)
       this.nodeMoveYOffset = local.y - (this.node!.y ?? 0)
@@ -300,15 +302,7 @@ export class NodeRenderer {
     const isDragging = this.renderer.dragInteraction.dragging
     const local = this.renderer.root.toLocal(event.global)
 
-    // if (
-    //   this.renderer.onNodeDrag || this.renderer.onNodePointerUp ||
-    //   this.renderer.onNodeClick || this.renderer.onNodeDoubleClick
-    // ) {
-    //   event.stopPropagation()
-    // }
-
     if (this.renderer.onNodeDrag) {
-      event.stopPropagation()
       this.renderer.container.style.cursor = 'auto'
       this.renderer.root.removeEventListener('pointermove', this.pointerMove)
       this.renderer.zoomInteraction.resume()
@@ -319,40 +313,30 @@ export class NodeRenderer {
 
       if (this.renderer.dragInteraction.dragging) {
         this.renderer.dragInteraction.dragging = false
-        this.renderer.onNodeDragEnd?.({
-          type: 'nodeDrag',
-          x: local.x,
-          y: local.y,
-          clientX: event.clientX,
-          clientY: event.clientY,
-          dx: 0,
-          dy: 0,
-          target: this.node!,
-          targetIdx: 0, // TODO
-          altKey: event.altKey,
-          ctrlKey: event.ctrlKey,
-          metaKey: event.metaKey,
-          shiftKey: event.shiftKey
-        })
+        if (this.renderer.onNodeDragEnd) {
+          event.stopPropagation()
+          this.renderer.onNodeDragEnd({
+            type: 'nodeDrag',
+            x: local.x,
+            y: local.y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            dx: 0,
+            dy: 0,
+            target: this.node!,
+            targetIdx: 0, // TODO
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey
+          })
+        }
       }
     }
 
-    this.renderer.onNodePointerUp?.({
-      type: 'nodePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.node!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
-
-    if (!isDragging) {
-      this.renderer.onNodeClick?.({
+    if (this.renderer.onNodePointerUp) {
+      event.stopPropagation()
+      this.renderer.onNodePointerUp({
         type: 'nodePointer',
         x: local.x,
         y: local.y,
@@ -365,10 +349,12 @@ export class NodeRenderer {
         metaKey: event.metaKey,
         shiftKey: event.shiftKey
       })
-      if (this.doubleClick) {
-        this.doubleClick = false
-        clearTimeout(this.doubleClickTimeout)
-        this.renderer.onNodeDoubleClick?.({
+    }
+
+    if (!isDragging) {
+      if (this.renderer.onNodeClick) {
+        event.stopPropagation()
+        this.renderer.onNodeClick({
           type: 'nodePointer',
           x: local.x,
           y: local.y,
@@ -381,6 +367,27 @@ export class NodeRenderer {
           metaKey: event.metaKey,
           shiftKey: event.shiftKey
         })
+      }
+
+      if (this.doubleClick) {
+        this.doubleClick = false
+        clearTimeout(this.doubleClickTimeout)
+        if (this.renderer.onNodeDoubleClick) {
+          event.stopPropagation()
+          this.renderer.onNodeDoubleClick({
+            type: 'nodePointer',
+            x: local.x,
+            y: local.y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            target: this.node!,
+            targetIdx: 0, // TODO
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey
+          })
+        }
       }
     }
   }
