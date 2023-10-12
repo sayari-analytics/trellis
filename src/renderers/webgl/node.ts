@@ -243,6 +243,7 @@ export class NodeRenderer {
 
     if (this.renderer.onNodeDrag) {
       event.stopPropagation()
+      this.renderer.draggedNode = this
       this.renderer.container.style.cursor = 'move'
       this.nodeMoveXOffset = local.x - (this.node!.x ?? 0)
       this.nodeMoveYOffset = local.y - (this.node!.y ?? 0)
@@ -299,6 +300,7 @@ export class NodeRenderer {
     const local = this.renderer.root.toLocal(event.global)
 
     if (this.renderer.onNodeDrag) {
+      this.renderer.draggedNode = undefined
       this.renderer.container.style.cursor = 'auto'
       this.renderer.root.removeEventListener('pointermove', this.pointerMove)
       this.renderer.zoomInteraction.resume()

@@ -4,9 +4,9 @@ import { NodeRenderer } from '../node'
 export class NodeHitArea {
   mounted = false
 
+  private hitArea = new Container()
   private container: Container
   private nodeRenderer: NodeRenderer
-  private hitArea = new Container()
 
   constructor(container: Container, nodeRenderer: NodeRenderer) {
     this.container = container
@@ -16,7 +16,6 @@ export class NodeHitArea {
     this.hitArea.addEventListener('pointerenter', this.nodeRenderer.pointerEnter)
     this.hitArea.addEventListener('pointerdown', this.nodeRenderer.pointerDown)
     this.hitArea.addEventListener('pointerup', this.nodeRenderer.pointerUp)
-    this.hitArea.addEventListener('pointerupoutside', this.nodeRenderer.pointerUp)
     this.hitArea.addEventListener('pointercancel', this.nodeRenderer.pointerUp)
     this.hitArea.addEventListener('pointerleave', this.nodeRenderer.pointerLeave)
   }

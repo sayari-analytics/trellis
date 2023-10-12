@@ -150,6 +150,7 @@ export class Renderer {
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   circle: CircleTexture
   arrow: ArrowTexture
+  draggedNode?: NodeRenderer
 
   private doubleClick = false
   private doubleClickTimeout?: number
@@ -242,7 +243,15 @@ export class Renderer {
     this.root.addEventListener('pointerdown', this.pointerDown)
     this.root.addEventListener('pointermove', this.pointerMove)
     this.root.addEventListener('pointerup', this.pointerUp)
-    this.root.addEventListener('pointerupoutside', this.pointerUp)
+    this.root.addEventListener('pointerupoutside', (event) => {
+      if (this.draggedNode) {
+        const draggedNode = this.draggedNode
+        draggedNode.pointerUp(event)
+        draggedNode.pointerLeave(event)
+      } else {
+        this.pointerUp(event)
+      }
+    })
     this.root.addEventListener('pointercancel', this.pointerUp)
     this.root.addEventListener('pointerleave', this.pointerLeave)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
@@ -590,10 +599,6 @@ export class Renderer {
     })
   }
 
-  // TODO - pointerupoutside doesn't work for nodes but does for viewport
-  // if node is dragging, fire onNodePointerUp on pointer up outside
-  // TODO - don't fire pointer up if it's handled by a node/edge pointerUp handler
-  // but still complete drag/decelarate event
   private pointerUp = (event: FederatedPointerEvent) => {
     if (!this.pointerIsDown) {
       return

@@ -7,9 +7,9 @@ const MIN_LINE_HOVER_RADIUS = 2
 export class EdgeHitArea {
   mounted = false
 
+  private hitArea = new Container()
   private container: Container
   private edgeRenderer: EdgeRenderer
-  private hitArea = new Container()
 
   constructor(container: Container, edgeRenderer: EdgeRenderer) {
     this.container = container
@@ -19,7 +19,6 @@ export class EdgeHitArea {
     this.hitArea.addEventListener('pointerenter', this.edgeRenderer.pointerEnter)
     this.hitArea.addEventListener('pointerdown', this.edgeRenderer.pointerDown)
     this.hitArea.addEventListener('pointerup', this.edgeRenderer.pointerUp)
-    this.hitArea.addEventListener('pointerupoutside', this.edgeRenderer.pointerUp)
     this.hitArea.addEventListener('pointercancel', this.edgeRenderer.pointerUp)
     this.hitArea.addEventListener('pointerleave', this.edgeRenderer.pointerLeave)
   }
