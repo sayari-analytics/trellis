@@ -48,7 +48,7 @@ export class EdgeHitArea {
 
   mount() {
     if (!this.mounted) {
-      this.container.addChild(this.hitArea)
+      this.container.addChildAt(this.hitArea, 0)
       this.mounted = true
     }
 

@@ -152,36 +152,36 @@ const options: Renderer.Options = {
   // onViewportDoubleClick: (event: Renderer.ViewportPointerEvent) => {
   //   console.log('viewport double click', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onViewportWheel: ({ dx, dy, dz }) => {
-  //   options.x! += dx
-  //   options.y! += dy
-  //   options.zoom! += dz
-  //   renderer.update({ nodes, edges, options })
-  // },
+  onViewportWheel: ({ dx, dy, dz }) => {
+    options.x! += dx
+    options.y! += dy
+    options.zoom! += dz
+    renderer.update({ nodes, edges, options })
+  },
   // onViewportPointerLeave: (event: Renderer.ViewportPointerEvent) => {
   //   console.log('viewport pointer leave', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
-  //   console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
-  //   nodes = nodes.map((node) => (node.id === event.target.id ? { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node))
-  //   edges = edges.map((edge) =>
-  //     edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge
-  //   )
-  //   renderer.update({ nodes, edges, options })
-  // },
+  onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
+    console.log('node pointer enter', `x: ${event.x}, y: ${event.y}, id: ${event.target.id}`)
+    nodes = nodes.map((node) => (node.id === event.target.id ? { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node))
+    edges = edges.map((edge) =>
+      edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge
+    )
+    renderer.update({ nodes, edges, options })
+  },
   // onNodePointerDown: (event: Renderer.NodePointerEvent) => {
   //   console.log('node pointer down', `x: ${event.x}, y: ${event.y}`)
   // },
   // onNodeDragStart: (event: Renderer.NodeDragEvent) => {
   //   console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onNodeDrag: (event: Renderer.NodeDragEvent) => {
-  //   console.log('node drag', `x: ${event.x}, y: ${event.y}`)
-  //   nodes = nodes.map((node) =>
-  //     node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
-  //   )
-  //   renderer.update({ nodes, edges, options })
-  // },
+  onNodeDrag: (event: Renderer.NodeDragEvent) => {
+    console.log('node drag', `x: ${event.x}, y: ${event.y}`)
+    nodes = nodes.map((node) =>
+      node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
+    )
+    renderer.update({ nodes, edges, options })
+  },
   // onNodeDragEnd: (event: Renderer.NodeDragEvent) => {
   //   console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
   // },
@@ -198,21 +198,21 @@ const options: Renderer.Options = {
   // onNodeDoubleClick: (event: Renderer.NodePointerEvent) => {
   //   console.log('node pointer double click', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
-  //   console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
-  //   nodes = nodes.map((node) =>
-  //     node.id === event.target.id ? { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
-  //   )
-  //   edges = edges.map((edge) =>
-  //     edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_STYLE } : edge
-  //   )
-  //   renderer.update({ nodes, edges, options })
-  // },
-  // onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
-  //   console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
-  //   edges = edges.map((edge) => (edge.id === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge))
-  //   renderer.update({ nodes, edges, options })
-  // },
+  onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
+    console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
+    nodes = nodes.map((node) =>
+      node.id === event.target.id ? { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
+    )
+    edges = edges.map((edge) =>
+      edge.source === event.target.id || edge.target === event.target.id ? { ...edge, style: EDGE_STYLE } : edge
+    )
+    renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
+    edges = edges.map((edge) => (edge.id === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge))
+    renderer.update({ nodes, edges, options })
+  },
   // onEdgePointerDown: (event: Renderer.EdgePointerEvent) => {
   //   console.log('edge pointer down', `x: ${event.x}, y: ${event.y}`)
   // },
@@ -225,11 +225,11 @@ const options: Renderer.Options = {
   // onEdgeDoubleClick: (event: Renderer.EdgePointerEvent) => {
   //   console.log('edge pointer double click', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
-  //   console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
-  //   edges = edges.map((edge) => ({ ...edge, style: EDGE_STYLE }))
-  //   renderer.update({ nodes, edges, options })
-  // }
+  onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
+    console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
+    edges = edges.map((edge) => ({ ...edge, style: EDGE_STYLE }))
+    renderer.update({ nodes, edges, options })
+  }
 }
 
 const renderer = new Renderer.Renderer({ container, width: options.width, height: options.height, debug: true }).update({
