@@ -1,9 +1,11 @@
-import { MIN_EDGES_ZOOM, Renderer } from '.'
+import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, Renderer } from '.'
 import { movePoint } from './utils'
 import { NodeRenderer } from './node'
 import * as Graph from '../..'
 import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'
+import { FederatedPointerEvent } from 'pixi.js'
+import { EdgeHitArea } from './interaction/edgeHitArea'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -20,20 +22,25 @@ export class EdgeRenderer {
   y0?: number
   x1?: number
   y1?: number
+  theta?: number
   width?: number
   stroke?: string | number
   strokeOpacity?: number
   sourceRadius?: number
   targetRadius?: number
 
+  private hitArea: EdgeHitArea
   private arrow?: { forward: Arrow; reverse?: undefined } | { forward?: undefined; reverse: Arrow } | { forward: Arrow; reverse: Arrow }
   private lineMounted = false
   private forwardArrowMounted = false
   private reverseArrowMounted = false
+  private doubleClickTimeout: number | undefined
+  private doubleClick = false
 
   constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
     this.lineSegment = new LineSegment(this.renderer.edgesContainer)
+    this.hitArea = new EdgeHitArea(this.renderer.interactionContainer, this)
     this.update(edge, source, target)
   }
 
@@ -51,13 +58,16 @@ export class EdgeRenderer {
 
       switch (arrow) {
         case 'forward':
-          this.arrow = { forward: new Arrow(this.renderer) }
+          this.arrow = { forward: new Arrow(this.renderer.edgesContainer, this.renderer.arrow) }
           break
         case 'reverse':
-          this.arrow = { reverse: new Arrow(this.renderer) }
+          this.arrow = { reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow) }
           break
         case 'both':
-          this.arrow = { forward: new Arrow(this.renderer), reverse: new Arrow(this.renderer) }
+          this.arrow = {
+            forward: new Arrow(this.renderer.edgesContainer, this.renderer.arrow),
+            reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
+          }
       }
     }
 
@@ -75,23 +85,51 @@ export class EdgeRenderer {
     const targetRadius = this.target.strokes.radius
     const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
 
-    if (this.renderer.zoom > MIN_EDGES_ZOOM && isVisible) {
+    // TODO - disable events if edge has no event handlers
+    // TODO - disable events when dragging/scrolling
+    if (isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM) {
+      this.renderer.interactionObjectManager.mount(this.hitArea)
+    } else {
+      this.renderer.interactionObjectManager.unmount(this.hitArea)
+    }
+
+    if (isVisible) {
       if (!this.lineMounted) {
         this.renderer.edgeObjectManager.mount(this.lineSegment)
         this.lineMounted = true
       }
-      if (this.arrow?.forward && !this.forwardArrowMounted) {
-        this.renderer.edgeObjectManager.mount(this.arrow.forward)
+    } else {
+      if (this.lineMounted) {
+        this.renderer.edgeObjectManager.unmount(this.lineSegment)
+        this.lineMounted = false
+      }
+    }
+
+    if (isVisible) {
+      if (!this.forwardArrowMounted && this.arrow?.forward) {
+        this.renderer.edgeArrowObjectManager.mount(this.arrow?.forward)
         this.forwardArrowMounted = true
       }
-      if (this.arrow?.reverse && !this.reverseArrowMounted) {
-        this.renderer.edgeObjectManager.mount(this.arrow.reverse)
+    } else {
+      if (this.forwardArrowMounted && this.arrow?.forward) {
+        this.renderer.edgeArrowObjectManager.unmount(this.arrow?.forward)
+        this.forwardArrowMounted = false
+      }
+    }
+
+    if (isVisible) {
+      if (!this.reverseArrowMounted && this.arrow?.reverse) {
+        this.renderer.edgeArrowObjectManager.mount(this.arrow?.reverse)
         this.reverseArrowMounted = true
       }
+    } else {
+      if (this.reverseArrowMounted && this.arrow?.reverse) {
+        this.renderer.edgeArrowObjectManager.unmount(this.arrow?.reverse)
+        this.reverseArrowMounted = false
+      }
+    }
 
-      // this.edgeGraphic.alpha = this.renderer.zoom <= MIN_EDGES_ZOOM + 0.1 ?
-      //   (this.renderer.zoom - MIN_EDGES_ZOOM) / MIN_EDGES_ZOOM + 0.1 : 1
-
+    if (isVisible) {
       const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
       const stroke = this.edge?.style?.stroke ?? DEFAULT_EDGE_COLOR
       const strokeOpacity = this.edge?.style?.strokeOpacity ?? 1
@@ -116,45 +154,39 @@ export class EdgeRenderer {
         this.y0 = y0
         this.x1 = x1
         this.y1 = y1
+        this.theta = Graph.angle(this.x0, this.y0, this.x1, this.y1)
         let edgeX0 = this.x0
         let edgeY0 = this.y0
         let edgeX1 = this.x1
         let edgeY1 = this.y1
 
-        if (this.arrow) {
-          const theta = Graph.angle(this.x0, this.y0, this.x1, this.y1)
-
-          if (this.arrow.forward) {
-            const edgePoint = movePoint(x1, y1, theta, this.targetRadius + this.arrow.forward.height)
-            edgeX1 = edgePoint[0]
-            edgeY1 = edgePoint[1]
-            const [arrowX1, arrowY1] = movePoint(x1, y1, theta, this.targetRadius)
-            this.arrow.forward.update(arrowX1, arrowY1, theta, stroke, strokeOpacity)
-          }
-
-          if (this.arrow.reverse) {
-            const edgePoint = movePoint(x0, y0, theta, -this.sourceRadius - this.arrow.reverse.height)
-            edgeX0 = edgePoint[0]
-            edgeY0 = edgePoint[1]
-            const [arrowX0, arrowY0] = movePoint(x0, y0, theta, -this.sourceRadius)
-            this.arrow.reverse.update(arrowX0, arrowY0, theta + Math.PI, stroke, strokeOpacity)
-          }
+        if (this.arrow?.forward) {
+          const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius + this.arrow.forward.height)
+          edgeX1 = edgePoint[0]
+          edgeY1 = edgePoint[1]
+          const [arrowX1, arrowY1] = movePoint(x1, y1, this.theta, this.targetRadius)
+          this.arrow.forward.update(arrowX1, arrowY1, this.theta, this.stroke, this.strokeOpacity)
+        } else {
+          const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius)
+          edgeX1 = edgePoint[0]
+          edgeY1 = edgePoint[1]
         }
 
-        this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, width, stroke, strokeOpacity)
-      }
-    } else {
-      if (this.lineMounted) {
-        this.renderer.edgeObjectManager.unmount(this.lineSegment)
-        this.lineMounted = false
-      }
-      if (this.arrow?.forward && this.forwardArrowMounted) {
-        this.renderer.edgeObjectManager.unmount(this.arrow.forward)
-        this.forwardArrowMounted = false
-      }
-      if (this.arrow?.reverse && this.reverseArrowMounted) {
-        this.renderer.edgeObjectManager.unmount(this.arrow.reverse)
-        this.reverseArrowMounted = false
+        if (this.arrow?.reverse) {
+          const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius - this.arrow.reverse.height)
+          edgeX0 = edgePoint[0]
+          edgeY0 = edgePoint[1]
+          const [arrowX0, arrowY0] = movePoint(x0, y0, this.theta, -this.sourceRadius)
+          this.arrow.reverse.update(arrowX0, arrowY0, this.theta + Math.PI, this.stroke, this.strokeOpacity)
+        } else {
+          const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius)
+          edgeX0 = edgePoint[0]
+          edgeY0 = edgePoint[1]
+        }
+
+        this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.stroke, this.strokeOpacity)
+        // TODO - draw hitArea over arrow
+        this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.theta)
       }
     }
   }
@@ -162,11 +194,161 @@ export class EdgeRenderer {
   delete() {
     this.renderer.edgeObjectManager.delete(this.lineSegment)
     if (this.arrow?.forward) {
-      this.renderer.edgeObjectManager.delete(this.arrow.forward)
+      this.renderer.edgeArrowObjectManager.delete(this.arrow.forward)
     }
     if (this.arrow?.reverse) {
-      this.renderer.edgeObjectManager.delete(this.arrow.reverse)
+      this.renderer.edgeArrowObjectManager.delete(this.arrow.reverse)
     }
+    this.renderer.interactionObjectManager.delete(this.hitArea)
+  }
+
+  pointerEnter = (event: FederatedPointerEvent) => {
+    if (this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
+      return
+    }
+
+    if (this.renderer.onEdgePointerDown || this.renderer.onEdgeClick || this.renderer.onEdgeDoubleClick || this.renderer.onEdgePointerUp) {
+      this.renderer.container.style.cursor = 'pointer'
+    }
+
+    const local = this.renderer.root.toLocal(event.global)
+    this.renderer.onEdgePointerEnter?.({
+      type: 'edgePointer',
+      x: local.x,
+      y: local.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: this.edge!,
+      targetIdx: 0, // TODO
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
+  }
+
+  pointerDown = (event: FederatedPointerEvent) => {
+    const local = this.renderer.root.toLocal(event.global)
+    this.renderer.zoomInteraction.pause()
+    this.renderer.dragInteraction.pause()
+    this.renderer.decelerateInteraction.pause()
+
+    if (this.renderer.onEdgeDoubleClick) {
+      if (this.doubleClickTimeout === undefined) {
+        this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+      } else {
+        this.doubleClick = true
+      }
+    }
+
+    if (this.renderer.onEdgePointerDown) {
+      event.stopPropagation()
+      this.renderer.onEdgePointerDown({
+        type: 'edgePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.edge!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+  }
+
+  pointerUp = (event: FederatedPointerEvent) => {
+    const local = this.renderer.root.toLocal(event.global)
+    this.renderer.zoomInteraction.resume()
+    this.renderer.dragInteraction.resume()
+    this.renderer.decelerateInteraction.resume()
+
+    if (this.renderer.onEdgePointerUp) {
+      event.stopPropagation()
+      this.renderer.onEdgePointerUp({
+        type: 'edgePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.edge!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    if (this.renderer.onEdgeClick) {
+      event.stopPropagation()
+      this.renderer.onEdgeClick({
+        type: 'edgePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.edge!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    if (this.doubleClick) {
+      this.doubleClick = false
+      this.doubleClickTimeout = undefined
+      if (this.renderer.onEdgeDoubleClick) {
+        event.stopPropagation()
+        this.renderer.onEdgeDoubleClick({
+          type: 'edgePointer',
+          x: local.x,
+          y: local.y,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          target: this.edge!,
+          targetIdx: 0, // TODO
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          shiftKey: event.shiftKey
+        })
+      }
+    }
+  }
+
+  pointerLeave = (event: FederatedPointerEvent) => {
+    if (this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
+      return
+    }
+
+    if (this.renderer.onEdgePointerDown || this.renderer.onEdgeClick || this.renderer.onEdgeDoubleClick || this.renderer.onEdgePointerUp) {
+      this.renderer.container.style.cursor = 'auto'
+    }
+
+    const local = this.renderer.root.toLocal(event.global)
+    this.renderer.onEdgePointerLeave?.({
+      type: 'edgePointer',
+      x: local.x,
+      y: local.y,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      target: this.edge!,
+      targetIdx: 0, // TODO
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey
+    })
+  }
+
+  private clearDoubleClick = () => {
+    this.doubleClickTimeout = undefined
+    this.doubleClick = false
   }
 
   private visible(minX: number, minY: number, maxX: number, maxY: number) {

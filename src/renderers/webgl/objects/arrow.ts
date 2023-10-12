@@ -1,21 +1,23 @@
-import { Sprite } from 'pixi.js'
-import { Renderer } from '..'
+import { Container, Sprite } from 'pixi.js'
+import { ArrowTexture } from '../textures/arrow'
 
 export class Arrow {
   mounted = false
   height: number
   width: number
 
-  private renderer: Renderer
+  private container: Container
+  private arrowTexture: ArrowTexture
   private arrow: Sprite
 
-  constructor(renderer: Renderer) {
-    this.renderer = renderer
-    this.arrow = new Sprite(this.renderer.arrow.texture)
-    this.height = this.renderer.arrow.height
-    this.width = this.renderer.arrow.width
+  constructor(container: Container, arrowTexture: ArrowTexture) {
+    this.container = container
+    this.arrowTexture = arrowTexture
+    this.arrow = new Sprite(this.arrowTexture.texture)
+    this.height = this.arrowTexture.height
+    this.width = this.arrowTexture.width
     this.arrow.anchor.set(0, 0.5)
-    this.arrow.scale.set(1 / this.renderer.arrow.scaleFactor)
+    this.arrow.scale.set(1 / this.arrowTexture.scaleFactor)
   }
 
   update(x: number, y: number, rotation: number, color: string | number, opacity: number) {
@@ -30,7 +32,7 @@ export class Arrow {
 
   mount() {
     if (!this.mounted) {
-      this.renderer.edgesContainer.addChild(this.arrow)
+      this.container.addChild(this.arrow)
       this.mounted = true
     }
 
@@ -39,7 +41,7 @@ export class Arrow {
 
   unmount() {
     if (this.mounted) {
-      this.renderer.edgesContainer.removeChild(this.arrow)
+      this.container.removeChild(this.arrow)
       this.mounted = false
     }
 

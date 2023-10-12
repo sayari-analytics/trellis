@@ -1,19 +1,21 @@
-import { Sprite } from 'pixi.js'
+import { Container, Sprite } from 'pixi.js'
 import * as Graph from '../../..'
-import { Renderer } from '..'
 import { NodeRenderer } from '../node'
+import { CircleTexture } from '../textures/circle'
 
 export class NodeStrokes {
   mounted = false
   radius = 0
-  strokes?: Sprite[] // TODO - make private
+  sprites?: Sprite[] // TODO - make private
 
-  private renderer: Renderer
+  private container: Container
+  private circleTexture: CircleTexture
   private nodeRenderer: NodeRenderer
   private style?: Graph.NodeStyle
 
-  constructor(renderer: Renderer, nodeRenderer: NodeRenderer) {
-    this.renderer = renderer
+  constructor(container: Container, circleTexture: CircleTexture, nodeRenderer: NodeRenderer) {
+    this.container = container
+    this.circleTexture = circleTexture
     this.nodeRenderer = nodeRenderer
   }
 
@@ -26,36 +28,36 @@ export class NodeStrokes {
       if (style?.stroke?.length) {
         // enter
 
-        this.strokes = Array(style.stroke.length)
+        this.sprites = Array(style.stroke.length)
 
         this.radius = radius
 
         for (let i = 0; i < style.stroke.length; i++) {
           this.radius += style.stroke[i].width
-          const circle = new Sprite(this.renderer.circle.texture)
+          const circle = new Sprite(this.circleTexture.texture)
           circle.anchor.set(0.5)
-          circle.scale.set(this.radius / this.renderer.circle.scaleFactor)
+          circle.scale.set(this.radius / this.circleTexture.scaleFactor)
           circle.tint = style.stroke[i].color
           circle.x = x
           circle.y = y
-          this.strokes[i] = circle
+          this.sprites[i] = circle
         }
         if (isMounted) {
           this.mount()
         }
       }
-    } else if (this.strokes && this.style?.stroke) {
+    } else if (this.sprites && this.style?.stroke) {
       // reposition
       this.radius = radius
 
-      for (let i = 0; i < this.strokes.length; i++) {
+      for (let i = 0; i < this.sprites.length; i++) {
         this.radius += this.style.stroke[i].width
-        const scale = this.radius / this.renderer.circle.scaleFactor
-        if (scale !== this.strokes[i].scale.x) {
-          this.strokes[i].scale.set(this.radius / this.renderer.circle.scaleFactor)
+        const scale = this.radius / this.circleTexture.scaleFactor
+        if (scale !== this.sprites[i].scale.x) {
+          this.sprites[i].scale.set(this.radius / this.circleTexture.scaleFactor)
         }
-        this.strokes[i].x = x
-        this.strokes[i].y = y
+        this.sprites[i].x = x
+        this.sprites[i].y = y
       }
     }
 
@@ -65,11 +67,11 @@ export class NodeStrokes {
   }
 
   mount() {
-    if (!this.mounted && this.strokes) {
+    if (!this.mounted && this.sprites) {
       const strokeContainerIndex = this.nodeRenderer.fill.containerIndex
 
-      for (let i = this.strokes.length - 1; i >= 0; i--) {
-        this.renderer.nodesContainer.addChildAt(this.strokes[i], strokeContainerIndex)
+      for (let i = this.sprites.length - 1; i >= 0; i--) {
+        this.container.addChildAt(this.sprites[i], strokeContainerIndex)
       }
       this.mounted = true
     }
@@ -78,9 +80,9 @@ export class NodeStrokes {
   }
 
   unmount() {
-    if (this.mounted && this.strokes) {
-      for (let i = this.strokes.length - 1; i >= 0; i--) {
-        this.renderer.nodesContainer.removeChild(this.strokes[i])
+    if (this.mounted && this.sprites) {
+      for (let i = this.sprites.length - 1; i >= 0; i--) {
+        this.container.removeChild(this.sprites[i])
       }
       this.mounted = false
     }
@@ -92,8 +94,8 @@ export class NodeStrokes {
     this.radius = 0
     this.unmount()
 
-    if (this.strokes) {
-      for (const stroke of this.strokes) {
+    if (this.sprites) {
+      for (const stroke of this.sprites) {
         stroke.destroy()
       }
     }

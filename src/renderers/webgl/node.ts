@@ -1,11 +1,12 @@
 import { FederatedPointerEvent } from 'pixi.js'
-import { MIN_LABEL_ZOOM, MIN_NODE_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer } from '.'
+import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'
 import { positionNodeLabel } from './utils'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { interpolate } from '../../utils'
+import { NodeHitArea } from './interaction/nodeHitArea'
 
 export class NodeRenderer {
   node!: Graph.Node
@@ -15,6 +16,7 @@ export class NodeRenderer {
   label?: Label
   strokes: NodeStrokes
 
+  private hitArea: NodeHitArea
   private renderer: Renderer
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
@@ -26,18 +28,20 @@ export class NodeRenderer {
   private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
+  private dragging = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
-    this.fill = new NodeFill(this.renderer, this)
-    this.strokes = new NodeStrokes(this.renderer, this)
+    this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
+    this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this)
+    this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
     this.update(node)
   }
 
   update(node: Graph.Node) {
     if (this.label === undefined) {
       if (node.label) {
-        this.label = new Label(this.renderer, node.label)
+        this.label = new Label(this.renderer.labelsContainer, node.label)
       }
     } else {
       if (node.label === undefined) {
@@ -60,12 +64,7 @@ export class NodeRenderer {
     const yChanged = y !== this.y
     const radiusChanged = node.radius !== this.node?.radius
 
-    if (
-      (xChanged || yChanged || radiusChanged) &&
-      !this.renderer.dragInteraction.dragging &&
-      this.renderer.animateNodePosition &&
-      this.renderer.renderedNodes
-    ) {
+    if ((xChanged || yChanged || radiusChanged) && !this.dragging && this.renderer.animateNodePosition && this.renderer.renderedNodes) {
       if (xChanged && this.renderer.animateNodePosition) {
         this.interpolateX = interpolate(this.x, x, this.renderer.animateNodePosition)
       }
@@ -125,33 +124,35 @@ export class NodeRenderer {
 
     const isVisible = this.visible()
 
-    // TODO - enable/disable events based on node screen pixel width, not fixed zoom
-    if (isVisible && this.renderer.zoom > MIN_NODE_INTERACTION_ZOOM) {
-      this.fill.circle.eventMode = 'static'
+    // TODO - disable events if node has no event handlers
+    // TODO - disable events if node pixel width < ~5px
+    // TODO - disable events when dragging/scrolling
+    if (isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM) {
+      this.renderer.interactionObjectManager.mount(this.hitArea)
     } else {
-      this.fill.circle.eventMode = 'none'
+      this.renderer.interactionObjectManager.unmount(this.hitArea)
     }
 
     if (isVisible) {
       if (!this.fillMounted) {
-        this.renderer.nodeObjectManager.mount(this.fill)
+        this.fill.mount()
         this.fillMounted = true
       }
     } else {
-      if (!this.fillMounted) {
-        this.renderer.nodeObjectManager.unmount(this.fill)
+      if (this.fillMounted) {
+        this.fill.unmount()
         this.fillMounted = false
       }
     }
 
     if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
       if (!this.strokeMounted) {
-        this.renderer.nodeObjectManager.mount(this.strokes)
+        this.renderer.nodeStrokeObjectManager.mount(this.strokes)
         this.strokeMounted = true
       }
     } else {
       if (this.strokeMounted) {
-        this.renderer.nodeObjectManager.unmount(this.strokes)
+        this.renderer.nodeStrokeObjectManager.unmount(this.strokes)
         this.strokeMounted = false
       }
     }
@@ -173,33 +174,12 @@ export class NodeRenderer {
 
   delete() {
     clearTimeout(this.doubleClickTimeout)
-    this.renderer.nodeObjectManager.delete(this.fill)
-    this.renderer.nodeObjectManager.delete(this.strokes)
+    this.fill.delete()
+    this.renderer.nodeStrokeObjectManager.delete(this.strokes)
+    this.renderer.interactionObjectManager.delete(this.hitArea)
     if (this.label) {
       this.renderer.labelObjectManager.delete(this.label)
     }
-  }
-
-  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
-    this.x = x
-    this.y = y
-
-    this.fill.update(this.x, this.y, radius, node.style)
-    this.strokes.update(this.x, this.y, radius, node.style)
-    if (this.label && node.label) {
-      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
-      this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
-    }
-  }
-
-  private visible() {
-    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    return (
-      this.x + this.strokes.radius >= this.renderer.minX &&
-      this.x - this.strokes.radius <= this.renderer.maxX &&
-      this.y + this.strokes.radius >= this.renderer.minY &&
-      this.y - this.strokes.radius <= this.renderer.maxY
-    )
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
@@ -245,7 +225,8 @@ export class NodeRenderer {
     }
 
     if (this.renderer.onNodePointerDown) {
-      this.renderer.onNodePointerDown?.({
+      event.stopPropagation()
+      this.renderer.onNodePointerDown({
         type: 'nodePointer',
         x: local.x,
         y: local.y,
@@ -262,7 +243,7 @@ export class NodeRenderer {
 
     if (this.renderer.onNodeDrag) {
       event.stopPropagation()
-
+      this.renderer.draggedNode = this
       this.renderer.container.style.cursor = 'move'
       this.nodeMoveXOffset = local.x - (this.node!.x ?? 0)
       this.nodeMoveYOffset = local.y - (this.node!.y ?? 0)
@@ -278,8 +259,8 @@ export class NodeRenderer {
 
     const local = this.renderer.root.toLocal(event.global)
 
-    if (!this.renderer.dragInteraction.dragging) {
-      this.renderer.dragInteraction.dragging = true
+    if (!this.dragging) {
+      this.dragging = true
       this.renderer.onNodeDragStart?.({
         type: 'nodeDrag',
         x: local.x,
@@ -315,18 +296,11 @@ export class NodeRenderer {
   }
 
   pointerUp = (event: FederatedPointerEvent) => {
-    const isDragging = this.renderer.dragInteraction.dragging
+    const isDragging = this.dragging
     const local = this.renderer.root.toLocal(event.global)
 
-    // if (
-    //   this.renderer.onNodeDrag || this.renderer.onNodePointerUp ||
-    //   this.renderer.onNodeClick || this.renderer.onNodeDoubleClick
-    // ) {
-    //   event.stopPropagation()
-    // }
-
     if (this.renderer.onNodeDrag) {
-      event.stopPropagation()
+      this.renderer.draggedNode = undefined
       this.renderer.container.style.cursor = 'auto'
       this.renderer.root.removeEventListener('pointermove', this.pointerMove)
       this.renderer.zoomInteraction.resume()
@@ -335,42 +309,34 @@ export class NodeRenderer {
       this.nodeMoveXOffset = 0
       this.nodeMoveYOffset = 0
 
-      if (this.renderer.dragInteraction.dragging) {
-        this.renderer.dragInteraction.dragging = false
-        this.renderer.onNodeDragEnd?.({
-          type: 'nodeDrag',
-          x: local.x,
-          y: local.y,
-          clientX: event.clientX,
-          clientY: event.clientY,
-          dx: 0,
-          dy: 0,
-          target: this.node!,
-          targetIdx: 0, // TODO
-          altKey: event.altKey,
-          ctrlKey: event.ctrlKey,
-          metaKey: event.metaKey,
-          shiftKey: event.shiftKey
-        })
+      if (isDragging) {
+        if (this.renderer.onNodeDragEnd) {
+          event.stopPropagation()
+          this.renderer.onNodeDragEnd({
+            type: 'nodeDrag',
+            x: local.x,
+            y: local.y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            dx: 0,
+            dy: 0,
+            target: this.node!,
+            targetIdx: 0, // TODO
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey
+          })
+        }
       }
     }
 
-    this.renderer.onNodePointerUp?.({
-      type: 'nodePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.node!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
+    this.renderer.dragInteraction.up(event)
+    this.renderer.decelerateInteraction.up()
 
-    if (!isDragging) {
-      this.renderer.onNodeClick?.({
+    if (this.renderer.onNodePointerUp) {
+      event.stopPropagation()
+      this.renderer.onNodePointerUp({
         type: 'nodePointer',
         x: local.x,
         y: local.y,
@@ -383,10 +349,12 @@ export class NodeRenderer {
         metaKey: event.metaKey,
         shiftKey: event.shiftKey
       })
-      if (this.doubleClick) {
-        this.doubleClick = false
-        clearTimeout(this.doubleClickTimeout)
-        this.renderer.onNodeDoubleClick?.({
+    }
+
+    if (!isDragging) {
+      if (this.renderer.onNodeClick) {
+        event.stopPropagation()
+        this.renderer.onNodeClick({
           type: 'nodePointer',
           x: local.x,
           y: local.y,
@@ -400,7 +368,30 @@ export class NodeRenderer {
           shiftKey: event.shiftKey
         })
       }
+
+      if (this.doubleClick) {
+        this.doubleClick = false
+        clearTimeout(this.doubleClickTimeout)
+        if (this.renderer.onNodeDoubleClick) {
+          event.stopPropagation()
+          this.renderer.onNodeDoubleClick({
+            type: 'nodePointer',
+            x: local.x,
+            y: local.y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            target: this.node!,
+            targetIdx: 0, // TODO
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey
+          })
+        }
+      }
     }
+
+    this.dragging = false
   }
 
   pointerLeave = (event: FederatedPointerEvent) => {
@@ -435,46 +426,31 @@ export class NodeRenderer {
     })
   }
 
-  clearDoubleClick = () => {
+  private clearDoubleClick = () => {
     this.doubleClickTimeout = undefined
     this.doubleClick = false
   }
+
+  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
+    this.x = x
+    this.y = y
+
+    this.fill.update(this.x, this.y, radius, node.style)
+    this.strokes.update(this.x, this.y, radius, node.style)
+    if (this.label && node.label) {
+      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
+      this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
+    }
+    this.hitArea.update(x, y, radius)
+  }
+
+  private visible() {
+    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
+    return (
+      this.x + this.strokes.radius >= this.renderer.minX &&
+      this.x - this.strokes.radius <= this.renderer.maxX &&
+      this.y + this.strokes.radius >= this.renderer.minY &&
+      this.y - this.strokes.radius <= this.renderer.maxY
+    )
+  }
 }
-
-// class Circle implements IHitArea {
-
-//   x: number
-//   y: number
-//   minX: number
-//   minY: number
-//   maxX: number
-//   maxY: number
-//   radius: number
-//   // squaredDistance: number
-
-//   constructor(x: number, y: number, radius: number) {
-//     this.x = x
-//     this.y = y
-//     this.minX = x - radius
-//     this.minY = y - radius
-//     this.maxX = x + radius
-//     this.maxY = y + radius
-//     this.radius = radius
-//     // this.squaredDistance = Math.pow(radius, 2)
-//   }
-
-//   update(x: number, y: number, radius: number) {
-//     this.x = x
-//     this.y = y
-//     this.minX = x - radius
-//     this.minY = y - radius
-//     this.maxX = x + radius
-//     this.maxY = y + radius
-//     this.radius = radius
-//   }
-
-//   contains(x: number, y: number): boolean {
-//     return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY
-//     // return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2) < this.squaredDistance
-//   }
-// }
