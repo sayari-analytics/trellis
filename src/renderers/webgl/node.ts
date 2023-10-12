@@ -18,7 +18,7 @@ export class NodeRenderer {
 
   private hitArea: NodeHitArea
   private renderer: Renderer
-  private doubleClickTimeout: number | undefined
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0

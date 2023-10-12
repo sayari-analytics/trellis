@@ -1,6 +1,6 @@
 {
   "name": "@sayari/trellis",
-  "version": "0.7.0-rc.11",
+  "version": "0.7.0-rc.12",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "main": "./index.js",
   "exports": "./index.js",
@@ -8,7 +8,8 @@
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest --reporter verbose",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
@@ -63,6 +64,7 @@
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "happy-dom": "^12.1.2",
     "parcel": "^2.9.3",
     "prettier": "^3.0.3",
     "process": "^0.11.10",
@@ -73,7 +75,9 @@
     "react-resize-detector": "^5.2.0",
     "rxjs": "^6.5.5",
     "ts-loader": "^6.2.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9",
+    "vitest": "^0.34.4"
   },
   "keywords": [
     "graph",

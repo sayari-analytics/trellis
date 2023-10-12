@@ -14,7 +14,7 @@ import * as NativeZoomBindings from './bindings/native/zoom'
 import * as Image from './renderers/image'
 import * as utils from '.'
 
-(window as any).trellis = {
+;(window as any).trellis = {
   layout: { Cluster, Force, Hierarchy, Fisheye, Collide, Components },
   renderers: { WebGL, Image },
   bindings: {

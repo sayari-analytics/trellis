@@ -1,6 +1,5 @@
 import { TWO_PI } from './renderers/webgl/utils'
 
-
 export type Node = {
   id: string
   radius: number

@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js-legacy'
 import { InternalRenderer } from '..'
-import { RectangleAnnotation, TextAnnotation } from '../../../trellis'
+import { RectangleAnnotation, TextAnnotation } from '../../..'
 import { clientPositionFromEvent, colorToNumber, pointerKeysFromEvent } from '../utils'
 
 const DEFAULT_PADDING = 4
@@ -77,7 +77,7 @@ export class RectangleAnnotationRenderer {
 
   private moveOffsetX = 0
   private moveOffsetY = 0
-  private doubleClickTimeout: number | undefined
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
 
   constructor(renderer: InternalRenderer<any, any>, annotation: TextAnnotation | RectangleAnnotation) {
