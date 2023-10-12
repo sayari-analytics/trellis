@@ -110,45 +110,45 @@ const options: Renderer.Options = {
   // onViewportDragEnd: (event: Renderer.ViewportDragEvent | Renderer.ViewportDragDecelerateEvent) => {
   //   console.log('viewport drag end', `x: ${event.dx}, y: ${event.dy}`)
   // },
-  // onViewportPointerUp: (event: Renderer.ViewportPointerEvent) => {
-  //   console.log('viewport pointer up', `x: ${event.x}, y: ${event.y}`)
-  // },
-  onViewportClick: (event: Renderer.ViewportPointerEvent) => {
-    console.log('viewport click', `x: ${event.x}, y: ${event.y}`)
-    // if (options.x === 0 && options.y === 0 && options.zoom === 1) {
-    //   options.x = 1000
-    //   options.y = -1000
-    //   options.zoom = 0.2
-    // } else {
-    //   options.x = 0
-    //   options.y = 0
-    //   options.zoom = 1
-    // }
-    // renderer.update({ nodes, edges, options })
-
-    // if (options.width === 1400 && options.height === 1000) {
-    //   options.width = 700
-    //   options.height = 500
-    // } else {
-    //   options.width = 1400
-    //   options.height = 1000
-    // }
-    // renderer.update({ nodes, edges, options })
-
-    // force({ nodes, edges }).then((graph) => {
-    //   nodes = graph.nodes
-
-    //   const { x, y, zoom } = Graph.boundsToViewport(
-    //     Graph.getSelectionBounds(nodes, 40),
-    //     { width: options.width, height: options.height }
-    //   )
-    //   options.x = x
-    //   options.y = y
-    //   options.zoom = zoom
-
-    //   renderer.update({ nodes, edges, options: options })
-    // })
+  onViewportPointerUp: (event: Renderer.ViewportPointerEvent) => {
+    console.log('viewport pointer up', `x: ${event.x}, y: ${event.y}`)
   },
+  // onViewportClick: (event: Renderer.ViewportPointerEvent) => {
+  //   console.log('viewport click', `x: ${event.x}, y: ${event.y}`)
+  //   // if (options.x === 0 && options.y === 0 && options.zoom === 1) {
+  //   //   options.x = 1000
+  //   //   options.y = -1000
+  //   //   options.zoom = 0.2
+  //   // } else {
+  //   //   options.x = 0
+  //   //   options.y = 0
+  //   //   options.zoom = 1
+  //   // }
+  //   // renderer.update({ nodes, edges, options })
+
+  //   // if (options.width === 1400 && options.height === 1000) {
+  //   //   options.width = 700
+  //   //   options.height = 500
+  //   // } else {
+  //   //   options.width = 1400
+  //   //   options.height = 1000
+  //   // }
+  //   // renderer.update({ nodes, edges, options })
+
+  //   // force({ nodes, edges }).then((graph) => {
+  //   //   nodes = graph.nodes
+
+  //   //   const { x, y, zoom } = Graph.boundsToViewport(
+  //   //     Graph.getSelectionBounds(nodes, 40),
+  //   //     { width: options.width, height: options.height }
+  //   //   )
+  //   //   options.x = x
+  //   //   options.y = y
+  //   //   options.zoom = zoom
+
+  //   //   renderer.update({ nodes, edges, options: options })
+  //   // })
+  // },
   // onViewportDoubleClick: (event: Renderer.ViewportPointerEvent) => {
   //   console.log('viewport double click', `x: ${event.x}, y: ${event.y}`)
   // },
@@ -185,9 +185,9 @@ const options: Renderer.Options = {
   // onNodeDragEnd: (event: Renderer.NodeDragEvent) => {
   //   console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
   // },
-  // onNodePointerUp: (event: Renderer.NodePointerEvent) => {
-  //   console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
-  // },
+  onNodePointerUp: (event: Renderer.NodePointerEvent) => {
+    console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
+  },
   // onNodeClick: (event: Renderer.NodePointerEvent) => {
   //   console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
   //   // const graph = hierarchy(event.target.id, { nodes, edges, options: { separation: (a, b) => 1, nodeSize: [30, 100] } })

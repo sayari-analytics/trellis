@@ -143,19 +143,21 @@ export class Renderer {
   nodeRenderersById: Record<string, NodeRenderer> = {}
   edges: Graph.Edge[] = []
   edgeRenderersById: Record<string, EdgeRenderer> = {}
-  #doubleClickTimeout?: number
-  #doubleClick = false
-  #renderedPosition = false
   renderedNodes = false
-  #interpolateX?: (dt: number) => { value: number; done: boolean }
-  #interpolateY?: (dt: number) => { value: number; done: boolean }
-  #interpolateZoom?: (dt: number) => { value: number; done: boolean }
   dragInertia = defaultOptions.dragInertia
   animateViewport: number | false = defaultOptions.animateViewport
   animateNodePosition: number | false = defaultOptions.animateNodePosition
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   circle: CircleTexture
   arrow: ArrowTexture
+
+  private doubleClick = false
+  private doubleClickTimeout?: number
+  private renderedPosition = false
+  private interpolateX?: (dt: number) => { value: number; done: boolean }
+  private interpolateY?: (dt: number) => { value: number; done: boolean }
+  private interpolateZoom?: (dt: number) => { value: number; done: boolean }
+  private pointerIsDown = false
 
   onViewportPointerEnter?: (event: ViewportPointerEvent) => void
   onViewportPointerDown?: (event: ViewportPointerEvent) => void
@@ -331,23 +333,23 @@ export class Renderer {
       !this.decelerateInteraction.decelerating &&
       !this.zoomInteraction.zooming &&
       this.animateViewport &&
-      this.#renderedPosition
+      this.renderedPosition
     ) {
       if (xChanged) {
-        this.#interpolateX = interpolate(this.x, x, this.animateViewport)
+        this.interpolateX = interpolate(this.x, x, this.animateViewport)
       }
       if (yChanged) {
-        this.#interpolateY = interpolate(this.y, y, this.animateViewport)
+        this.interpolateY = interpolate(this.y, y, this.animateViewport)
       }
       if (zoomChanged) {
-        this.#interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
+        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
       }
     } else {
       this.setPosition(x, y, zoom)
-      this.#renderedPosition = true
-      this.#interpolateX = undefined
-      this.#interpolateY = undefined
-      this.#interpolateZoom = undefined
+      this.renderedPosition = true
+      this.interpolateX = undefined
+      this.interpolateY = undefined
+      this.interpolateZoom = undefined
     }
 
     const shouldUpdateNodes = this.nodes !== nodes && !(this.nodes.length === 0 && nodes.length === 0)
@@ -443,7 +445,7 @@ export class Renderer {
   }
 
   delete() {
-    clearTimeout(this.#doubleClickTimeout)
+    clearTimeout(this.doubleClickTimeout)
     this.app.destroy(true, true)
   }
 
@@ -458,30 +460,30 @@ export class Renderer {
     let _y: number | undefined
     let _zoom: number | undefined
 
-    if (this.#interpolateX) {
-      const { value, done } = this.#interpolateX(dt)
+    if (this.interpolateX) {
+      const { value, done } = this.interpolateX(dt)
       _x = value
 
       if (done) {
-        this.#interpolateX = undefined
+        this.interpolateX = undefined
       }
     }
 
-    if (this.#interpolateY) {
-      const { value, done } = this.#interpolateY(dt)
+    if (this.interpolateY) {
+      const { value, done } = this.interpolateY(dt)
       _y = value
 
       if (done) {
-        this.#interpolateY = undefined
+        this.interpolateY = undefined
       }
     }
 
-    if (this.#interpolateZoom) {
-      const { value, done } = this.#interpolateZoom(dt)
+    if (this.interpolateZoom) {
+      const { value, done } = this.interpolateZoom(dt)
       _zoom = value
 
       if (done) {
-        this.#interpolateZoom = undefined
+        this.interpolateZoom = undefined
       }
     }
 
@@ -540,11 +542,13 @@ export class Renderer {
   }
 
   private pointerDown = (event: FederatedPointerEvent) => {
+    this.pointerIsDown = true
+
     if (this.onViewportDoubleClick) {
-      if (this.#doubleClickTimeout === undefined) {
-        this.#doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
+      if (this.doubleClickTimeout === undefined) {
+        this.doubleClickTimeout = setTimeout(this.clearDoubleClick, 500)
       } else {
-        this.#doubleClick = true
+        this.doubleClick = true
       }
     }
 
@@ -591,6 +595,11 @@ export class Renderer {
   // TODO - don't fire pointer up if it's handled by a node/edge pointerUp handler
   // but still complete drag/decelarate event
   private pointerUp = (event: FederatedPointerEvent) => {
+    if (!this.pointerIsDown) {
+      return
+    }
+    this.pointerIsDown = false
+
     const isDragging = this.dragInteraction.dragging
     this.dragInteraction.up(event)
     this.decelerateInteraction.up()
@@ -624,9 +633,9 @@ export class Renderer {
         shiftKey: event.shiftKey
       })
 
-      if (this.#doubleClick) {
-        this.#doubleClick = false
-        this.#doubleClickTimeout = undefined
+      if (this.doubleClick) {
+        this.doubleClick = false
+        this.doubleClickTimeout = undefined
         this.onViewportDoubleClick?.({
           type: 'viewportPointer',
           x,
@@ -660,8 +669,8 @@ export class Renderer {
   }
 
   private clearDoubleClick = () => {
-    this.#doubleClickTimeout = undefined
-    this.#doubleClick = false
+    this.doubleClickTimeout = undefined
+    this.doubleClick = false
   }
 }
 
