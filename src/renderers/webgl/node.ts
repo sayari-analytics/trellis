@@ -28,6 +28,7 @@ export class NodeRenderer {
   private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
+  private dragging = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -63,12 +64,7 @@ export class NodeRenderer {
     const yChanged = y !== this.y
     const radiusChanged = node.radius !== this.node?.radius
 
-    if (
-      (xChanged || yChanged || radiusChanged) &&
-      !this.renderer.dragInteraction.dragging &&
-      this.renderer.animateNodePosition &&
-      this.renderer.renderedNodes
-    ) {
+    if ((xChanged || yChanged || radiusChanged) && !this.dragging && this.renderer.animateNodePosition && this.renderer.renderedNodes) {
       if (xChanged && this.renderer.animateNodePosition) {
         this.interpolateX = interpolate(this.x, x, this.renderer.animateNodePosition)
       }
@@ -262,8 +258,8 @@ export class NodeRenderer {
 
     const local = this.renderer.root.toLocal(event.global)
 
-    if (!this.renderer.dragInteraction.dragging) {
-      this.renderer.dragInteraction.dragging = true
+    if (!this.dragging) {
+      this.dragging = true
       this.renderer.onNodeDragStart?.({
         type: 'nodeDrag',
         x: local.x,
@@ -299,7 +295,7 @@ export class NodeRenderer {
   }
 
   pointerUp = (event: FederatedPointerEvent) => {
-    const isDragging = this.renderer.dragInteraction.dragging
+    const isDragging = this.dragging
     const local = this.renderer.root.toLocal(event.global)
 
     if (this.renderer.onNodeDrag) {
@@ -311,8 +307,7 @@ export class NodeRenderer {
       this.nodeMoveXOffset = 0
       this.nodeMoveYOffset = 0
 
-      if (this.renderer.dragInteraction.dragging) {
-        this.renderer.dragInteraction.dragging = false
+      if (isDragging) {
         if (this.renderer.onNodeDragEnd) {
           event.stopPropagation()
           this.renderer.onNodeDragEnd({
@@ -333,6 +328,9 @@ export class NodeRenderer {
         }
       }
     }
+
+    this.renderer.dragInteraction.up(event)
+    this.renderer.decelerateInteraction.up()
 
     if (this.renderer.onNodePointerUp) {
       event.stopPropagation()
@@ -390,6 +388,8 @@ export class NodeRenderer {
         }
       }
     }
+
+    this.dragging = false
   }
 
   pointerLeave = (event: FederatedPointerEvent) => {

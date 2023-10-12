@@ -110,9 +110,9 @@ const options: Renderer.Options = {
   // onViewportDragEnd: (event: Renderer.ViewportDragEvent | Renderer.ViewportDragDecelerateEvent) => {
   //   console.log('viewport drag end', `x: ${event.dx}, y: ${event.dy}`)
   // },
-  onViewportPointerUp: (event: Renderer.ViewportPointerEvent) => {
-    console.log('viewport pointer up', `x: ${event.x}, y: ${event.y}`)
-  },
+  // onViewportPointerUp: (event: Renderer.ViewportPointerEvent) => {
+  //   console.log('viewport pointer up', `x: ${event.x}, y: ${event.y}`)
+  // },
   // onViewportClick: (event: Renderer.ViewportPointerEvent) => {
   //   console.log('viewport click', `x: ${event.x}, y: ${event.y}`)
   //   // if (options.x === 0 && options.y === 0 && options.zoom === 1) {
@@ -175,19 +175,19 @@ const options: Renderer.Options = {
   // onNodeDragStart: (event: Renderer.NodeDragEvent) => {
   //   console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
   // },
-  onNodeDrag: (event: Renderer.NodeDragEvent) => {
-    console.log('node drag', `x: ${event.x}, y: ${event.y}`)
-    nodes = nodes.map((node) =>
-      node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
-    )
-    renderer.update({ nodes, edges, options })
-  },
+  // onNodeDrag: (event: Renderer.NodeDragEvent) => {
+  //   console.log('node drag', `x: ${event.x}, y: ${event.y}`)
+  //   nodes = nodes.map((node) =>
+  //     node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
+  //   )
+  //   renderer.update({ nodes, edges, options })
+  // },
   // onNodeDragEnd: (event: Renderer.NodeDragEvent) => {
   //   console.log('node drag end', `x: ${event.x}, y: ${event.y}`)
   // },
-  onNodePointerUp: (event: Renderer.NodePointerEvent) => {
-    console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
-  },
+  // onNodePointerUp: (event: Renderer.NodePointerEvent) => {
+  //   console.log('node pointer up', `x: ${event.x}, y: ${event.y}`)
+  // },
   // onNodeClick: (event: Renderer.NodePointerEvent) => {
   //   console.log('node pointer click', `x: ${event.x}, y: ${event.y}`)
   //   // const graph = hierarchy(event.target.id, { nodes, edges, options: { separation: (a, b) => 1, nodeSize: [30, 100] } })
