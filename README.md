@@ -57,30 +57,8 @@ npm run dev
 
 ### Deployment
 
-prerelease
+All deployments must be run from the master branch with a clean working directory.
 
 ```bash
-npm run build
-
-npm version [premajor|preminor|prepatch|prerelease] --preid rc
-
-git push --follow-tags
-
-npm run copy
-
-npm publish dist/ --tag next
-```
-
-release
-
-```bash
-npm run build
-
-npm version [major|minor|patch]
-
-git push --follow-tags
-
-npm run copy
-
-npm publish dist/
+./deploy.sh [prerelease|patch|minor|major]
 ```
