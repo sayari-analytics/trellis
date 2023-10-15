@@ -13,6 +13,7 @@ import { Font } from './textures/font'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
+import { TextIconTexture } from './textures/textIcon'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -101,6 +102,7 @@ export const defaultOptions = {
 // TODO - make configurable
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
+export const MIN_NODE_ICON_ZOOM = 0.3
 export const MIN_INTERACTION_ZOOM = 0.15
 export const MIN_EDGES_ZOOM = 0.1
 export const MIN_ZOOM = 3
@@ -150,10 +152,11 @@ export class Renderer {
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   circle: CircleTexture
   arrow: ArrowTexture
+  textIcon: TextIconTexture
   draggedNode?: NodeRenderer
 
   private doubleClick = false
-  private doubleClickTimeout?: number
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private renderedPosition = false
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
@@ -226,6 +229,7 @@ export class Renderer {
     this.app.stage.addChild(this.root)
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
+    this.textIcon = new TextIconTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer

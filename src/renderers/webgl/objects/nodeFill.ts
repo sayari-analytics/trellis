@@ -6,7 +6,6 @@ const DEFAULT_NODE_FILL = 0xaaaaaa
 
 export class NodeFill {
   mounted = false
-  containerIndex: number
   fill: Sprite // TODO - make private
 
   private container: Container
@@ -22,7 +21,6 @@ export class NodeFill {
     this.fill.visible = false
 
     this.container.addChild(this.fill)
-    this.containerIndex = this.container.getChildIndex(this.fill)
   }
 
   update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
@@ -70,5 +68,9 @@ export class NodeFill {
     this.fill.destroy()
 
     return undefined
+  }
+
+  getContainerIndex() {
+    return this.container.getChildIndex(this.fill)
   }
 }

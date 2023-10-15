@@ -1,7 +1,7 @@
 import { Container, Sprite } from 'pixi.js'
-import * as Graph from '../../..'
-import { NodeRenderer } from '../node'
 import { CircleTexture } from '../textures/circle'
+import { NodeFill } from './nodeFill'
+import * as Graph from '../../..'
 
 export class NodeStrokes {
   mounted = false
@@ -10,13 +10,13 @@ export class NodeStrokes {
 
   private container: Container
   private circleTexture: CircleTexture
-  private nodeRenderer: NodeRenderer
+  private fill: NodeFill
   private style?: Graph.NodeStyle
 
-  constructor(container: Container, circleTexture: CircleTexture, nodeRenderer: NodeRenderer) {
+  constructor(container: Container, circleTexture: CircleTexture, fill: NodeFill) {
     this.container = container
     this.circleTexture = circleTexture
-    this.nodeRenderer = nodeRenderer
+    this.fill = fill
   }
 
   update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
@@ -68,7 +68,7 @@ export class NodeStrokes {
 
   mount() {
     if (!this.mounted && this.sprites) {
-      const strokeContainerIndex = this.nodeRenderer.fill.containerIndex
+      const strokeContainerIndex = this.fill.getContainerIndex()
 
       for (let i = this.sprites.length - 1; i >= 0; i--) {
         this.container.addChildAt(this.sprites[i], strokeContainerIndex)

@@ -1,12 +1,13 @@
 import { FederatedPointerEvent } from 'pixi.js'
-import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer } from '.'
+import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer, MIN_NODE_ICON_ZOOM } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'
 import { positionNodeLabel } from './utils'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
-import { interpolate } from '../../utils'
+import { Icon } from './objects/icon'
 import { NodeHitArea } from './interaction/nodeHitArea'
+import { interpolate } from '../../utils'
 
 export class NodeRenderer {
   node!: Graph.Node
@@ -14,6 +15,7 @@ export class NodeRenderer {
   y!: number
   fill: NodeFill
   label?: Label
+  icon?: Icon
   strokes: NodeStrokes
 
   private hitArea: NodeHitArea
@@ -28,12 +30,13 @@ export class NodeRenderer {
   private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
+  private iconMounted = false
   private dragging = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
     this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
-    this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this)
+    this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
     this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
     this.update(node)
   }
@@ -48,6 +51,18 @@ export class NodeRenderer {
         this.renderer.labelObjectManager.delete(this.label)
         this.labelMounted = false
         this.label = undefined
+      }
+    }
+
+    if (this.icon === undefined) {
+      if (node.style?.icon) {
+        this.icon = new Icon(this.renderer.nodesContainer, this.renderer.textIcon, this.fill, node.style.icon)
+      }
+    } else {
+      if (node.style?.icon === undefined) {
+        this.icon.delete()
+        this.iconMounted = false
+        this.icon = undefined
       }
     }
 
@@ -170,6 +185,20 @@ export class NodeRenderer {
         }
       }
     }
+
+    if (this.icon) {
+      if (isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
+        if (!this.iconMounted) {
+          this.icon.mount()
+          this.iconMounted = true
+        }
+      } else {
+        if (this.iconMounted) {
+          this.icon.unmount()
+          this.iconMounted = false
+        }
+      }
+    }
   }
 
   delete() {
@@ -179,6 +208,9 @@ export class NodeRenderer {
     this.renderer.interactionObjectManager.delete(this.hitArea)
     if (this.label) {
       this.renderer.labelObjectManager.delete(this.label)
+    }
+    if (this.icon) {
+      this.icon.delete()
     }
   }
 
@@ -440,6 +472,9 @@ export class NodeRenderer {
     if (this.label && node.label) {
       const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
       this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
+    }
+    if (this.icon && node.style?.icon) {
+      this.icon.update(this.x, this.y, node.style.icon)
     }
     this.hitArea.update(x, y, radius)
   }

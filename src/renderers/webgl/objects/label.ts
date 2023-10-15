@@ -110,10 +110,7 @@ export class Label {
         this.text.text = label
       } else {
         const isMounted = this.mounted
-        this.text.destroy()
-        if (isMounted) {
-          this.unmount()
-        }
+        this.delete()
         this.text = new Text(label, TEXT_OUTLINE_STYLE)
         this.fontSize = undefined
         this.position = undefined
@@ -126,10 +123,7 @@ export class Label {
     } else {
       if (isASCII(label)) {
         const isMounted = this.mounted
-        this.text.destroy()
-        if (isMounted) {
-          this.unmount()
-        }
+        this.delete()
         this.text = new BitmapText(label, { fontName: 'Label' })
         this.fontSize = undefined
         this.position = undefined

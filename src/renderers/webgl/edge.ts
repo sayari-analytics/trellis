@@ -34,7 +34,7 @@ export class EdgeRenderer {
   private lineMounted = false
   private forwardArrowMounted = false
   private reverseArrowMounted = false
-  private doubleClickTimeout: number | undefined
+  private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
 
   constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {

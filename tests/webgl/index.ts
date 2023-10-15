@@ -32,13 +32,15 @@ const LIGHT_PURPLE = '#CAD'
 const NODE_STYLE: Graph.NodeStyle = {
   color: PURPLE,
   stroke: [{ width: 2, color: LIGHT_PURPLE }],
-  label: { position: 'bottom' }
+  label: { position: 'bottom' },
+  icon: { type: 'textIcon', text: 'T', family: 'sans-serif', size: 14, color: '#fff', weight: '400' }
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: '#f66',
   stroke: [{ width: 2, color: '#fcc' }],
-  label: { position: 'bottom' }
+  label: { position: 'bottom' },
+  icon: { type: 'textIcon', text: 'L', family: 'sans-serif', size: 14, color: '#fff', weight: '400' }
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
@@ -59,7 +61,7 @@ let nodes: Graph.Node[] = []
 let edges: Graph.Edge[] = []
 const step = 50
 const coordinates: Record<number, Set<number>> = {}
-for (const [_x, _y] of sampleCoordinatePlane(1000, step, 0.5)) {
+for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
   const x = Math.round(_x)
   const y = Math.round(_y)
   nodes.push({ id: `${x}|${y}`, x: _x, y: _y, radius: 10, label: `${x}|${y}`, style: NODE_STYLE })
@@ -88,7 +90,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const options: Renderer.Options = {
   x: 0,
   y: 0,
-  zoom: 0.5,
+  zoom: 1,
   minZoom: 0.025,
   width: 1250, // 1700,
   height: 650, // 940,
@@ -102,7 +104,7 @@ const options: Renderer.Options = {
   //   console.log('viewport drag start', `x: ${event.dx}, y: ${event.dy}`)
   // },
   onViewportDrag: (event: Renderer.ViewportDragEvent | Renderer.ViewportDragDecelerateEvent) => {
-    console.log('viewport drag', `x: ${event.dx}, y: ${event.dy}`)
+    // console.log('viewport drag', `x: ${event.dx}, y: ${event.dy}`)
     options.x! += event.dx
     options.y! += event.dy
     renderer.update({ nodes, edges, options })
@@ -176,7 +178,7 @@ const options: Renderer.Options = {
   //   console.log('node drag start', `x: ${event.x}, y: ${event.y}`)
   // },
   onNodeDrag: (event: Renderer.NodeDragEvent) => {
-    console.log('node drag', `x: ${event.x}, y: ${event.y}`)
+    // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
     )
