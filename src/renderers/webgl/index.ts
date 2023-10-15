@@ -135,9 +135,10 @@ export class Renderer {
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
   nodeStrokeObjectManager = new ObjectManager(1000)
-  edgeObjectManager = new ObjectManager(3000)
+  nodeIconObjectManager = new ObjectManager(1000)
+  edgeObjectManager = new ObjectManager(2000)
   edgeArrowObjectManager = new ObjectManager(1000)
-  labelObjectManager = new ObjectManager(3000)
+  labelObjectManager = new ObjectManager(2000)
   interactionObjectManager = new ObjectManager(2000)
   font = new Font()
   eventSystem: EventSystem
@@ -513,6 +514,7 @@ export class Renderer {
     }
 
     this.nodeStrokeObjectManager.render()
+    this.nodeIconObjectManager.render()
     this.edgeObjectManager.render()
     this.edgeArrowObjectManager.render()
     this.labelObjectManager.render()

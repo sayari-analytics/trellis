@@ -189,12 +189,12 @@ export class NodeRenderer {
     if (this.icon) {
       if (isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
         if (!this.iconMounted) {
-          this.icon.mount()
+          this.renderer.nodeIconObjectManager.mount(this.icon)
           this.iconMounted = true
         }
       } else {
         if (this.iconMounted) {
-          this.icon.unmount()
+          this.renderer.nodeIconObjectManager.unmount(this.icon)
           this.iconMounted = false
         }
       }
@@ -210,7 +210,7 @@ export class NodeRenderer {
       this.renderer.labelObjectManager.delete(this.label)
     }
     if (this.icon) {
-      this.icon.delete()
+      this.renderer.nodeIconObjectManager.delete(this.icon)
     }
   }
 
