@@ -24,6 +24,8 @@ export class NodeRenderer {
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
+  private dragStart = false
+  private pointerLeftBeforeDragComplete = false
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
   private interpolateRadius?: (dt: number) => { value: number; done: boolean }
@@ -31,7 +33,6 @@ export class NodeRenderer {
   private strokeMounted = false
   private labelMounted = false
   private iconMounted = false
-  private dragging = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -79,7 +80,12 @@ export class NodeRenderer {
     const yChanged = y !== this.y
     const radiusChanged = node.radius !== this.node?.radius
 
-    if ((xChanged || yChanged || radiusChanged) && !this.dragging && this.renderer.animateNodePosition && this.renderer.renderedNodes) {
+    if (
+      (xChanged || yChanged || radiusChanged) &&
+      this.renderer.draggedNode !== this &&
+      this.renderer.animateNodePosition &&
+      this.renderer.renderedNodes
+    ) {
       if (xChanged && this.renderer.animateNodePosition) {
         this.interpolateX = interpolate(this.x, x, this.renderer.animateNodePosition)
       }
@@ -215,9 +221,20 @@ export class NodeRenderer {
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
-    if (this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
+    if (this.renderer.draggedNode === this) {
+      this.pointerLeftBeforeDragComplete = false
+    }
+
+    if (
+      this.renderer.hoveredNode ||
+      this.renderer.draggedNode ||
+      this.renderer.dragInteraction.dragging ||
+      this.renderer.zoomInteraction.zooming
+    ) {
       return
     }
+
+    this.renderer.hoveredNode = this
 
     if (
       this.renderer.onNodePointerDown ||
@@ -229,20 +246,22 @@ export class NodeRenderer {
       this.renderer.container.style.cursor = 'pointer'
     }
 
-    const local = this.renderer.root.toLocal(event.global)
-    this.renderer.onNodePointerEnter?.({
-      type: 'nodePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.node!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
+    if (this.renderer.onNodePointerEnter) {
+      const local = this.renderer.root.toLocal(event.global)
+      this.renderer.onNodePointerEnter({
+        type: 'nodePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.node!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
   }
 
   pointerDown = (event: FederatedPointerEvent) => {
@@ -275,10 +294,11 @@ export class NodeRenderer {
 
     if (this.renderer.onNodeDrag) {
       event.stopPropagation()
-      this.renderer.draggedNode = this
       this.renderer.container.style.cursor = 'move'
       this.nodeMoveXOffset = local.x - (this.node!.x ?? 0)
       this.nodeMoveYOffset = local.y - (this.node!.y ?? 0)
+      this.renderer.draggedNode = this
+      this.dragStart = true
       this.renderer.root.addEventListener('pointermove', this.pointerMove)
       this.renderer.zoomInteraction.pause()
       this.renderer.dragInteraction.pause()
@@ -291,8 +311,7 @@ export class NodeRenderer {
 
     const local = this.renderer.root.toLocal(event.global)
 
-    if (!this.dragging) {
-      this.dragging = true
+    if (this.dragStart) {
       this.renderer.onNodeDragStart?.({
         type: 'nodeDrag',
         x: local.x,
@@ -308,6 +327,7 @@ export class NodeRenderer {
         metaKey: event.metaKey,
         shiftKey: event.shiftKey
       })
+      this.dragStart = false
     }
 
     this.renderer.onNodeDrag?.({
@@ -328,11 +348,9 @@ export class NodeRenderer {
   }
 
   pointerUp = (event: FederatedPointerEvent) => {
-    const isDragging = this.dragging
     const local = this.renderer.root.toLocal(event.global)
 
     if (this.renderer.onNodeDrag) {
-      this.renderer.draggedNode = undefined
       this.renderer.container.style.cursor = 'auto'
       this.renderer.root.removeEventListener('pointermove', this.pointerMove)
       this.renderer.zoomInteraction.resume()
@@ -341,7 +359,7 @@ export class NodeRenderer {
       this.nodeMoveXOffset = 0
       this.nodeMoveYOffset = 0
 
-      if (isDragging) {
+      if (this.renderer.draggedNode === this) {
         if (this.renderer.onNodeDragEnd) {
           event.stopPropagation()
           this.renderer.onNodeDragEnd({
@@ -383,7 +401,7 @@ export class NodeRenderer {
       })
     }
 
-    if (!isDragging) {
+    if (this.renderer.draggedNode !== this) {
       if (this.renderer.onNodeClick) {
         event.stopPropagation()
         this.renderer.onNodeClick({
@@ -423,11 +441,20 @@ export class NodeRenderer {
       }
     }
 
-    this.dragging = false
+    this.renderer.draggedNode = undefined
+
+    if (this.pointerLeftBeforeDragComplete) {
+      this.pointerLeave(event)
+    }
   }
 
   pointerLeave = (event: FederatedPointerEvent) => {
-    if (this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
+    if (this.renderer.hoveredNode !== this) {
+      return
+    }
+
+    if (this.renderer.draggedNode === this) {
+      this.pointerLeftBeforeDragComplete = true
       return
     }
 
@@ -442,20 +469,25 @@ export class NodeRenderer {
       this.renderer.container.style.cursor = 'auto'
     }
 
-    const local = this.renderer.root.toLocal(event.global)
-    this.renderer.onNodePointerLeave?.({
-      type: 'nodePointer',
-      x: local.x,
-      y: local.y,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      target: this.node!,
-      targetIdx: 0, // TODO
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey,
-      metaKey: event.metaKey,
-      shiftKey: event.shiftKey
-    })
+    if (this.renderer.onNodePointerLeave) {
+      const local = this.renderer.root.toLocal(event.global)
+      this.renderer.onNodePointerLeave({
+        type: 'nodePointer',
+        x: local.x,
+        y: local.y,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        target: this.node!,
+        targetIdx: 0, // TODO
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey
+      })
+    }
+
+    this.renderer.hoveredNode = undefined
+    this.pointerLeftBeforeDragComplete = false
   }
 
   private clearDoubleClick = () => {

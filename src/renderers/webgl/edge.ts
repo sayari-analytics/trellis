@@ -203,7 +203,7 @@ export class EdgeRenderer {
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
-    if (this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
+    if (this.renderer.draggedNode || this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
       return
     }
 
@@ -322,7 +322,7 @@ export class EdgeRenderer {
   }
 
   pointerLeave = (event: FederatedPointerEvent) => {
-    if (this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
+    if (this.renderer.draggedNode || this.renderer.dragInteraction.dragging || this.renderer.zoomInteraction.zooming) {
       return
     }
 

@@ -155,6 +155,7 @@ export class Renderer {
   arrow: ArrowTexture
   textIcon: TextIconTexture
   draggedNode?: NodeRenderer
+  hoveredNode?: NodeRenderer
 
   private doubleClick = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
@@ -248,15 +249,7 @@ export class Renderer {
     this.root.addEventListener('pointerdown', this.pointerDown)
     this.root.addEventListener('pointermove', this.pointerMove)
     this.root.addEventListener('pointerup', this.pointerUp)
-    this.root.addEventListener('pointerupoutside', (event) => {
-      if (this.draggedNode) {
-        const draggedNode = this.draggedNode
-        draggedNode.pointerUp(event)
-        draggedNode.pointerLeave(event)
-      } else {
-        this.pointerUp(event)
-      }
-    })
+    this.root.addEventListener('pointerupoutside', this.pointerUp)
     this.root.addEventListener('pointercancel', this.pointerUp)
     this.root.addEventListener('pointerleave', this.pointerLeave)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
@@ -606,6 +599,13 @@ export class Renderer {
   }
 
   private pointerUp = (event: FederatedPointerEvent) => {
+    if (this.draggedNode) {
+      const draggedNode = this.draggedNode
+      draggedNode.pointerUp(event)
+      draggedNode.pointerLeave(event)
+      return
+    }
+
     if (!this.pointerIsDown) {
       return
     }
