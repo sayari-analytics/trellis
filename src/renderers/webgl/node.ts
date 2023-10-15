@@ -24,7 +24,7 @@ export class NodeRenderer {
   private doubleClick = false
   private nodeMoveXOffset: number = 0
   private nodeMoveYOffset: number = 0
-  private dragStart = false
+  private isDragging = false
   private pointerLeftBeforeDragComplete = false
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
@@ -298,7 +298,6 @@ export class NodeRenderer {
       this.nodeMoveXOffset = local.x - (this.node!.x ?? 0)
       this.nodeMoveYOffset = local.y - (this.node!.y ?? 0)
       this.renderer.draggedNode = this
-      this.dragStart = true
       this.renderer.root.addEventListener('pointermove', this.pointerMove)
       this.renderer.zoomInteraction.pause()
       this.renderer.dragInteraction.pause()
@@ -311,7 +310,7 @@ export class NodeRenderer {
 
     const local = this.renderer.root.toLocal(event.global)
 
-    if (this.dragStart) {
+    if (!this.isDragging) {
       this.renderer.onNodeDragStart?.({
         type: 'nodeDrag',
         x: local.x,
@@ -327,7 +326,8 @@ export class NodeRenderer {
         metaKey: event.metaKey,
         shiftKey: event.shiftKey
       })
-      this.dragStart = false
+
+      this.isDragging = true
     }
 
     this.renderer.onNodeDrag?.({
@@ -401,7 +401,7 @@ export class NodeRenderer {
       })
     }
 
-    if (this.renderer.draggedNode !== this) {
+    if (!this.isDragging) {
       if (this.renderer.onNodeClick) {
         event.stopPropagation()
         this.renderer.onNodeClick({
@@ -441,6 +441,7 @@ export class NodeRenderer {
       }
     }
 
+    this.isDragging = false
     this.renderer.draggedNode = undefined
 
     if (this.pointerLeftBeforeDragComplete) {
