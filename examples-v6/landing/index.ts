@@ -2,7 +2,7 @@ import clustersKmeans from '@turf/clusters-kmeans'
 import * as Force from '../../src/layout/force'
 import * as Hierarchy from '../../src/layout/hierarchy'
 import * as WebGL from '../../src/renderers/webgl'
-import * as Graph from '../../src/'
+import * as Graph from '../../src'
 import raw from './data'
 
 type Node = Graph.Node & { cluster?: number; size?: number }

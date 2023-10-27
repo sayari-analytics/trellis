@@ -4,7 +4,7 @@ import * as Hierarchy from '../../src/layout/hierarchy'
 import * as Collide from '../../src/layout/collide'
 import * as Radial from '../../src/layout/radial'
 import * as WebGL from '../../src/renderers/webgl'
-import * as Graph from '../../src/'
+import * as Graph from '../../src'
 import raw from './data'
 
 type Node = Graph.Node & { cluster?: number; size?: number }

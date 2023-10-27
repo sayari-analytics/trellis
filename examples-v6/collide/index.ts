@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Collide from '../../src/layout/collide'
-import * as Graph from '../../src/'
+import * as Graph from '../../src'
 import * as WebGL from '../../src/renderers/webgl'
 import graphData from './data'
 
