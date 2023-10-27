@@ -11,6 +11,10 @@
   "parser": "typescript",
   "overrides": [
     {
+      "files": ["*.css"],
+      "options": { "parser": "css" }
+    },
+    {
       "files": ["*.json", "*rc"],
       "options": { "parser": "json" }
     },
