@@ -45,18 +45,16 @@ export type ImageIcon = {
 
 export type Stroke = { color: string; width: number }
 
-export type LabelBackground = { color: string; opacity?: number }
-
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelStyle = Partial<{
   color: string
-  fontFamily: string
+  fontFamily: string | string[]
   fontSize: number
   maxWidth: number
   stroke: Stroke
   position: LabelPosition
-  background: LabelBackground
+  background: string
 }>
 
 export type NodeStyle = {

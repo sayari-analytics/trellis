@@ -2,7 +2,6 @@ import { FederatedPointerEvent } from 'pixi.js'
 import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer, MIN_NODE_ICON_ZOOM } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'
-import { positionNodeLabel } from './utils'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { Icon } from './objects/icon'
@@ -43,17 +42,7 @@ export class NodeRenderer {
   }
 
   update(node: Graph.Node) {
-    if (this.label === undefined) {
-      if (node.label) {
-        this.label = new Label(this.renderer.labelsContainer, node.label)
-      }
-    } else {
-      if (node.label === undefined) {
-        this.renderer.labelObjectManager.delete(this.label)
-        this.labelMounted = false
-        this.label = undefined
-      }
-    }
+    this.setLabel(node)
 
     if (this.icon === undefined) {
       if (node.style?.icon) {
@@ -502,10 +491,7 @@ export class NodeRenderer {
 
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
-    if (this.label && node.label) {
-      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
-      this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
-    }
+    this.setLabel(node)
     if (this.icon && node.style?.icon) {
       this.icon.update(this.x, this.y, node.style.icon)
     }
@@ -520,5 +506,19 @@ export class NodeRenderer {
       this.y + this.strokes.radius >= this.renderer.minY &&
       this.y - this.strokes.radius <= this.renderer.maxY
     )
+  }
+
+  private setLabel(node: Graph.Node) {
+    if (this.label === undefined) {
+      if (node.label !== undefined) {
+        this.label = new Label(this.renderer.labelsContainer, node.label, node.style?.label)
+      }
+    } else if (node.label === undefined) {
+      this.renderer.labelObjectManager.delete(this.label)
+      this.labelMounted = false
+      this.label = undefined
+    } else {
+      this.label.update(node.label, { x: this.x, y: this.y, offset: this.strokes.radius }, node.style?.label)
+    }
   }
 }

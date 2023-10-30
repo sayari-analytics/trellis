@@ -27,15 +27,14 @@ const NODE_STYLE: Graph.NodeStyle = {
   stroke: [{ width: 2, color: LIGHT_PURPLE }],
   icon: { type: 'textIcon', text: 'T', family: 'sans-serif', size: 14, color: '#fff', weight: '400' },
   label: {
-    position: 'bottom',
-    color: LIGHT_PURPLE
+    position: 'bottom'
   }
 }
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: '#f66',
   stroke: [{ width: 2, color: '#fcc' }],
-  label: { position: 'bottom' },
+  label: { position: 'bottom', color: '#fcc' },
   icon: { type: 'textIcon', text: 'L', family: 'sans-serif', size: 14, color: '#fff', weight: '400' }
 }
 
