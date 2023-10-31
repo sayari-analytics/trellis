@@ -20,7 +20,7 @@ const NODE_STYLE: Graph.NodeStyle = {
   icon: TEXT_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
-    position: 'top',
+    position: 'bottom',
     fontName: 'NodeLabel',
     fontFamily: ['Arial', 'sans-serif'],
     background: { color: GREEN_LIGHT },
@@ -33,7 +33,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
   icon: TEXT_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
-    position: 'top',
+    position: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: ['Arial', 'sans-serif'],
     background: { color: GREEN_LIGHT },

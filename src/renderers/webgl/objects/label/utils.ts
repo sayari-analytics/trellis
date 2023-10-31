@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Stroke } from '../../../../types'
 import {
   Text,
@@ -104,47 +105,6 @@ const isASCII = (str: string) => {
   return true
 }
 
-const getLabelCoordinates = (
-  { x, y, offset = 0 }: LabelCoords,
-  isBitmapText: boolean,
-  { position, margin = 0, background }: StyleWithDefaults
-) => {
-  let vertical = 0
-  let horizontal = 0
-  if (background !== undefined) {
-    const [v, h] = getBackgroundPadding(background.padding)
-    vertical += v / 2
-    horizontal += h / 2
-  }
-
-  const shift = margin + offset
-
-  if (isBitmapText) {
-    // BitmapText shifts text down 2px
-    switch (position) {
-      case 'bottom':
-        return [x, y + shift + vertical]
-      case 'left':
-        return [x - shift - horizontal - 2, y - 2]
-      case 'top':
-        return [x, y - shift - vertical - 4]
-      case 'right':
-        return [x + shift + horizontal + 2, y - 2]
-    }
-  } else {
-    switch (position) {
-      case 'bottom':
-        return [x, y + shift + vertical]
-      case 'left':
-        return [x - shift - horizontal - 2, y + 1]
-      case 'top':
-        return [x, y - shift - vertical + 2]
-      case 'right':
-        return [x + shift + horizontal + 2, y + 1]
-    }
-  }
-}
-
 const getPositionAlign = (position: LabelPosition): TextStyleAlign => {
   return position === 'left' || position === 'right' ? position : 'center'
 }
@@ -207,6 +167,20 @@ const loadFont = (style: StyleWithDefaults) => {
   }
 }
 
+const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
+  return typeof padding === 'number' ? [padding, padding] : padding
+}
+
+const setBackgroundStyle = (sprite: Sprite, text: Text | BitmapText, { color, opacity = 1, padding }: LabelBackgroundStyle) => {
+  const [vertical, horizontal] = getBackgroundPadding(padding)
+  sprite.anchor.set(text.anchor.x, text.anchor.y)
+  sprite.height = text.height + vertical
+  sprite.width = text.width + horizontal
+  sprite.alpha = opacity
+  sprite.tint = color
+  return sprite
+}
+
 const createTextObject = (label: string, style: StyleWithDefaults) => {
   let text: BitmapText | Text
 
@@ -221,48 +195,49 @@ const createTextObject = (label: string, style: StyleWithDefaults) => {
   return text
 }
 
-const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
-  return typeof padding === 'number' ? [padding, padding] : padding
-}
-
-// TODO -> fix offset difference between text and bitmap text
-const getBackgroundX = (x: number, isBitmapText: boolean, { position, background }: StyleWithDefaults) => {
-  const horizontal = getBackgroundPadding(background?.padding)[1] / 2
-  switch (position) {
-    case 'right':
-      return x - horizontal - 2
-    case 'left':
-      return x + horizontal - 2
-    default:
-      return x
-  }
-}
-
-const getBackgroundY = (y: number, isBitmapText: boolean, { position, background }: StyleWithDefaults) => {
-  const vertical = getBackgroundPadding(background?.padding)[0] / 2
-  switch (position) {
-    case 'bottom':
-      return y - vertical
-    case 'top':
-      return y + vertical
-    default:
-      return y
-  }
-}
-
-const setBackgroundStyle = (sprite: Sprite, text: Text | BitmapText, { color, opacity = 1, padding }: LabelBackgroundStyle) => {
-  const [vertical, horizontal] = getBackgroundPadding(padding)
-  sprite.anchor.set(text.anchor.x, text.anchor.y)
-  sprite.height = text.height + vertical
-  sprite.width = text.width + horizontal
-  sprite.alpha = opacity
-  sprite.tint = color
-  return sprite
-}
-
 const createBackgroundSprite = (text: Text | BitmapText, style: LabelBackgroundStyle) => {
   const sprite = Sprite.from(Texture.WHITE, { resolution: RESOLUTION })
   return setBackgroundStyle(sprite, text, style)
+}
+
+const getLabelCoordinates = (
+  { x, y, offset = 0 }: LabelCoords,
+  { position, margin = 2, background }: StyleWithDefaults,
+  isBitmapText: boolean
+) => {
+  const shift = margin + offset
+  // BitmapText shifts text down 2px
+  const label = { x, y: isBitmapText ? y - 1 : y + 1 }
+  const bg = { x, y: isBitmapText ? y - 1 : y + 1 }
+
+  let vertical = 0
+  let horizontal = 0
+  if (background !== undefined) {
+    const [v, h] = getBackgroundPadding(background.padding)
+    vertical += v / 2
+    horizontal += h / 2
+  }
+
+  switch (position) {
+    case 'bottom':
+      label.y += shift + vertical
+      bg.y += shift
+      break
+    case 'left':
+      label.x -= shift + horizontal
+      bg.x -= shift
+      break
+    case 'top':
+      label.y -= shift + vertical
+      bg.y -= shift
+      break
+    case 'right':
+      label.x += shift + horizontal
+      bg.x += shift
+      break
+  }
+
+  return { label, bg }
 }
 
 export default {
@@ -276,8 +251,6 @@ export default {
   bitmapFontIsAvailable,
   loadFont,
   createTextObject,
-  getBackgroundX,
-  getBackgroundY,
   setBackgroundStyle,
   createBackgroundSprite,
   getBackgroundPadding

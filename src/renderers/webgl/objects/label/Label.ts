@@ -147,21 +147,23 @@ export class Label {
   }
 
   private set coordinates(coords: LabelCoords) {
-    const isBitmapText = this.isBitmapText()
-    const [x, y] = utils.getLabelCoordinates(coords, isBitmapText, this.style)
+    const { label, bg } = utils.getLabelCoordinates(coords, this.style, this.isBitmapText())
 
-    if (x !== this.x) {
-      this.text.x = x
-      this.x = x
-      if (this.backgroundSprite) {
-        this.backgroundSprite.x = utils.getBackgroundX(x, isBitmapText, this.style)
-      }
+    if (label.x !== this.x) {
+      this.text.x = label.x
+      this.x = label.x
     }
-    if (y !== this.y) {
-      this.text.y = y
-      this.y = y
-      if (this.backgroundSprite) {
-        this.backgroundSprite.y = utils.getBackgroundY(y, isBitmapText, this.style)
+    if (label.y !== this.y) {
+      this.text.y = label.y
+      this.y = label.y
+    }
+
+    if (this.backgroundSprite) {
+      if (this.backgroundSprite.x !== bg.x) {
+        this.backgroundSprite.x = bg.x
+      }
+      if (this.backgroundSprite.y !== bg.y) {
+        this.backgroundSprite.y = bg.y
       }
     }
   }
