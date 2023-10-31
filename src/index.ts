@@ -381,4 +381,4 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 
 // exports
 export type { Stroke } from './types'
-export type { LabelStyle, LabelCoords, LabelPosition } from './renderers/webgl/objects/label'
+export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './renderers/webgl/objects/label'

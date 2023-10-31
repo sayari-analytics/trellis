@@ -1,6 +1,6 @@
-import type { StyleWithDefaults, LabelCoords, LabelPosition, LabelStyle } from './utils'
+import type { StyleWithDefaults, LabelCoords, LabelPosition, LabelStyle, LabelBackgroundStyle } from './utils'
 import type { Stroke } from '../../../../types'
-import { BitmapText, Container, Text, TextStyleAlign } from 'pixi.js'
+import { BitmapText, Container, Sprite, Text, TextStyleAlign, TextStyleFill, TextStyleFontWeight } from 'pixi.js'
 import { equals } from '../../../..'
 import utils, { STYLE_DEFAULTS } from './utils'
 
@@ -13,39 +13,40 @@ import utils, { STYLE_DEFAULTS } from './utils'
 export class Label {
   mounted = false
 
+  private dirty = false
+  private label: string
   private container: Container
   private text: BitmapText | Text
-  private label: string
+  private style: StyleWithDefaults
+  private backgroundSprite: Sprite | null = null
   private x?: number
   private y?: number
-  private style: StyleWithDefaults
-  private dirty = false
 
   constructor(container: Container, label: string, labelStyle?: LabelStyle) {
+    const style = utils.mergeDefaults(labelStyle)
+    const text = utils.createTextObject(label, style)
     this.container = container
     this.label = label
-    this.style = utils.mergeDefaults(labelStyle)
-
-    if (utils.isASCII(label)) {
-      utils.loadFont(this.style)
-      this.text = new BitmapText(label, utils.getBitmapStyle(this.style))
-    } else {
-      this.text = new Text(label, utils.getTextStyle(this.style))
+    this.style = style
+    this.text = text
+    if (style.background !== undefined) {
+      this.backgroundSprite = utils.createBackgroundSprite(text, style.background)
     }
-
-    this.position = this.style.position
   }
 
   update(label: string, coords: LabelCoords, style?: LabelStyle) {
     this.value = label
+    this.style.margin = style?.margin
     this.coordinates = coords
     this.wordWrap = style?.wordWrap
     this.color = style?.color
     this.stroke = style?.stroke
+    this.fontWeight = style?.fontWeight
     this.position = style?.position ?? STYLE_DEFAULTS.POSITION
     this.fontSize = style?.fontSize ?? STYLE_DEFAULTS.FONT_SIZE
     this.fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
     this.fontName = style?.fontName ?? STYLE_DEFAULTS.FONT_NAME
+    this.background = style?.background
 
     const isBitmapText = this.isBitmapText()
     const isASCII = utils.isASCII(label)
@@ -71,6 +72,10 @@ export class Label {
 
   mount() {
     if (!this.mounted) {
+      if (this.backgroundSprite) {
+        this.container.addChild(this.backgroundSprite)
+      }
+
       this.container.addChild(this.text)
       this.mounted = true
     }
@@ -80,6 +85,10 @@ export class Label {
 
   unmount() {
     if (this.mounted) {
+      if (this.backgroundSprite) {
+        this.container.removeChild(this.backgroundSprite)
+      }
+
       this.container.removeChild(this.text)
       this.mounted = false
     }
@@ -138,15 +147,22 @@ export class Label {
   }
 
   private set coordinates(coords: LabelCoords) {
-    const [x, y] = utils.getLabelCoordinates(coords, this.text instanceof BitmapText, this.style.position)
+    const isBitmapText = this.isBitmapText()
+    const [x, y] = utils.getLabelCoordinates(coords, isBitmapText, this.style)
 
     if (x !== this.x) {
       this.text.x = x
       this.x = x
+      if (this.backgroundSprite) {
+        this.backgroundSprite.x = utils.getBackgroundX(x, isBitmapText, this.style)
+      }
     }
     if (y !== this.y) {
       this.text.y = y
       this.y = y
+      if (this.backgroundSprite) {
+        this.backgroundSprite.y = utils.getBackgroundY(y, isBitmapText, this.style)
+      }
     }
   }
 
@@ -202,8 +218,8 @@ export class Label {
     }
   }
 
-  private set color(color: string | undefined) {
-    if (color !== this.style.color) {
+  private set color(color: TextStyleFill | undefined) {
+    if (!equals(color, this.style.color)) {
       this.style.color = color
       if (!this.isBitmapText(this.text)) {
         this.dirty = true
@@ -239,6 +255,35 @@ export class Label {
       if (this.isBitmapText(this.text)) {
         this.dirty = true
         this.text.fontName = fontName
+      }
+    }
+  }
+
+  private set fontWeight(fontWeight: TextStyleFontWeight | undefined) {
+    if (fontWeight !== this.style.fontWeight) {
+      this.style.fontWeight = fontWeight
+      if (!this.isBitmapText(this.text)) {
+        this.dirty = true
+        this.text.style.fontWeight = fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
+      }
+    }
+  }
+
+  private set background(background: LabelBackgroundStyle | undefined) {
+    if (!equals(background, this.style.background)) {
+      this.style.background = background
+      if (this.backgroundSprite) {
+        if (background !== undefined) {
+          utils.setBackgroundStyle(this.backgroundSprite, this.text, background)
+        } else {
+          const sprite = this.backgroundSprite
+          this.backgroundSprite = null
+          this.mounted && this.container.removeChild(sprite)
+          sprite.destroy()
+        }
+      } else if (background !== undefined) {
+        this.backgroundSprite = utils.createBackgroundSprite(this.text, background)
+        this.mounted && this.container.addChild(this.backgroundSprite)
       }
     }
   }

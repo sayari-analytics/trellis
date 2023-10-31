@@ -1,18 +1,41 @@
 import type { Stroke } from '../../../../types'
-import { Text, TextStyle, ITextStyle, IBitmapTextStyle, TextStyleAlign, BitmapFont } from 'pixi.js'
+import {
+  Text,
+  TextStyle,
+  TextStyleFill,
+  ITextStyle,
+  IBitmapTextStyle,
+  TextStyleAlign,
+  BitmapFont,
+  ColorSource,
+  Sprite,
+  Texture,
+  BitmapText,
+  TextStyleFontWeight
+} from 'pixi.js'
 
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
+export type BackgroundPadding = number | [vertical: number, horizontal: number]
+
+export type LabelBackgroundStyle = {
+  color: ColorSource
+  opacity?: number
+  padding?: BackgroundPadding
+}
+
 export type LabelStyle = Partial<{
-  color: string
   fontName: string
   fontSize: number
   wordWrap: number
-  background: string
-  fontFamily: string | string[]
-  position: LabelPosition
+  margin: number
   letterSpacing: number
+  fontFamily: string | string[]
+  fontWeight: TextStyleFontWeight
   stroke: Stroke
+  color: TextStyleFill
+  position: LabelPosition
+  background: LabelBackgroundStyle
 }>
 
 type _StyleDefaults = 'fontSize' | 'position' | 'fontFamily' | 'fontName'
@@ -25,10 +48,11 @@ export type StyleWithDefaults = Omit<LabelStyle, _StyleDefaults> & {
 
 export type LabelCoords = { x: number; y: number; offset?: number }
 
+const RESOLUTION = 2
 export const STYLE_DEFAULTS = {
   FONT_SIZE: 10,
-  LETTER_SPACING: 1,
   STROKE_THICKNESS: 0,
+  PADDING: [4, 8] as [number, number],
   WORD_WRAP: false,
   STROKE: '#FFF',
   FONT_NAME: 'Label',
@@ -36,11 +60,12 @@ export const STYLE_DEFAULTS = {
   ALIGN: 'center' as const,
   POSITION: 'bottom' as const,
   LINE_JOIN: 'round' as const,
+  FONT_WEIGHT: 'normal' as const,
   FONT_FAMILY: ['Arial', 'sans-serif']
 }
 
 // install text defaults
-Text.defaultResolution = 2
+Text.defaultResolution = RESOLUTION
 Text.defaultAutoResolution = false
 TextStyle.defaultStyle = {
   ...TextStyle.defaultStyle,
@@ -51,7 +76,6 @@ TextStyle.defaultStyle = {
   wordWrap: STYLE_DEFAULTS.WORD_WRAP,
   fontSize: STYLE_DEFAULTS.FONT_SIZE,
   fontFamily: STYLE_DEFAULTS.FONT_FAMILY,
-  letterSpacing: STYLE_DEFAULTS.LETTER_SPACING,
   strokeThickness: STYLE_DEFAULTS.STROKE_THICKNESS
 }
 
@@ -80,29 +104,43 @@ const isASCII = (str: string) => {
   return true
 }
 
-const getLabelCoordinates = ({ x, y, offset = 0 }: LabelCoords, isBitmapText: boolean, position: LabelPosition) => {
+const getLabelCoordinates = (
+  { x, y, offset = 0 }: LabelCoords,
+  isBitmapText: boolean,
+  { position, margin = 0, background }: StyleWithDefaults
+) => {
+  let vertical = 0
+  let horizontal = 0
+  if (background !== undefined) {
+    const [v, h] = getBackgroundPadding(background.padding)
+    vertical += v / 2
+    horizontal += h / 2
+  }
+
+  const shift = margin + offset
+
   if (isBitmapText) {
     // BitmapText shifts text down 2px
     switch (position) {
       case 'bottom':
-        return [x, y + offset]
+        return [x, y + shift + vertical]
       case 'left':
-        return [x - offset - 2, y - 2]
+        return [x - shift - horizontal - 2, y - 2]
       case 'top':
-        return [x, y - offset - 4]
+        return [x, y - shift - vertical - 4]
       case 'right':
-        return [x + offset + 2, y - 2]
+        return [x + shift + horizontal + 2, y - 2]
     }
   } else {
     switch (position) {
       case 'bottom':
-        return [x, y + offset]
+        return [x, y + shift + vertical]
       case 'left':
-        return [x - offset - 2, y + 1]
+        return [x - shift - horizontal - 2, y + 1]
       case 'top':
-        return [x, y - offset + 2]
+        return [x, y - shift - vertical + 2]
       case 'right':
-        return [x + offset + 2, y + 1]
+        return [x + shift + horizontal + 2, y + 1]
     }
   }
 }
@@ -124,7 +162,7 @@ const getPositionAnchor = (position: LabelPosition): [x: number, y: number] => {
   }
 }
 
-const getTextStyle = ({ color, fontFamily, fontSize, wordWrap, stroke, position, letterSpacing }: StyleWithDefaults) => {
+const getTextStyle = ({ color, fontFamily, fontSize, fontWeight, wordWrap, stroke, position, letterSpacing }: StyleWithDefaults) => {
   const style: Partial<ITextStyle> = {}
   if (color !== undefined) {
     style.fill = color
@@ -134,6 +172,9 @@ const getTextStyle = ({ color, fontFamily, fontSize, wordWrap, stroke, position,
   }
   if (fontSize !== undefined) {
     style.fontSize = fontSize
+  }
+  if (fontWeight !== undefined) {
+    style.fontWeight = fontWeight
   }
   if (wordWrap !== undefined) {
     style.wordWrap = true
@@ -162,8 +203,66 @@ const bitmapFontIsAvailable = (fontName: string) => BitmapFont.available[fontNam
 
 const loadFont = (style: StyleWithDefaults) => {
   if (!bitmapFontIsAvailable(style.fontName)) {
-    BitmapFont.from(style.fontName, getTextStyle(style), { resolution: 2 })
+    BitmapFont.from(style.fontName, { ...getTextStyle(style), letterSpacing: 1 }, { resolution: RESOLUTION, chars: BitmapFont.ASCII })
   }
+}
+
+const createTextObject = (label: string, style: StyleWithDefaults) => {
+  let text: BitmapText | Text
+
+  if (isASCII(label)) {
+    loadFont(style)
+    text = new BitmapText(label, getBitmapStyle(style))
+  } else {
+    text = new Text(label, getTextStyle(style))
+  }
+
+  text.anchor.set(...getPositionAnchor(style.position))
+  return text
+}
+
+const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
+  return typeof padding === 'number' ? [padding, padding] : padding
+}
+
+// TODO -> fix offset difference between text and bitmap text
+const getBackgroundX = (x: number, isBitmapText: boolean, { position, background }: StyleWithDefaults) => {
+  const horizontal = getBackgroundPadding(background?.padding)[1] / 2
+  switch (position) {
+    case 'right':
+      return x - horizontal - 2
+    case 'left':
+      return x + horizontal - 2
+    default:
+      return x
+  }
+}
+
+const getBackgroundY = (y: number, isBitmapText: boolean, { position, background }: StyleWithDefaults) => {
+  const vertical = getBackgroundPadding(background?.padding)[0] / 2
+  switch (position) {
+    case 'bottom':
+      return y - vertical
+    case 'top':
+      return y + vertical
+    default:
+      return y
+  }
+}
+
+const setBackgroundStyle = (sprite: Sprite, text: Text | BitmapText, { color, opacity = 1, padding }: LabelBackgroundStyle) => {
+  const [vertical, horizontal] = getBackgroundPadding(padding)
+  sprite.anchor.set(text.anchor.x, text.anchor.y)
+  sprite.height = text.height + vertical
+  sprite.width = text.width + horizontal
+  sprite.alpha = opacity
+  sprite.tint = color
+  return sprite
+}
+
+const createBackgroundSprite = (text: Text | BitmapText, style: LabelBackgroundStyle) => {
+  const sprite = Sprite.from(Texture.WHITE, { resolution: RESOLUTION })
+  return setBackgroundStyle(sprite, text, style)
 }
 
 export default {
@@ -175,5 +274,11 @@ export default {
   getTextStyle,
   getBitmapStyle,
   bitmapFontIsAvailable,
-  loadFont
+  loadFont,
+  createTextObject,
+  getBackgroundX,
+  getBackgroundY,
+  setBackgroundStyle,
+  createBackgroundSprite,
+  getBackgroundPadding
 }

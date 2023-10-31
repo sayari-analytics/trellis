@@ -28,10 +28,14 @@ const NODE_STYLE: Graph.NodeStyle = {
   stroke: [{ width: 2, color: LIGHT_PURPLE }],
   icon: { type: 'textIcon', text: 'T', family: 'sans-serif', size: 14, color: '#fff', weight: '400' },
   label: {
-    position: 'bottom',
+    position: 'top',
     fontName: ARIAL_PINK,
     fontFamily: ['Arial', 'sans-serif'],
-    color: LIGHT_PURPLE
+    margin: 2,
+    background: {
+      color: '#f66',
+      opacity: 0.5
+    }
   }
 }
 
