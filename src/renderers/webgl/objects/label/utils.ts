@@ -1,19 +1,21 @@
-import { Text, TextStyle, ITextStyle, IBitmapTextStyle, TextStyleAlign } from 'pixi.js'
+import { Text, TextStyle, ITextStyle, IBitmapTextStyle, TextStyleAlign, BitmapFont } from 'pixi.js'
 import { LabelPosition, LabelStyle, Stroke } from '../../../..'
 
 export type LabelAnchor = { x: number; y: number; offset?: number }
 
-export type StyleWithDefaults = Omit<LabelStyle, 'position' | 'fontSize' | 'stroke'> & {
+export type StyleWithDefaults = Omit<LabelStyle, 'position' | 'fontSize' | 'stroke' | 'fontFamily' | 'fontName'> & {
   stroke: Stroke
   fontSize: number
   position: LabelPosition
+  fontFamily: string | string[]
+  fontName: string
 }
 
 // defaults
 export const DEFAULT_FONT_SIZE = 10
 export const DEFAULT_COLOR = '#000000'
 export const DEFAULT_ORIENTATION = 'bottom'
-export const DEFAULT_BITMAP_FONT = 'Label'
+export const DEFAULT_FONT_NAME = 'Label'
 export const DEFAULT_FONT_FAMILY = ['Arial', 'sans-serif']
 export const DEFAULT_STROKE_COLOR = '#FFF'
 export const DEFAULT_STROKE_WIDTH = 0
@@ -21,7 +23,9 @@ export const DEFAULT_STROKE: Stroke = { color: '#FFF', width: 0 }
 export const STYLE_DEFAULTS: StyleWithDefaults = {
   position: DEFAULT_ORIENTATION,
   fontSize: DEFAULT_FONT_SIZE,
-  stroke: DEFAULT_STROKE
+  stroke: DEFAULT_STROKE,
+  fontFamily: DEFAULT_FONT_FAMILY,
+  fontName: DEFAULT_FONT_NAME
 }
 
 // install text defaults
@@ -53,9 +57,6 @@ export const isASCII = (str: string) => {
 
   return true
 }
-
-export const renderAsBitmapText = (label: string, { color, fontFamily }: LabelStyle = {}) =>
-  isASCII(label) && color === undefined && fontFamily === undefined
 
 export const getLabelCoordinates = ({ x, y, offset = 0 }: LabelAnchor, isBitmapText: boolean, position: LabelPosition) => {
   if (isBitmapText) {
@@ -129,7 +130,17 @@ export const getTextStyle = ({ color, fontFamily, fontSize, maxWidth, stroke, ba
 }
 
 export const getBitmapStyle = (style: StyleWithDefaults): Partial<IBitmapTextStyle> => ({
-  fontName: DEFAULT_BITMAP_FONT,
+  fontName: style.fontName,
   fontSize: style.fontSize,
   align: getPositionAlign(style.position)
 })
+
+export const bitmapFontIsAvailable = (fontName: string) => {
+  return BitmapFont.available[fontName] !== undefined
+}
+
+export const loadFont = (style: StyleWithDefaults) => {
+  if (!bitmapFontIsAvailable(style.fontName)) {
+    BitmapFont.from(style.fontName, getTextStyle(style))
+  }
+}

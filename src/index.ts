@@ -49,6 +49,7 @@ export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelStyle = Partial<{
   color: string
+  fontName: string
   fontFamily: string | string[]
   fontSize: number
   maxWidth: number

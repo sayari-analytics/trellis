@@ -17,33 +17,51 @@ export class Label {
   private x?: number
   private y?: number
   private style: StyleWithDefaults
+  private dirty = false
 
-  constructor(container: Container, label: string, style?: LabelStyle) {
+  constructor(container: Container, label: string, labelStyle?: LabelStyle) {
     this.container = container
     this.label = label
-    this.style = utils.mergeDefaults(style)
-    if (utils.renderAsBitmapText(label, this.style)) {
-      this.text = new BitmapText(label, utils.getBitmapStyle(this.style))
+    const style = utils.mergeDefaults(labelStyle)
+    const textStyle = utils.getTextStyle(style)
+    if (utils.isASCII(label)) {
+      utils.loadFont(style)
+      this.text = new BitmapText(label, utils.getBitmapStyle(style))
     } else {
-      this.text = new Text(label, utils.getTextStyle(this.style))
+      this.text = new Text(label, textStyle)
     }
-    this.position = this.style.position
+    this.style = style
+    this.text.anchor.set(...utils.getPositionAnchor(style.position))
   }
 
   update(label: string, anchor: LabelAnchor, style?: LabelStyle) {
     this.value = label
+    const isBitmapText = this.isBitmapText()
+    const isASCII = utils.isASCII(label)
 
-    if (this.text instanceof BitmapText ? !utils.renderAsBitmapText(label, style) : utils.renderAsBitmapText(label, style)) {
+    if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
       this.transformText()
     }
 
     this.coordinates = anchor
-    this.color = style?.color
     this.maxWidth = style?.maxWidth
-    this.fontFamily = style?.fontFamily
+    this.color = style?.color ?? utils.DEFAULT_COLOR
     this.position = style?.position ?? utils.DEFAULT_ORIENTATION
     this.fontSize = style?.fontSize ?? utils.DEFAULT_FONT_SIZE
     this.stroke = style?.stroke ?? utils.DEFAULT_STROKE
+    this.fontFamily = style?.fontFamily ?? utils.DEFAULT_FONT_FAMILY
+    this.fontName = style?.fontName ?? utils.DEFAULT_FONT_NAME
+
+    if (this.dirty) {
+      this.dirty = false
+      if (this.isBitmapText(this.text)) {
+        utils.loadFont(this.style)
+        this.text.updateText()
+      } else {
+        this.text.updateText(true)
+      }
+    }
+
     return this
   }
 
@@ -72,8 +90,12 @@ export class Label {
     return undefined
   }
 
+  private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {
+    return text instanceof BitmapText
+  }
+
   private transformText() {
-    if (this.text instanceof BitmapText) {
+    if (this.isBitmapText()) {
       const isMounted = this.mounted
       this.delete()
       this.text = new Text(this.label, utils.getTextStyle(this.style))
@@ -86,6 +108,7 @@ export class Label {
     } else {
       const isMounted = this.mounted
       this.delete()
+      utils.loadFont(this.style)
       this.text = new BitmapText(this.label, utils.getBitmapStyle(this.style))
       this.position = this.style.position
       this.x = undefined
@@ -117,15 +140,16 @@ export class Label {
   }
 
   private set position(position: LabelPosition) {
-    if (position !== this.style.position) {
-      this.style.position = position
-      this.align = utils.getPositionAlign(position)
-    }
+    this.align = utils.getPositionAlign(position)
     this.text.anchor.set(...utils.getPositionAnchor(position))
+    if (position !== this.style.position) {
+      this.dirty = true
+      this.style.position = position
+    }
   }
 
   private set align(align: TextStyleAlign) {
-    if (this.text instanceof BitmapText) {
+    if (this.isBitmapText(this.text)) {
       this.text.align = align
     } else {
       this.text.style.align = align
@@ -134,8 +158,9 @@ export class Label {
 
   private set fontSize(fontSize: number) {
     if (fontSize !== this.style.fontSize) {
+      this.dirty = true
       this.style.fontSize = fontSize
-      if (this.text instanceof BitmapText) {
+      if (this.isBitmapText(this.text)) {
         this.text.fontSize = fontSize
       } else {
         this.text.style.fontSize = fontSize
@@ -145,8 +170,9 @@ export class Label {
 
   private set maxWidth(maxWidth: number | undefined) {
     if (maxWidth !== this.style.maxWidth) {
+      this.dirty = true
       this.style.maxWidth = maxWidth
-      if (this.text instanceof BitmapText) {
+      if (this.isBitmapText(this.text)) {
         this.text.maxWidth = maxWidth ?? 0
       } else {
         this.text.style.wordWrap = maxWidth !== undefined
@@ -155,11 +181,12 @@ export class Label {
     }
   }
 
-  private set color(color: string | undefined) {
+  private set color(color: string) {
     if (color !== this.style.color) {
       this.style.color = color
-      if (this.text instanceof Text) {
-        this.text.style.fill = color ?? utils.DEFAULT_COLOR
+      if (!this.isBitmapText(this.text)) {
+        this.dirty = true
+        this.text.style.fill = color
       }
     }
   }
@@ -167,18 +194,30 @@ export class Label {
   private set stroke(stroke: Stroke) {
     if (!equals(stroke, this.style.stroke)) {
       this.style.stroke = stroke
-      if (this.text instanceof Text) {
+      if (!this.isBitmapText(this.text)) {
+        this.dirty = true
         this.text.style.stroke = stroke.color
         this.text.style.strokeThickness = stroke.width
       }
     }
   }
 
-  private set fontFamily(fontFamily: string | string[] | undefined) {
+  private set fontFamily(fontFamily: string | string[]) {
     if (!equals(fontFamily, this.style.fontFamily)) {
       this.style.fontFamily = fontFamily
-      if (this.text instanceof Text) {
-        this.text.style.fontFamily = fontFamily ?? utils.DEFAULT_FONT_FAMILY
+      if (!this.isBitmapText(this.text)) {
+        this.dirty = true
+        this.text.style.fontFamily = fontFamily
+      }
+    }
+  }
+
+  private set fontName(fontName: string) {
+    if (fontName !== this.style.fontName) {
+      this.style.fontName = fontName
+      if (this.isBitmapText(this.text)) {
+        this.dirty = true
+        this.text.fontName = fontName
       }
     }
   }
