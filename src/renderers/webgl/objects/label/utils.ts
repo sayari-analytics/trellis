@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Stroke } from '../../../../types'
 import {
   Text,
@@ -12,7 +11,8 @@ import {
   Sprite,
   Texture,
   BitmapText,
-  TextStyleFontWeight
+  TextStyleFontWeight,
+  Rectangle
 } from 'pixi.js'
 
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
@@ -53,8 +53,9 @@ const RESOLUTION = 2
 export const STYLE_DEFAULTS = {
   FONT_SIZE: 10,
   STROKE_THICKNESS: 0,
-  PADDING: [4, 8] as [number, number],
+  LETTER_SPACING: 0.5,
   WORD_WRAP: false,
+  PADDING: [4, 8] as [number, number],
   STROKE: '#FFF',
   FONT_NAME: 'Label',
   COLOR: '#000000',
@@ -77,7 +78,8 @@ TextStyle.defaultStyle = {
   wordWrap: STYLE_DEFAULTS.WORD_WRAP,
   fontSize: STYLE_DEFAULTS.FONT_SIZE,
   fontFamily: STYLE_DEFAULTS.FONT_FAMILY,
-  strokeThickness: STYLE_DEFAULTS.STROKE_THICKNESS
+  strokeThickness: STYLE_DEFAULTS.STROKE_THICKNESS,
+  letterSpacing: STYLE_DEFAULTS.LETTER_SPACING
 }
 
 // utils
@@ -156,29 +158,17 @@ const getTextStyle = ({ color, fontFamily, fontSize, fontWeight, wordWrap, strok
 const getBitmapStyle = (style: StyleWithDefaults): Partial<IBitmapTextStyle> => ({
   fontName: style.fontName,
   fontSize: style.fontSize,
-  align: getPositionAlign(style.position)
+  align: getPositionAlign(style.position),
+  letterSpacing: style.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
 })
 
-const bitmapFontIsAvailable = (fontName: string) => BitmapFont.available[fontName] !== undefined
-
 const loadFont = (style: StyleWithDefaults) => {
-  if (!bitmapFontIsAvailable(style.fontName)) {
-    BitmapFont.from(style.fontName, { ...getTextStyle(style), letterSpacing: 1 }, { resolution: RESOLUTION, chars: BitmapFont.ASCII })
+  if (BitmapFont.available[style.fontName] === undefined) {
+    BitmapFont.from(style.fontName, getTextStyle(style), {
+      resolution: RESOLUTION,
+      chars: BitmapFont.ASCII
+    })
   }
-}
-
-const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
-  return typeof padding === 'number' ? [padding, padding] : padding
-}
-
-const setBackgroundStyle = (sprite: Sprite, text: Text | BitmapText, { color, opacity = 1, padding }: LabelBackgroundStyle) => {
-  const [vertical, horizontal] = getBackgroundPadding(padding)
-  sprite.anchor.set(text.anchor.x, text.anchor.y)
-  sprite.height = text.height + vertical
-  sprite.width = text.width + horizontal
-  sprite.alpha = opacity
-  sprite.tint = color
-  return sprite
 }
 
 const createTextObject = (label: string, style: StyleWithDefaults) => {
@@ -195,6 +185,24 @@ const createTextObject = (label: string, style: StyleWithDefaults) => {
   return text
 }
 
+const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
+  return typeof padding === 'number' ? [padding, padding] : padding
+}
+
+const setBackgroundSize = (sprite: Sprite, bounds: Rectangle, padding?: BackgroundPadding) => {
+  const [vertical, horizontal] = getBackgroundPadding(padding)
+  sprite.height = bounds.height + vertical
+  sprite.width = bounds.width + horizontal
+  return sprite
+}
+
+const setBackgroundStyle = (sprite: Sprite, text: Text | BitmapText, { color, opacity = 1, padding }: LabelBackgroundStyle) => {
+  sprite.anchor.set(text.anchor.x, text.anchor.y)
+  sprite.alpha = opacity
+  sprite.tint = color
+  return setBackgroundSize(sprite, text.getLocalBounds(), padding)
+}
+
 const createBackgroundSprite = (text: Text | BitmapText, style: LabelBackgroundStyle) => {
   const sprite = Sprite.from(Texture.WHITE, { resolution: RESOLUTION })
   return setBackgroundStyle(sprite, text, style)
@@ -206,9 +214,8 @@ const getLabelCoordinates = (
   isBitmapText: boolean
 ) => {
   const shift = margin + offset
-  // BitmapText shifts text down 2px
-  const label = { x, y: isBitmapText ? y - 1 : y + 1 }
-  const bg = { x, y: isBitmapText ? y - 1 : y + 1 }
+  const label = { x, y }
+  const bg = { x, y }
 
   let vertical = 0
   let horizontal = 0
@@ -222,18 +229,32 @@ const getLabelCoordinates = (
     case 'bottom':
       label.y += shift + vertical
       bg.y += shift
+
       break
     case 'left':
       label.x -= shift + horizontal
       bg.x -= shift
+
+      if (isBitmapText) {
+        label.y -= 1
+        bg.y -= 1
+      }
+
       break
     case 'top':
       label.y -= shift + vertical
       bg.y -= shift
+
       break
     case 'right':
       label.x += shift + horizontal
       bg.x += shift
+
+      if (isBitmapText) {
+        label.y -= 1
+        bg.y -= 1
+      }
+
       break
   }
 
@@ -248,9 +269,9 @@ export default {
   getPositionAnchor,
   getTextStyle,
   getBitmapStyle,
-  bitmapFontIsAvailable,
   loadFont,
   createTextObject,
+  setBackgroundSize,
   setBackgroundStyle,
   createBackgroundSprite,
   getBackgroundPadding

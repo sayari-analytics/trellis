@@ -14,6 +14,7 @@ export class Label {
   mounted = false
 
   private dirty = false
+  private transformed = false
   private label: string
   private container: Container
   private text: BitmapText | Text
@@ -35,7 +36,17 @@ export class Label {
   }
 
   update(label: string, coords: LabelCoords, style?: LabelStyle) {
+    const previous = this.text.getLocalBounds()
+
     this.value = label
+
+    const isBitmapText = this.isBitmapText()
+    const isASCII = utils.isASCII(label)
+    // if the text type has changed, regenerate a new text object
+    if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
+      this.transformText(label, utils.mergeDefaults(style))
+    }
+
     this.style.margin = style?.margin
     this.coordinates = coords
     this.wordWrap = style?.wordWrap
@@ -48,25 +59,19 @@ export class Label {
     this.fontName = style?.fontName ?? STYLE_DEFAULTS.FONT_NAME
     this.background = style?.background
 
-    const isBitmapText = this.isBitmapText()
-    const isASCII = utils.isASCII(label)
-
-    if (isASCII) {
-      // conditionally load font if BitmapFont is unavailable
-      utils.loadFont(this.style)
-    }
-
-    if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
-      // if the text type has changed, regenerate a new text object
-      this.dirty = false
-      this.transformText()
-    }
-
     if (this.dirty) {
       this.dirty = false
       this.updateText()
     }
 
+    if (this.backgroundSprite) {
+      const bounds = this.text.getLocalBounds()
+      if (previous.width !== bounds.width || previous.height !== bounds.height) {
+        utils.setBackgroundSize(this.backgroundSprite, bounds, this.style.background?.padding)
+      }
+    }
+
+    this.transformed = false
     return this
   }
 
@@ -115,27 +120,17 @@ export class Label {
     }
   }
 
-  private transformText() {
-    if (this.isBitmapText()) {
-      const isMounted = this.mounted
-      this.delete()
-      this.text = new Text(this.label, utils.getTextStyle(this.style))
-      this.position = this.style.position
-      this.x = undefined
-      this.y = undefined
-      if (isMounted) {
-        this.mount()
-      }
-    } else {
-      const isMounted = this.mounted
-      this.delete()
-      this.text = new BitmapText(this.label, utils.getBitmapStyle(this.style))
-      this.position = this.style.position
-      this.x = undefined
-      this.y = undefined
-      if (isMounted) {
-        this.mount()
-      }
+  private transformText(label: string, style: StyleWithDefaults) {
+    const isMounted = this.mounted
+
+    this.delete()
+    this.text = utils.createTextObject(label, style)
+    this.transformed = true
+    this.x = undefined
+    this.y = undefined
+
+    if (isMounted) {
+      this.mount()
     }
   }
 
@@ -172,7 +167,7 @@ export class Label {
     this.align = utils.getPositionAlign(position)
     this.anchor = utils.getPositionAnchor(position)
     if (position !== this.style.position) {
-      this.dirty = true
+      this.dirty = !this.transformed
       this.style.position = position
     }
   }
@@ -199,12 +194,14 @@ export class Label {
 
   private set fontSize(fontSize: number) {
     if (fontSize !== this.style.fontSize) {
-      this.dirty = true
       this.style.fontSize = fontSize
-      if (this.isBitmapText(this.text)) {
-        this.text.fontSize = fontSize
-      } else {
-        this.text.style.fontSize = fontSize
+      if (!this.transformed) {
+        this.dirty = true
+        if (this.isBitmapText(this.text)) {
+          this.text.fontSize = fontSize
+        } else {
+          this.text.style.fontSize = fontSize
+        }
       }
     }
   }
@@ -212,7 +209,7 @@ export class Label {
   private set wordWrap(wordWrap: number | undefined) {
     if (wordWrap !== this.style.wordWrap) {
       this.style.wordWrap = wordWrap
-      if (!this.isBitmapText(this.text)) {
+      if (!this.transformed && !this.isBitmapText(this.text)) {
         this.dirty = true
         this.text.style.wordWrap = wordWrap !== undefined
         this.text.style.wordWrapWidth = wordWrap ?? 0
@@ -223,7 +220,7 @@ export class Label {
   private set color(color: TextStyleFill | undefined) {
     if (!equals(color, this.style.color)) {
       this.style.color = color
-      if (!this.isBitmapText(this.text)) {
+      if (!this.transformed && !this.isBitmapText(this.text)) {
         this.dirty = true
         this.text.style.fill = color ?? STYLE_DEFAULTS.COLOR
       }
@@ -233,7 +230,7 @@ export class Label {
   private set stroke(stroke: Stroke | undefined) {
     if (!equals(stroke, this.style.stroke)) {
       this.style.stroke = stroke
-      if (!this.isBitmapText(this.text)) {
+      if (!this.transformed && !this.isBitmapText(this.text)) {
         this.dirty = true
         this.text.style.stroke = stroke?.color ?? STYLE_DEFAULTS.STROKE
         this.text.style.strokeThickness = stroke?.width ?? STYLE_DEFAULTS.STROKE_THICKNESS
@@ -243,10 +240,12 @@ export class Label {
 
   private set fontFamily(fontFamily: string | string[]) {
     if (!equals(fontFamily, this.style.fontFamily)) {
-      this.dirty = true
       this.style.fontFamily = fontFamily
-      if (!this.isBitmapText(this.text)) {
-        this.text.style.fontFamily = fontFamily
+      if (!this.transformed) {
+        this.dirty = true
+        if (!this.isBitmapText(this.text)) {
+          this.text.style.fontFamily = fontFamily
+        }
       }
     }
   }
@@ -254,7 +253,7 @@ export class Label {
   private set fontName(fontName: string) {
     if (fontName !== this.style.fontName) {
       this.style.fontName = fontName
-      if (this.isBitmapText(this.text)) {
+      if (!this.transformed && this.isBitmapText(this.text)) {
         this.dirty = true
         this.text.fontName = fontName
       }
@@ -264,7 +263,7 @@ export class Label {
   private set fontWeight(fontWeight: TextStyleFontWeight | undefined) {
     if (fontWeight !== this.style.fontWeight) {
       this.style.fontWeight = fontWeight
-      if (!this.isBitmapText(this.text)) {
+      if (!this.transformed && !this.isBitmapText(this.text)) {
         this.dirty = true
         this.text.style.fontWeight = fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
       }
