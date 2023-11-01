@@ -42,7 +42,17 @@ export class NodeRenderer {
   }
 
   update(node: Graph.Node) {
-    this.setLabel(node)
+    if (this.label === undefined) {
+      if (node.label !== undefined) {
+        this.label = new Label(this.renderer.labelsContainer, node.label, node.style?.label)
+      }
+    } else if (node.label === undefined || node.label.trim() === '') {
+      this.renderer.labelObjectManager.delete(this.label)
+      this.labelMounted = false
+      this.label = undefined
+    } else {
+      this.label.update(node.label, node.style?.label)
+    }
 
     if (this.icon === undefined) {
       if (node.style?.icon) {
@@ -491,7 +501,9 @@ export class NodeRenderer {
 
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
-    this.setLabel(node)
+    if (this.label !== undefined) {
+      this.label.moveTo(this.x, this.y, this.strokes.radius)
+    }
     if (this.icon && node.style?.icon) {
       this.icon.update(this.x, this.y, node.style.icon)
     }
@@ -506,19 +518,5 @@ export class NodeRenderer {
       this.y + this.strokes.radius >= this.renderer.minY &&
       this.y - this.strokes.radius <= this.renderer.maxY
     )
-  }
-
-  private setLabel(node: Graph.Node) {
-    if (this.label === undefined) {
-      if (node.label !== undefined) {
-        this.label = new Label(this.renderer.labelsContainer, node.label, node.style?.label)
-      }
-    } else if (node.label === undefined) {
-      this.renderer.labelObjectManager.delete(this.label)
-      this.labelMounted = false
-      this.label = undefined
-    } else {
-      this.label.update(node.label, { x: this.x, y: this.y, offset: this.strokes.radius }, node.style?.label)
-    }
   }
 }

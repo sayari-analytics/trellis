@@ -8,11 +8,7 @@ import {
   TextStyleAlign,
   BitmapFont,
   ColorSource,
-  Sprite,
-  Texture,
-  BitmapText,
-  TextStyleFontWeight,
-  Rectangle
+  TextStyleFontWeight
 } from 'pixi.js'
 
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
@@ -28,8 +24,8 @@ export type LabelBackgroundStyle = {
 export type LabelStyle = Partial<{
   fontName: string
   fontSize: number
-  wordWrap: number
   margin: number
+  wordWrap: number
   letterSpacing: number
   fontFamily: string | string[]
   fontWeight: TextStyleFontWeight
@@ -47,14 +43,14 @@ export type StyleWithDefaults = Omit<LabelStyle, _StyleDefaults> & {
   fontName: string
 }
 
-export type LabelCoords = { x: number; y: number; offset?: number }
-
-const RESOLUTION = 2
+export const RESOLUTION = 2
 export const STYLE_DEFAULTS = {
   FONT_SIZE: 10,
   STROKE_THICKNESS: 0,
   LETTER_SPACING: 0.5,
   WORD_WRAP: false,
+  MARGIN: 2,
+  OPACITY: 1,
   PADDING: [4, 8] as [number, number],
   STROKE: '#FFF',
   FONT_NAME: 'Label',
@@ -97,6 +93,16 @@ const mergeDefaults = ({
   ...style
 })
 
+const mergeBackgroundDefaults = ({
+  color,
+  opacity = STYLE_DEFAULTS.OPACITY,
+  padding = STYLE_DEFAULTS.PADDING
+}: LabelBackgroundStyle): Required<LabelBackgroundStyle> => ({
+  color,
+  opacity,
+  padding
+})
+
 const isASCII = (str: string) => {
   for (const char of str) {
     if (char.codePointAt(0)! > 126) {
@@ -107,11 +113,11 @@ const isASCII = (str: string) => {
   return true
 }
 
-const getPositionAlign = (position: LabelPosition): TextStyleAlign => {
+const getTextAlign = (position: LabelPosition): TextStyleAlign => {
   return position === 'left' || position === 'right' ? position : 'center'
 }
 
-const getPositionAnchor = (position: LabelPosition): [x: number, y: number] => {
+const getAnchorPoint = (position: LabelPosition): [x: number, y: number] => {
   switch (position) {
     case 'bottom':
       return [0.5, 0]
@@ -147,7 +153,7 @@ const getTextStyle = ({ color, fontFamily, fontSize, fontWeight, wordWrap, strok
     style.strokeThickness = stroke.width
   }
   if (position !== STYLE_DEFAULTS.POSITION) {
-    style.align = getPositionAlign(position)
+    style.align = getTextAlign(position)
   }
   if (letterSpacing !== undefined) {
     style.letterSpacing = letterSpacing
@@ -158,7 +164,7 @@ const getTextStyle = ({ color, fontFamily, fontSize, fontWeight, wordWrap, strok
 const getBitmapStyle = (style: StyleWithDefaults): Partial<IBitmapTextStyle> => ({
   fontName: style.fontName,
   fontSize: style.fontSize,
-  align: getPositionAlign(style.position),
+  align: getTextAlign(style.position),
   letterSpacing: style.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
 })
 
@@ -171,47 +177,16 @@ const loadFont = (style: StyleWithDefaults) => {
   }
 }
 
-const createTextObject = (label: string, style: StyleWithDefaults) => {
-  let text: BitmapText | Text
-
-  if (isASCII(label)) {
-    loadFont(style)
-    text = new BitmapText(label, getBitmapStyle(style))
-  } else {
-    text = new Text(label, getTextStyle(style))
-  }
-
-  text.anchor.set(...getPositionAnchor(style.position))
-  return text
-}
-
 const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
   return typeof padding === 'number' ? [padding, padding] : padding
 }
 
-const setBackgroundSize = (sprite: Sprite, bounds: Rectangle, padding?: BackgroundPadding) => {
-  const [vertical, horizontal] = getBackgroundPadding(padding)
-  sprite.height = bounds.height + vertical
-  sprite.width = bounds.width + horizontal
-  return sprite
-}
-
-const setBackgroundStyle = (sprite: Sprite, text: Text | BitmapText, { color, opacity = 1, padding }: LabelBackgroundStyle) => {
-  sprite.anchor.set(text.anchor.x, text.anchor.y)
-  sprite.alpha = opacity
-  sprite.tint = color
-  return setBackgroundSize(sprite, text.getLocalBounds(), padding)
-}
-
-const createBackgroundSprite = (text: Text | BitmapText, style: LabelBackgroundStyle) => {
-  const sprite = Sprite.from(Texture.WHITE, { resolution: RESOLUTION })
-  return setBackgroundStyle(sprite, text, style)
-}
-
 const getLabelCoordinates = (
-  { x, y, offset = 0 }: LabelCoords,
-  { position, margin = 2, background }: StyleWithDefaults,
-  isBitmapText: boolean
+  x: number,
+  y: number,
+  offset: number,
+  isBitmapText: boolean,
+  { position, background, margin = STYLE_DEFAULTS.MARGIN }: StyleWithDefaults
 ) => {
   const shift = margin + offset
   const label = { x, y }
@@ -264,15 +239,12 @@ const getLabelCoordinates = (
 export default {
   isASCII,
   mergeDefaults,
+  mergeBackgroundDefaults,
   getLabelCoordinates,
-  getPositionAlign,
-  getPositionAnchor,
+  getTextAlign,
+  getAnchorPoint,
   getTextStyle,
   getBitmapStyle,
   loadFont,
-  createTextObject,
-  setBackgroundSize,
-  setBackgroundStyle,
-  createBackgroundSprite,
   getBackgroundPadding
 }
