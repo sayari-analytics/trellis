@@ -1,7 +1,9 @@
 import utils, { STYLE_DEFAULTS } from './utils'
 import type { LabelBackgroundStyle } from './utils'
-import { BitmapText, ColorSource, Container, Point, Rectangle, Sprite, Text, Texture } from 'pixi.js'
+import { BitmapText, ColorSource, Container, Point, Sprite, Text, Texture } from 'pixi.js'
 import { equals } from '../../../..'
+
+export type Rectangle = { width: number; height: number }
 
 export class LabelBackground {
   mounted = false
@@ -19,7 +21,9 @@ export class LabelBackground {
     this.label = label
     this.container = container
     this._style = style
-    this.rect = this.label.getLocalBounds()
+
+    const bounds = this.label.getLocalBounds()
+    this.rect = { width: bounds.width, height: bounds.height }
 
     const { width, height } = this.size
 
@@ -31,14 +35,10 @@ export class LabelBackground {
     this.sprite.tint = this.style.color
   }
 
-  update(label: Text | BitmapText, style: LabelBackgroundStyle) {
+  update(rect: Rectangle, anchor: Point, style: LabelBackgroundStyle) {
     this.dirty = !equals(style.padding, this._style.padding)
-    this.bounds = label.getLocalBounds()
-    this.anchor = label.anchor.clone()
-
-    if (this.label !== label) {
-      this.label = label
-    }
+    this.bounds = rect
+    this.anchor = anchor
 
     if (this._style !== style) {
       this._style = style
@@ -89,6 +89,14 @@ export class LabelBackground {
     this.sprite.destroy()
 
     return undefined
+  }
+
+  get text() {
+    return this.label
+  }
+
+  set text(text: Text | BitmapText) {
+    this.label = text
   }
 
   private resize() {

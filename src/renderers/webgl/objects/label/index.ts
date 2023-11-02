@@ -1,8 +1,8 @@
 import utils, { STYLE_DEFAULTS } from './utils'
 import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign, FontWeight } from './utils'
 import type { Stroke } from '../../../../types'
-import { BitmapText, Container, Text } from 'pixi.js'
-import { LabelBackground } from './background'
+import { BitmapText, Container, Text, Point } from 'pixi.js'
+import { LabelBackground, Rectangle } from './background'
 import { equals } from '../../../../'
 
 /**
@@ -16,6 +16,7 @@ export class Label {
 
   private x?: number
   private y?: number
+
   private dirty = false
   private transformed = false
   private label: string
@@ -79,9 +80,14 @@ export class Label {
       this.updateText()
     }
 
-    if (labelHasChanged || styleHasChanged) {
+    if (this.transformed && this.labelBackground) {
       this.transformed = false
-      this.background = style?.background
+      this.labelBackground.text = this.text
+    }
+
+    if (labelHasChanged || styleHasChanged) {
+      const { width, height } = this.text.getLocalBounds()
+      this.setBackground({ width, height }, this.text.anchor.clone(), style?.background)
     }
 
     return this
@@ -164,6 +170,17 @@ export class Label {
 
     if (isMounted) {
       this.mount()
+    }
+  }
+
+  private setBackground(rect: Rectangle, anchor: Point, background: LabelBackgroundStyle | undefined) {
+    if (this.labelBackground === null && background !== undefined) {
+      this.labelBackground = new LabelBackground(this.container, this.text, background)
+    } else if (this.labelBackground && background !== undefined) {
+      this.labelBackground.update(rect, anchor, background)
+    } else if (this.labelBackground && background === undefined) {
+      this.labelBackground.delete()
+      this.labelBackground = null
     }
   }
 
@@ -256,17 +273,6 @@ export class Label {
     if (!this.isBitmapText(this.text) && this.text.style.fontWeight !== fontWeight) {
       this.dirty = true
       this.text.style.fontWeight = fontWeight
-    }
-  }
-
-  private set background(background: LabelBackgroundStyle | undefined) {
-    if (this.labelBackground === null && background !== undefined) {
-      this.labelBackground = new LabelBackground(this.container, this.text, background)
-    } else if (this.labelBackground && background !== undefined) {
-      this.labelBackground.update(this.text, background)
-    } else if (this.labelBackground && background === undefined) {
-      this.labelBackground.delete()
-      this.labelBackground = null
     }
   }
 

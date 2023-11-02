@@ -8,11 +8,11 @@ const DARK_GREEN = '#607330'
 
 const TEXT_ICON: Graph.TextIcon = {
   type: 'textIcon',
-  family: 'sans-serif',
+  fontFamily: 'sans-serif',
+  fontWeight: '400',
+  fontSize: 14,
   color: '#fff',
-  weight: '400',
-  text: '!',
-  size: 14
+  text: '!'
 }
 
 const NODE_STYLE: Graph.NodeStyle = {

@@ -22,20 +22,17 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
 const PURPLE = '#7A5DC5'
 const LIGHT_PURPLE = '#CAD'
 const ARIAL_PINK = 'ArialPink'
+const TEXT_ICON: Graph.TextIcon = { type: 'textIcon', text: 'T', fontFamily: 'sans-serif', fontSize: 14, color: '#fff', fontWeight: '400' }
 
 const NODE_STYLE: Graph.NodeStyle = {
   color: PURPLE,
   stroke: [{ width: 2, color: LIGHT_PURPLE }],
-  icon: { type: 'textIcon', text: 'T', family: 'sans-serif', size: 14, color: '#fff', weight: '400' },
+  icon: TEXT_ICON,
   label: {
     position: 'top',
     fontName: ARIAL_PINK,
-    fontFamily: ['Arial', 'sans-serif'],
-    margin: 2,
-    background: {
-      color: '#f66',
-      opacity: 0.5
-    }
+    fontFamily: 'Arial, sans-serif',
+    margin: 2
   }
 }
 
@@ -43,7 +40,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: '#f66',
   stroke: [{ width: 2, color: '#fcc' }],
   label: { position: 'bottom', color: '#fcc' },
-  icon: { type: 'textIcon', text: 'L', family: 'sans-serif', size: 14, color: '#fff', weight: '400' }
+  icon: TEXT_ICON
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
