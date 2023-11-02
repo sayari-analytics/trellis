@@ -1,3 +1,4 @@
+import { MIN_ZOOM } from '../..'
 import type { Stroke } from '../../../../types'
 import {
   Text,
@@ -8,17 +9,16 @@ import {
   TextStyleAlign,
   BitmapFont,
   ColorSource,
-  TextStyleFontWeight
+  TextStyleFontWeight,
+  LINE_JOIN
 } from 'pixi.js'
 
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
-export type BackgroundPadding = number | [vertical: number, horizontal: number]
-
 export type LabelBackgroundStyle = {
   color: ColorSource
   opacity?: number
-  padding?: BackgroundPadding
+  padding?: number | number[]
 }
 
 export type LabelStyle = Partial<{
@@ -27,7 +27,7 @@ export type LabelStyle = Partial<{
   margin: number
   wordWrap: number
   letterSpacing: number
-  fontFamily: string | string[]
+  fontFamily: string
   fontWeight: TextStyleFontWeight
   stroke: Stroke
   color: TextStyleFill
@@ -35,12 +35,13 @@ export type LabelStyle = Partial<{
   background: LabelBackgroundStyle
 }>
 
-type _StyleDefaults = 'fontSize' | 'position' | 'fontFamily' | 'fontName'
+type _StyleDefaults = 'fontSize' | 'position' | 'fontFamily' | 'fontName' | 'margin'
 export type StyleWithDefaults = Omit<LabelStyle, _StyleDefaults> & {
   fontSize: number
   position: LabelPosition
   fontFamily: string | string[]
   fontName: string
+  margin: number
 }
 
 export const RESOLUTION = 2
@@ -57,9 +58,8 @@ export const STYLE_DEFAULTS = {
   COLOR: '#000000',
   ALIGN: 'center' as const,
   POSITION: 'bottom' as const,
-  LINE_JOIN: 'round' as const,
   FONT_WEIGHT: 'normal' as const,
-  FONT_FAMILY: ['Arial', 'sans-serif']
+  FONT_FAMILY: 'Arial, sans-serif'
 }
 
 // install text defaults
@@ -70,7 +70,7 @@ TextStyle.defaultStyle = {
   align: STYLE_DEFAULTS.ALIGN,
   fill: STYLE_DEFAULTS.COLOR,
   stroke: STYLE_DEFAULTS.STROKE,
-  lineJoin: STYLE_DEFAULTS.LINE_JOIN,
+  lineJoin: LINE_JOIN.ROUND,
   wordWrap: STYLE_DEFAULTS.WORD_WRAP,
   fontSize: STYLE_DEFAULTS.FONT_SIZE,
   fontFamily: STYLE_DEFAULTS.FONT_FAMILY,
@@ -84,12 +84,14 @@ const mergeDefaults = ({
   fontSize = STYLE_DEFAULTS.FONT_SIZE,
   fontFamily = STYLE_DEFAULTS.FONT_FAMILY,
   fontName = STYLE_DEFAULTS.FONT_NAME,
+  margin = STYLE_DEFAULTS.MARGIN,
   ...style
 }: LabelStyle = {}): StyleWithDefaults => ({
   position,
   fontSize,
   fontFamily,
   fontName,
+  margin,
   ...style
 })
 
@@ -170,15 +172,17 @@ const getBitmapStyle = (style: StyleWithDefaults): Partial<IBitmapTextStyle> => 
 
 const loadFont = (style: StyleWithDefaults) => {
   if (BitmapFont.available[style.fontName] === undefined) {
-    BitmapFont.from(style.fontName, getTextStyle(style), {
-      resolution: RESOLUTION,
+    BitmapFont.from(style.fontName, getTextStyle({ ...style, fontSize: style.fontSize * RESOLUTION * MIN_ZOOM }), {
       chars: BitmapFont.ASCII
     })
   }
 }
 
-const getBackgroundPadding = (padding: BackgroundPadding = STYLE_DEFAULTS.PADDING): [vertical: number, horizontal: number] => {
-  return typeof padding === 'number' ? [padding, padding] : padding
+const getBackgroundPadding = (
+  padding: number | number[] = STYLE_DEFAULTS.PADDING
+): [top: number, right: number, bottom: number, left: number] => {
+  const [top, right = top, bottom = top, left = right]: number[] = typeof padding === 'number' ? [padding] : padding
+  return [top, right, bottom, left]
 }
 
 const getLabelCoordinates = (
@@ -186,50 +190,45 @@ const getLabelCoordinates = (
   y: number,
   offset: number,
   isBitmapText: boolean,
-  { position, background, margin = STYLE_DEFAULTS.MARGIN }: StyleWithDefaults
+  { position, background, margin }: StyleWithDefaults
 ) => {
   const shift = margin + offset
   const label = { x, y }
   const bg = { x, y }
 
-  let vertical = 0
-  let horizontal = 0
+  let top = 0
+  let right = 0
+  let bottom = 0
+  let left = 0
   if (background !== undefined) {
-    const [v, h] = getBackgroundPadding(background.padding)
-    vertical += v / 2
-    horizontal += h / 2
+    const [t, r, b, l] = getBackgroundPadding(background.padding)
+    top += t
+    right += r
+    bottom += b
+    left += l
+  }
+
+  if (isBitmapText && (position === 'left' || position === 'right')) {
+    label.y -= 1
+    bg.y -= 1
   }
 
   switch (position) {
     case 'bottom':
-      label.y += shift + vertical
+      label.y += shift + top
       bg.y += shift
-
       break
     case 'left':
-      label.x -= shift + horizontal
+      label.x -= shift + right
       bg.x -= shift
-
-      if (isBitmapText) {
-        label.y -= 1
-        bg.y -= 1
-      }
-
       break
     case 'top':
-      label.y -= shift + vertical
+      label.y -= shift + bottom
       bg.y -= shift
-
       break
     case 'right':
-      label.x += shift + horizontal
+      label.x += shift + left
       bg.x += shift
-
-      if (isBitmapText) {
-        label.y -= 1
-        bg.y -= 1
-      }
-
       break
   }
 

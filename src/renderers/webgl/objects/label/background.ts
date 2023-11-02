@@ -1,6 +1,6 @@
-import utils, { RESOLUTION, STYLE_DEFAULTS } from './utils'
-import type { BackgroundPadding, LabelBackgroundStyle } from './utils'
-import { BitmapText, ColorSource, Container, Rectangle, Sprite, Text, Texture } from 'pixi.js'
+import utils, { STYLE_DEFAULTS } from './utils'
+import type { LabelBackgroundStyle } from './utils'
+import { BitmapText, ColorSource, Container, Point, Rectangle, Sprite, Text, Texture } from 'pixi.js'
 import { equals } from '../../../..'
 
 export class LabelBackground {
@@ -12,28 +12,39 @@ export class LabelBackground {
   private sprite: Sprite
   private label: Text | BitmapText
   private container: Container
-  private style: Required<LabelBackgroundStyle>
   private rect: Rectangle
+  private _style: LabelBackgroundStyle
 
   constructor(container: Container, label: Text | BitmapText, style: LabelBackgroundStyle) {
     this.label = label
     this.container = container
-    this.style = utils.mergeBackgroundDefaults(style)
-    this.sprite = Sprite.from(Texture.WHITE, { resolution: RESOLUTION })
+    this._style = style
+    this.rect = this.label.getLocalBounds()
+
+    const { width, height } = this.size
+
+    this.sprite = Sprite.from(Texture.WHITE)
+    this.sprite.height = height
+    this.sprite.width = width
     this.sprite.anchor.set(this.label.anchor.x, this.label.anchor.y)
     this.sprite.alpha = this.style.opacity
     this.sprite.tint = this.style.color
-    this.rect = label.getLocalBounds()
-    this.resize()
   }
 
   update(label: Text | BitmapText, style: LabelBackgroundStyle) {
-    this.label = label
-    this.color = style.color
+    this.dirty = !equals(style.padding, this._style.padding)
     this.bounds = label.getLocalBounds()
-    this.opacity = style.opacity ?? STYLE_DEFAULTS.OPACITY
-    this.padding = style.padding ?? STYLE_DEFAULTS.PADDING
-    this.sprite.anchor.set(this.label.anchor.x, this.label.anchor.y)
+    this.anchor = label.anchor.clone()
+
+    if (this.label !== label) {
+      this.label = label
+    }
+
+    if (this._style !== style) {
+      this._style = style
+      this.color = style.color
+      this.opacity = style.opacity ?? STYLE_DEFAULTS.OPACITY
+    }
 
     if (this.dirty) {
       this.dirty = false
@@ -81,39 +92,42 @@ export class LabelBackground {
   }
 
   private resize() {
-    const [vertical, horizontal] = utils.getBackgroundPadding(this.style.padding)
-
-    const height = this.rect.height + vertical
+    const { height, width } = this.size
     if (height !== this.sprite.height) {
       this.sprite.height = height
     }
-
-    const width = this.rect.width + horizontal
     if (width !== this.sprite.width) {
       this.sprite.width = width
     }
-
     return this
   }
 
+  private get style() {
+    return utils.mergeBackgroundDefaults(this._style)
+  }
+
+  private get size() {
+    const [top, right, bottom, left] = utils.getBackgroundPadding(this._style.padding)
+    const height = this.rect.height + top + bottom
+    const width = this.rect.width + right + left
+    return { width, height }
+  }
+
+  private set anchor(anchor: Point) {
+    if (!this.sprite.anchor.equals(anchor)) {
+      this.sprite.anchor.copyFrom(anchor)
+    }
+  }
+
   private set color(color: ColorSource) {
-    if (color !== this.style.color) {
-      this.style.color = color
+    if (this.sprite.tint !== color) {
       this.sprite.tint = color
     }
   }
 
   private set opacity(opacity: number) {
-    if (opacity !== this.style.opacity) {
-      this.style.opacity = opacity
+    if (this.sprite.alpha !== opacity) {
       this.sprite.alpha = opacity
-    }
-  }
-
-  private set padding(padding: BackgroundPadding) {
-    if (!equals(padding, this.style.padding)) {
-      this.style.padding = padding
-      this.dirty = true
     }
   }
 

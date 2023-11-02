@@ -22,7 +22,7 @@ const NODE_STYLE: Graph.NodeStyle = {
   label: {
     position: 'right',
     fontName: 'NodeLabel',
-    fontFamily: ['Arial', 'sans-serif'],
+    fontFamily: 'Arial, sans-serif',
     background: { color: GREEN_LIGHT },
     margin: 4
   }
@@ -35,7 +35,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
   label: {
     position: 'right',
     fontName: 'NodeLabelHover',
-    fontFamily: ['Arial', 'sans-serif'],
+    fontFamily: 'Arial, sans-serif',
     background: { color: DARK_GREEN },
     color: '#FFF',
     margin: 4

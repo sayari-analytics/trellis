@@ -50,7 +50,7 @@ export class NodeRenderer {
       this.renderer.labelObjectManager.delete(this.label)
       this.labelMounted = false
       this.label = undefined
-    } else {
+    } else if (!this.label.equals(node.label, node.style?.label)) {
       this.label.update(node.label, node.style?.label)
     }
 
