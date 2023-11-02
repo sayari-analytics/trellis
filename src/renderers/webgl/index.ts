@@ -13,7 +13,7 @@ import { Font } from './textures/font'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
-import { TextIconTexture } from './textures/textIcon'
+import { TextIconTexture, ImageIconTexture } from './textures/icons'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -154,6 +154,7 @@ export class Renderer {
   circle: CircleTexture
   arrow: ArrowTexture
   textIcon: TextIconTexture
+  imageIcon: ImageIconTexture
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
 
@@ -232,6 +233,7 @@ export class Renderer {
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
     this.textIcon = new TextIconTexture(this)
+    this.imageIcon = new ImageIconTexture()
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer

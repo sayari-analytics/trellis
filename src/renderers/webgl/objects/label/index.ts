@@ -3,6 +3,7 @@ import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign, FontWe
 import type { Stroke } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
+import { equals } from '../../../../'
 
 /**
  * TODO
@@ -36,15 +37,16 @@ export class Label {
       this.text = new Text(this.label, utils.getTextStyle(this.style))
     }
 
-    this.text.anchor.set(...utils.getAnchorPoint(this.style.position))
+    this.anchor = utils.getAnchorPoint(this.style.position)
+
     if (this.style.background !== undefined) {
-      this.labelBackground = new LabelBackground(container, this.text, this.style.background)
+      this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
   }
 
   update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
-    const styleHasChanged = this._style !== style
+    const styleHasChanged = !equals(this._style, style)
 
     this._style = style
 
@@ -128,10 +130,6 @@ export class Label {
     }
 
     return undefined
-  }
-
-  equals(label: string, style: LabelStyle | undefined) {
-    return this.label === label && this._style === style
   }
 
   private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {

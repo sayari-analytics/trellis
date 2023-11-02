@@ -50,20 +50,20 @@ export class NodeRenderer {
       this.renderer.labelObjectManager.delete(this.label)
       this.labelMounted = false
       this.label = undefined
-    } else if (!this.label.equals(node.label, node.style?.label)) {
+    } else {
       this.label.update(node.label, node.style?.label)
     }
 
     if (this.icon === undefined) {
-      if (node.style?.icon) {
-        this.icon = new Icon(this.renderer.nodesContainer, this.renderer.textIcon, this.fill, node.style.icon)
+      if (node.style?.icon !== undefined) {
+        this.icon = new Icon(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, node.style.icon)
       }
+    } else if (node.style?.icon === undefined) {
+      this.icon.delete()
+      this.iconMounted = false
+      this.icon = undefined
     } else {
-      if (node.style?.icon === undefined) {
-        this.icon.delete()
-        this.iconMounted = false
-        this.icon = undefined
-      }
+      this.icon.update(node.style.icon)
     }
 
     /**
@@ -504,8 +504,8 @@ export class NodeRenderer {
     if (this.label !== undefined) {
       this.label.moveTo(this.x, this.y, this.strokes.radius)
     }
-    if (this.icon && node.style?.icon) {
-      this.icon.update(this.x, this.y, node.style.icon)
+    if (this.icon !== undefined) {
+      this.icon.moveTo(this.x, this.y)
     }
     this.hitArea.update(x, y, radius)
   }

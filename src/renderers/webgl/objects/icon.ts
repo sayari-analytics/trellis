@@ -1,40 +1,64 @@
+import { TextIconTexture, ImageIconTexture, TrellisIcon, TextIcon, ImageIcon } from '../textures/icons'
 import { Container, Sprite } from 'pixi.js'
 import { NodeFill } from './nodeFill'
-import { TextIconTexture } from '../textures/textIcon'
-import * as Graph from '../../..'
+import * as Trellis from '../../../'
 
-// TODO - support image icons
 export class Icon {
   mounted = false
 
+  private x?: number
+  private y?: number
   private container: Container
   private textIconTexture: TextIconTexture
+  private imageIconTexture: ImageIconTexture
   private nodeFill: NodeFill
-  private style: Graph.TextIcon | Graph.ImageIcon
+  private style: TrellisIcon
   private icon: Sprite
 
-  constructor(container: Container, textIconTexture: TextIconTexture, nodeFill: NodeFill, style: Graph.TextIcon | Graph.ImageIcon) {
+  constructor(
+    container: Container,
+    textIconTexture: TextIconTexture,
+    imageIconTexture: ImageIconTexture,
+    nodeFill: NodeFill,
+    style: TrellisIcon
+  ) {
     this.container = container
     this.textIconTexture = textIconTexture
+    this.imageIconTexture = imageIconTexture
     this.nodeFill = nodeFill
-
-    this.icon = this.createIcon(style)
+    this.icon = this.create(style)
     this.style = style
   }
 
-  update(x: number, y: number, style: Graph.TextIcon | Graph.ImageIcon) {
-    if (!Graph.equals(this.style, style)) {
+  update(style: TrellisIcon) {
+    if (!Trellis.equals(this.style, style)) {
       const isMounted = this.mounted
+
       this.delete()
-      this.icon = this.createIcon(style)
+      this.style = style
+      this.icon = this.create(style)
+
       if (isMounted) {
         this.mount()
       }
-      this.style = style
     }
 
-    this.icon.x = this.style.offsetX ?? 0 + x
-    this.icon.y = this.style.offsetY ?? 0 + y
+    return this
+  }
+
+  moveTo(_x: number, _y: number) {
+    const x = _x + (this.style.offset?.x ?? 0)
+    const y = _y + (this.style.offset?.y ?? 0)
+
+    if (x !== this.x) {
+      this.x = x
+      this.icon.x = x
+    }
+
+    if (y !== this.y) {
+      this.y = y
+      this.icon.y = y
+    }
 
     return this
   }
@@ -64,22 +88,21 @@ export class Icon {
     return undefined
   }
 
-  private createIcon(style: Graph.TextIcon | Graph.ImageIcon): Sprite {
-    let icon: Sprite
-
-    if (style.type === 'textIcon') {
-      icon = new Sprite(this.textIconTexture.create(style.text, style.family, style.size, style.weight ?? 'normal', style.color))
-      icon.anchor.set(0.5)
-      icon.scale.set(1 / this.textIconTexture.scaleFactor)
-    } else if (style.type === 'imageIcon') {
-      // TODO
-      icon = new Sprite(this.textIconTexture.create('?', 'sans-serif', 12, 'normal', 0x000000))
-      icon.anchor.set(0.5)
-    } else {
-      icon = new Sprite(this.textIconTexture.create('?', 'sans-serif', 12, 'normal', 0x000000))
-      icon.anchor.set(0.5)
-    }
-
+  private create(style: TrellisIcon) {
+    const icon = style.type === 'textIcon' ? this.createTextIcon(style) : this.createImageIcon(style)
+    icon.anchor.set(0.5)
     return icon
+  }
+
+  private createTextIcon(style: TextIcon) {
+    const icon = new Sprite(this.textIconTexture.create(style))
+    icon.scale.set(1 / this.textIconTexture.scaleFactor)
+    return icon
+  }
+
+  private createImageIcon(style: ImageIcon) {
+    const sprite = new Sprite(this.imageIconTexture.create(style))
+    sprite.scale.set(style.scale ?? 1)
+    return sprite
   }
 }
