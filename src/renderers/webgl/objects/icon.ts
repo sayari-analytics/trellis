@@ -91,6 +91,8 @@ export class Icon {
   private create(style: TrellisIcon) {
     const icon = style.type === 'textIcon' ? this.createTextIcon(style) : this.createImageIcon(style)
     icon.anchor.set(0.5)
+    icon.x = this.x ?? 0
+    icon.y = this.y ?? 0
     return icon
   }
 

@@ -86,8 +86,7 @@ export class Label {
     }
 
     if (labelHasChanged || styleHasChanged) {
-      const { width, height } = this.text.getLocalBounds()
-      this.setBackground({ width, height }, this.text.anchor.clone(), style?.background)
+      this.setBackground({ ...this.text.getLocalBounds() }, this.text.anchor.clone(), style?.background)
     }
 
     return this

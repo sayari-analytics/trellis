@@ -1,10 +1,17 @@
 import * as Renderer from '@trellis/renderers/webgl'
 import * as Graph from '@trellis/index'
 import * as Collide from '@trellis/layout/collide'
+import { person } from '../../../assets/icons'
 
 const GREEN = '#91AD49'
 const GREEN_LIGHT = '#C6D336'
 const DARK_GREEN = '#607330'
+
+const IMAGE_ICON: Graph.ImageIcon = {
+  type: 'imageIcon',
+  url: person,
+  scale: 0.66
+}
 
 const TEXT_ICON: Graph.TextIcon = {
   type: 'textIcon',
@@ -17,7 +24,7 @@ const TEXT_ICON: Graph.TextIcon = {
 
 const NODE_STYLE: Graph.NodeStyle = {
   color: GREEN,
-  icon: TEXT_ICON,
+  icon: IMAGE_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
     position: 'right',

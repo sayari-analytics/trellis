@@ -22,8 +22,7 @@ export class LabelBackground {
     this.container = container
     this._style = style
 
-    const bounds = this.label.getLocalBounds()
-    this.rect = { width: bounds.width, height: bounds.height }
+    this.rect = { ...this.label.getLocalBounds() }
 
     const { width, height } = this.size
 
