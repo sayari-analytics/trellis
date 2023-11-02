@@ -9,7 +9,6 @@ import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import { ArrowTexture } from './textures/arrow'
 import { CircleTexture } from './textures/circle'
-import { Font } from './textures/font'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
@@ -140,7 +139,6 @@ export class Renderer {
   edgeArrowObjectManager = new ObjectManager(1000)
   labelObjectManager = new ObjectManager(2000)
   interactionObjectManager = new ObjectManager(2000)
-  font = new Font()
   eventSystem: EventSystem
   nodes: Graph.Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}

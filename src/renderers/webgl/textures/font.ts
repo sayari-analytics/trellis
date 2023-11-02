@@ -1,24 +1,37 @@
-import { BitmapFont } from 'pixi.js'
+import { BitmapFont, TextStyle } from 'pixi.js'
 import { MIN_ZOOM } from '..'
 
-export class Font {
-  private font: BitmapFont
+export class FontBook {
+  static resolution = 2
+  static maxFontSize = 10
+  static scaleFactor = MIN_ZOOM
 
-  constructor(fontFamily = 'sans-serif', maxFontSize = 10, minZoom = MIN_ZOOM, strokeThickness = 1.5) {
-    this.font = BitmapFont.from(
-      'Label',
-      {
-        fontFamily,
-        fontSize: maxFontSize * 2 * minZoom, // max font size * retina * minZoom
-        fill: 0x000000,
-        stroke: 0xffffff,
-        strokeThickness: strokeThickness * 2 * minZoom // strokeThickness * retina * minZoom
-      },
-      { chars: BitmapFont.ASCII }
-    )
+  static find(fontName: string): BitmapFont | undefined {
+    return BitmapFont.available[fontName]
   }
 
-  delete() {
-    this.font.destroy()
+  static available(fontName: string) {
+    return FontBook.find(fontName) !== undefined
+  }
+
+  static create(fontName: string, style: TextStyle, maxFontSize = FontBook.maxFontSize, scaleFactor = FontBook.scaleFactor) {
+    style.fontSize = maxFontSize * FontBook.resolution * scaleFactor
+
+    return BitmapFont.from(fontName, style, {
+      chars: BitmapFont.ASCII,
+      resolution: FontBook.resolution
+    })
+  }
+
+  static load(fontName: string, style: TextStyle, maxFontSize = FontBook.maxFontSize, scaleFactor = FontBook.scaleFactor) {
+    if (!FontBook.available(fontName)) {
+      FontBook.create(fontName, style, maxFontSize, scaleFactor)
+    } else {
+      return FontBook.find(fontName)
+    }
+  }
+
+  static delete(fontName: string) {
+    FontBook.find(fontName)?.destroy()
   }
 }
