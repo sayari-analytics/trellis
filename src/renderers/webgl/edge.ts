@@ -1,4 +1,5 @@
-import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, Renderer } from '.'
+import { type Renderer } from '.'
+import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM } from './utils'
 import { movePoint } from './utils'
 import { NodeRenderer } from './node'
 import * as Graph from '../..'

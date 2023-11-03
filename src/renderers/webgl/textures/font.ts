@@ -1,5 +1,5 @@
 import { BitmapFont, TextStyle } from 'pixi.js'
-import { MIN_ZOOM } from '..'
+import { MIN_ZOOM } from '../utils'
 
 export class FontBook {
   static resolution = 2

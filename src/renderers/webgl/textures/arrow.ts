@@ -1,5 +1,6 @@
 import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js'
-import { MIN_ZOOM, Renderer } from '..'
+import { MIN_ZOOM } from '../utils'
+import { type Renderer } from '..'
 
 export class ArrowTexture {
   texture: RenderTexture

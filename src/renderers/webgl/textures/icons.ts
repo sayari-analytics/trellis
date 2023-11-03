@@ -1,4 +1,5 @@
-import { MIN_ZOOM, Renderer } from '..'
+import { type Renderer } from '..'
+import { MIN_ZOOM } from '../utils'
 import {
   Text,
   Matrix,

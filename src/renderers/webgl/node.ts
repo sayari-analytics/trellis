@@ -1,5 +1,6 @@
+import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from './utils'
 import { FederatedPointerEvent } from 'pixi.js'
-import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer, MIN_NODE_ICON_ZOOM } from '.'
+import { type Renderer } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'
 import { NodeFill } from './objects/nodeFill'

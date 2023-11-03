@@ -4,6 +4,7 @@ import type { Stroke } from '../../../../types'
 import { BitmapText, Container, Text, Point } from 'pixi.js'
 import { LabelBackground, Rectangle } from './background'
 import { equals } from '../../../../'
+import { FontBook } from '../../textures/font'
 
 /**
  * TODO
@@ -29,17 +30,7 @@ export class Label {
     this.container = container
     this.label = label
     this._style = style
-
-    if (utils.isASCII(this.label)) {
-      utils.loadFont(this.style)
-      this.text = new BitmapText(this.label, utils.getBitmapStyle(this.style))
-      this.text.resolution = 2
-    } else {
-      this.text = new Text(this.label, utils.getTextStyle(this.style))
-    }
-
-    this.anchor = utils.getAnchorPoint(this.style.position)
-
+    this.text = this.create()
     if (this.style.background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
@@ -137,6 +128,23 @@ export class Label {
     return undefined
   }
 
+  private create() {
+    const label = this.label
+    const style = this.style
+    let text: Text | BitmapText
+
+    if (utils.isASCII(label)) {
+      FontBook.load(style.fontName, utils.getTextStyle(style))
+      text = new BitmapText(label, utils.getBitmapStyle(style))
+      text.resolution = FontBook.resolution
+    } else {
+      text = new Text(label, utils.getTextStyle(style))
+    }
+
+    text.anchor.set(...utils.getAnchorPoint(style.position))
+    return text
+  }
+
   private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {
     return text instanceof BitmapText
   }
@@ -154,16 +162,7 @@ export class Label {
     const isMounted = this.mounted
 
     this.delete()
-
-    if (utils.isASCII(this.label)) {
-      utils.loadFont(this.style)
-      this.text = new BitmapText(this.label, utils.getBitmapStyle(this.style))
-      this.text.resolution = 2
-    } else {
-      this.text = new Text(this.label, utils.getTextStyle(this.style))
-    }
-
-    this.anchor = utils.getAnchorPoint(this.style.position)
+    this.text = this.create()
     this.text.x = this.x ?? 0
     this.text.y = this.y ?? 0
 

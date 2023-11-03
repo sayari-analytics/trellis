@@ -1,6 +1,6 @@
-import { MIN_ZOOM } from '../..'
 import type { Stroke } from '../../../../types'
-import { Text, TextStyle, ITextStyle, IBitmapTextStyle, BitmapFont, LINE_JOIN } from 'pixi.js'
+import { FontBook } from '../../textures/font'
+import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
@@ -54,7 +54,7 @@ export const STYLE_DEFAULTS = {
 }
 
 // install text defaults
-Text.defaultResolution = RESOLUTION
+Text.defaultResolution = FontBook.resolution
 Text.defaultAutoResolution = false
 TextStyle.defaultStyle = {
   ...TextStyle.defaultStyle,
@@ -161,14 +161,6 @@ const getBitmapStyle = (style: StyleWithDefaults): Partial<IBitmapTextStyle> => 
   letterSpacing: style.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
 })
 
-const loadFont = (style: StyleWithDefaults) => {
-  if (BitmapFont.available[style.fontName] === undefined) {
-    BitmapFont.from(style.fontName, getTextStyle({ ...style, fontSize: style.fontSize * RESOLUTION * MIN_ZOOM }), {
-      chars: BitmapFont.ASCII
-    })
-  }
-}
-
 const getBackgroundPadding = (
   padding: number | number[] = STYLE_DEFAULTS.PADDING
 ): [top: number, right: number, bottom: number, left: number] => {
@@ -235,6 +227,5 @@ export default {
   getAnchorPoint,
   getTextStyle,
   getBitmapStyle,
-  loadFont,
   getBackgroundPadding
 }
