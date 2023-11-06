@@ -2,7 +2,7 @@ import Stats from 'stats.js'
 import * as Cluster from '../../src/layout/cluster'
 import * as Fisheye from '../../src/layout/fisheye'
 import * as WebGL from '../../src/renderers/webgl'
-import * as Graph from '../../src/'
+import * as Graph from '../../src'
 
 export const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom

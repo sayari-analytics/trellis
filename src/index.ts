@@ -43,25 +43,26 @@ export type ImageIcon = {
   offsetY?: number
 }
 
+export type Stroke = { color: string; width: number }
+
+export type LabelBackground = { color: string; opacity?: number }
+
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelStyle = Partial<{
   color: string
   fontFamily: string
   fontSize: number
-  wordWrap: number
-  background: string
-  backgroundOpacity: number
+  maxWidth: number
+  stroke: Stroke
   position: LabelPosition
+  background: LabelBackground
 }>
 
 export type NodeStyle = {
   color?: string
   icon?: TextIcon | ImageIcon
-  stroke?: {
-    color: string
-    width: number
-  }[]
+  stroke?: Stroke[]
   badge?: {
     position: number
     radius: number

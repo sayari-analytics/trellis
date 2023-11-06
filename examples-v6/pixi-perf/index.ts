@@ -1,6 +1,6 @@
 import Stats from 'stats.js'
 import * as Force from '../../src/layout/force'
-import * as Graph from '../../src/'
+import * as Graph from '../../src'
 import * as Zoom from '../../src/bindings/native/zoom'
 import * as Download from '../../src/bindings/native/download'
 import * as WebGL from '../../src/renderers/webgl'

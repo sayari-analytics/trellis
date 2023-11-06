@@ -1,0 +1,22 @@
+{
+  "name": "@sayari/native",
+  "version": "1.0.0",
+  "description": "Trellis code examples with native renderer",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "dev": "vite",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayari-analytics/trellis.git"
+  },
+  "keywords": ["trellis", "examples"],
+  "author": "Mikey Gower",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayari-analytics/trellis/issues"
+  },
+  "homepage": "https://github.com/sayari-analytics/trellis#readme"
+}

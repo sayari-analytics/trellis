@@ -1,4 +1,4 @@
-import { Node, Edge } from '../../src/'
+import { Node, Edge } from '../../src'
 
 const graph: { nodes: Record<string, Node & { type: string }>; edges: Record<string, Edge> } = {
   nodes: {

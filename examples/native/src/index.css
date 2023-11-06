@@ -1,0 +1,17 @@
+@import '../../reset';
+
+#examples {
+  display: flex;
+  flex-direction: column;
+  margin: 2rem;
+  gap: 1rem;
+}
+
+#graph {
+  position: absolute;
+  left: 5rem;
+  top: 3rem;
+}
+#graph canvas {
+  border: 1px solid #eee;
+}
