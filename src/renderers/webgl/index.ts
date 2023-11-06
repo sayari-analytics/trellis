@@ -249,9 +249,9 @@ export class Renderer {
     this.root.addEventListener('pointerdown', this.pointerDown)
     this.root.addEventListener('pointermove', this.pointerMove)
     this.root.addEventListener('pointerup', this.pointerUp)
-    this.root.addEventListener('pointerupoutside', this.pointerUp)
     this.root.addEventListener('pointercancel', this.pointerUp)
     this.root.addEventListener('pointerleave', this.pointerLeave)
+    this.root.addEventListener('pointerupoutside', this.pointerReleaseNode)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
 
     if (debug) {
@@ -600,9 +600,7 @@ export class Renderer {
 
   private pointerUp = (event: FederatedPointerEvent) => {
     if (this.draggedNode) {
-      const draggedNode = this.draggedNode
-      draggedNode.pointerUp(event)
-      draggedNode.pointerLeave(event)
+      this.pointerReleaseNode(event)
       return
     }
 
@@ -682,6 +680,14 @@ export class Renderer {
   private clearDoubleClick = () => {
     this.doubleClickTimeout = undefined
     this.doubleClick = false
+  }
+
+  private pointerReleaseNode(event: FederatedPointerEvent) {
+    if (this.draggedNode) {
+      const draggedNode = this.draggedNode
+      draggedNode.pointerUp(event)
+      draggedNode.pointerLeave(event)
+    }
   }
 }
 
