@@ -1,8 +1,8 @@
 import utils, { STYLE_DEFAULTS } from './utils'
 import type { LabelPosition, LabelStyle, LabelBackgroundStyle } from './utils'
 import type { Stroke, TextAlign, FontWeight } from '../../../../types'
-import { BitmapText, Container, Text, Point } from 'pixi.js'
-import { LabelBackground, Rectangle } from './background'
+import { BitmapText, Container, Text } from 'pixi.js'
+import { LabelBackground } from './background'
 import { FontBook } from '../../textures/font'
 import { equals } from '../../../../'
 
@@ -94,7 +94,7 @@ export class Label {
     }
 
     if (labelHasChanged || styleHasChanged) {
-      this.setBackground({ ...this.text.getLocalBounds() }, this.text.anchor.clone(), style?.background)
+      this.background = style?.background
     }
 
     return this
@@ -145,6 +145,13 @@ export class Label {
     return undefined
   }
 
+  getBounds() {
+    return (
+      this.labelBackground?.getBounds() ||
+      utils.getBounds(this.x ?? 0, this.y ?? 0, this.text.width, this.text.height, this.text.anchor.clone())
+    )
+  }
+
   private create() {
     const label = this.label
     const style = this.style
@@ -190,11 +197,11 @@ export class Label {
     }
   }
 
-  private setBackground(rect: Rectangle, anchor: Point, background: LabelBackgroundStyle | undefined) {
+  private set background(background: LabelBackgroundStyle | undefined) {
     if (this.labelBackground === null && background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, background)
     } else if (this.labelBackground && background !== undefined) {
-      this.labelBackground.update(rect, anchor, background)
+      this.labelBackground.update({ width: this.text.width, height: this.text.height }, this.text.anchor.clone(), background)
     } else if (this.labelBackground && background === undefined) {
       this.labelBackground.delete()
       this.labelBackground = null

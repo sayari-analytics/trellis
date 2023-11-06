@@ -3,7 +3,7 @@ import type { LabelBackgroundStyle } from './utils'
 import { BitmapText, ColorSource, Container, Point, Sprite, Text, Texture } from 'pixi.js'
 import { equals } from '../../../..'
 
-export type Rectangle = { width: number; height: number }
+export type Size = { width: number; height: number }
 
 export class LabelBackground {
   mounted = false
@@ -14,7 +14,7 @@ export class LabelBackground {
   private sprite: Sprite
   private label: Text | BitmapText
   private container: Container
-  private rect: Rectangle
+  private rect: Size
   private _style: LabelBackgroundStyle
 
   constructor(container: Container, label: Text | BitmapText, style: LabelBackgroundStyle) {
@@ -22,7 +22,7 @@ export class LabelBackground {
     this.container = container
     this._style = style
 
-    this.rect = { ...this.label.getLocalBounds() }
+    this.rect = { width: this.label.width, height: this.label.height }
 
     const { width, height } = this.size
 
@@ -34,7 +34,7 @@ export class LabelBackground {
     this.sprite.tint = this.style.color
   }
 
-  update(rect: Rectangle, anchor: Point, style: LabelBackgroundStyle) {
+  update(rect: Size, anchor: Point, style: LabelBackgroundStyle) {
     this.dirty = !equals(style.padding, this._style.padding)
     this.bounds = rect
     this.anchor = anchor
@@ -90,6 +90,10 @@ export class LabelBackground {
     return undefined
   }
 
+  getBounds() {
+    return utils.getBounds(this.x ?? 0, this.y ?? 0, this.sprite.width, this.sprite.height, this.sprite.anchor.clone())
+  }
+
   get text() {
     return this.label
   }
@@ -138,7 +142,7 @@ export class LabelBackground {
     }
   }
 
-  private set bounds(bounds: Rectangle) {
+  private set bounds(bounds: Size) {
     if (this.rect.width !== bounds.width || this.rect.height !== bounds.height) {
       this.rect = bounds
       this.dirty = true

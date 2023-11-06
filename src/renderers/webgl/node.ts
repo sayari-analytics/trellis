@@ -500,13 +500,20 @@ export class NodeRenderer {
   }
 
   private visible() {
-    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    return (
-      this.x + this.strokes.radius >= this.renderer.minX &&
-      this.x - this.strokes.radius <= this.renderer.maxX &&
-      this.y + this.strokes.radius >= this.renderer.minY &&
-      this.y - this.strokes.radius <= this.renderer.maxY
-    )
+    let left = this.x - this.strokes.radius
+    let right = this.x + this.strokes.radius
+    let top = this.y - this.strokes.radius
+    let bottom = this.y + this.strokes.radius
+
+    if (this.label) {
+      const bounds = this.label.getBounds()
+      left = Math.min(left, bounds.left)
+      right = Math.max(right, bounds.right)
+      top = Math.min(top, bounds.top)
+      bottom = Math.max(bottom, bounds.bottom)
+    }
+
+    return right >= this.renderer.minX && left <= this.renderer.maxX && bottom >= this.renderer.minY && top <= this.renderer.maxY
   }
 
   private mountLabel(shouldMount: boolean) {
