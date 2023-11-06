@@ -1,4 +1,6 @@
 import { TWO_PI } from './renderers/webgl/utils'
+import type { LabelStyle } from './renderers/webgl/objects/label'
+import type { Stroke } from './types'
 
 export type Node = {
   id: string
@@ -42,22 +44,6 @@ export type ImageIcon = {
   offsetX?: number
   offsetY?: number
 }
-
-export type Stroke = { color: string; width: number }
-
-export type LabelBackground = { color: string; opacity?: number }
-
-export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
-
-export type LabelStyle = Partial<{
-  color: string
-  fontFamily: string
-  fontSize: number
-  maxWidth: number
-  stroke: Stroke
-  position: LabelPosition
-  background: LabelBackground
-}>
 
 export type NodeStyle = {
   color?: string
@@ -392,3 +378,7 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
   const angle = Math.atan2(y0 - y1, x0 - x1)
   return angle < 0 ? angle + TWO_PI : angle
 }
+
+// exports
+export type { Stroke } from './types'
+export type { LabelStyle, LabelBackgroundStyle, LabelPosition, FontWeight, TextAlign } from './renderers/webgl/objects/label'

@@ -2,7 +2,6 @@ import { FederatedPointerEvent } from 'pixi.js'
 import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer, MIN_NODE_ICON_ZOOM } from '.'
 import * as Graph from '../..'
 import { Label } from './objects/label'
-import { positionNodeLabel } from './utils'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { Icon } from './objects/icon'
@@ -44,15 +43,15 @@ export class NodeRenderer {
 
   update(node: Graph.Node) {
     if (this.label === undefined) {
-      if (node.label) {
-        this.label = new Label(this.renderer.labelsContainer, node.label)
+      if (node.label !== undefined) {
+        this.label = new Label(this.renderer.labelsContainer, node.label, node.style?.label)
       }
-    } else {
-      if (node.label === undefined) {
-        this.renderer.labelObjectManager.delete(this.label)
-        this.labelMounted = false
-        this.label = undefined
-      }
+    } else if (node.label === undefined || node.label.trim() === '') {
+      this.renderer.labelObjectManager.delete(this.label)
+      this.labelMounted = false
+      this.label = undefined
+    } else if (!this.label.equals(node.label, node.style?.label)) {
+      this.label.update(node.label, node.style?.label)
     }
 
     if (this.icon === undefined) {
@@ -502,9 +501,8 @@ export class NodeRenderer {
 
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
-    if (this.label && node.label) {
-      const labelPosition = positionNodeLabel(this.x, this.y, node.label, this.strokes.radius, node.style?.label?.position)
-      this.label.update(node.label, labelPosition[0], labelPosition[1], node.style?.label)
+    if (this.label !== undefined) {
+      this.label.moveTo(this.x, this.y, this.strokes.radius)
     }
     if (this.icon && node.style?.icon) {
       this.icon.update(this.x, this.y, node.style.icon)
