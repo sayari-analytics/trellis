@@ -1,22 +1,13 @@
 import { MIN_ZOOM } from '../..'
 import type { Stroke } from '../../../../types'
-import {
-  Text,
-  TextStyle,
-  TextStyleFill,
-  ITextStyle,
-  IBitmapTextStyle,
-  TextStyleAlign,
-  BitmapFont,
-  ColorSource,
-  TextStyleFontWeight,
-  LINE_JOIN
-} from 'pixi.js'
+import { Text, TextStyle, ITextStyle, IBitmapTextStyle, BitmapFont, LINE_JOIN } from 'pixi.js'
 
+export type TextAlign = 'left' | 'center' | 'right' | 'justify'
+export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelBackgroundStyle = {
-  color: ColorSource
+  color: string
   opacity?: number
   padding?: number | number[]
 }
@@ -28,9 +19,9 @@ export type LabelStyle = Partial<{
   wordWrap: number
   letterSpacing: number
   fontFamily: string
-  fontWeight: TextStyleFontWeight
+  fontWeight: FontWeight
   stroke: Stroke
-  color: TextStyleFill
+  color: string
   position: LabelPosition
   background: LabelBackgroundStyle
 }>
@@ -115,7 +106,7 @@ const isASCII = (str: string) => {
   return true
 }
 
-const getTextAlign = (position: LabelPosition): TextStyleAlign => {
+const getTextAlign = (position: LabelPosition): TextAlign => {
   return position === 'left' || position === 'right' ? position : 'center'
 }
 

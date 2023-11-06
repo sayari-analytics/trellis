@@ -1,7 +1,7 @@
 import utils, { STYLE_DEFAULTS } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle } from './utils'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign, FontWeight } from './utils'
 import type { Stroke } from '../../../../types'
-import { BitmapText, Container, Text, TextStyleAlign, TextStyleFill, TextStyleFontWeight } from 'pixi.js'
+import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
 
 /**
@@ -178,7 +178,7 @@ export class Label {
     this.anchor = utils.getAnchorPoint(position)
   }
 
-  private set align(align: TextStyleAlign) {
+  private set align(align: TextAlign) {
     if (this.isBitmapText(this.text)) {
       if (this.text.align !== align) {
         this.dirty = true
@@ -221,7 +221,7 @@ export class Label {
     }
   }
 
-  private set color(color: TextStyleFill) {
+  private set color(color: string) {
     if (!this.isBitmapText(this.text) && this.text.style.fill !== color) {
       this.dirty = true
       this.text.style.fill = color
@@ -254,7 +254,7 @@ export class Label {
     }
   }
 
-  private set fontWeight(fontWeight: TextStyleFontWeight) {
+  private set fontWeight(fontWeight: FontWeight) {
     if (!this.isBitmapText(this.text) && this.text.style.fontWeight !== fontWeight) {
       this.dirty = true
       this.text.style.fontWeight = fontWeight
@@ -286,4 +286,4 @@ export class Label {
 }
 
 export { LabelBackground } from './background'
-export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './utils'
+export type { LabelStyle, LabelBackgroundStyle, LabelPosition, FontWeight, TextAlign } from './utils'
