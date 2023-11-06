@@ -6,6 +6,7 @@ export type Props = {
   group?: 'top' | 'middle' | 'bottom'
   title?: string
   onClick?: () => void
+  children?: React.ReactNode
 }
 
 const STYLE = {
