@@ -103,8 +103,8 @@ export class Icon {
   }
 
   private createImageIcon(style: ImageIcon) {
-    const sprite = new Sprite(this.imageIconTexture.create(style))
-    sprite.scale.set(style.scale ?? 1)
-    return sprite
+    const icon = new Sprite(this.imageIconTexture.create(style))
+    icon.scale.set(style.scale ?? 1)
+    return icon
   }
 }
