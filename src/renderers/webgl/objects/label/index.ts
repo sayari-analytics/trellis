@@ -89,9 +89,10 @@ export class Label {
     }
 
     if (this.transformed && this.labelBackground) {
-      this.transformed = false
       this.labelBackground.text = this.text
     }
+
+    this.transformed = false
 
     if (labelHasChanged || styleHasChanged) {
       this.background = style?.background
