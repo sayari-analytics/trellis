@@ -3,7 +3,7 @@ import { MIN_ZOOM } from '../utils'
 import {
   Text,
   Matrix,
-  Sprite,
+  Assets,
   IPointData,
   TextStyleFill,
   RenderTexture,
@@ -45,38 +45,42 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
     this.scaleFactor = scaleFactor
   }
 
-  create({ text, fontFamily, fontSize, fontWeight, color: fill }: TextIcon) {
+  async create({ text, fontFamily, fontSize, fontWeight, color: fill }: TextIcon) {
     const key = `${text}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
 
     if (this.cache[key] === undefined) {
-      const textObject = new Text(text, {
-        fontFamily,
-        fontSize: fontSize * this.scaleFactor,
-        fontWeight,
-        fill
-      })
+      if (await this.renderer.fontBook.load(fontFamily, fontWeight)) {
+        const textObject = new Text(text, {
+          fontFamily,
+          fontSize: fontSize * this.scaleFactor,
+          fontWeight,
+          fill
+        })
 
-      textObject.updateText(true)
+        textObject.updateText(true)
 
-      const renderTexture = RenderTexture.create({
-        width: textObject.width,
-        height: textObject.height,
-        multisample: MSAA_QUALITY.HIGH,
-        resolution: 2
-      })
+        const renderTexture = RenderTexture.create({
+          width: textObject.width,
+          height: textObject.height,
+          multisample: MSAA_QUALITY.HIGH,
+          resolution: 2
+        })
 
-      this.renderer.app.renderer.render(textObject, {
-        renderTexture,
-        transform: new Matrix()
-      })
+        this.renderer.app.renderer.render(textObject, {
+          renderTexture,
+          transform: new Matrix()
+        })
 
-      if (this.renderer.app.renderer instanceof PixiRenderer) {
-        this.renderer.app.renderer.framebuffer.blit()
+        if (this.renderer.app.renderer instanceof PixiRenderer) {
+          this.renderer.app.renderer.framebuffer.blit()
+        }
+
+        textObject.destroy(true)
+
+        this.cache[key] = renderTexture
+      } else {
+        return null
       }
-
-      textObject.destroy(true)
-
-      this.cache[key] = renderTexture
     }
 
     return this.cache[key]
@@ -91,13 +95,18 @@ export type ImageIcon = {
 }
 
 export class ImageIconTexture extends IconTexture {
-  create({ url }: ImageIcon) {
+  async create({ url }: ImageIcon) {
     if (this.cache[url] === undefined) {
-      this.cache[url] = Sprite.from(url).texture
+      try {
+        const texture = await Assets.load<PixiTexture>(url)
+        this.cache[url] = texture
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(error)
+        return null
+      }
     }
 
     return this.cache[url]
   }
 }
-
-export type TrellisIcon = TextIcon | ImageIcon

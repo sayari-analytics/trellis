@@ -33,8 +33,12 @@ export class NodeRenderer {
   private strokeMounted = false
   private labelMounted = false
   private iconMounted = false
+
+  // async
   private labelLoading = false
   private mountLabelOnReady = false
+  private iconLoading = false
+  private mountIconOnReady = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -55,7 +59,7 @@ export class NodeRenderer {
       }
     } else if (this.label === undefined) {
       this.labelLoading = true
-      Label.create(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
+      Label.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
         const mountLabelOnReady = this.mountLabelOnReady
         this.label = label
         this.labelLoading = false
@@ -69,16 +73,27 @@ export class NodeRenderer {
       this.label.update(nodeLabel, labelStyle)
     }
 
-    if (this.icon === undefined) {
-      if (node.style?.icon !== undefined) {
-        this.icon = new Icon(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, node.style.icon)
+    const iconStyle = node.style?.icon
+    if (iconStyle === undefined) {
+      if (this.icon) {
+        this.icon.delete()
+        this.iconMounted = false
+        this.icon = undefined
       }
-    } else if (node.style?.icon === undefined) {
-      this.icon.delete()
-      this.iconMounted = false
-      this.icon = undefined
+    } else if (this.icon === undefined) {
+      this.iconLoading = true
+      Icon.init(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, iconStyle).then((icon) => {
+        const mountIconOnReady = this.mountIconOnReady
+        this.icon = icon
+        this.iconLoading = false
+        this.mountIconOnReady = false
+        if (this.icon && mountIconOnReady) {
+          this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
+          this.icon.moveTo(this.x, this.y)
+        }
+      })
     } else {
-      this.icon.update(node.style.icon)
+      this.icon.update(iconStyle)
     }
 
     /**
@@ -193,20 +208,7 @@ export class NodeRenderer {
     }
 
     this.mountLabel(isVisible && this.renderer.zoom > MIN_LABEL_ZOOM)
-
-    if (this.icon) {
-      if (isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
-        if (!this.iconMounted) {
-          this.renderer.nodeIconObjectManager.mount(this.icon)
-          this.iconMounted = true
-        }
-      } else {
-        if (this.iconMounted) {
-          this.renderer.nodeIconObjectManager.unmount(this.icon)
-          this.iconMounted = false
-        }
-      }
-    }
+    this.mountIcon(isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
   }
 
   delete() {
@@ -533,6 +535,20 @@ export class NodeRenderer {
       } else if (!shouldBeMounted && this.labelMounted) {
         this.renderer.labelObjectManager.unmount(this.label)
         this.labelMounted = false
+      }
+    }
+  }
+
+  private mountIcon(shouldBeMounted: boolean) {
+    if (this.iconLoading) {
+      this.mountIconOnReady = true
+    } else if (this.icon) {
+      if (shouldBeMounted && !this.iconMounted) {
+        this.renderer.nodeIconObjectManager.mount(this.icon)
+        this.iconMounted = true
+      } else if (!shouldBeMounted && this.iconMounted) {
+        this.renderer.nodeIconObjectManager.unmount(this.icon)
+        this.iconMounted = false
       }
     }
   }

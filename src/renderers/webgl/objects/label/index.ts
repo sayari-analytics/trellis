@@ -27,7 +27,7 @@ export class Label {
   private transformed = false
   private dirty = false
 
-  static async create(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+  static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
     if (await fontBook.load(style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY, style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT)) {
       return new Label(fontBook, container, label, style)
     }
@@ -38,7 +38,7 @@ export class Label {
     this.fontBook = fontBook
     this.container = container
     this._style = style
-    this.text = this.createText()
+    this.text = this.create()
     if (this.style.background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
@@ -141,7 +141,7 @@ export class Label {
     return undefined
   }
 
-  private createText() {
+  private create() {
     const label = this.label
     const style = this.style
     const textStyle = utils.getTextStyle(style)
@@ -151,12 +151,11 @@ export class Label {
     if (utils.isASCII(label)) {
       this.fontBook.create(style.fontName, textStyle)
       text = new BitmapText(label, utils.getBitmapStyle(style))
-      text.resolution = this.fontBook.resolution
     } else {
       text = new Text(label, textStyle)
-      text.resolution = this.fontBook.resolution * 2
     }
 
+    text.resolution = this.fontBook.resolution
     text.anchor.set(...utils.getAnchorPoint(style.position))
     return text
   }
@@ -178,7 +177,7 @@ export class Label {
     const isMounted = this.mounted
 
     this.delete()
-    this.text = this.createText()
+    this.text = this.create()
     this.text.x = this.x ?? 0
     this.text.y = this.y ?? 0
 

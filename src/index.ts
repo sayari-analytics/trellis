@@ -1,5 +1,5 @@
 import { TWO_PI } from './renderers/webgl/utils'
-import type { TrellisIcon } from './renderers/webgl/textures/icons'
+import type { NodeIcon } from './renderers/webgl/objects/icon'
 import type { LabelStyle } from './renderers/webgl/objects/label'
 import type { Stroke } from './types'
 
@@ -29,7 +29,7 @@ export type Edge = {
 
 export type NodeStyle = {
   color?: string
-  icon?: TrellisIcon
+  icon?: NodeIcon
   stroke?: Stroke[]
   badge?: {
     position: number
@@ -37,7 +37,7 @@ export type NodeStyle = {
     color: string
     stroke?: string
     strokeWidth?: number
-    icon?: TrellisIcon
+    icon?: NodeIcon
   }[]
   label?: LabelStyle
 }
@@ -362,6 +362,6 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 }
 
 // exports
-export type { Stroke } from './types'
+export type { Stroke, NodeIcon }
 export type { LabelStyle, LabelBackgroundStyle, LabelPosition, FontWeight, TextAlign } from './renderers/webgl/objects/label'
-export type { TrellisIcon, TextIcon, ImageIcon } from './renderers/webgl/textures/icons'
+export type { TextIcon, ImageIcon } from './renderers/webgl/textures/icons'

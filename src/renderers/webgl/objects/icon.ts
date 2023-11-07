@@ -1,7 +1,9 @@
-import { TextIconTexture, ImageIconTexture, TrellisIcon, TextIcon, ImageIcon } from '../textures/icons'
-import { Container, Sprite } from 'pixi.js'
+import { TextIconTexture, ImageIconTexture, TextIcon, ImageIcon } from '../textures/icons'
+import { Container, Sprite, Texture, RenderTexture } from 'pixi.js'
 import { NodeFill } from './nodeFill'
 import * as Trellis from '../../../'
+
+export type NodeIcon = TextIcon | ImageIcon
 
 export class Icon {
   mounted = false
@@ -9,37 +11,70 @@ export class Icon {
   private x?: number
   private y?: number
   private container: Container
+  private texture: Texture | RenderTexture
   private textIconTexture: TextIconTexture
   private imageIconTexture: ImageIconTexture
   private nodeFill: NodeFill
-  private style: TrellisIcon
+  private style: NodeIcon
   private icon: Sprite
 
-  constructor(
+  static async init(
     container: Container,
     textIconTexture: TextIconTexture,
     imageIconTexture: ImageIconTexture,
     nodeFill: NodeFill,
-    style: TrellisIcon
+    style: NodeIcon
   ) {
+    let texture: Texture | RenderTexture | null
+
+    if (style.type === 'imageIcon') {
+      texture = await imageIconTexture.create(style)
+    } else {
+      texture = await textIconTexture.create(style)
+    }
+
+    if (texture !== null) {
+      return new Icon(texture, container, textIconTexture, imageIconTexture, nodeFill, style)
+    }
+  }
+
+  private constructor(
+    texture: Texture | RenderTexture,
+    container: Container,
+    textIconTexture: TextIconTexture,
+    imageIconTexture: ImageIconTexture,
+    nodeFill: NodeFill,
+    style: NodeIcon
+  ) {
+    this.style = style
+    this.texture = texture
     this.container = container
     this.textIconTexture = textIconTexture
     this.imageIconTexture = imageIconTexture
     this.nodeFill = nodeFill
-    this.icon = this.create(style)
-    this.style = style
+    this.icon = this.create(texture)
   }
 
-  update(style: TrellisIcon) {
+  async update(style: NodeIcon) {
     if (!Trellis.equals(this.style, style)) {
-      const isMounted = this.mounted
+      let texture: Texture | RenderTexture | null
+      if (style.type === 'imageIcon') {
+        texture = await this.imageIconTexture.create(style)
+      } else {
+        texture = await this.textIconTexture.create(style)
+      }
 
-      this.delete()
-      this.style = style
-      this.icon = this.create(style)
+      if (texture !== null) {
+        this.texture = texture
+        const isMounted = this.mounted
 
-      if (isMounted) {
-        this.mount()
+        this.delete()
+        this.style = style
+        this.icon = this.create(texture)
+
+        if (isMounted) {
+          this.mount()
+        }
       }
     }
 
@@ -88,23 +123,13 @@ export class Icon {
     return undefined
   }
 
-  private create(style: TrellisIcon) {
-    const icon = style.type === 'textIcon' ? this.createTextIcon(style) : this.createImageIcon(style)
+  private create(texture: Texture | RenderTexture) {
+    const icon = new Sprite(texture)
+    const scale = this.style.type === 'imageIcon' ? this.style.scale : 1 / this.textIconTexture.scaleFactor
+    icon.scale.set(scale ?? 1)
     icon.anchor.set(0.5)
     icon.x = this.x ?? 0
     icon.y = this.y ?? 0
-    return icon
-  }
-
-  private createTextIcon(style: TextIcon) {
-    const icon = new Sprite(this.textIconTexture.create(style))
-    icon.scale.set(1 / this.textIconTexture.scaleFactor)
-    return icon
-  }
-
-  private createImageIcon(style: ImageIcon) {
-    const icon = new Sprite(this.imageIconTexture.create(style))
-    icon.scale.set(style.scale ?? 1)
     return icon
   }
 }

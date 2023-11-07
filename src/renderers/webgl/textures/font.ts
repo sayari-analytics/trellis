@@ -5,6 +5,21 @@ import { throttle } from '../../../utils'
 
 const warn = throttle((err) => console.warn(err), 0)
 
+const GENERIC_FONT_FAMILIES = new Set([
+  'serif',
+  'sans-serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+  'system-ui',
+  'emoji',
+  'math',
+  'fangsong',
+  'ui-serif',
+  'ui-sans-serif',
+  'ui-monospace'
+])
+
 export class FontBook {
   static defaultResolution = 2
   static defaultMaxFontSize = 10
@@ -38,8 +53,13 @@ export class FontBook {
     return this.cache[fontFamily] === true
   }
 
-  async load(fontFamily: string = 'sans-serif', weight: string | number = 'normal', timeout?: number) {
+  async load(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal', timeout?: number) {
+    if (fontFamily === undefined || GENERIC_FONT_FAMILIES.has(fontFamily)) {
+      return true
+    }
+
     if (!this.available(fontFamily)) {
+      const weight = typeof fontWeight === 'string' && !isNaN(+fontWeight) ? +fontWeight : fontWeight
       const font = new FontFaceObserver(fontFamily, { weight })
       try {
         await font.load(null, timeout)
