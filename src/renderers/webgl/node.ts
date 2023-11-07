@@ -33,6 +33,8 @@ export class NodeRenderer {
   private strokeMounted = false
   private labelMounted = false
   private iconMounted = false
+  private labelLoading = false
+  private mountLabelOnReady = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -43,16 +45,28 @@ export class NodeRenderer {
   }
 
   update(node: Graph.Node) {
-    if (this.label === undefined) {
-      if (node.label !== undefined) {
-        this.label = new Label(this.renderer.labelsContainer, node.label, node.style?.label)
+    const nodeLabel = node.label
+    const labelStyle = node.style?.label
+    if (nodeLabel === undefined || nodeLabel.trim() === '') {
+      if (this.label) {
+        this.renderer.labelObjectManager.delete(this.label)
+        this.labelMounted = false
+        this.label = undefined
       }
-    } else if (node.label === undefined || node.label.trim() === '') {
-      this.renderer.labelObjectManager.delete(this.label)
-      this.labelMounted = false
-      this.label = undefined
+    } else if (this.label === undefined) {
+      this.labelLoading = true
+      Label.create(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
+        const mountLabelOnReady = this.mountLabelOnReady
+        this.label = label
+        this.labelLoading = false
+        this.mountLabelOnReady = false
+        if (this.label && mountLabelOnReady) {
+          this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+          this.label.moveTo(this.x, this.y, this.strokes.radius)
+        }
+      })
     } else {
-      this.label.update(node.label, node.style?.label)
+      this.label.update(nodeLabel, labelStyle)
     }
 
     if (this.icon === undefined) {
@@ -178,19 +192,7 @@ export class NodeRenderer {
       }
     }
 
-    if (this.label) {
-      if (isVisible && this.renderer.zoom > MIN_LABEL_ZOOM) {
-        if (!this.labelMounted) {
-          this.renderer.labelObjectManager.mount(this.label)
-          this.labelMounted = true
-        }
-      } else {
-        if (this.labelMounted) {
-          this.renderer.labelObjectManager.unmount(this.label)
-          this.labelMounted = false
-        }
-      }
-    }
+    this.mountLabel(isVisible && this.renderer.zoom > MIN_LABEL_ZOOM)
 
     if (this.icon) {
       if (isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
@@ -519,5 +521,19 @@ export class NodeRenderer {
       this.y + this.strokes.radius >= this.renderer.minY &&
       this.y - this.strokes.radius <= this.renderer.maxY
     )
+  }
+
+  private mountLabel(shouldBeMounted: boolean) {
+    if (this.labelLoading) {
+      this.mountLabelOnReady = true
+    } else if (this.label) {
+      if (shouldBeMounted && !this.labelMounted) {
+        this.renderer.labelObjectManager.mount(this.label)
+        this.labelMounted = true
+      } else if (!shouldBeMounted && this.labelMounted) {
+        this.renderer.labelObjectManager.unmount(this.label)
+        this.labelMounted = false
+      }
+    }
   }
 }

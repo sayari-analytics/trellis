@@ -1,6 +1,5 @@
-import type { Stroke } from '../../../../types'
-import { FontBook } from '../../textures/font'
 import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
+import type { Stroke } from '../../../../types'
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
@@ -50,11 +49,10 @@ export const STYLE_DEFAULTS = {
   ALIGN: 'center' as const,
   POSITION: 'bottom' as const,
   FONT_WEIGHT: 'normal' as const,
-  FONT_FAMILY: 'Arial, sans-serif'
+  FONT_FAMILY: 'sans-serif'
 }
 
 // install text defaults
-Text.defaultResolution = FontBook.resolution
 Text.defaultAutoResolution = false
 TextStyle.defaultStyle = {
   ...TextStyle.defaultStyle,

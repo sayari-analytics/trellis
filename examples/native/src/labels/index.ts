@@ -29,7 +29,7 @@ const NODE_STYLE: Graph.NodeStyle = {
   label: {
     position: 'right',
     fontName: 'NodeLabel',
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: 'Roboto',
     background: { color: GREEN_LIGHT },
     margin: 4
   }
@@ -42,7 +42,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
   label: {
     position: 'right',
     fontName: 'NodeLabelHover',
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: 'Roboto',
     background: { color: DARK_GREEN },
     color: '#FFF',
     margin: 4
@@ -69,7 +69,7 @@ const collide = Collide.Layout()
 const edges: Graph.Edge[] = []
 let nodes = data.map<Graph.Node>((label, index) => ({
   radius: 10,
-  label: index % 2 === 0 ? label + ' 北京' : label,
+  label,
   id: `${index}-${label}`,
   style: NODE_STYLE
 }))

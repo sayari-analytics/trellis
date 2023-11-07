@@ -3,8 +3,8 @@ import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign, FontWe
 import type { Stroke } from '../../../../types'
 import { BitmapText, Container, Text, Point } from 'pixi.js'
 import { LabelBackground, Rectangle } from './background'
-import { equals } from '../../../../'
 import { FontBook } from '../../textures/font'
+import { equals } from '../../../../'
 
 /**
  * TODO
@@ -18,27 +18,40 @@ export class Label {
   private x?: number
   private y?: number
 
-  private dirty = false
-  private transformed = false
+  private _style: LabelStyle | undefined
   private label: string
+  private fontBook: FontBook
   private container: Container
   private text: BitmapText | Text
   private labelBackground: LabelBackground | null = null
-  private _style: LabelStyle | undefined
+  private transformed = false
+  private dirty = false
 
-  constructor(container: Container, label: string, style: LabelStyle | undefined) {
-    this.container = container
+  static async create(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+    if (await fontBook.load(style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY, style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT)) {
+      return new Label(fontBook, container, label, style)
+    }
+  }
+
+  private constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
     this.label = label
+    this.fontBook = fontBook
+    this.container = container
     this._style = style
-    this.text = this.create()
+    this.text = this.createText()
     if (this.style.background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
   }
 
-  update(label: string, style: LabelStyle | undefined) {
+  async update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
     const styleHasChanged = !equals(this._style, style)
+
+    const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
+    if (style?.fontFamily !== undefined && style.fontFamily !== this.style.fontFamily) {
+      await this.fontBook.load(style.fontFamily, fontWeight)
+    }
 
     this._style = style
 
@@ -57,8 +70,8 @@ export class Label {
     if (styleHasChanged) {
       this.stroke = style?.stroke
       this.wordWrap = style?.wordWrap
+      this.fontWeight = fontWeight
       this.color = style?.color ?? STYLE_DEFAULTS.COLOR
-      this.fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
       this.letterSpacing = style?.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
       this.position = style?.position ?? STYLE_DEFAULTS.POSITION
       this.fontSize = style?.fontSize ?? STYLE_DEFAULTS.FONT_SIZE
@@ -128,17 +141,20 @@ export class Label {
     return undefined
   }
 
-  private create() {
+  private createText() {
     const label = this.label
     const style = this.style
+    const textStyle = utils.getTextStyle(style)
+
     let text: Text | BitmapText
 
     if (utils.isASCII(label)) {
-      FontBook.load(style.fontName, utils.getTextStyle(style))
+      this.fontBook.create(style.fontName, textStyle)
       text = new BitmapText(label, utils.getBitmapStyle(style))
-      text.resolution = FontBook.resolution
+      text.resolution = this.fontBook.resolution
     } else {
-      text = new Text(label, utils.getTextStyle(style))
+      text = new Text(label, textStyle)
+      text.resolution = this.fontBook.resolution * 2
     }
 
     text.anchor.set(...utils.getAnchorPoint(style.position))
@@ -162,7 +178,7 @@ export class Label {
     const isMounted = this.mounted
 
     this.delete()
-    this.text = this.create()
+    this.text = this.createText()
     this.text.x = this.x ?? 0
     this.text.y = this.y ?? 0
 

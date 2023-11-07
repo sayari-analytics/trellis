@@ -13,6 +13,7 @@ import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
 import { TextIconTexture, ImageIconTexture } from './textures/icons'
+import { FontBook } from './textures/font'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -145,6 +146,7 @@ export class Renderer {
   arrow: ArrowTexture
   textIcon: TextIconTexture
   imageIcon: ImageIconTexture
+  fontBook = new FontBook() // TODO -> make configurable
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
 

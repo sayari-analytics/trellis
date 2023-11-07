@@ -1,37 +1,74 @@
 import { BitmapFont, TextStyle } from 'pixi.js'
 import { MIN_ZOOM } from '../utils'
+import FontFaceObserver from 'fontfaceobserver'
+import { throttle } from '../../../utils'
+
+const warn = throttle((err) => console.warn(err), 0)
 
 export class FontBook {
-  static resolution = 2
-  static maxFontSize = 10
-  static scaleFactor = MIN_ZOOM
+  static defaultResolution = 2
+  static defaultMaxFontSize = 10
+  static defaultScaleFactor = MIN_ZOOM
+  static defaultChars = BitmapFont.ASCII
+
+  resolution: number
+  maxFontSize: number
+  scaleFactor: number
+  chars: string | (string | string[])[]
+
+  private cache: { [family: string]: boolean } = {}
+
+  constructor(
+    resolution = FontBook.defaultResolution,
+    maxFontSize = FontBook.defaultMaxFontSize,
+    scaleFactor = FontBook.defaultScaleFactor,
+    chars = FontBook.defaultChars
+  ) {
+    this.resolution = resolution
+    this.maxFontSize = maxFontSize
+    this.scaleFactor = scaleFactor
+    this.chars = chars
+  }
 
   static find(fontName: string): BitmapFont | undefined {
     return BitmapFont.available[fontName]
   }
 
-  static available(fontName: string) {
-    return FontBook.find(fontName) !== undefined
+  available(fontFamily: string) {
+    return this.cache[fontFamily] === true
   }
 
-  static create(fontName: string, style: TextStyle, maxFontSize = FontBook.maxFontSize, scaleFactor = FontBook.scaleFactor) {
-    style.fontSize = maxFontSize * FontBook.resolution * scaleFactor
-
-    return BitmapFont.from(fontName, style, {
-      chars: BitmapFont.ASCII,
-      resolution: FontBook.resolution
-    })
-  }
-
-  static load(fontName: string, style: TextStyle, maxFontSize = FontBook.maxFontSize, scaleFactor = FontBook.scaleFactor) {
-    if (!FontBook.available(fontName)) {
-      FontBook.create(fontName, style, maxFontSize, scaleFactor)
-    } else {
-      return FontBook.find(fontName)
+  async load(fontFamily: string = 'sans-serif', weight: string | number = 'normal', timeout?: number) {
+    if (!this.available(fontFamily)) {
+      const font = new FontFaceObserver(fontFamily, { weight })
+      try {
+        await font.load(null, timeout)
+        this.cache[fontFamily] = true
+      } catch (error) {
+        warn(error)
+        return false
+      }
     }
+
+    return true
   }
 
-  static delete(fontName: string) {
-    FontBook.find(fontName)?.destroy()
+  create(fontName: string, style: TextStyle) {
+    const font = FontBook.find(fontName)
+
+    if (font === undefined) {
+      style.fontSize = this.maxFontSize * this.resolution * this.scaleFactor
+      return BitmapFont.from(fontName, style, { chars: this.chars, resolution: this.resolution })
+    }
+
+    return font
+  }
+
+  delete(fontName?: string) {
+    if (fontName === undefined) {
+      this.cache = {}
+    } else {
+      FontBook.find(fontName)?.destroy()
+    }
   }
 }
