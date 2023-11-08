@@ -1,8 +1,7 @@
-/* eslint-disable no-console */
 import { BitmapFont, TextStyle } from 'pixi.js'
 import { MIN_ZOOM } from '../utils'
-import FontFaceObserver from 'fontfaceobserver'
 import { throttle } from '../../../utils'
+import FontFaceObserver from 'fontfaceobserver'
 
 const warn = throttle((err) => console.warn(err), 0)
 
@@ -51,17 +50,22 @@ export class FontBook {
     return BitmapFont.available[fontName]
   }
 
-  available(fontFamily: string, fontWeight: string | number | undefined = 'normal') {
+  available(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal') {
+    const family = fontFamily?.split(', ')[0]
     return (
-      this.cache[fontFamily] === true || GENERIC_FONT_FAMILIES.has(fontFamily) || document.fonts.check(`${fontWeight} 1em ${fontFamily}`)
+      family === undefined ||
+      this.cache[family] === true ||
+      GENERIC_FONT_FAMILIES.has(family) ||
+      document.fonts.check(`${fontWeight} 1em ${family}`)
     )
   }
 
   async load(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal', timeout?: number) {
-    const family = fontFamily?.split(', ')[0]
-    if (family === undefined || this.available(family, fontWeight)) {
+    if (fontFamily === undefined || this.available(fontFamily, fontWeight)) {
       return true
     }
+
+    const family = fontFamily.split(', ')[0]
 
     try {
       if (!this.loading[family]) {
@@ -94,6 +98,7 @@ export class FontBook {
   delete(fontName?: string) {
     if (fontName === undefined) {
       this.cache = {}
+      this.loading = {}
     } else {
       FontBook.find(fontName)?.destroy()
     }

@@ -18,6 +18,14 @@ export class Icon {
   private style: NodeIcon
   private icon: Sprite
 
+  private static async createTexture(style: NodeIcon, imageIconTexture: ImageIconTexture, textIconTexture: TextIconTexture) {
+    if (style.type === 'imageIcon') {
+      return await imageIconTexture.create(style)
+    } else {
+      return await textIconTexture.create(style)
+    }
+  }
+
   static async init(
     container: Container,
     textIconTexture: TextIconTexture,
@@ -25,15 +33,9 @@ export class Icon {
     nodeFill: NodeFill,
     style: NodeIcon
   ) {
-    let texture: Texture | RenderTexture | null
+    const texture = await Icon.createTexture(style, imageIconTexture, textIconTexture)
 
-    if (style.type === 'imageIcon') {
-      texture = await imageIconTexture.create(style)
-    } else {
-      texture = await textIconTexture.create(style)
-    }
-
-    if (texture !== null) {
+    if (texture) {
       return new Icon(texture, container, textIconTexture, imageIconTexture, nodeFill, style)
     }
   }
@@ -57,19 +59,13 @@ export class Icon {
 
   async update(style: NodeIcon) {
     if (!Trellis.equals(this.style, style)) {
-      let texture: Texture | RenderTexture | null
-      if (style.type === 'imageIcon') {
-        texture = await this.imageIconTexture.create(style)
-      } else {
-        texture = await this.textIconTexture.create(style)
-      }
+      const texture = await Icon.createTexture(style, this.imageIconTexture, this.textIconTexture)
 
-      if (texture !== null) {
-        this.texture = texture
+      if (texture) {
         const isMounted = this.mounted
-
         this.delete()
         this.style = style
+        this.texture = texture
         this.icon = this.create()
 
         if (isMounted) {
@@ -125,8 +121,8 @@ export class Icon {
 
   private create() {
     const icon = new Sprite(this.texture)
-    const scale = this.style.type === 'imageIcon' ? this.style.scale : 1 / this.textIconTexture.scaleFactor
-    icon.scale.set(scale ?? 1)
+    const scale = this.style.type === 'imageIcon' ? this.style.scale ?? 1 : 1 / this.textIconTexture.scaleFactor
+    icon.scale.set(scale)
     icon.anchor.set(0.5)
     icon.x = this.x ?? 0
     icon.y = this.y ?? 0
