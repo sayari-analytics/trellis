@@ -1,8 +1,6 @@
 import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
-import type { Stroke } from '../../../../types'
+import type { Stroke, FontWeight, TextAlign } from '../../../../types'
 
-export type TextAlign = 'left' | 'center' | 'right' | 'justify'
-export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
 
 export type LabelBackgroundStyle = {

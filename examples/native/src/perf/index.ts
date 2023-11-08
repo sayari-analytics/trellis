@@ -31,7 +31,7 @@ const NODE_STYLE: Graph.NodeStyle = {
   label: {
     position: 'top',
     fontName: ARIAL_PINK,
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: 'Roboto',
     margin: 2
   }
 }

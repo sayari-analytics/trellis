@@ -1,6 +1,6 @@
 import utils, { STYLE_DEFAULTS } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign, FontWeight } from './utils'
-import type { Stroke } from '../../../../types'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle } from './utils'
+import type { Stroke, TextAlign, FontWeight } from '../../../../types'
 import { BitmapText, Container, Text, Point } from 'pixi.js'
 import { LabelBackground, Rectangle } from './background'
 import { FontBook } from '../../textures/font'
@@ -28,7 +28,11 @@ export class Label {
   private dirty = false
 
   static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
-    if (await fontBook.load(style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY, style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT)) {
+    const fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
+    const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
+    const ready = await fontBook.load(fontFamily, fontWeight, 10000)
+
+    if (ready) {
       return new Label(fontBook, container, label, style)
     }
   }
@@ -303,4 +307,4 @@ export class Label {
 }
 
 export { LabelBackground } from './background'
-export type { LabelStyle, LabelBackgroundStyle, LabelPosition, FontWeight, TextAlign } from './utils'
+export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './utils'

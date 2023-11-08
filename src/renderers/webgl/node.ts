@@ -32,13 +32,9 @@ export class NodeRenderer {
   private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
-  private iconMounted = false
-
-  // async
   private labelLoading = false
-  private mountLabelOnReady = false
+  private iconMounted = false
   private iconLoading = false
-  private mountIconOnReady = false
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -60,14 +56,10 @@ export class NodeRenderer {
     } else if (this.label === undefined) {
       this.labelLoading = true
       Label.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
-        const mountLabelOnReady = this.mountLabelOnReady
         this.label = label
         this.labelLoading = false
-        this.mountLabelOnReady = false
-        if (this.label && mountLabelOnReady) {
-          this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
-          this.label.moveTo(this.x, this.y, this.strokes.radius)
-        }
+        this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+        this.label?.moveTo(this.x, this.y, this.strokes.radius)
       })
     } else {
       this.label.update(nodeLabel, labelStyle)
@@ -83,14 +75,10 @@ export class NodeRenderer {
     } else if (this.icon === undefined) {
       this.iconLoading = true
       Icon.init(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, iconStyle).then((icon) => {
-        const mountIconOnReady = this.mountIconOnReady
         this.icon = icon
         this.iconLoading = false
-        this.mountIconOnReady = false
-        if (this.icon && mountIconOnReady) {
-          this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
-          this.icon.moveTo(this.x, this.y)
-        }
+        this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
+        this.icon?.moveTo(this.x, this.y)
       })
     } else {
       this.icon.update(iconStyle)
@@ -506,13 +494,9 @@ export class NodeRenderer {
 
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
-    if (this.label !== undefined) {
-      this.label.moveTo(this.x, this.y, this.strokes.radius)
-    }
-    if (this.icon !== undefined) {
-      this.icon.moveTo(this.x, this.y)
-    }
-    this.hitArea.update(x, y, radius)
+    this.label?.moveTo(this.x, this.y, this.strokes.radius)
+    this.icon?.moveTo(this.x, this.y)
+    this.hitArea.update(this.x, this.y, radius)
   }
 
   private visible() {
@@ -525,28 +509,24 @@ export class NodeRenderer {
     )
   }
 
-  private mountLabel(shouldBeMounted: boolean) {
-    if (this.labelLoading) {
-      this.mountLabelOnReady = true
-    } else if (this.label) {
-      if (shouldBeMounted && !this.labelMounted) {
+  private mountLabel(shouldMount: boolean) {
+    if (!this.labelLoading && this.label) {
+      if (shouldMount && !this.labelMounted) {
         this.renderer.labelObjectManager.mount(this.label)
         this.labelMounted = true
-      } else if (!shouldBeMounted && this.labelMounted) {
+      } else if (!shouldMount && this.labelMounted) {
         this.renderer.labelObjectManager.unmount(this.label)
         this.labelMounted = false
       }
     }
   }
 
-  private mountIcon(shouldBeMounted: boolean) {
-    if (this.iconLoading) {
-      this.mountIconOnReady = true
-    } else if (this.icon) {
-      if (shouldBeMounted && !this.iconMounted) {
+  private mountIcon(shouldMount: boolean) {
+    if (!this.iconLoading && this.icon) {
+      if (shouldMount && !this.iconMounted) {
         this.renderer.nodeIconObjectManager.mount(this.icon)
         this.iconMounted = true
-      } else if (!shouldBeMounted && this.iconMounted) {
+      } else if (!shouldMount && this.iconMounted) {
         this.renderer.nodeIconObjectManager.unmount(this.icon)
         this.iconMounted = false
       }

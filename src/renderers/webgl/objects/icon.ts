@@ -52,7 +52,7 @@ export class Icon {
     this.textIconTexture = textIconTexture
     this.imageIconTexture = imageIconTexture
     this.nodeFill = nodeFill
-    this.icon = this.create(texture)
+    this.icon = this.create()
   }
 
   async update(style: NodeIcon) {
@@ -70,7 +70,7 @@ export class Icon {
 
         this.delete()
         this.style = style
-        this.icon = this.create(texture)
+        this.icon = this.create()
 
         if (isMounted) {
           this.mount()
@@ -123,8 +123,8 @@ export class Icon {
     return undefined
   }
 
-  private create(texture: Texture | RenderTexture) {
-    const icon = new Sprite(texture)
+  private create() {
+    const icon = new Sprite(this.texture)
     const scale = this.style.type === 'imageIcon' ? this.style.scale : 1 / this.textIconTexture.scaleFactor
     icon.scale.set(scale ?? 1)
     icon.anchor.set(0.5)

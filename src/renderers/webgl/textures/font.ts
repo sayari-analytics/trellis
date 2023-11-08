@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { BitmapFont, TextStyle } from 'pixi.js'
 import { MIN_ZOOM } from '../utils'
 import FontFaceObserver from 'fontfaceobserver'
@@ -32,6 +33,7 @@ export class FontBook {
   chars: string | (string | string[])[]
 
   private cache: { [family: string]: boolean } = {}
+  private loading: { [family: string]: Promise<void> } = {}
 
   constructor(
     resolution = FontBook.defaultResolution,
@@ -49,28 +51,33 @@ export class FontBook {
     return BitmapFont.available[fontName]
   }
 
-  available(fontFamily: string) {
-    return this.cache[fontFamily] === true
+  available(fontFamily: string, fontWeight: string | number | undefined = 'normal') {
+    return (
+      this.cache[fontFamily] === true || GENERIC_FONT_FAMILIES.has(fontFamily) || document.fonts.check(`${fontWeight} 1em ${fontFamily}`)
+    )
   }
 
   async load(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal', timeout?: number) {
-    if (fontFamily === undefined || GENERIC_FONT_FAMILIES.has(fontFamily)) {
+    const family = fontFamily?.split(', ')[0]
+    if (family === undefined || this.available(family, fontWeight)) {
       return true
     }
 
-    if (!this.available(fontFamily)) {
-      const weight = typeof fontWeight === 'string' && !isNaN(+fontWeight) ? +fontWeight : fontWeight
-      const font = new FontFaceObserver(fontFamily, { weight })
-      try {
-        await font.load(null, timeout)
-        this.cache[fontFamily] = true
-      } catch (error) {
-        warn(error)
-        return false
+    try {
+      if (!this.loading[family]) {
+        const weight = typeof fontWeight === 'string' && !isNaN(+fontWeight) ? +fontWeight : fontWeight
+        const font = new FontFaceObserver(family, { weight })
+        this.loading[family] = font.load(null, timeout)
       }
+
+      await this.loading[family]
+      this.cache[family] = true
+    } catch (error) {
+      warn(error)
+      return false
     }
 
-    return true
+    return this.cache[family]
   }
 
   create(fontName: string, style: TextStyle) {

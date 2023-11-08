@@ -363,5 +363,6 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 
 // exports
 export type { Stroke, NodeIcon }
-export type { LabelStyle, LabelBackgroundStyle, LabelPosition, FontWeight, TextAlign } from './renderers/webgl/objects/label'
+export type { FontWeight, TextAlign } from './types'
+export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './renderers/webgl/objects/label'
 export type { TextIcon, ImageIcon } from './renderers/webgl/textures/icons'
