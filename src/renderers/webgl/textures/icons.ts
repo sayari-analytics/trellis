@@ -90,11 +90,15 @@ export type ImageIcon = {
 }
 
 export class ImageIconTexture extends IconTexture {
+  private loading: { [key: string]: Promise<PixiTexture> } = {}
+
   async create({ url }: ImageIcon) {
     if (this.cache[url] === undefined) {
       try {
-        const texture = await Assets.load<PixiTexture>(url)
-        this.cache[url] = texture
+        if (!this.loading[url]) {
+          this.loading[url] = Assets.load<PixiTexture>(url)
+        }
+        this.cache[url] = await this.loading[url]
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error(error)
