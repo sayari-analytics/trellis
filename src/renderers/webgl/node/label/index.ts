@@ -4,7 +4,7 @@ import type { Stroke, TextAlign, FontWeight } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
 import { FontBook } from '../../textures/font'
-import { equals } from '../../../../'
+import { equals } from '../../../..'
 
 /**
  * TODO
@@ -15,8 +15,8 @@ import { equals } from '../../../../'
 export class Label {
   mounted = false
 
-  private x?: number
-  private y?: number
+  private x = 0
+  private y = 0
   private dirty = false
   private transformed = false
   private label: string
@@ -196,8 +196,8 @@ export class Label {
 
     this.delete()
     this.text = this.create()
-    this.text.x = this.x ?? 0
-    this.text.y = this.y ?? 0
+    this.text.x = this.x
+    this.text.y = this.y
 
     if (isMounted) {
       this.mount()
@@ -209,14 +209,7 @@ export class Label {
   }
 
   private setBounds() {
-    this.labelBounds = utils.getLabelBounds(
-      this.x ?? 0,
-      this.y ?? 0,
-      this.text.width,
-      this.text.height,
-      this.text.anchor.x,
-      this.text.anchor.y
-    )
+    this.labelBounds = utils.getLabelBounds(this.x, this.y, this.text.width, this.text.height, this.text.anchor.x, this.text.anchor.y)
     return this.labelBounds
   }
 

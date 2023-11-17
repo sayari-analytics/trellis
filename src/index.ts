@@ -1,6 +1,6 @@
 import { TWO_PI } from './renderers/webgl/utils'
-import type { NodeIcon } from './renderers/webgl/objects/icon'
-import type { LabelStyle } from './renderers/webgl/objects/label'
+import type { NodeIcon } from './renderers/webgl/node/icon'
+import type { LabelStyle } from './renderers/webgl/node/label'
 import type { Stroke } from './types'
 
 export type Node = {
@@ -364,5 +364,5 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 // exports
 export type { Stroke, NodeIcon }
 export type { FontWeight, TextAlign } from './types'
-export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './renderers/webgl/objects/label'
+export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './renderers/webgl/node/label'
 export type { TextIcon, ImageIcon } from './renderers/webgl/textures/icons'

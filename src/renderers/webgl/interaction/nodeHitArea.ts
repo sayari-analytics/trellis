@@ -1,5 +1,5 @@
 import { Circle, Container } from 'pixi.js'
-import { NodeRenderer } from '../node'
+import { NodeRenderer } from '../node/node'
 
 export class NodeHitArea {
   mounted = false

@@ -1,7 +1,7 @@
 import { TextIconTexture, ImageIconTexture, TextIcon, ImageIcon } from '../textures/icons'
 import { Container, Sprite, Texture, RenderTexture } from 'pixi.js'
-import { NodeFill } from './nodeFill'
-import * as Trellis from '../../../'
+import { NodeFill } from './fill'
+import * as Trellis from '../../..'
 
 export type NodeIcon = TextIcon | ImageIcon
 

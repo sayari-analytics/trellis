@@ -1,7 +1,7 @@
 import { type Renderer } from '.'
 import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM } from './utils'
 import { movePoint } from './utils'
-import { NodeRenderer } from './node'
+import { NodeRenderer } from './node/node'
 import * as Graph from '../..'
 import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'

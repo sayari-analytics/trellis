@@ -38,7 +38,10 @@ const NODE_STYLE: Graph.NodeStyle = {
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: DARK_GREEN,
   icon: TEXT_ICON,
-  stroke: [{ width: 2, color: GREEN_LIGHT }],
+  stroke: [
+    { width: 2, color: GREEN_LIGHT },
+    { width: 2, color: DARK_GREEN }
+  ],
   label: {
     position: 'bottom',
     fontName: 'NodeLabelHover',

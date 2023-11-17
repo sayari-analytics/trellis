@@ -6,8 +6,8 @@ import { equals } from '../../../..'
 export class LabelBackground {
   mounted = false
 
-  private x?: number
-  private y?: number
+  private x = 0
+  private y = 0
   private dirty = false
   private sprite: Sprite
   private container: Container
@@ -134,8 +134,8 @@ export class LabelBackground {
 
   private setBounds() {
     this.backgroundBounds = utils.getLabelBounds(
-      this.x ?? 0,
-      this.y ?? 0,
+      this.x,
+      this.y,
       this.sprite.width,
       this.sprite.height,
       this.sprite.anchor.x,

@@ -1,18 +1,18 @@
-import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from './utils'
+import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../utils'
 import { FederatedPointerEvent } from 'pixi.js'
-import { type Renderer } from '.'
-import * as Graph from '../..'
-import { Label } from './objects/label'
-import { NodeFill } from './objects/nodeFill'
-import { NodeStrokes } from './objects/nodeStrokes'
-import { Icon } from './objects/icon'
-import { NodeHitArea } from './interaction/nodeHitArea'
-import { interpolate } from '../../utils'
+import { type Renderer } from '..'
+import * as Graph from '../../..'
+import { Label } from './label'
+import { NodeFill } from './fill'
+import { NodeStrokes } from './strokes'
+import { Icon } from './icon'
+import { NodeHitArea } from '../interaction/nodeHitArea'
+import { interpolate } from '../../../utils'
 
 export class NodeRenderer {
+  x = 0
+  y = 0
   node!: Graph.Node
-  x!: number
-  y!: number
   fill: NodeFill
   label?: Label
   icon?: Icon
@@ -45,6 +45,8 @@ export class NodeRenderer {
   }
 
   update(node: Graph.Node) {
+    this.strokes.update(node.radius, node.style?.stroke)
+
     const nodeLabel = node.label
     const labelStyle = node.style?.label
     if (nodeLabel === undefined || nodeLabel.trim() === '') {
@@ -183,18 +185,7 @@ export class NodeRenderer {
       }
     }
 
-    if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
-      if (!this.strokeMounted) {
-        this.renderer.nodeStrokeObjectManager.mount(this.strokes)
-        this.strokeMounted = true
-      }
-    } else {
-      if (this.strokeMounted) {
-        this.renderer.nodeStrokeObjectManager.unmount(this.strokes)
-        this.strokeMounted = false
-      }
-    }
-
+    this.mountStrokes(isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM)
     this.mountLabel(isVisible && this.renderer.zoom > MIN_LABEL_ZOOM)
     this.mountIcon(isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
   }
@@ -493,7 +484,7 @@ export class NodeRenderer {
     this.y = y
 
     this.fill.update(this.x, this.y, radius, node.style)
-    this.strokes.update(this.x, this.y, radius, node.style)
+    this.strokes.moveTo(this.x, this.y)
     this.label?.moveTo(this.x, this.y, this.strokes.radius)
     this.icon?.moveTo(this.x, this.y)
     this.hitArea.update(this.x, this.y, radius)
@@ -513,6 +504,16 @@ export class NodeRenderer {
     }
 
     return right >= this.renderer.minX && left <= this.renderer.maxX && bottom >= this.renderer.minY && top <= this.renderer.maxY
+  }
+
+  private mountStrokes(shouldMount: boolean) {
+    if (shouldMount && !this.strokeMounted) {
+      this.renderer.nodeStrokeObjectManager.mount(this.strokes)
+      this.strokeMounted = true
+    } else if (!shouldMount && this.strokeMounted) {
+      this.renderer.nodeStrokeObjectManager.unmount(this.strokes)
+      this.strokeMounted = false
+    }
   }
 
   private mountLabel(shouldMount: boolean) {
