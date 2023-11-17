@@ -1,9 +1,7 @@
 import utils, { STYLE_DEFAULTS } from './utils'
 import type { LabelBackgroundStyle } from './utils'
-import { BitmapText, ColorSource, Container, Point, Sprite, Text, Texture } from 'pixi.js'
+import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.js'
 import { equals } from '../../../..'
-
-export type Size = { width: number; height: number }
 
 export class LabelBackground {
   mounted = false
@@ -14,15 +12,16 @@ export class LabelBackground {
   private sprite: Sprite
   private label: Text | BitmapText
   private container: Container
-  private rect: Size
+  private labelWidth: number
+  private labelHeight: number
   private _style: LabelBackgroundStyle
 
   constructor(container: Container, label: Text | BitmapText, style: LabelBackgroundStyle) {
     this.label = label
     this.container = container
     this._style = style
-
-    this.rect = { width: this.label.width, height: this.label.height }
+    this.labelWidth = this.label.width
+    this.labelHeight = this.label.height
 
     const { width, height } = this.size
 
@@ -34,9 +33,9 @@ export class LabelBackground {
     this.sprite.tint = this.style.color
   }
 
-  update(rect: Size, anchor: Point, style: LabelBackgroundStyle) {
+  update(size: { width: number; height: number }, anchor: [number, number], style: LabelBackgroundStyle) {
     this.dirty = !equals(style.padding, this._style.padding)
-    this.bounds = rect
+    this.bounds = size
     this.anchor = anchor
 
     if (this._style !== style) {
@@ -91,7 +90,7 @@ export class LabelBackground {
   }
 
   getBounds() {
-    return utils.getBounds(this.x ?? 0, this.y ?? 0, this.sprite.width, this.sprite.height, this.sprite.anchor.clone())
+    return utils.getBounds(this.x ?? 0, this.y ?? 0, this.sprite.width, this.sprite.height, this.sprite.anchor.x, this.sprite.anchor.y)
   }
 
   get text() {
@@ -119,14 +118,14 @@ export class LabelBackground {
 
   private get size() {
     const [top, right, bottom, left] = utils.getBackgroundPadding(this._style.padding)
-    const height = this.rect.height + top + bottom
-    const width = this.rect.width + right + left
+    const height = this.labelHeight + top + bottom
+    const width = this.labelWidth + right + left
     return { width, height }
   }
 
-  private set anchor(anchor: Point) {
-    if (!this.sprite.anchor.equals(anchor)) {
-      this.sprite.anchor.copyFrom(anchor)
+  private set anchor([x, y]: [number, number]) {
+    if (!this.sprite.anchor.equals({ x, y })) {
+      this.sprite.anchor.set(x, y)
     }
   }
 
@@ -142,9 +141,10 @@ export class LabelBackground {
     }
   }
 
-  private set bounds(bounds: Size) {
-    if (this.rect.width !== bounds.width || this.rect.height !== bounds.height) {
-      this.rect = bounds
+  private set bounds(bounds: { width: number; height: number }) {
+    if (this.labelWidth !== bounds.width || this.labelHeight !== bounds.height) {
+      this.labelWidth = bounds.width
+      this.labelHeight = bounds.height
       this.dirty = true
     }
   }

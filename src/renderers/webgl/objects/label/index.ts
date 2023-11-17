@@ -149,7 +149,7 @@ export class Label {
   getBounds() {
     return (
       this.labelBackground?.getBounds() ||
-      utils.getBounds(this.x ?? 0, this.y ?? 0, this.text.width, this.text.height, this.text.anchor.clone())
+      utils.getBounds(this.x ?? 0, this.y ?? 0, this.text.width, this.text.height, this.text.anchor.x, this.text.anchor.y)
     )
   }
 
@@ -202,7 +202,11 @@ export class Label {
     if (this.labelBackground === null && background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, background)
     } else if (this.labelBackground && background !== undefined) {
-      this.labelBackground.update({ width: this.text.width, height: this.text.height }, this.text.anchor.clone(), background)
+      this.labelBackground.update(
+        { width: this.text.width, height: this.text.height },
+        [this.text.anchor.x, this.text.anchor.y],
+        background
+      )
     } else if (this.labelBackground && background === undefined) {
       this.labelBackground.delete()
       this.labelBackground = null

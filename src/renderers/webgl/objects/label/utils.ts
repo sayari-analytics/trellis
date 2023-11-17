@@ -1,4 +1,4 @@
-import { Text, TextStyle, ITextStyle, IBitmapTextStyle, Point, LINE_JOIN } from 'pixi.js'
+import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
 import type { Stroke, FontWeight, TextAlign } from '../../../../types'
 
 export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
@@ -214,15 +214,15 @@ const getLabelCoordinates = (
   return { label, bg }
 }
 
-const getBounds = (x: number, y: number, width: number, height: number, anchor: Point) => ({
+const getBounds = (x: number, y: number, width: number, height: number, anchorX: number, anchorY: number) => ({
   x,
   y,
   width,
   height,
-  right: anchor.x === 0 ? x + width : anchor.x === 0.5 ? x + width / 2 : x,
-  left: anchor.x === 0 ? x : anchor.x === 0.5 ? x - width / 2 : x - width,
-  bottom: anchor.y === 0 ? y + height : anchor.y === 0.5 ? y + height / 2 : y,
-  top: anchor.y === 0 ? y : anchor.y === 0.5 ? y - height / 2 : y - height
+  right: anchorX === 0 ? x + width : anchorX === 0.5 ? x + width / 2 : x,
+  left: anchorX === 0 ? x : anchorX === 0.5 ? x - width / 2 : x - width,
+  bottom: anchorY === 0 ? y + height : anchorY === 0.5 ? y + height / 2 : y,
+  top: anchorY === 0 ? y : anchorY === 0.5 ? y - height / 2 : y - height
 })
 
 export default {
