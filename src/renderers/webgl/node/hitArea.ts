@@ -1,9 +1,13 @@
 import { Circle, Container } from 'pixi.js'
-import { NodeRenderer } from '../node/node'
+import { NodeRenderer } from './node'
 
 export class NodeHitArea {
   mounted = false
 
+  private x = 0
+  private y = 0
+  private _radius = 0
+  private circle = new Circle()
   private hitArea = new Container()
   private container: Container
   private nodeRenderer: NodeRenderer
@@ -12,6 +16,7 @@ export class NodeHitArea {
     this.container = container
     this.nodeRenderer = nodeRenderer
 
+    this.hitArea.hitArea = this.circle
     this.hitArea.eventMode = 'static'
     this.hitArea.addEventListener('pointerenter', this.nodeRenderer.pointerEnter)
     this.hitArea.addEventListener('pointerdown', this.nodeRenderer.pointerDown)
@@ -20,8 +25,22 @@ export class NodeHitArea {
     this.hitArea.addEventListener('pointerleave', this.nodeRenderer.pointerLeave)
   }
 
-  update(x: number, y: number, radius: number) {
-    this.hitArea.hitArea = new Circle(x, y, radius)
+  set radius(radius: number) {
+    if (this._radius !== radius) {
+      this._radius = radius
+      this.circle.radius = radius
+    }
+  }
+
+  moveTo(x: number, y: number) {
+    if (this.x !== x) {
+      this.x = x
+      this.circle.x = x
+    }
+    if (this.y !== y) {
+      this.y = y
+      this.circle.y = y
+    }
 
     return this
   }

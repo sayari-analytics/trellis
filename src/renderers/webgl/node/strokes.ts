@@ -6,10 +6,11 @@ import type { Stroke } from '../../../types'
 
 export class NodeStrokes {
   mounted = false
-  radius = 0
 
   private x = 0
   private y = 0
+  private nodeRadius = 0
+  private strokesRadius = 0
   private fill: NodeFill
   private container: Container
   private circleTexture: CircleTexture
@@ -22,22 +23,14 @@ export class NodeStrokes {
     this.fill = fill
   }
 
-  update(radius: number, strokes: Stroke[] = []) {
+  update(strokes: Stroke[] = []) {
     if (!equals(this.strokes, strokes)) {
       const isMounted = this.mounted
       this.delete()
-
-      this.radius = radius
       this.setStrokes(strokes)
 
       if (isMounted) {
         this.mount()
-      }
-    } else if (this.radius !== radius) {
-      this.radius = radius
-      for (const index in this.strokes) {
-        this.radius += this.strokes[index].width
-        this.sprites[index].scale.set(this.scale)
       }
     }
   }
@@ -96,18 +89,34 @@ export class NodeStrokes {
       sprite.destroy()
     }
 
-    this.radius = 0
+    this.strokesRadius = 0
     this.sprites = []
     this.strokes = []
 
     return undefined
   }
 
+  get radius() {
+    return this.strokesRadius
+  }
+
+  set radius(radius: number) {
+    if (this.nodeRadius !== radius) {
+      this.nodeRadius = radius
+      this.strokesRadius = radius
+      for (const index in this.strokes) {
+        this.strokesRadius += this.strokes[index].width
+        this.sprites[index].scale.set(this.scale)
+      }
+    }
+  }
+
   private setStrokes(strokes: Stroke[]) {
     const sprites: Sprite[] = []
+    let radius = this.nodeRadius
 
     for (const stroke of strokes) {
-      this.radius += stroke.width
+      radius += stroke.width
       const sprite = new Sprite(this.circleTexture.texture)
       sprite.anchor.set(0.5)
       sprite.scale.set(this.scale)
@@ -117,11 +126,12 @@ export class NodeStrokes {
       sprites.push(sprite)
     }
 
+    this.strokesRadius = radius
     this.sprites = sprites
     this.strokes = strokes
   }
 
   private get scale() {
-    return this.radius / this.circleTexture.scaleFactor
+    return this.strokesRadius / this.circleTexture.scaleFactor
   }
 }

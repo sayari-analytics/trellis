@@ -103,7 +103,9 @@ const options: Renderer.Options = {
   },
   onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}`)
-    nodes = nodes.map((node) => (node.id === event.target.id ? { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node))
+    nodes = nodes.map((node) =>
+      node.id === event.target.id ? { ...node, radius: 15, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node
+    )
     renderer.update({ nodes, edges, options })
   },
   onNodeDrag: (event: Renderer.NodeDragEvent) => {
@@ -116,7 +118,7 @@ const options: Renderer.Options = {
   onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
-      node.id === event.target.id ? { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
+      node.id === event.target.id ? { ...node, radius: 10, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
     )
     renderer.update({ nodes, edges, options })
   }

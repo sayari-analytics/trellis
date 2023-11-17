@@ -6,12 +6,13 @@ import { Label } from './label'
 import { NodeFill } from './fill'
 import { NodeStrokes } from './strokes'
 import { Icon } from './icon'
-import { NodeHitArea } from '../interaction/nodeHitArea'
+import { NodeHitArea } from './hitArea'
 import { interpolate } from '../../../utils'
 
 export class NodeRenderer {
   x = 0
   y = 0
+  radius = 0
   node!: Graph.Node
   fill: NodeFill
   label?: Label
@@ -29,6 +30,7 @@ export class NodeRenderer {
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
   private interpolateRadius?: (dt: number) => { value: number; done: boolean }
+  private hitAreaMounted = false
   private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
@@ -45,7 +47,8 @@ export class NodeRenderer {
   }
 
   update(node: Graph.Node) {
-    this.strokes.update(node.radius, node.style?.stroke)
+    this.strokes.update(node.style?.stroke)
+    this.fill.update(node.style?.color)
 
     const nodeLabel = node.label
     const labelStyle = node.style?.label
@@ -60,8 +63,8 @@ export class NodeRenderer {
       Label.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
         this.label = label
         this.labelLoading = false
-        this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
         this.label?.moveTo(this.x, this.y, this.strokes.radius)
+        this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
       })
     } else {
       this.label.update(nodeLabel, labelStyle)
@@ -79,8 +82,8 @@ export class NodeRenderer {
       Icon.init(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, iconStyle).then((icon) => {
         this.icon = icon
         this.iconLoading = false
-        this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
         this.icon?.moveTo(this.x, this.y)
+        this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
       })
     } else {
       this.icon.update(iconStyle)
@@ -97,7 +100,7 @@ export class NodeRenderer {
     const y = node.y ?? 0
     const xChanged = x !== this.x
     const yChanged = y !== this.y
-    const radiusChanged = node.radius !== this.node?.radius
+    const radiusChanged = node.radius !== this.radius
 
     if (
       (xChanged || yChanged || radiusChanged) &&
@@ -112,10 +115,11 @@ export class NodeRenderer {
         this.interpolateY = interpolate(this.y, y, this.renderer.animateNodePosition)
       }
       if (radiusChanged && this.renderer.animateNodeRadius) {
-        this.interpolateRadius = interpolate(this.y, y, this.renderer.animateNodeRadius)
+        this.interpolateRadius = interpolate(this.radius, node.radius, this.renderer.animateNodeRadius)
       }
     } else {
-      this.setPosition(node, x, y, node.radius)
+      this.setRadius(node.radius)
+      this.moveTo(x, y)
       this.interpolateX = undefined
       this.interpolateY = undefined
       this.interpolateRadius = undefined
@@ -130,6 +134,19 @@ export class NodeRenderer {
     let _x: number | undefined
     let _y: number | undefined
     let _radius: number | undefined
+
+    if (this.interpolateRadius) {
+      const { value, done } = this.interpolateRadius(dt)
+      _radius = value
+
+      if (done) {
+        this.interpolateRadius = undefined
+      }
+    }
+
+    if (_radius !== undefined) {
+      this.setRadius(_radius)
+    }
 
     if (this.interpolateX) {
       const { value, done } = this.interpolateX(dt)
@@ -149,42 +166,13 @@ export class NodeRenderer {
       }
     }
 
-    if (this.interpolateRadius) {
-      const { value, done } = this.interpolateRadius(dt)
-      _radius = value
-
-      if (done) {
-        this.interpolateRadius = undefined
-      }
-    }
-
-    if (_x !== undefined || _y !== undefined || _radius !== undefined) {
-      this.setPosition(this.node, _x ?? this.x, _y ?? this.y, _radius ?? this.node.radius)
+    if (_x !== undefined || _y !== undefined) {
+      this.moveTo(_x ?? this.x, _y ?? this.y)
     }
 
     const isVisible = this.visible()
-
-    // TODO - disable events if node has no event handlers
-    // TODO - disable events if node pixel width < ~5px
-    // TODO - disable events when dragging/scrolling
-    if (isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM) {
-      this.renderer.interactionObjectManager.mount(this.hitArea)
-    } else {
-      this.renderer.interactionObjectManager.unmount(this.hitArea)
-    }
-
-    if (isVisible) {
-      if (!this.fillMounted) {
-        this.fill.mount()
-        this.fillMounted = true
-      }
-    } else {
-      if (this.fillMounted) {
-        this.fill.unmount()
-        this.fillMounted = false
-      }
-    }
-
+    this.mountHitArea(isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM)
+    this.mountFill(isVisible)
     this.mountStrokes(isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM)
     this.mountLabel(isVisible && this.renderer.zoom > MIN_LABEL_ZOOM)
     this.mountIcon(isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
@@ -474,20 +462,27 @@ export class NodeRenderer {
     this.pointerLeftBeforeDragComplete = false
   }
 
-  private clearDoubleClick = () => {
-    this.doubleClickTimeout = undefined
-    this.doubleClick = false
+  private setRadius(radius: number) {
+    this.radius = radius
+    this.fill.radius = radius
+    this.strokes.radius = radius
+    this.hitArea.radius = radius
   }
 
-  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
+  private moveTo(x: number, y: number) {
     this.x = x
     this.y = y
 
-    this.fill.update(this.x, this.y, radius, node.style)
+    this.fill.moveTo(this.x, this.y)
     this.strokes.moveTo(this.x, this.y)
+    this.hitArea.moveTo(this.x, this.y)
     this.label?.moveTo(this.x, this.y, this.strokes.radius)
     this.icon?.moveTo(this.x, this.y)
-    this.hitArea.update(this.x, this.y, radius)
+  }
+
+  private clearDoubleClick = () => {
+    this.doubleClickTimeout = undefined
+    this.doubleClick = false
   }
 
   private visible() {
@@ -504,6 +499,29 @@ export class NodeRenderer {
     }
 
     return right >= this.renderer.minX && left <= this.renderer.maxX && bottom >= this.renderer.minY && top <= this.renderer.maxY
+  }
+
+  // TODO - disable events if node has no event handlers
+  // TODO - disable events if node pixel width < ~5px
+  // TODO - disable events when dragging/scrolling
+  private mountHitArea(shouldMount: boolean) {
+    if (shouldMount && !this.hitAreaMounted) {
+      this.renderer.interactionObjectManager.mount(this.hitArea)
+      this.hitAreaMounted = true
+    } else if (!shouldMount && this.hitAreaMounted) {
+      this.renderer.interactionObjectManager.unmount(this.hitArea)
+      this.hitAreaMounted = false
+    }
+  }
+
+  private mountFill(shouldMount: boolean) {
+    if (shouldMount && !this.fillMounted) {
+      this.fill.mount()
+      this.fillMounted = true
+    } else if (!shouldMount && this.fillMounted) {
+      this.fill.unmount()
+      this.fillMounted = false
+    }
   }
 
   private mountStrokes(shouldMount: boolean) {

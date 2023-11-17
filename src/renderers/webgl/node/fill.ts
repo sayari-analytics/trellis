@@ -1,51 +1,56 @@
 import { Container, Sprite } from 'pixi.js'
-import * as Graph from '../../..'
 import { CircleTexture } from '../textures/circle'
 
-const DEFAULT_NODE_FILL = 0xaaaaaa
+const DEFAULT_NODE_FILL = '#AAAAAA'
 
 export class NodeFill {
   mounted = false
-  fill: Sprite // TODO - make private
 
+  private x = 0
+  private y = 0
+  private _radius = 0
+  private fill: Sprite
   private container: Container
   private circleTexture: CircleTexture
-  private radius?: number
-  private style?: Graph.NodeStyle
+  private color = DEFAULT_NODE_FILL
 
   constructor(container: Container, circleTexture: CircleTexture) {
     this.container = container
     this.circleTexture = circleTexture
-    this.fill = new Sprite(this.circleTexture.texture)
-    this.fill.anchor.set(0.5)
-    this.fill.visible = false
-
-    this.container.addChild(this.fill)
+    this.fill = this.create()
   }
 
-  update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
-    if ((style?.color ?? DEFAULT_NODE_FILL) !== (this.style?.color ?? DEFAULT_NODE_FILL)) {
-      this.fill.tint = style?.color ?? DEFAULT_NODE_FILL
+  set radius(radius: number) {
+    if (this._radius !== radius) {
+      this._radius = radius
+      this.fill.scale.set(this.scale)
     }
+  }
 
-    if (radius !== this.radius) {
-      this.fill.scale.set(radius / this.circleTexture.scaleFactor)
-      this.radius = radius
+  update(color = DEFAULT_NODE_FILL) {
+    if (this.color !== color) {
+      this.color = color
+      this.fill.tint = color
     }
-
-    this.fill.x = x
-    this.fill.y = y
-
-    this.style = style
 
     return this
   }
 
+  moveTo(x: number, y: number) {
+    if (this.x !== x) {
+      this.x = x
+      this.fill.x = x
+    }
+    if (this.y !== y) {
+      this.y = y
+      this.fill.y = y
+    }
+  }
+
   mount() {
+    // TODO - why is mounting/unmouting fill Sprite less efficient?
     if (!this.mounted) {
-      // TODO - why is mounting/unmouting fill Sprite less efficient?
       this.fill.visible = true
-      // this.container.addChild(this.fill)
       this.mounted = true
     }
 
@@ -55,7 +60,6 @@ export class NodeFill {
   unmount() {
     if (this.mounted) {
       this.fill.visible = false
-      // this.container.removeChild(this.fill)
       this.mounted = false
     }
 
@@ -72,5 +76,20 @@ export class NodeFill {
 
   getContainerIndex() {
     return this.container.getChildIndex(this.fill)
+  }
+
+  private create() {
+    const fill = new Sprite(this.circleTexture.texture)
+    fill.tint = this.color
+    fill.anchor.set(0.5)
+    fill.visible = false
+    fill.x = this.x
+    fill.y = this.y
+    this.container.addChild(fill)
+    return fill
+  }
+
+  private get scale() {
+    return this._radius / this.circleTexture.scaleFactor
   }
 }
