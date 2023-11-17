@@ -141,7 +141,6 @@ export class LabelBackground {
       this.sprite.anchor.x,
       this.sprite.anchor.y
     )
-
     return this.backgroundBounds
   }
 

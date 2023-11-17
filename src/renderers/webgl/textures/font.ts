@@ -88,7 +88,9 @@ export class FontBook {
     const font = FontBook.find(fontName)
 
     if (font === undefined) {
-      style.fontSize = this.maxFontSize * this.resolution * this.scaleFactor
+      const fontSize = this.maxFontSize * this.resolution * this.scaleFactor
+      style.fontSize = fontSize
+      style.lineHeight = fontSize * 1.3
       return BitmapFont.from(fontName, style, { chars: this.chars, resolution: this.resolution })
     }
 

@@ -58,7 +58,9 @@ export const STYLE_DEFAULTS = {
   ALIGN: 'center' as const,
   POSITION: 'bottom' as const,
   FONT_WEIGHT: 'normal' as const,
-  FONT_FAMILY: 'sans-serif'
+  FONT_FAMILY: 'sans-serif',
+  LINE_HEIGHT: 13,
+  BASELINE: 'alphabetic' as const
 }
 
 // install text defaults
@@ -73,7 +75,9 @@ TextStyle.defaultStyle = {
   fontSize: STYLE_DEFAULTS.FONT_SIZE,
   fontFamily: STYLE_DEFAULTS.FONT_FAMILY,
   strokeThickness: STYLE_DEFAULTS.STROKE_THICKNESS,
-  letterSpacing: STYLE_DEFAULTS.LETTER_SPACING
+  letterSpacing: STYLE_DEFAULTS.LETTER_SPACING,
+  lineHeight: STYLE_DEFAULTS.LINE_HEIGHT,
+  textBaseline: STYLE_DEFAULTS.BASELINE
 }
 
 // utils
@@ -140,6 +144,7 @@ const getTextStyle = ({ color, fontFamily, fontSize, fontWeight, wordWrap, strok
   }
   if (fontSize !== undefined) {
     style.fontSize = fontSize
+    style.lineHeight = fontSize * 1.3
   }
   if (fontWeight !== undefined) {
     style.fontWeight = fontWeight
@@ -198,9 +203,8 @@ const getLabelCoordinates = (
     left += l
   }
 
-  if (isBitmapText && (position === 'left' || position === 'right')) {
-    label.y -= 1
-    bg.y -= 1
+  if (isBitmapText) {
+    label.y -= position === 'bottom' ? 1 : 2
   }
 
   switch (position) {

@@ -27,7 +27,7 @@ const NODE_STYLE: Graph.NodeStyle = {
   icon: IMAGE_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
-    position: 'right',
+    position: 'bottom',
     fontName: 'NodeLabel',
     fontFamily: 'Roboto',
     background: { color: GREEN_LIGHT },
@@ -40,7 +40,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
   icon: TEXT_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
-    position: 'right',
+    position: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: 'Roboto',
     background: { color: DARK_GREEN },
@@ -69,7 +69,7 @@ const collide = Collide.Layout()
 const edges: Graph.Edge[] = []
 let nodes = data.map<Graph.Node>((label, index) => ({
   radius: 10,
-  label,
+  label: `${label}${index % 2 === 0 ? ' 北京' : ''}`,
   id: `${index}-${label}`,
   style: NODE_STYLE
 }))
