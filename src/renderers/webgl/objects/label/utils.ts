@@ -27,9 +27,20 @@ type _StyleDefaults = 'fontSize' | 'position' | 'fontFamily' | 'fontName' | 'mar
 export type StyleWithDefaults = Omit<LabelStyle, _StyleDefaults> & {
   fontSize: number
   position: LabelPosition
-  fontFamily: string | string[]
+  fontFamily: string
   fontName: string
   margin: number
+}
+
+export type LabelBounds = {
+  x: number
+  y: number
+  width: number
+  height: number
+  top: number
+  bottom: number
+  right: number
+  left: number
 }
 
 export const RESOLUTION = 2
@@ -214,7 +225,7 @@ const getLabelCoordinates = (
   return { label, bg }
 }
 
-const getBounds = (x: number, y: number, width: number, height: number, anchorX: number, anchorY: number) => ({
+const getLabelBounds = (x: number, y: number, width: number, height: number, anchorX: number, anchorY: number): LabelBounds => ({
   x,
   y,
   width,
@@ -235,5 +246,5 @@ export default {
   getTextStyle,
   getBitmapStyle,
   getBackgroundPadding,
-  getBounds
+  getLabelBounds
 }

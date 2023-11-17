@@ -506,11 +506,10 @@ export class NodeRenderer {
     let bottom = this.y + this.strokes.radius
 
     if (this.label) {
-      const bounds = this.label.getBounds()
-      left = Math.min(left, bounds.left)
-      right = Math.max(right, bounds.right)
-      top = Math.min(top, bounds.top)
-      bottom = Math.max(bottom, bounds.bottom)
+      left = Math.min(left, this.label.bounds.left)
+      right = Math.max(right, this.label.bounds.right)
+      top = Math.min(top, this.label.bounds.top)
+      bottom = Math.max(bottom, this.label.bounds.bottom)
     }
 
     return right >= this.renderer.minX && left <= this.renderer.maxX && bottom >= this.renderer.minY && top <= this.renderer.maxY

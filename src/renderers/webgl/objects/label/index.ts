@@ -1,5 +1,5 @@
 import utils, { STYLE_DEFAULTS } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle } from './utils'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle, StyleWithDefaults, LabelBounds } from './utils'
 import type { Stroke, TextAlign, FontWeight } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
@@ -17,15 +17,16 @@ export class Label {
 
   private x?: number
   private y?: number
-
-  private _style: LabelStyle | undefined
+  private dirty = false
+  private transformed = false
   private label: string
   private fontBook: FontBook
   private container: Container
   private text: BitmapText | Text
   private labelBackground: LabelBackground | null = null
-  private transformed = false
-  private dirty = false
+  private assignedStyle: LabelStyle | undefined
+  private activeStyle!: StyleWithDefaults
+  private labelBounds!: LabelBounds
 
   static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
     const fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
@@ -41,8 +42,9 @@ export class Label {
     this.label = label
     this.fontBook = fontBook
     this.container = container
-    this._style = style
+    this.style = style
     this.text = this.create()
+    this.setBounds()
     if (this.style.background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
@@ -50,14 +52,14 @@ export class Label {
 
   async update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
-    const styleHasChanged = !equals(this._style, style)
+    const styleHasChanged = !equals(this.assignedStyle, style)
 
     const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
     if (style?.fontFamily !== undefined && style.fontFamily !== this.style.fontFamily) {
       await this.fontBook.load(style.fontFamily, fontWeight)
     }
 
-    this._style = style
+    this.style = style
 
     if (labelHasChanged) {
       this.label = label
@@ -95,6 +97,7 @@ export class Label {
     this.transformed = false
 
     if (labelHasChanged || styleHasChanged) {
+      this.setBounds()
       this.background = style?.background
     }
 
@@ -102,6 +105,8 @@ export class Label {
   }
 
   moveTo(x: number, y: number, offset = 0) {
+    let dirty = false
+
     const { label, bg } = utils.getLabelCoordinates(x, y, offset, this.isBitmapText(), this.style)
 
     this.labelBackground?.moveTo(bg.x, bg.y)
@@ -109,11 +114,19 @@ export class Label {
     if (label.x !== this.x) {
       this.text.x = label.x
       this.x = label.x
+      dirty = true
     }
     if (label.y !== this.y) {
       this.text.y = label.y
       this.y = label.y
+      dirty = true
     }
+
+    if (dirty) {
+      this.labelBounds = this.setBounds()
+    }
+
+    return this
   }
 
   mount() {
@@ -146,11 +159,8 @@ export class Label {
     return undefined
   }
 
-  getBounds() {
-    return (
-      this.labelBackground?.getBounds() ||
-      utils.getBounds(this.x ?? 0, this.y ?? 0, this.text.width, this.text.height, this.text.anchor.x, this.text.anchor.y)
-    )
+  get bounds() {
+    return this.labelBackground?.bounds ?? this.labelBounds
   }
 
   private create() {
@@ -170,10 +180,6 @@ export class Label {
     text.resolution = this.fontBook.resolution
     text.anchor.set(...utils.getAnchorPoint(style.position))
     return text
-  }
-
-  private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {
-    return text instanceof BitmapText
   }
 
   private updateText() {
@@ -198,23 +204,40 @@ export class Label {
     }
   }
 
+  private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {
+    return text instanceof BitmapText
+  }
+
+  private setBounds() {
+    this.labelBounds = utils.getLabelBounds(
+      this.x ?? 0,
+      this.y ?? 0,
+      this.text.width,
+      this.text.height,
+      this.text.anchor.x,
+      this.text.anchor.y
+    )
+    return this.labelBounds
+  }
+
+  private get style(): StyleWithDefaults {
+    return this.activeStyle
+  }
+
+  private set style(style: LabelStyle | undefined) {
+    this.assignedStyle = style
+    this.activeStyle = utils.mergeDefaults(style)
+  }
+
   private set background(background: LabelBackgroundStyle | undefined) {
     if (this.labelBackground === null && background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, background)
     } else if (this.labelBackground && background !== undefined) {
-      this.labelBackground.update(
-        { width: this.text.width, height: this.text.height },
-        [this.text.anchor.x, this.text.anchor.y],
-        background
-      )
+      this.labelBackground.update([this.text.width, this.text.height], [this.text.anchor.x, this.text.anchor.y], background)
     } else if (this.labelBackground && background === undefined) {
       this.labelBackground.delete()
       this.labelBackground = null
     }
-  }
-
-  private get style() {
-    return utils.mergeDefaults(this._style)
   }
 
   private set position(position: LabelPosition) {

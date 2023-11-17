@@ -29,7 +29,7 @@ const NODE_STYLE: Graph.NodeStyle = {
   stroke: [{ width: 2, color: LIGHT_PURPLE }],
   icon: TEXT_ICON,
   label: {
-    position: 'top',
+    position: 'bottom',
     fontName: ARIAL_PINK,
     fontFamily: 'Roboto',
     margin: 2

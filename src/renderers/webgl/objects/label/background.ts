@@ -1,5 +1,5 @@
 import utils, { STYLE_DEFAULTS } from './utils'
-import type { LabelBackgroundStyle } from './utils'
+import type { LabelBackgroundStyle, LabelBounds } from './utils'
 import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.js'
 import { equals } from '../../../..'
 
@@ -10,36 +10,31 @@ export class LabelBackground {
   private y?: number
   private dirty = false
   private sprite: Sprite
-  private label: Text | BitmapText
   private container: Container
+  private label: Text | BitmapText
   private labelWidth: number
   private labelHeight: number
-  private _style: LabelBackgroundStyle
+  private assignedStyle!: LabelBackgroundStyle
+  private activeStyle!: Required<LabelBackgroundStyle>
+  private backgroundBounds!: LabelBounds
 
   constructor(container: Container, label: Text | BitmapText, style: LabelBackgroundStyle) {
     this.label = label
+    this.style = style
     this.container = container
-    this._style = style
     this.labelWidth = this.label.width
     this.labelHeight = this.label.height
-
-    const { width, height } = this.size
-
-    this.sprite = Sprite.from(Texture.WHITE)
-    this.sprite.height = height
-    this.sprite.width = width
-    this.sprite.anchor.set(this.label.anchor.x, this.label.anchor.y)
-    this.sprite.alpha = this.style.opacity
-    this.sprite.tint = this.style.color
+    this.sprite = this.create()
+    this.setBounds()
   }
 
-  update(size: { width: number; height: number }, anchor: [number, number], style: LabelBackgroundStyle) {
-    this.dirty = !equals(style.padding, this._style.padding)
-    this.bounds = size
+  update(size: [width: number, height: number], anchor: [number, number], style: LabelBackgroundStyle) {
+    this.dirty = !equals(style.padding, this.style.padding)
+    this.size = size
     this.anchor = anchor
 
-    if (this._style !== style) {
-      this._style = style
+    if (!equals(style, this.assignedStyle)) {
+      this.style = style
       this.color = style.color
       this.opacity = style.opacity ?? STYLE_DEFAULTS.OPACITY
     }
@@ -47,21 +42,32 @@ export class LabelBackground {
     if (this.dirty) {
       this.dirty = false
       this.resize()
+      this.setBounds()
     }
 
     return this
   }
 
   moveTo(x: number, y: number) {
+    let dirty = false
+
     if (this.x !== x) {
       this.x = x
       this.sprite.x = x
+      dirty = true
     }
 
     if (this.y !== y) {
       this.y = y
       this.sprite.y = y
+      dirty = true
     }
+
+    if (dirty) {
+      this.setBounds()
+    }
+
+    return this
   }
 
   mount() {
@@ -89,10 +95,6 @@ export class LabelBackground {
     return undefined
   }
 
-  getBounds() {
-    return utils.getBounds(this.x ?? 0, this.y ?? 0, this.sprite.width, this.sprite.height, this.sprite.anchor.x, this.sprite.anchor.y)
-  }
-
   get text() {
     return this.label
   }
@@ -101,26 +103,71 @@ export class LabelBackground {
     this.label = text
   }
 
+  get bounds() {
+    return this.backgroundBounds
+  }
+
+  private create() {
+    const [width, height] = this.size
+
+    const sprite = Sprite.from(Texture.WHITE)
+    sprite.height = height
+    sprite.width = width
+    sprite.anchor.set(this.label.anchor.x, this.label.anchor.y)
+    sprite.alpha = this.style.opacity
+    sprite.tint = this.style.color
+    return sprite
+  }
+
   private resize() {
-    const { height, width } = this.size
+    const [width, height] = this.size
+
     if (height !== this.sprite.height) {
       this.sprite.height = height
     }
     if (width !== this.sprite.width) {
       this.sprite.width = width
     }
-    return this
+
+    return [width, height]
   }
 
-  private get style() {
-    return utils.mergeBackgroundDefaults(this._style)
+  private setBounds() {
+    this.backgroundBounds = utils.getLabelBounds(
+      this.x ?? 0,
+      this.y ?? 0,
+      this.sprite.width,
+      this.sprite.height,
+      this.sprite.anchor.x,
+      this.sprite.anchor.y
+    )
+
+    return this.backgroundBounds
   }
 
-  private get size() {
-    const [top, right, bottom, left] = utils.getBackgroundPadding(this._style.padding)
-    const height = this.labelHeight + top + bottom
-    const width = this.labelWidth + right + left
-    return { width, height }
+  private set style(style: LabelBackgroundStyle) {
+    this.assignedStyle = style
+    this.activeStyle = utils.mergeBackgroundDefaults(style)
+  }
+
+  private get style(): Required<LabelBackgroundStyle> {
+    return this.activeStyle
+  }
+
+  private get size(): [width: number, height: number] {
+    const [top, right, bottom, left] = utils.getBackgroundPadding(this.style.padding)
+    return [this.labelWidth + right + left, this.labelHeight + top + bottom]
+  }
+
+  private set size([width, height]: [width: number, height: number]) {
+    if (this.labelWidth !== width) {
+      this.labelWidth = width
+      this.dirty = true
+    }
+    if (this.labelHeight !== height) {
+      this.labelHeight = height
+      this.dirty = true
+    }
   }
 
   private set anchor([x, y]: [number, number]) {
@@ -138,14 +185,6 @@ export class LabelBackground {
   private set opacity(opacity: number) {
     if (this.sprite.alpha !== opacity) {
       this.sprite.alpha = opacity
-    }
-  }
-
-  private set bounds(bounds: { width: number; height: number }) {
-    if (this.labelWidth !== bounds.width || this.labelHeight !== bounds.height) {
-      this.labelWidth = bounds.width
-      this.labelHeight = bounds.height
-      this.dirty = true
     }
   }
 }
