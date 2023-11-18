@@ -7,6 +7,6 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/index.umd.ts", "src/renderers/webgl-v6/**/*"]
+  "include": ["src"],
+  "exclude": ["v6"]
 }

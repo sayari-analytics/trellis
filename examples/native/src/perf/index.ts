@@ -1,4 +1,3 @@
-import * as Renderer from '@trellis/renderers/webgl'
 import * as Graph from '@trellis/index'
 
 const sampleCoordinatePlane = function* (count: number, step: number, sample: number) {
@@ -87,14 +86,14 @@ for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
 
 const container = document.querySelector('#graph') as HTMLDivElement
 
-const options: Renderer.Options = {
+const options: Graph.Options = {
   x: 0,
   y: 0,
   zoom: 1,
   minZoom: 0.025,
   width: 1250, // 1700,
   height: 650, // 940,
-  onViewportDrag: (event: Renderer.ViewportDragEvent | Renderer.ViewportDragDecelerateEvent) => {
+  onViewportDrag: (event: Graph.ViewportDragEvent | Graph.ViewportDragDecelerateEvent) => {
     // console.log('viewport drag', `x: ${event.dx}, y: ${event.dy}`)
     options.x! += event.dx
     options.y! += event.dy
@@ -106,7 +105,7 @@ const options: Renderer.Options = {
     options.zoom! += dz
     renderer.update({ nodes, edges, options })
   },
-  onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
+  onNodePointerEnter: (event: Graph.NodePointerEvent) => {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) => (node.id === event.target.id ? { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node))
     edges = edges.map((edge) =>
@@ -114,14 +113,14 @@ const options: Renderer.Options = {
     )
     renderer.update({ nodes, edges, options })
   },
-  onNodeDrag: (event: Renderer.NodeDragEvent) => {
+  onNodeDrag: (event: Graph.NodeDragEvent) => {
     // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
     )
     renderer.update({ nodes, edges, options })
   },
-  onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
+  onNodePointerLeave: (event: Graph.NodePointerEvent) => {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
@@ -131,19 +130,19 @@ const options: Renderer.Options = {
     )
     renderer.update({ nodes, edges, options })
   },
-  onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
+  onEdgePointerEnter: (event: Graph.EdgePointerEvent) => {
     // console.log('edge pointer enter', `x: ${event.x}, y: ${event.y}`)
     edges = edges.map((edge) => (edge.id === event.target.id ? { ...edge, style: EDGE_HOVER_STYLE } : edge))
     renderer.update({ nodes, edges, options })
   },
-  onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
+  onEdgePointerLeave: (event: Graph.EdgePointerEvent) => {
     // console.log('edge pointer leave', `x: ${event.x}, y: ${event.y}`)
     edges = edges.map((edge) => (edge.id === event.target.id ? { ...edge, style: EDGE_STYLE } : edge))
     renderer.update({ nodes, edges, options })
   }
 }
 
-const renderer = new Renderer.Renderer({ container, width: options.width, height: options.height, debug: true }).update({
+const renderer = new Graph.Renderer({ container, width: options.width, height: options.height, debug: true }).update({
   nodes,
   edges,
   options

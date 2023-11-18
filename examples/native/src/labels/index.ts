@@ -1,6 +1,4 @@
-import * as Renderer from '@trellis/renderers/webgl'
 import * as Graph from '@trellis/index'
-import * as Collide from '@trellis/layout/collide'
 import { person } from '../../../assets/icons'
 
 const GREEN = '#91AD49'
@@ -67,7 +65,7 @@ const data = [
   'Valjean'
 ]
 
-const collide = Collide.Layout()
+const collide = Graph.Collide.Layout()
 
 const edges: Graph.Edge[] = []
 let nodes = data.map<Graph.Node>((label, index) => ({
@@ -85,11 +83,11 @@ const bounds = Graph.getSelectionBounds(nodes, 100)
 const viewport = Graph.boundsToViewport(bounds, size)
 const container = document.querySelector('#graph') as HTMLDivElement
 
-const options: Renderer.Options = {
+const options: Graph.Options = {
   ...viewport,
   ...size,
   minZoom: 0.025,
-  onViewportDrag: (event: Renderer.ViewportDragEvent | Renderer.ViewportDragDecelerateEvent) => {
+  onViewportDrag: (event: Graph.ViewportDragEvent | Graph.ViewportDragDecelerateEvent) => {
     // console.log('viewport drag', `x: ${event.dx}, y: ${event.dy}`)
     options.x! += event.dx
     options.y! += event.dy
@@ -101,21 +99,21 @@ const options: Renderer.Options = {
     options.zoom! += dz
     renderer.update({ nodes, edges, options })
   },
-  onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
+  onNodePointerEnter: (event: Graph.NodePointerEvent) => {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, radius: 15, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node
     )
     renderer.update({ nodes, edges, options })
   },
-  onNodeDrag: (event: Renderer.NodeDragEvent) => {
+  onNodeDrag: (event: Graph.NodeDragEvent) => {
     // console.log('node drag', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, x: (node.x ?? 0) + event.dx, y: (node.y ?? 0) + event.dy } : node
     )
     renderer.update({ nodes, edges, options })
   },
-  onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
+  onNodePointerLeave: (event: Graph.NodePointerEvent) => {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, radius: 10, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
@@ -124,7 +122,7 @@ const options: Renderer.Options = {
   }
 }
 
-const renderer = new Renderer.Renderer({ container, width: options.width, height: options.height, debug: true }).update({
+const renderer = new Graph.Renderer({ container, width: options.width, height: options.height, debug: true }).update({
   nodes,
   edges,
   options
