@@ -3,16 +3,16 @@ import type { LabelPosition, LabelStyle, LabelBackgroundStyle, StyleWithDefaults
 import type { Stroke, TextAlign, FontWeight } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
+import { RenderObject } from '../../objectManager'
 import { FontBook } from '../../textures/font'
 import { equals } from '../../../..'
 
 /**
  * TODO
- * - add support for background color, custom font loading
- * - add support for loading custom fonts as asset bundles
  * - moving/scaling labels is slow. render ASCII text characters as sprites to partical container?
  */
-export class Label {
+
+export class Label implements RenderObject {
   mounted = false
 
   private x = 0

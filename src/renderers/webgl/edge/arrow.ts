@@ -1,7 +1,8 @@
 import { Container, Sprite } from 'pixi.js'
 import { ArrowTexture } from '../textures/arrow'
+import { RenderObject } from '../objectManager'
 
-export class Arrow {
+export class Arrow implements RenderObject {
   mounted = false
   height: number
   width: number

@@ -1,9 +1,10 @@
 import { Container, Sprite } from 'pixi.js'
 import { CircleTexture } from '../textures/circle'
+import { RenderObject } from '../objectManager'
 
 const DEFAULT_NODE_FILL = '#AAAAAA'
 
-export class NodeFill {
+export class NodeFill implements RenderObject {
   mounted = false
 
   private x = 0
@@ -45,6 +46,8 @@ export class NodeFill {
       this.y = y
       this.fill.y = y
     }
+
+    return this
   }
 
   mount() {

@@ -1,12 +1,12 @@
-import { type Renderer } from '.'
-import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM } from './utils'
-import { movePoint } from './utils'
-import { NodeRenderer } from './node/node'
-import * as Graph from '../..'
-import { Arrow } from './objects/arrow'
-import { LineSegment } from './objects/lineSegment'
+import { type Renderer } from '..'
+import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM } from '../utils'
+import { movePoint } from '../utils'
+import { NodeRenderer } from '../node/node'
+import * as Graph from '../../..'
+import { Arrow } from './arrow'
+import { LineSegment } from './lineSegment'
 import { FederatedPointerEvent } from 'pixi.js'
-import { EdgeHitArea } from './interaction/edgeHitArea'
+import { EdgeHitArea } from './hitArea'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -82,8 +82,8 @@ export class EdgeRenderer {
     const y0 = this.source.y
     const x1 = this.target.x
     const y1 = this.target.y
-    const sourceRadius = this.source.strokes._radius
-    const targetRadius = this.target.strokes._radius
+    const sourceRadius = this.source.strokes.radius
+    const targetRadius = this.target.strokes.radius
     const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
 
     // TODO - disable events if edge has no event handlers

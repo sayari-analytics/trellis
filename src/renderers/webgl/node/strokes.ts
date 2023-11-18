@@ -2,9 +2,10 @@ import { Container, Sprite } from 'pixi.js'
 import { CircleTexture } from '../textures/circle'
 import { NodeFill } from './fill'
 import { equals } from '../../..'
-import type { Stroke } from '../../../types'
+import { RenderObject } from '../objectManager'
+import { Stroke } from '../../../types'
 
-export class NodeStrokes {
+export class NodeStrokes implements RenderObject {
   mounted = false
 
   private x = 0
@@ -54,6 +55,8 @@ export class NodeStrokes {
         sprite.y = y
       }
     }
+
+    return this
   }
 
   mount() {

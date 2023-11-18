@@ -1,19 +1,44 @@
 import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../utils'
 import { FederatedPointerEvent } from 'pixi.js'
 import { type Renderer } from '..'
-import * as Graph from '../../..'
-import { Label } from './label'
+import { Stroke } from '../../../types'
+import { Label, LabelStyle } from './label'
 import { NodeFill } from './fill'
 import { NodeStrokes } from './strokes'
-import { Icon } from './icon'
+import { Icon, NodeIcon } from './icon'
 import { NodeHitArea } from './hitArea'
 import { interpolate } from '../../../utils'
+import { NodeBadge } from './badges'
+
+export type NodeStyle = {
+  color?: string
+  icon?: NodeIcon
+  stroke?: Stroke[]
+  badge?: NodeBadge[]
+  label?: LabelStyle
+}
+
+export type Node = {
+  id: string
+  radius: number
+  x?: number
+  y?: number
+  fx?: number
+  fy?: number
+  label?: string
+  style?: NodeStyle
+  // subgraph?: {
+  //   nodes: Node[]
+  //   edges: Edge[]
+  //   options?: {}
+  // }
+}
 
 export class NodeRenderer {
   x = 0
   y = 0
   radius = 0
-  node!: Graph.Node
+  node!: Node
   fill: NodeFill
   label?: Label
   icon?: Icon
@@ -38,7 +63,7 @@ export class NodeRenderer {
   private iconMounted = false
   private iconLoading = false
 
-  constructor(renderer: Renderer, node: Graph.Node) {
+  constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
     this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
     this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
@@ -46,7 +71,7 @@ export class NodeRenderer {
     this.update(node)
   }
 
-  update(node: Graph.Node) {
+  update(node: Node) {
     this.strokes.update(node.style?.stroke)
     this.fill.update(node.style?.color)
 

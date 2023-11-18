@@ -1,10 +1,11 @@
 import { Container, Polygon } from 'pixi.js'
 import { HALF_PI, movePoint } from '../utils'
-import { EdgeRenderer } from '../edge'
+import { EdgeRenderer } from './edge'
+import { RenderObject } from '../objectManager'
 
 const MIN_LINE_HOVER_RADIUS = 2
 
-export class EdgeHitArea {
+export class EdgeHitArea implements RenderObject {
   mounted = false
 
   private hitArea = new Container()

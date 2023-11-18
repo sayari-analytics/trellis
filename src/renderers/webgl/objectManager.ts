@@ -1,31 +1,29 @@
 export interface RenderObject {
   mounted: boolean
-
+  // moveTo(...args: number[]): this
   mount(): this
-
   unmount(): this
-
   delete(): void
 }
 
-export class ObjectManager {
+export class ObjectManager<Object extends RenderObject = RenderObject> {
   private batchSize: number
 
-  private batch = new Map<RenderObject, 0 | 1 | 2>()
+  private batch = new Map<Object, 0 | 1 | 2>()
 
   constructor(batchSize: number) {
     this.batchSize = batchSize
   }
 
-  mount(object: RenderObject) {
+  mount(object: Object) {
     this.batch.set(object, 0)
   }
 
-  unmount(object: RenderObject) {
+  unmount(object: Object) {
     this.batch.set(object, 1)
   }
 
-  delete(object: RenderObject) {
+  delete(object: Object) {
     this.batch.set(object, 2)
   }
 

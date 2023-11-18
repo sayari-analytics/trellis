@@ -2,8 +2,9 @@ import utils, { STYLE_DEFAULTS } from './utils'
 import type { LabelBackgroundStyle, LabelBounds } from './utils'
 import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.js'
 import { equals } from '../../../..'
+import { RenderObject } from '../../objectManager'
 
-export class LabelBackground {
+export class LabelBackground implements RenderObject {
   mounted = false
 
   private x = 0

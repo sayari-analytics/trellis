@@ -1,23 +1,6 @@
 import { TWO_PI } from './renderers/webgl/utils'
-import type { NodeIcon } from './renderers/webgl/node/icon'
-import type { LabelStyle } from './renderers/webgl/node/label'
+import type { Node, LabelStyle } from './renderers/webgl/node'
 import type { Stroke } from './types'
-
-export type Node = {
-  id: string
-  radius: number
-  x?: number
-  y?: number
-  fx?: number
-  fy?: number
-  label?: string
-  style?: NodeStyle
-  subgraph?: {
-    nodes: Node[]
-    edges: Edge[]
-    options?: {}
-  }
-}
 
 export type Edge = {
   id: string
@@ -25,21 +8,6 @@ export type Edge = {
   target: string
   label?: string
   style?: EdgeStyle
-}
-
-export type NodeStyle = {
-  color?: string
-  icon?: NodeIcon
-  stroke?: Stroke[]
-  badge?: {
-    position: number
-    radius: number
-    color: string
-    stroke?: string
-    strokeWidth?: number
-    icon?: NodeIcon
-  }[]
-  label?: LabelStyle
 }
 
 export type EdgeStyle = {
@@ -362,7 +330,7 @@ export const angle = (x0: number, y0: number, x1: number, y1: number) => {
 }
 
 // exports
-export type { Stroke, NodeIcon }
+export type { Stroke }
 export type { FontWeight, TextAlign } from './types'
-export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './renderers/webgl/node/label'
+export type { Node, NodeStyle, NodeIcon, LabelStyle, LabelBackgroundStyle, LabelPosition } from './renderers/webgl/node'
 export type { TextIcon, ImageIcon } from './renderers/webgl/textures/icons'

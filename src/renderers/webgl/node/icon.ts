@@ -2,10 +2,11 @@ import { TextIconTexture, ImageIconTexture, TextIcon, ImageIcon } from '../textu
 import { Container, Sprite, Texture, RenderTexture } from 'pixi.js'
 import { NodeFill } from './fill'
 import * as Trellis from '../../..'
+import { RenderObject } from '../objectManager'
 
 export type NodeIcon = TextIcon | ImageIcon
 
-export class Icon {
+export class Icon implements RenderObject {
   mounted = false
 
   private x?: number

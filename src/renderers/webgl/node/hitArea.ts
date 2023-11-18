@@ -1,7 +1,8 @@
 import { Circle, Container } from 'pixi.js'
 import { NodeRenderer } from './node'
+import { RenderObject } from '../objectManager'
 
-export class NodeHitArea {
+export class NodeHitArea implements RenderObject {
   mounted = false
 
   private x = 0
