@@ -1,6 +1,6 @@
-import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from '@/utils'
+import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './../../utils'
 import { HierarchyNode } from 'd3-hierarchy'
-import { Node, Edge } from '@/types'
+import { Node, Edge } from './../../types'
 import tree from './tree'
 
 type CompareFn<N extends Node, E extends Edge> = (a: HierarchyNode<HierarchyData<N, E>>, b: HierarchyNode<HierarchyData<N, E>>) => number

@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { ViewportDragDecelerateEvent, ViewportDragEvent } from '@/webgl'
-import { Annotation, Node } from '@/types'
+import { ViewportDragDecelerateEvent, ViewportDragEvent } from './../../webgl'
+import { Annotation, Node } from './../../types'
 
 export type SelectionChangeEvent = {
   type: 'selectionChange'
@@ -11,7 +11,7 @@ export type SelectionChangeEvent = {
   shiftKey: boolean
 }
 
-export type Props<N extends Node> = {
+export type SelectionProps<N extends Node> = {
   nodes: N[]
   color?: string
   strokeColor?: string
@@ -22,10 +22,10 @@ export type Props<N extends Node> = {
   onViewportDragStart?: (event: ViewportDragEvent) => void
   onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
   onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
-  children: (childProps: ChildProps) => ReactNode
+  children: (childProps: SelectionChildProps) => ReactNode
 }
 
-export type ChildProps = {
+export type SelectionChildProps = {
   select: boolean
   annotation?: Annotation
   cursor?: string
@@ -49,7 +49,7 @@ function setsAreEqual<T>(a: Set<T>, b: Set<T>) {
   return true
 }
 
-export const Selection = <N extends Node>(props: Props<N>) => {
+export const Selection = <N extends Node>(props: SelectionProps<N>) => {
   const [state, setState] = useState<{
     select: boolean
     cursor?: string
@@ -69,7 +69,7 @@ export const Selection = <N extends Node>(props: Props<N>) => {
 
   const _selection = useRef<Set<string>>(new Set())
 
-  const _props = useRef<Props<N>>(props)
+  const _props = useRef<SelectionProps<N>>(props)
   _props.current = props
 
   useEffect(() => {
@@ -235,3 +235,5 @@ export const Selection = <N extends Node>(props: Props<N>) => {
         : undefined
   }) as unknown as JSX.Element
 }
+
+export default Selection

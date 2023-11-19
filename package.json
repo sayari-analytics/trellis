@@ -4,9 +4,6 @@
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
-  "main": "./index.js",
-  "exports": "./index.js",
-  "types": "./index.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
     "format": "prettier . --write",
@@ -16,27 +13,58 @@
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/**.{ts,tsx}\" --fix",
     "perf": "parcel perf/index.html",
-    "build:tsc": "tsc --project ./tsconfig.json",
+    "build:tsc": "tsc --emitDeclarationOnly --project ./tsconfig.json",
     "build:umd": "parcel build --target umd",
-    "build": "npm run clean && npm run build:tsc && npm run build:umd",
+    "build:react": "parcel build --dist-dir './dist/react' .'/src/react/index.ts'",
+    "build": "npm run clean && npm run build:tsc && parcel build",
     "copy": "cp package* README.md LICENSE dist/",
     "docs:dev": "npm run clean && parcel docs-src/index.html",
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/",
     "native:dev": "npm run dev --workspace=examples/native",
     "react:dev": "npm run dev --workspace=examples/react"
   },
-  "source": "./src/index.umd.ts",
   "targets": {
-    "main": false,
-    "types": false,
-    "umd": {
+    "browser": {
       "context": "browser",
-      "outputFormat": "global",
-      "distDir": "./dist"
+      "source": "./src/index.ts",
+      "outputFormat": "esmodule",
+      "distDir": "./dist/browser"
+    },
+    "main": {
+      "context": "node",
+      "source": "./src/index.ts",
+      "outputFormat": "commonjs",
+      "distDir": "./dist/main",
+      "isLibrary": true
+    },
+    "module": {
+      "context": "node",
+      "source": "./src/index.ts",
+      "outputFormat": "esmodule",
+      "distDir": "./dist/module",
+      "isLibrary": true
+    },
+    "react": {
+      "context": "node",
+      "source": "./src/react/index.ts",
+      "distDir": "./dist/react",
+      "isLibrary": true
     }
   },
-  "alias": {
-    "@/*": "./src/$1"
+  "@parcel/resolver-default": {
+    "packageExports": true
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/main/index.js",
+      "import": "./dist/module/index.js",
+      "browser": "./dist/browser/index.js",
+      "types": "./dist/declaration/index.d.ts"
+    },
+    "./react": {
+      "default": "./dist/react/index.js",
+      "types": "./dist/declaration/react/index.d.ts"
+    }
   },
   "dependencies": {
     "@pixi/events": "^7.3.2",
@@ -59,6 +87,7 @@
     "@types/d3-scale": "^4.0.6",
     "@types/d3-scale-chromatic": "^3.0.1",
     "@types/fontfaceobserver": "^2.1.3",
+    "@types/node": "^20.9.2",
     "@types/react": "^18.2.33",
     "@types/react-dom": "^18.2.14",
     "@types/stats.js": "^0.17.2",

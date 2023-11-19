@@ -1,8 +1,8 @@
-import { Stroke, RenderObject } from '@/types'
+import { Stroke, RenderObject } from './../../../types'
 import { Container, Sprite } from 'pixi.js'
-import { CircleTexture } from '@/webgl/textures'
+import { CircleTexture } from './../../textures'
 import { NodeFill } from './fill'
-import { equals } from '@/utils'
+import { equals } from './../../../utils'
 
 export class NodeStrokes implements RenderObject {
   mounted = false

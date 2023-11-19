@@ -11,7 +11,7 @@ import {
   SimulationLinkDatum,
   SimulationNodeDatum
 } from 'd3-force'
-import { Node, Edge, Extend } from '@/types'
+import { Node, Edge, Extend } from './../../types'
 
 export type ForceOptions = Partial<{
   nodeStrength: number

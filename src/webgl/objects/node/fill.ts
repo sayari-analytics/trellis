@@ -1,6 +1,6 @@
 import { Container, Sprite } from 'pixi.js'
-import { CircleTexture } from '@/webgl/textures/circle'
-import { RenderObject } from '@/types'
+import { CircleTexture } from '../../textures'
+import { RenderObject } from './../../../types'
 
 const DEFAULT_NODE_FILL = '#AAAAAA'
 

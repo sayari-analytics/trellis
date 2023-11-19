@@ -1,8 +1,8 @@
 import { Container, Sprite, Texture, RenderTexture } from 'pixi.js'
-import { TextIconTexture, ImageIconTexture } from '@/webgl/textures/icons'
-import { NodeIcon, RenderObject } from '@/types'
+import { TextIconTexture, ImageIconTexture } from './../../textures'
+import { NodeIcon, RenderObject } from './../../../types'
 import { NodeFill } from './fill'
-import { equals } from '@/utils'
+import { equals } from './../../../utils'
 
 export class Icon implements RenderObject {
   mounted = false

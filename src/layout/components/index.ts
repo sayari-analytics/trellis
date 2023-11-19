@@ -1,6 +1,6 @@
 import { packEnclose, packSiblings } from 'd3-hierarchy'
-import { connectedComponents } from '@/utils'
-import { Node, Edge } from '@/types'
+import { connectedComponents } from './../../utils'
+import { Node, Edge } from './../../types'
 
 export type ComponentsOptions = Partial<{ padding: number }>
 

@@ -1,7 +1,7 @@
 import { createElement, Fragment, FunctionComponent, ReactNode } from 'react'
 import { Button } from './button'
 
-export type Props = {
+export type ButtonGroupProps = {
   children: {
     selected?: boolean
     disabled?: boolean
@@ -11,7 +11,7 @@ export type Props = {
   }[]
 }
 
-export const ButtonGroup: FunctionComponent<Props> = (props) => {
+export const ButtonGroup: FunctionComponent<ButtonGroupProps> = (props) => {
   return createElement(
     Fragment,
     {},
@@ -31,3 +31,5 @@ export const ButtonGroup: FunctionComponent<Props> = (props) => {
     )
   )
 }
+
+export default ButtonGroup

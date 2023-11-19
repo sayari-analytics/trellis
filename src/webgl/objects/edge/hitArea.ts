@@ -1,6 +1,6 @@
-import { RenderObject, Interactions } from '@/types'
+import { RenderObject, Interactions } from './../../../types'
 import { Container, Polygon } from 'pixi.js'
-import { HALF_PI, movePoint } from '@/utils'
+import { HALF_PI, movePoint } from './../../../utils'
 
 const MIN_LINE_HOVER_RADIUS = 2
 

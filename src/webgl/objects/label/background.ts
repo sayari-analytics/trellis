@@ -1,7 +1,7 @@
-import type { Bounds, LabelBackgroundStyle, RenderObject } from '@/types'
+import type { Bounds, LabelBackgroundStyle, RenderObject } from './../../../types'
 import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.js'
-import { equals } from '@/utils'
-import utils, { STYLE_DEFAULTS } from '@/utils/label'
+import { equals } from './../../../utils'
+import utils, { STYLE_DEFAULTS } from './../../../utils/label'
 
 export class LabelBackground implements RenderObject {
   mounted = false

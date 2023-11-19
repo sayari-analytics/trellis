@@ -1,6 +1,6 @@
 import { Container, Sprite } from 'pixi.js'
-import { ArrowTexture } from '@/webgl/textures'
-import { RenderObject } from '@/types'
+import { ArrowTexture } from './../../textures'
+import { RenderObject } from './../../../types'
 
 export class Arrow implements RenderObject {
   mounted = false

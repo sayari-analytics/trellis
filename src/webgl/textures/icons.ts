@@ -1,10 +1,10 @@
-import { Text, Matrix, Assets, RenderTexture, Renderer as PixiRenderer, Texture as PixiTexture, MSAA_QUALITY } from 'pixi.js'
-import type { TextIcon, ImageIcon } from '@/types'
+import { Text, Matrix, Assets, RenderTexture, Renderer as PixiRenderer, Texture, MSAA_QUALITY } from 'pixi.js'
+import type { TextIcon, ImageIcon } from './../../types'
 import type { Renderer } from '..'
-import { MIN_ZOOM } from '@/utils'
+import { MIN_ZOOM } from './../../utils'
 
-export class IconTexture<Texture extends PixiTexture = PixiTexture> {
-  protected cache: { [key: string]: Texture } = {}
+export class IconTexture<T extends Texture = Texture> {
+  protected cache: { [key: string]: T } = {}
 
   delete() {
     for (const key in this.cache) {
@@ -73,13 +73,13 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
 }
 
 export class ImageIconTexture extends IconTexture {
-  private loading: { [key: string]: Promise<PixiTexture> } = {}
+  private loading: { [key: string]: Promise<Texture> } = {}
 
   async create({ url }: ImageIcon) {
     if (this.cache[url] === undefined) {
       try {
         if (!this.loading[url]) {
-          this.loading[url] = Assets.load<PixiTexture>(url)
+          this.loading[url] = Assets.load<Texture>(url)
         }
         this.cache[url] = await this.loading[url]
       } catch (error) {

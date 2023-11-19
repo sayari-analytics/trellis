@@ -1,4 +1,4 @@
-export type Options = Partial<{
+export type ZoomOptions = Partial<{
   className: string
   top: number
   left: number
@@ -35,59 +35,59 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-export const clampZoom = (min: number, max: number, zoom: number) => Math.max(min, Math.min(max, zoom))
-
 /**
  * TODO
  * - disable on min/max zoom
  * - tooltips
  */
-export const Control = ({ container }: { container: HTMLDivElement }) => {
-  const controlContainer = document.createElement('div')
-  controlContainer.style.position = 'absolute'
-  controlContainer.style.display = 'none'
+export const Zoom = {
+  Control: ({ container }: { container: HTMLDivElement }) => {
+    const controlContainer = document.createElement('div')
+    controlContainer.style.position = 'absolute'
+    controlContainer.style.display = 'none'
 
-  const zoomIn = styleButton(document.createElement('button'))
-  zoomIn.setAttribute('aria-label', 'Zoom in')
-  zoomIn.setAttribute('title', 'Zoom in')
-  zoomIn.textContent = '＋'
-  zoomIn.style.borderTopLeftRadius = '4px'
-  zoomIn.style.borderTopRightRadius = '4px'
-  controlContainer.appendChild(zoomIn)
+    const zoomIn = styleButton(document.createElement('button'))
+    zoomIn.setAttribute('aria-label', 'Zoom in')
+    zoomIn.setAttribute('title', 'Zoom in')
+    zoomIn.textContent = '＋'
+    zoomIn.style.borderTopLeftRadius = '4px'
+    zoomIn.style.borderTopRightRadius = '4px'
+    controlContainer.appendChild(zoomIn)
 
-  const zoomOut = styleButton(document.createElement('button'))
-  zoomOut.setAttribute('aria-label', 'Zoom out')
-  zoomOut.setAttribute('title', 'Zoom out')
-  zoomOut.style.borderTop = 'none'
-  zoomOut.style.borderBottomLeftRadius = '4px'
-  zoomOut.style.borderBottomRightRadius = '4px'
-  zoomOut.textContent = '－'
-  controlContainer.appendChild(zoomOut)
+    const zoomOut = styleButton(document.createElement('button'))
+    zoomOut.setAttribute('aria-label', 'Zoom out')
+    zoomOut.setAttribute('title', 'Zoom out')
+    zoomOut.style.borderTop = 'none'
+    zoomOut.style.borderBottomLeftRadius = '4px'
+    zoomOut.style.borderBottomRightRadius = '4px'
+    zoomOut.textContent = '－'
+    controlContainer.appendChild(zoomOut)
 
-  container.style.position = 'relative'
-  container.appendChild(controlContainer)
+    container.style.position = 'relative'
+    container.appendChild(controlContainer)
 
-  return (options: Options) => {
-    controlContainer.style.display = 'block'
-    controlContainer.className = options.className ?? 'zoom-container'
+    return (options: ZoomOptions) => {
+      controlContainer.style.display = 'block'
+      controlContainer.className = options.className ?? 'zoom-container'
 
-    if (options.top !== undefined) {
-      controlContainer.style.top = `${options.top}px`
-    } else if (options.bottom !== undefined) {
-      controlContainer.style.bottom = `${options.bottom}px`
-    } else {
-      controlContainer.style.top = DEFAULT_TOP
+      if (options.top !== undefined) {
+        controlContainer.style.top = `${options.top}px`
+      } else if (options.bottom !== undefined) {
+        controlContainer.style.bottom = `${options.bottom}px`
+      } else {
+        controlContainer.style.top = DEFAULT_TOP
+      }
+
+      if (options.left !== undefined) {
+        controlContainer.style.left = `${options.left}px`
+      } else if (options.right !== undefined) {
+        controlContainer.style.right = `${options.right}px`
+      } else {
+        controlContainer.style.left = DEFAULT_LEFT
+      }
+
+      zoomIn.onpointerdown = options.onZoomIn ?? null
+      zoomOut.onpointerdown = options.onZoomOut ?? null
     }
-
-    if (options.left !== undefined) {
-      controlContainer.style.left = `${options.left}px`
-    } else if (options.right !== undefined) {
-      controlContainer.style.right = `${options.right}px`
-    } else {
-      controlContainer.style.left = DEFAULT_LEFT
-    }
-
-    zoomIn.onpointerdown = options.onZoomIn ?? null
-    zoomOut.onpointerdown = options.onZoomOut ?? null
   }
 }

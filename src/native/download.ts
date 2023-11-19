@@ -1,4 +1,4 @@
-export type Options = {
+export type DownloadOptions = {
   className?: string
   top?: number
   left?: number
@@ -35,57 +35,61 @@ const styleButton = (button: HTMLButtonElement) => {
   return button
 }
 
-export const Control = ({ container }: { container: HTMLDivElement }) => {
-  const controlContainer = document.createElement('div')
-  controlContainer.style.position = 'absolute'
-  controlContainer.style.display = 'none'
+export const Download = {
+  Control: ({ container }: { container: HTMLDivElement }) => {
+    const controlContainer = document.createElement('div')
+    controlContainer.style.position = 'absolute'
+    controlContainer.style.display = 'none'
 
-  const download = styleButton(document.createElement('button'))
-  download.textContent = 'd'
-  download.setAttribute('aria-label', 'Download')
-  download.setAttribute('title', 'Download')
-  download.onmouseenter = () => (download.style.background = DEFAULT_BG_HOVER)
-  download.onmouseleave = () => (download.style.background = DEFAULT_BG)
-  download.onfocus = () => (download.style.boxShadow = '0px 0px 0px 1px #aaa inset')
-  download.onblur = () => (download.style.boxShadow = 'none')
-  download.onpointerdown = () => {
-    download.style.background = DEFAULT_BG
-    download.style.color = DEFAULT_COLOR
-  }
-  controlContainer.appendChild(download)
-
-  container.style.position = 'relative'
-  container.appendChild(controlContainer)
-
-  return (options: Options) => {
-    controlContainer.style.display = 'block'
-    controlContainer.className = options.className ?? 'download-container'
-
-    if (options.top !== undefined) {
-      controlContainer.style.top = `${options.top}px`
-    } else if (options.bottom !== undefined) {
-      controlContainer.style.bottom = `${options.bottom}px`
-    } else {
-      controlContainer.style.top = DEFAULT_TOP
+    const download = styleButton(document.createElement('button'))
+    download.textContent = 'd'
+    download.setAttribute('aria-label', 'Download')
+    download.setAttribute('title', 'Download')
+    download.onmouseenter = () => (download.style.background = DEFAULT_BG_HOVER)
+    download.onmouseleave = () => (download.style.background = DEFAULT_BG)
+    download.onfocus = () => (download.style.boxShadow = '0px 0px 0px 1px #aaa inset')
+    download.onblur = () => (download.style.boxShadow = 'none')
+    download.onpointerdown = () => {
+      download.style.background = DEFAULT_BG
+      download.style.color = DEFAULT_COLOR
     }
+    controlContainer.appendChild(download)
 
-    if (options.left !== undefined) {
-      controlContainer.style.left = `${options.left}px`
-    } else if (options.right !== undefined) {
-      controlContainer.style.right = `${options.right}px`
-    } else {
-      controlContainer.style.left = DEFAULT_LEFT
-    }
+    container.style.position = 'relative'
+    container.appendChild(controlContainer)
 
-    download.onclick = () => {
-      options.onClick?.()?.then((url: string) => {
-        const link = document.createElement('a')
-        link.setAttribute('download', options.fileName ?? 'download')
-        link.href = url
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      })
+    return (options: DownloadOptions) => {
+      controlContainer.style.display = 'block'
+      controlContainer.className = options.className ?? 'download-container'
+
+      if (options.top !== undefined) {
+        controlContainer.style.top = `${options.top}px`
+      } else if (options.bottom !== undefined) {
+        controlContainer.style.bottom = `${options.bottom}px`
+      } else {
+        controlContainer.style.top = DEFAULT_TOP
+      }
+
+      if (options.left !== undefined) {
+        controlContainer.style.left = `${options.left}px`
+      } else if (options.right !== undefined) {
+        controlContainer.style.right = `${options.right}px`
+      } else {
+        controlContainer.style.left = DEFAULT_LEFT
+      }
+
+      download.onclick = () => {
+        options.onClick?.()?.then((url: string) => {
+          const link = document.createElement('a')
+          link.setAttribute('download', options.fileName ?? 'download')
+          link.href = url
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        })
+      }
     }
   }
 }
+
+export default Download

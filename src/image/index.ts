@@ -1,5 +1,5 @@
-import { Renderer } from '@/webgl'
-import { Node, Edge, Annotation } from '@/types'
+import { Renderer } from './../webgl'
+import { Node, Edge, Annotation } from './../types'
 
 export type ImageOptions = {
   width: number

@@ -1,5 +1,5 @@
 import { BitmapFont, TextStyle } from 'pixi.js'
-import { MIN_ZOOM, throttle } from '@/utils'
+import { MIN_ZOOM, throttle } from './../../utils'
 import FontFaceObserver from 'fontfaceobserver'
 
 const warn = throttle((err) => console.warn(err), 0)

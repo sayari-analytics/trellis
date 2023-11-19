@@ -1,5 +1,5 @@
 import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
-import type { LabelStyle, LabelBackgroundStyle, LabelPosition, TextAlign, Bounds } from '@/types'
+import type { LabelStyle, LabelBackgroundStyle, LabelPosition, TextAlign, Bounds } from './../types'
 
 type _StyleDefaults = 'fontSize' | 'position' | 'fontFamily' | 'fontName' | 'margin'
 export type StyleWithDefaults = Omit<LabelStyle, _StyleDefaults> & {

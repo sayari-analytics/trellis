@@ -1,6 +1,6 @@
 import { createElement, FunctionComponent, useCallback, useState } from 'react'
 
-export type Props = {
+export type ButtonProps = {
   selected?: boolean
   disabled?: boolean
   group?: 'top' | 'middle' | 'bottom'
@@ -111,7 +111,7 @@ const buttonStyle = (disabled?: boolean, selected?: boolean, hover?: boolean, fo
     : _STYLE
 }
 
-export const Button: FunctionComponent<Props> = (props) => {
+export const Button: FunctionComponent<ButtonProps> = (props) => {
   const [hover, setHover] = useState(false)
   const [focus, setFocus] = useState(false)
 
@@ -135,3 +135,5 @@ export const Button: FunctionComponent<Props> = (props) => {
     props.children
   )
 }
+
+export default Button

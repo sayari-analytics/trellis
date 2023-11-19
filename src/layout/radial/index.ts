@@ -1,5 +1,5 @@
 import Hierarchy from '../hierarchy'
-import { Node, Edge } from '@/types'
+import { Node, Edge } from './../../types'
 
 export type RadialOptions = Partial<{
   x: number

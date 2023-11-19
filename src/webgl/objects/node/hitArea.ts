@@ -1,4 +1,4 @@
-import type { RenderObject, Interactions } from '@/types'
+import type { RenderObject, Interactions } from './../../../types'
 import { Circle, Container } from 'pixi.js'
 
 export class NodeHitArea implements RenderObject {

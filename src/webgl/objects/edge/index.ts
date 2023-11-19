@@ -1,10 +1,10 @@
-import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, angle, movePoint } from '@/utils'
+import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, angle, movePoint } from './../../../utils'
 import { NodeRenderer } from '../node'
 import { type Renderer } from '../..'
 import { FederatedPointerEvent } from 'pixi.js'
 import { LineSegment } from './lineSegment'
 import { EdgeHitArea } from './hitArea'
-import { Edge } from '@/types'
+import { Edge } from './../../../types'
 import { Arrow } from './arrow'
 
 const DEFAULT_EDGE_WIDTH = 1

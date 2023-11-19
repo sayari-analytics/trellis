@@ -1,5 +1,5 @@
 import { forceCollide, forceSimulation, SimulationNodeDatum } from 'd3-force'
-import { Node, Edge } from '@/types'
+import { Node, Edge } from './../../types'
 
 export type CollideOptions = Partial<{ nodePadding: number; tick: number }>
 

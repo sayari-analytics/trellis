@@ -1,9 +1,9 @@
-import utils, { STYLE_DEFAULTS, StyleWithDefaults } from '@/utils/label'
-import type { Bounds, Stroke, TextAlign, FontWeight, LabelStyle, LabelPosition, LabelBackgroundStyle, RenderObject } from '@/types'
+import { Bounds, Stroke, TextAlign, FontWeight, LabelStyle, LabelPosition, LabelBackgroundStyle, RenderObject } from './../../../types'
+import utils, { STYLE_DEFAULTS, StyleWithDefaults } from './../../../utils/label'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
-import { FontBook } from '@/webgl/textures'
-import { equals } from '@/utils'
+import { FontBook } from './../../textures'
+import { equals } from './../../../utils'
 
 /**
  * TODO

@@ -1,5 +1,5 @@
 import { pack, hierarchy } from 'd3-hierarchy'
-import { Node } from '@/types'
+import { Node } from './../../types'
 
 export const Cluster = {
   Layout: () => {

@@ -1,4 +1,4 @@
-import { RenderObject } from '@/types'
+import { RenderObject } from './../../types'
 
 export class ObjectManager<Object extends RenderObject = RenderObject> {
   private batchSize: number

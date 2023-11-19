@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture } from 'pixi.js'
-import { angle, distance, HALF_PI } from '@/utils'
-import { RenderObject } from '@/types'
+import { angle, distance, HALF_PI } from './../../../utils'
+import { RenderObject } from './../../../types'
 
 export class LineSegment implements RenderObject {
   mounted = false

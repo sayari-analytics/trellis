@@ -1,4 +1,4 @@
-import type { Node } from '@/types'
+import type { Node } from './../types'
 import { TWO_PI } from './constants'
 
 export const logUnknownEdgeError = (source: Node | undefined, target: Node | undefined) => {

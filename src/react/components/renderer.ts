@@ -1,8 +1,8 @@
 import { createElement, useRef, useEffect } from 'react'
-import { Renderer as WebGLRenderer, Options } from '@/webgl'
-import { Node, Edge, Annotation } from '@/types'
+import { Renderer as WebGLRenderer, Options } from './../../webgl'
+import { Node, Edge, Annotation } from './../../types'
 
-export type Props<N extends Node = Node, E extends Edge = Edge> = Options & {
+export type RendererProps<N extends Node = Node, E extends Edge = Edge> = Options & {
   nodes: N[]
   edges: E[]
   annotations?: Annotation[]
@@ -12,7 +12,7 @@ export type Props<N extends Node = Node, E extends Edge = Edge> = Options & {
 // const defaultNodesEqual = <N extends Node>(prev: N[], current: N[]) => prev === current
 // const defaultEdgesEqual = <E extends Edge>(prev: E[], current: E[]) => prev === current
 
-export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
+export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: RendererProps<N, E>) => {
   const ref = useRef<HTMLDivElement>(null)
   const renderer = useRef<WebGLRenderer>()
 
@@ -39,3 +39,5 @@ export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Pr
 
   return createElement('div', { ref: ref })
 }
+
+export default Renderer
