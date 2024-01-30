@@ -1,5 +1,8 @@
 import { interpolateBasis, interpolateNumber } from 'd3-interpolate'
 
+export const isNumber = (value: unknown): value is number => typeof value === 'number'
+export const isString = (value: unknown): value is string => typeof value === 'string'
+
 export const noop = () => {}
 
 export const throttle = <T extends unknown[]>(cb: (...args: T) => void, duration: number) => {
