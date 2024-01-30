@@ -1,4 +1,4 @@
-import { Renderer } from '..'
+import { Renderer } from '../..'
 
 /**
  * deceleration logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)

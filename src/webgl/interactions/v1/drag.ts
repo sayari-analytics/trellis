@@ -1,5 +1,5 @@
 import { FederatedPointerEvent } from 'pixi.js'
-import { Renderer } from '..'
+import { Renderer } from '../..'
 
 /**
  * drag logic is based largely on the excellent [pixi-viewport](https://github.com/davidfig/pixi-viewport)

@@ -73,6 +73,11 @@ export interface Options {
    * @default { height: 12, width: 6 }
    */
   arrowSize?: { height: number; width: number }
+  /**
+   * minimum hover radius for interactive strokes
+   * @default 2
+   */
+  minLineHoverRadius?: number
 }
 
 export interface DefaultOptions extends Concrete<Options> {

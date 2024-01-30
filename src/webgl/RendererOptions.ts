@@ -19,17 +19,18 @@ export default class RendererOptions implements DefaultOptions {
   dragInertia: number = DEFAULT_OPTIONS.dragInertia
   maxRadius: number = DEFAULT_OPTIONS.maxRadius
   arrowSize: Dimensions = DEFAULT_OPTIONS.arrowSize
+  minLineHoverRadius: number = DEFAULT_OPTIONS.minLineHoverRadius
 
   constructor(defaultOptions: DefaultOptions) {
     this._defaultOptions = defaultOptions
     this.set({})
   }
 
-  set({ animateViewport = true, animateNodeRadius = true, animateNodePosition = true, ...options }: Options): this {
+  set(options: Options): this {
     Object.assign(this, options, this._defaultOptions, {
-      animateViewport: this.coerceAnimationValue('animateViewport', animateViewport),
-      animateNodeRadius: this.coerceAnimationValue('animateNodeRadius', animateNodeRadius),
-      animateNodePosition: this.coerceAnimationValue('animateNodePosition', animateNodePosition)
+      animateViewport: this.coerceAnimationValue('animateViewport', options.animateViewport),
+      animateNodeRadius: this.coerceAnimationValue('animateNodeRadius', options.animateNodeRadius),
+      animateNodePosition: this.coerceAnimationValue('animateNodePosition', options.animateNodePosition)
     })
 
     return this
@@ -37,7 +38,7 @@ export default class RendererOptions implements DefaultOptions {
 
   private coerceAnimationValue(
     key: 'animateViewport' | 'animateNodePosition' | 'animateNodeRadius',
-    value: number | boolean
+    value: number | boolean | undefined = true
   ): number | false {
     return value === false || isNumber(value)
       ? value
