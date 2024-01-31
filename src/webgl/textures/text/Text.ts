@@ -1,6 +1,6 @@
 import { Bounds, Stroke, FontWeight, TextStyle, TextHighlightStyle, TextAlign } from '../../../types/api'
 import { BitmapText, Container, Text as PixiText } from 'pixi.js'
-import { isNumber } from 'src/utils'
+import { isNumber } from '../../../utils'
 import TextStyleTexture from './TextStyleTexture'
 import TextHighlight from './TextHighlight'
 import RenderObject from '../../RenderObject'

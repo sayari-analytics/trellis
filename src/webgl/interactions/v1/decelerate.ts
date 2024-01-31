@@ -81,7 +81,7 @@ export class Decelerate {
     if (x || y) {
       this.decelerating = true
       this.renderer.onViewportDrag({
-        type: 'viewportDragDecelarate',
+        type: 'viewportDragDecelerate',
         dx: x ?? 0,
         dy: y ?? 0
       })

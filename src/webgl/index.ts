@@ -1,83 +1,27 @@
 import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
-import { ArrowTexture, CircleTexture, FontBook, TextIconTexture, ImageIconTexture } from './textures'
+import { ArrowTexture, CircleTexture, TextIconTexture, ImageIconTexture } from './textures'
 import { NodeRenderer, EdgeRenderer, ObjectManager } from './objects'
 import { interpolate, logUnknownEdgeError } from '../utils'
-import { Viewport, Node, Edge, Annotation } from '../types'
+import {
+  Node,
+  Edge,
+  Annotation,
+  EdgePointerEvent,
+  NodeDragEvent,
+  NodePointerEvent,
+  Options,
+  EventHandlers,
+  ViewportDragDecelerateEvent,
+  ViewportDragEvent,
+  ViewportPointerEvent,
+  ViewportWheelEvent,
+  Dimensions,
+  Viewport
+} from '../types'
 import { Zoom, Drag, Decelerate } from './interactions'
 import { Grid } from './grid'
+import FontBook from './textures/text/FontBook'
 import Stats from 'stats.js'
-
-export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
-export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
-export type Position = 'nw' | 'ne' | 'se' | 'sw'
-export type NodePointerEvent = { type: 'nodePointer'; target: Node; targetIdx: number } & MousePosition & Keys
-export type NodeDragEvent = { type: 'nodeDrag'; dx: number; dy: number; target: Node; targetIdx: number } & MousePosition & Keys
-export type EdgePointerEvent = { type: 'edgePointer'; target: Edge; targetIdx: number } & MousePosition & Keys
-export type AnnotationPointerEvent = {
-  type: 'annotationPointer'
-  position?: Position
-  target: Annotation
-  targetIdx: number
-} & MousePosition &
-  Keys
-export type AnnotationDragEvent = {
-  type: 'annotationDrag'
-  dx: number
-  dy: number
-  target: Annotation
-  targetIdx: number
-} & MousePosition &
-  Keys
-export type AnnotationResizeEvent = {
-  type: 'annotationResize'
-  position: Position
-  target: Annotation
-  targetIdx: number
-} & MousePosition &
-  Keys
-export type ViewportPointerEvent = { type: 'viewportPointer'; target: Viewport } & MousePosition & Keys
-export type ViewportDragEvent = { type: 'viewportDrag'; dx: number; dy: number } & MousePosition & Keys
-export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate'; dx: number; dy: number } & Keys
-export type ViewportWheelEvent = { type: 'viewportWheel'; dx: number; dy: number; dz: number } & MousePosition & Keys
-export type Options = {
-  width: number
-  height: number
-  x?: number
-  y?: number
-  zoom?: number
-  minZoom?: number
-  maxZoom?: number
-  animateViewport?: number | boolean
-  animateNodePosition?: number | boolean
-  animateNodeRadius?: number | boolean
-  dragInertia?: number
-  onViewportPointerEnter?: (event: ViewportPointerEvent) => void
-  onViewportPointerDown?: (event: ViewportPointerEvent) => void
-  onViewportPointerMove?: (event: ViewportPointerEvent) => void
-  onViewportDragStart?: (event: ViewportDragEvent) => void
-  onViewportDrag?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
-  onViewportDragEnd?: (event: ViewportDragEvent | ViewportDragDecelerateEvent) => void
-  onViewportPointerUp?: (event: ViewportPointerEvent) => void
-  onViewportClick?: (event: ViewportPointerEvent) => void
-  onViewportDoubleClick?: (event: ViewportPointerEvent) => void
-  onViewportPointerLeave?: (event: ViewportPointerEvent) => void
-  onViewportWheel?: (event: ViewportWheelEvent) => void
-  onNodePointerEnter?: (event: NodePointerEvent) => void
-  onNodePointerDown?: (event: NodePointerEvent) => void
-  onNodeDragStart?: (event: NodeDragEvent) => void
-  onNodeDrag?: (event: NodeDragEvent) => void
-  onNodeDragEnd?: (event: NodeDragEvent) => void
-  onNodePointerUp?: (event: NodePointerEvent) => void
-  onNodeClick?: (event: NodePointerEvent) => void
-  onNodeDoubleClick?: (event: NodePointerEvent) => void
-  onNodePointerLeave?: (event: NodePointerEvent) => void
-  onEdgePointerEnter?: (event: EdgePointerEvent) => void
-  onEdgePointerDown?: (event: EdgePointerEvent) => void
-  onEdgePointerUp?: (event: EdgePointerEvent) => void
-  onEdgePointerLeave?: (event: EdgePointerEvent) => void
-  onEdgeClick?: (event: EdgePointerEvent) => void
-  onEdgeDoubleClick?: (event: EdgePointerEvent) => void
-}
 
 export const defaultOptions = {
   x: 0,
@@ -90,6 +34,7 @@ export const defaultOptions = {
   animateNodeRadius: 800,
   dragInertia: 0.88
 }
+export type OptionsV1 = Options & EventHandlers & Dimensions & Partial<Viewport>
 
 export class Renderer {
   width: number
@@ -254,7 +199,7 @@ export class Renderer {
     }
   }
 
-  update({ nodes, edges, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
+  update({ nodes, edges, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: OptionsV1 }) {
     this.animateViewport =
       options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
     this.animateNodePosition =

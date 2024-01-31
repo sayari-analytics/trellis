@@ -2,11 +2,11 @@ import { interpolate, MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM
 import { FederatedPointerEvent } from 'pixi.js'
 import { type Renderer } from '../..'
 import { Node } from './../../../types'
-import { Label } from '../label'
 import { NodeStrokes } from './strokes'
 import { NodeFill } from './fill'
 import { Icon } from './icon'
 import { NodeHitArea } from './hitArea'
+import Text from '../../textures/text/Text'
 
 export class NodeRenderer {
   x = 0
@@ -14,7 +14,7 @@ export class NodeRenderer {
   radius = 0
   node!: Node
   fill: NodeFill
-  label?: Label
+  label?: Text
   icon?: Icon
   strokes: NodeStrokes
 
@@ -59,11 +59,14 @@ export class NodeRenderer {
       }
     } else if (this.label === undefined) {
       this.labelLoading = true
-      Label.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
-        this.label = label
-        this.labelLoading = false
-        this.label?.moveTo(this.x, this.y, this.strokes.radius)
-        this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+      Text.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
+        if (label) {
+          this.label = label
+          this.labelLoading = false
+          this.label.offset = this.strokes.radius
+          this.label.moveTo(this.x, this.y)
+          this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+        }
       })
     } else {
       this.label.update(nodeLabel, labelStyle)
@@ -145,6 +148,9 @@ export class NodeRenderer {
 
     if (_radius !== undefined) {
       this.setRadius(_radius)
+      if (!this.interpolateX && !this.interpolateY && this.label) {
+        this.label.moveTo(this.x, this.y)
+      }
     }
 
     if (this.interpolateX) {
@@ -225,7 +231,7 @@ export class NodeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.node!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -254,7 +260,7 @@ export class NodeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.node!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -290,7 +296,7 @@ export class NodeRenderer {
         dx: 0,
         dy: 0,
         target: this.node!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -309,7 +315,7 @@ export class NodeRenderer {
       dx: local.x - (this.node!.x ?? 0) - this.nodeMoveXOffset,
       dy: local.y - (this.node!.y ?? 0) - this.nodeMoveYOffset,
       target: this.node!,
-      targetIdx: 0, // TODO
+      targetIndex: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
@@ -341,7 +347,7 @@ export class NodeRenderer {
             dx: 0,
             dy: 0,
             target: this.node!,
-            targetIdx: 0, // TODO
+            targetIndex: 0, // TODO
             altKey: event.altKey,
             ctrlKey: event.ctrlKey,
             metaKey: event.metaKey,
@@ -363,7 +369,7 @@ export class NodeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.node!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -381,7 +387,7 @@ export class NodeRenderer {
           clientX: event.clientX,
           clientY: event.clientY,
           target: this.node!,
-          targetIdx: 0, // TODO
+          targetIndex: 0, // TODO
           altKey: event.altKey,
           ctrlKey: event.ctrlKey,
           metaKey: event.metaKey,
@@ -401,7 +407,7 @@ export class NodeRenderer {
             clientX: event.clientX,
             clientY: event.clientY,
             target: this.node!,
-            targetIdx: 0, // TODO
+            targetIndex: 0, // TODO
             altKey: event.altKey,
             ctrlKey: event.ctrlKey,
             metaKey: event.metaKey,
@@ -449,7 +455,7 @@ export class NodeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.node!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -466,6 +472,9 @@ export class NodeRenderer {
     this.fill.radius = radius
     this.strokes.radius = radius
     this.hitArea.radius = radius
+    if (this.label) {
+      this.label.offset = this.strokes.radius
+    }
   }
 
   private moveTo(x: number, y: number) {
@@ -475,7 +484,7 @@ export class NodeRenderer {
     this.fill.moveTo(this.x, this.y)
     this.strokes.moveTo(this.x, this.y)
     this.hitArea.moveTo(this.x, this.y)
-    this.label?.moveTo(this.x, this.y, this.strokes.radius)
+    this.label?.moveTo(this.x, this.y)
     this.icon?.moveTo(this.x, this.y)
   }
 

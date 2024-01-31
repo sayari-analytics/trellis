@@ -54,6 +54,7 @@ export class Drag {
             clientY: event.clientY,
             dx,
             dy,
+            target: this.viewport,
             altKey: event.altKey,
             ctrlKey: event.ctrlKey,
             metaKey: event.metaKey,
@@ -69,6 +70,7 @@ export class Drag {
           clientY: event.clientY,
           dx,
           dy,
+          target: this.viewport,
           altKey: event.altKey,
           ctrlKey: event.ctrlKey,
           metaKey: event.metaKey,
@@ -96,6 +98,7 @@ export class Drag {
         clientY: event.clientY,
         dx: 0,
         dy: 0,
+        target: this.viewport,
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -113,5 +116,13 @@ export class Drag {
 
   resume() {
     this.paused = false
+  }
+
+  private get viewport() {
+    return {
+      x: this.renderer.x,
+      y: this.renderer.y,
+      zoom: this.renderer.zoom
+    }
   }
 }
