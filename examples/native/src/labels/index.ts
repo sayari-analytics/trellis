@@ -67,11 +67,14 @@ const data = [
 
 const collide = Graph.Collide.Layout()
 
-const edges: Graph.Edge[] = []
+const edges: Graph.Edge[] = [
+  { id: '0::1', source: '0', target: '1', label: 'EDGE LABEL 0 --> 1!', style: { stroke: { color: DARK_GREEN, width: 1 } } }
+]
+
 let nodes = data.map<Graph.Node>((label, index) => ({
   radius: 10,
   label: `${label}${index % 2 === 0 ? ' 北京' : ''}`,
-  id: `${index}-${label}`,
+  id: `${index}`,
   style: NODE_STYLE
 }))
 
