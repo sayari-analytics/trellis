@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture, RenderTexture } from 'pixi.js'
 import { TextIconTexture, ImageIconTexture } from './../../textures'
-import { NodeIcon, RenderObject } from './../../../types'
+import { IconStyle, RenderObject } from './../../../types'
 import { NodeFill } from './fill'
 import { equals } from './../../../utils'
 
@@ -14,10 +14,10 @@ export class Icon implements RenderObject {
   private textIconTexture: TextIconTexture
   private imageIconTexture: ImageIconTexture
   private nodeFill: NodeFill
-  private style: NodeIcon
+  private style: IconStyle
   private icon: Sprite
 
-  private static async createTexture(style: NodeIcon, imageIconTexture: ImageIconTexture, textIconTexture: TextIconTexture) {
+  private static async createTexture(style: IconStyle, imageIconTexture: ImageIconTexture, textIconTexture: TextIconTexture) {
     if (style.type === 'imageIcon') {
       return await imageIconTexture.create(style)
     } else {
@@ -30,7 +30,7 @@ export class Icon implements RenderObject {
     textIconTexture: TextIconTexture,
     imageIconTexture: ImageIconTexture,
     nodeFill: NodeFill,
-    style: NodeIcon
+    style: IconStyle
   ) {
     const texture = await Icon.createTexture(style, imageIconTexture, textIconTexture)
 
@@ -45,7 +45,7 @@ export class Icon implements RenderObject {
     textIconTexture: TextIconTexture,
     imageIconTexture: ImageIconTexture,
     nodeFill: NodeFill,
-    style: NodeIcon
+    style: IconStyle
   ) {
     this.style = style
     this.texture = texture
@@ -56,7 +56,7 @@ export class Icon implements RenderObject {
     this.icon = this.create()
   }
 
-  async update(style: NodeIcon) {
+  async update(style: IconStyle) {
     if (!equals(this.style, style)) {
       const texture = await Icon.createTexture(style, this.imageIconTexture, this.textIconTexture)
 

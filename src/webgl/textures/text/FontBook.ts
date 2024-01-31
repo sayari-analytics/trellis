@@ -1,7 +1,7 @@
 import { BitmapFont, TextStyle } from 'pixi.js'
 import { throttle } from '../../../utils'
 import FontFaceObserver from 'fontfaceobserver'
-import RendererOptions from 'src/webgl/RendererOptions'
+// import RendererOptions from 'src/webgl/RendererOptions'
 
 const warn = throttle((err) => console.warn(err), 0)
 
@@ -31,9 +31,9 @@ export default class FontBook {
     return BitmapFont.available[fontName]
   }
 
-  constructor(private options: RendererOptions) {
-    this.options = options
-  }
+  // constructor(private options: RendererOptions) {
+  //   this.options = options
+  // }
 
   available(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal') {
     const family = fontFamily?.split(', ')[0]
@@ -92,9 +92,11 @@ export default class FontBook {
   }
 
   get resolution() {
-    return this.options.resolution
+    return 2
+    // return this.options.resolution
   }
   get scaleFactor() {
-    return this.options.minTextureZoom
+    return 3
+    // return this.options.minTextureZoom
   }
 }

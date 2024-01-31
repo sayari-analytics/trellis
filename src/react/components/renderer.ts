@@ -1,8 +1,8 @@
 import { createElement, useRef, useEffect } from 'react'
-import { Renderer as WebGLRenderer, Options } from './../../webgl'
+import { Renderer as WebGLRenderer, OptionsV1 } from './../../webgl'
 import { Node, Edge, Annotation } from './../../types'
 
-export type RendererProps<N extends Node = Node, E extends Edge = Edge> = Options & {
+export type RendererProps<N extends Node = Node, E extends Edge = Edge> = OptionsV1 & {
   nodes: N[]
   edges: E[]
   annotations?: Annotation[]

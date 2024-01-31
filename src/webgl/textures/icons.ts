@@ -25,8 +25,8 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
     this.scaleFactor = scaleFactor
   }
 
-  async create({ text, fontFamily, fontSize, fontWeight, color: fill }: TextIcon) {
-    const key = `${text}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
+  async create({ content, fontFamily, fontSize = 10, fontWeight, color: fill }: TextIcon) {
+    const key = `${content}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
 
     if (this.cache[key] === undefined) {
       let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
@@ -38,7 +38,7 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
         return null
       }
 
-      const textObject = new Text(text, {
+      const textObject = new Text(content, {
         fontFamily,
         fontSize: fontSize * this.scaleFactor,
         fontWeight,

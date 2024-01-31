@@ -130,9 +130,9 @@ export class EdgeRenderer {
     }
 
     if (isVisible) {
-      const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
-      const stroke = this.edge?.style?.stroke ?? DEFAULT_EDGE_COLOR
-      const strokeOpacity = this.edge?.style?.strokeOpacity ?? 1
+      const width = this.edge?.style?.stroke?.width ?? DEFAULT_EDGE_WIDTH
+      const stroke = this.edge?.style?.stroke?.color ?? DEFAULT_EDGE_COLOR
+      const strokeOpacity = this.edge?.style?.opacity ?? 1
 
       if (
         x0 !== this.x0 ||
@@ -219,7 +219,7 @@ export class EdgeRenderer {
       clientX: event.clientX,
       clientY: event.clientY,
       target: this.edge!,
-      targetIdx: 0, // TODO
+      targetIndex: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
@@ -250,7 +250,7 @@ export class EdgeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.edge!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -274,7 +274,7 @@ export class EdgeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.edge!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -291,7 +291,7 @@ export class EdgeRenderer {
         clientX: event.clientX,
         clientY: event.clientY,
         target: this.edge!,
-        targetIdx: 0, // TODO
+        targetIndex: 0, // TODO
         altKey: event.altKey,
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
@@ -311,7 +311,7 @@ export class EdgeRenderer {
           clientX: event.clientX,
           clientY: event.clientY,
           target: this.edge!,
-          targetIdx: 0, // TODO
+          targetIndex: 0, // TODO
           altKey: event.altKey,
           ctrlKey: event.ctrlKey,
           metaKey: event.metaKey,
@@ -338,7 +338,7 @@ export class EdgeRenderer {
       clientX: event.clientX,
       clientY: event.clientY,
       target: this.edge!,
-      targetIdx: 0, // TODO
+      targetIndex: 0, // TODO
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,

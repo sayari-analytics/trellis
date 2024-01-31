@@ -17,7 +17,7 @@ const TEXT_ICON: Graph.TextIcon = {
   fontWeight: '400',
   fontSize: 14,
   color: '#fff',
-  text: '!'
+  content: '!'
 }
 
 const NODE_STYLE: Graph.NodeStyle = {
@@ -25,10 +25,10 @@ const NODE_STYLE: Graph.NodeStyle = {
   icon: IMAGE_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
-    position: 'bottom',
+    anchor: 'bottom',
     fontName: 'NodeLabel',
     fontFamily: 'Roboto',
-    background: { color: GREEN_LIGHT },
+    highlight: { color: GREEN_LIGHT },
     margin: 4
   }
 }
@@ -41,10 +41,10 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
     { width: 2, color: DARK_GREEN }
   ],
   label: {
-    position: 'bottom',
+    anchor: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: 'Roboto',
-    background: { color: DARK_GREEN },
+    highlight: { color: DARK_GREEN },
     color: '#FFF',
     margin: 4
   }
@@ -83,7 +83,7 @@ const bounds = Graph.getSelectionBounds(nodes, 100)
 const viewport = Graph.boundsToViewport(bounds, size)
 const container = document.querySelector('#graph') as HTMLDivElement
 
-const options: Graph.Options = {
+const options: Graph.OptionsV1 = {
   ...viewport,
   ...size,
   minZoom: 0.025,
