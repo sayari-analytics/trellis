@@ -31,7 +31,7 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
     if (this.cache[key] === undefined) {
       let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
       if (!ready) {
-        ready = await this.renderer.fontBook.load(fontFamily, fontWeight)
+        ready = await this.renderer.fontBook.loadFontFamily(fontFamily, fontWeight)
       }
 
       if (!ready) {

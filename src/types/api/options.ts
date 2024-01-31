@@ -49,6 +49,11 @@ export interface Options {
    */
   maxRadius?: number
   /**
+   * the maximum font size
+   * @default 16
+   */
+  maxFontSize?: number
+  /**
    * disable viewport animation or apply a duration in milliseconds
    * @default 800
    */

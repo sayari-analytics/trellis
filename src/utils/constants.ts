@@ -77,7 +77,8 @@ export const DEFAULT_OPTIONS = {
   resolution: 2,
   arrowSize: { width: 6, height: 12 },
   defaultViewport: { x: 0, y: 0, zoom: 1 },
-  minLineHoverRadius: 2
+  minLineHoverRadius: 2,
+  maxFontSize: 16
 }
 
 export const DEFAULT_TEXT_STYLE = {

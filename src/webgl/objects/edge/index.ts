@@ -170,8 +170,8 @@ export class EdgeRenderer {
     }
 
     if (isVisible) {
-      const width = this.edge?.style?.stroke?.width ?? DEFAULT_EDGE_WIDTH
-      const stroke = this.edge?.style?.stroke?.color ?? DEFAULT_EDGE_COLOR
+      const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
+      const stroke = this.edge?.style?.color ?? DEFAULT_EDGE_COLOR
       const strokeOpacity = this.edge?.style?.opacity ?? 1
 
       if (

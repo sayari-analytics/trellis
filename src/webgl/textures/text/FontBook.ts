@@ -1,6 +1,7 @@
 import { BitmapFont, TextStyle } from 'pixi.js'
 import { throttle } from '../../../utils'
 import FontFaceObserver from 'fontfaceobserver'
+import { FontWeight } from 'src'
 // import RendererOptions from 'src/webgl/RendererOptions'
 
 const warn = throttle((err) => console.warn(err), 0)
@@ -22,10 +23,10 @@ const GENERIC_FONT_FAMILIES = new Set([
 
 export default class FontBook {
   chars = BitmapFont.ASCII
-  maxFontSize = 10
+  maxFontSize = 16
 
   private cache: { [family: string]: boolean } = {}
-  private loading: { [family: string]: Promise<void> } = {}
+  private observers: { [family: string]: FontFaceObserver } = {}
 
   static find(fontName: string): BitmapFont | undefined {
     return BitmapFont.available[fontName]
@@ -35,8 +36,8 @@ export default class FontBook {
   //   this.options = options
   // }
 
-  available(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal') {
-    const family = fontFamily?.split(', ')[0]
+  available(fontFamily: string, fontWeight: FontWeight) {
+    const family = fontFamily.split(', ')[0]
     return (
       family === undefined ||
       this.cache[family] === true ||
@@ -45,7 +46,7 @@ export default class FontBook {
     )
   }
 
-  async load(fontFamily: string | undefined, fontWeight: string | number | undefined = 'normal', timeout?: number) {
+  async loadFontFamily(fontFamily: string, fontWeight: FontWeight, timeout?: number) {
     if (fontFamily === undefined || this.available(fontFamily, fontWeight)) {
       return true
     }
@@ -53,13 +54,12 @@ export default class FontBook {
     const family = fontFamily.split(', ')[0]
 
     try {
-      if (!this.loading[family]) {
+      if (!this.observers[family]) {
         const weight = typeof fontWeight === 'string' && !isNaN(+fontWeight) ? +fontWeight : fontWeight
-        const font = new FontFaceObserver(family, { weight })
-        this.loading[family] = font.load(null, timeout)
+        this.observers[family] = new FontFaceObserver(family, { weight })
       }
 
-      await this.loading[family]
+      await this.observers[family].load(null, timeout)
       this.cache[family] = true
     } catch (error) {
       warn(error)
@@ -69,7 +69,7 @@ export default class FontBook {
     return this.cache[family]
   }
 
-  create(fontName: string, style: TextStyle) {
+  createBitmapFont(fontName: string, style: TextStyle) {
     const font = FontBook.find(fontName)
 
     if (font === undefined) {
@@ -85,7 +85,7 @@ export default class FontBook {
   delete(fontName?: string) {
     if (fontName === undefined) {
       this.cache = {}
-      this.loading = {}
+      this.observers = {}
     } else {
       FontBook.find(fontName)?.destroy()
     }

@@ -1,8 +1,7 @@
 import { TextStyle as PixiTextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
 import { Bounds, TextStyle, AnchorPosition, TextAlign, TextHighlightStyle } from '../../../types/api'
 import { DEFAULT_TEXT_STYLE } from '../../../utils/constants'
-import { equals, isNumber } from '../../../utils'
-import FontBook from './FontBook'
+import { isNumber } from '../../../utils'
 
 interface DefaultTextStyle extends Required<Omit<TextStyle, 'highlight'>> {
   highlight?: TextHighlightStyle
@@ -39,20 +38,22 @@ export default class TextStyleTexture {
     stroke: DEFAULT_TEXT_STYLE.STROKE
   }
 
-  fontBook: FontBook
   private _style: DefaultTextStyle = TextStyleTexture.defaultStyle
   private _textStyle: TextStyle | undefined
 
-  constructor(fontBook: FontBook, style: TextStyle | undefined) {
-    this.fontBook = fontBook
+  constructor(style: TextStyle | undefined) {
     this.style = style
+  }
+
+  compare(style: TextStyle | undefined) {
+    return this._textStyle !== style
   }
 
   get style(): DefaultTextStyle {
     return this._style
   }
 
-  private set style(style: TextStyle | undefined) {
+  set style(style: TextStyle | undefined) {
     this._textStyle = style
 
     const next = { ...TextStyleTexture.defaultStyle, ...(style ?? {}) }
@@ -60,31 +61,6 @@ export default class TextStyleTexture {
       ...next,
       align: style?.align ?? TextStyleTexture.textAlignFromAnchor(next.anchor)
     }
-  }
-
-  async update(style: TextStyle | undefined) {
-    const prevFamily = this.style.fontFamily
-    const prevWeight = this.style.fontWeight
-
-    this.style = style
-
-    if (this.style.fontFamily !== prevFamily || this.style.fontWeight !== prevWeight) {
-      await this.loadFont()
-    }
-
-    return this
-  }
-
-  compare(style: TextStyle | undefined) {
-    return equals(this._textStyle, style)
-  }
-
-  async loadFont(timeout = 10000) {
-    return this.fontBook.load(this.style.fontFamily, this.style.fontWeight, timeout)
-  }
-
-  createFont() {
-    return this.fontBook.create(this.style.fontName, this.getTextStyle())
   }
 
   getTextStyle(): PixiTextStyle {

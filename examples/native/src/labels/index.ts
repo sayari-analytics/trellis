@@ -28,8 +28,8 @@ const NODE_STYLE: Graph.NodeStyle = {
     anchor: 'bottom',
     fontName: 'NodeLabel',
     fontFamily: 'Roboto',
-    highlight: { color: GREEN_LIGHT },
-    margin: 4
+    margin: 4,
+    color: DARK_GREEN
   }
 }
 
@@ -44,8 +44,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
     anchor: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: 'Roboto',
-    highlight: { color: DARK_GREEN },
-    color: '#FFF',
+    color: GREEN_LIGHT,
     margin: 4
   }
 }
@@ -67,9 +66,7 @@ const data = [
 
 const collide = Graph.Collide.Layout()
 
-const edges: Graph.Edge[] = [
-  { id: '0::1', source: '0', target: '1', label: 'EDGE LABEL 0 --> 1!', style: { stroke: { color: DARK_GREEN, width: 1 } } }
-]
+const edges: Graph.Edge[] = [{ id: '0::1', source: '0', target: '1', label: 'EDGE LABEL 0 --> 1!', style: { color: DARK_GREEN, width: 1 } }]
 
 let nodes = data.map<Graph.Node>((label, index) => ({
   radius: 10,
@@ -89,7 +86,7 @@ const container = document.querySelector('#graph') as HTMLDivElement
 const options: Graph.OptionsV1 = {
   ...viewport,
   ...size,
-  minZoom: 0.025,
+  minZoom: 0.25,
   onViewportDrag: (event: Graph.ViewportDragEvent | Graph.ViewportDragDecelerateEvent) => {
     // console.log('viewport drag', `x: ${event.dx}, y: ${event.dy}`)
     options.x! += event.dx

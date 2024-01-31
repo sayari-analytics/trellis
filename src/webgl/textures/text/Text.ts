@@ -21,20 +21,22 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
   protected _bounds!: Bounds
 
   static async init(fontBook: FontBook, container: Container, text: string, style: TextStyle | undefined) {
-    const texture = new TextStyleTexture(fontBook, style)
-    const ready = await texture.loadFont()
+    const texture = new TextStyleTexture(style)
+    const ready = await fontBook.loadFontFamily(texture.style.fontFamily, texture.style.fontWeight, 5000)
 
     if (ready) {
-      return new Text(container, text, texture)
+      return new Text(fontBook, container, text, texture)
     }
   }
 
   private constructor(
+    protected fontBook: FontBook,
     container: Container,
     protected text: string,
     protected texture: TextStyleTexture
   ) {
     super(container)
+    this.fontBook = fontBook
     this.text = text
     this.texture = texture
     this.object = this.create()
@@ -48,7 +50,33 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     const textHasChanged = this.text !== text
     const styleHasChanged = !this.texture.compare(textStyle)
 
-    this.texture.update(textStyle)
+    if (styleHasChanged) {
+      const prevFontFamily = this.texture.style.fontFamily
+
+      this.texture.style = textStyle
+
+      const { fontFamily, fontWeight } = this.texture.style
+
+      if (prevFontFamily !== fontFamily) {
+        const ready = await this.fontBook.loadFontFamily(fontFamily, fontWeight, 5000)
+        if (!ready) {
+          this.texture.style.fontFamily = prevFontFamily
+        }
+      }
+
+      const style = this.texture.style
+
+      this.stroke = style.stroke
+      this.wordWrap = style.wordWrap
+      this.fontWeight = style.fontWeight
+      this.color = style.color
+      this.letterSpacing = style.letterSpacing
+      this.anchor = this.texture.anchorPoint()
+      this.align = style.align
+      this.fontSize = style.fontSize
+      this.fontFamily = style.fontFamily
+      this.fontName = style.fontName
+    }
 
     if (textHasChanged) {
       this.text = text
@@ -60,20 +88,6 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
       if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
         this.transformText()
       }
-    }
-
-    if (styleHasChanged) {
-      const style = this.texture.style
-      this.stroke = style.stroke
-      this.wordWrap = style.wordWrap
-      this.fontWeight = style.fontWeight
-      this.color = style.color
-      this.letterSpacing = style.letterSpacing
-      this.anchor = this.texture.anchorPoint()
-      this.align = style.align
-      this.fontSize = style.fontSize
-      this.fontFamily = style.fontFamily
-      this.fontName = style.fontName
     }
 
     if (this.dirty) {
@@ -151,13 +165,13 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     let text: PixiText | BitmapText
 
     if (TextStyleTexture.isASCII(this.text)) {
-      this.texture.createFont()
+      this.fontBook.createBitmapFont(this.texture.style.fontName, this.texture.getTextStyle())
       text = new BitmapText(this.text, this.texture.getBitmapStyle())
     } else {
       text = new PixiText(this.text, this.texture.getTextStyle())
     }
 
-    text.resolution = this.texture.fontBook.resolution
+    text.resolution = this.fontBook.resolution
     text.anchor.set(...this.texture.anchorPoint())
     return text
   }

@@ -138,7 +138,7 @@ export interface EdgeLabelStyle extends TextStyle {
   anchor?: Exclude<AnchorPosition, 'left' | 'right'>
 }
 
-export interface EdgeStyle {
+export interface EdgeStyle extends Partial<Stroke> {
   /**
    * @default 1
    */
@@ -148,7 +148,6 @@ export interface EdgeStyle {
    */
   arrow?: ArrowStyle
   label?: EdgeLabelStyle
-  stroke?: Stroke
 }
 
 export interface Edge {
