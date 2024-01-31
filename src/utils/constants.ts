@@ -79,3 +79,22 @@ export const DEFAULT_OPTIONS = {
   defaultViewport: { x: 0, y: 0, zoom: 1 },
   minLineHoverRadius: 2
 }
+
+export const DEFAULT_TEXT_STYLE = {
+  FONT_SIZE: 10,
+  LETTER_SPACING: 0.5,
+  MARGIN: 2,
+  OPACITY: 1,
+  PADDING: [4, 8] as [number, number],
+  STROKE: { color: '#FFF', width: 0 },
+  FONT_NAME: 'Text',
+  COLOR: '#000000',
+  ALIGN: 'center' as const,
+  ANCHOR: 'bottom' as const,
+  FONT_WEIGHT: 'normal' as const,
+  FONT_FAMILY: 'sans-serif',
+  LINE_HEIGHT: 13,
+  BASELINE: 'alphabetic' as const,
+  WORD_WRAP: false as const,
+  FONT_STYLE: 'normal' as const
+}

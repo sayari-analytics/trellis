@@ -53,7 +53,7 @@ export interface TextStyle {
   fontName?: string
   fontSize?: number
   margin?: number
-  wordWrap?: number
+  wordWrap?: number | false
   letterSpacing?: number
   fontFamily?: string
   fontWeight?: FontWeight
@@ -170,7 +170,7 @@ export interface TextAnnotationStyle extends AnnotationStyle {
   padding?: number | number[]
 }
 
-interface AnnotationType<Type extends string> {
+interface AnnotationBase<Type extends string> {
   type: Type
   id: string
   x: number
@@ -178,18 +178,18 @@ interface AnnotationType<Type extends string> {
   resize?: boolean
 }
 
-export interface CircleAnnotation extends AnnotationType<'circle'> {
+export interface CircleAnnotation extends AnnotationBase<'circle'> {
   radius: number
   style: AnnotationStyle
 }
 
-export interface RectangleAnnotation extends AnnotationType<'rectangle'> {
+export interface RectangleAnnotation extends AnnotationBase<'rectangle'> {
   height: number
   width: number
   style: AnnotationStyle
 }
 
-export interface TextAnnotation extends AnnotationType<'text'> {
+export interface TextAnnotation extends AnnotationBase<'text'> {
   content: string
   height: number
   width: number
