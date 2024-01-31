@@ -82,20 +82,7 @@ export class EdgeRenderer {
         this.labelMounted = false
       }
     } else if (this.label === undefined) {
-      Text.init(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label).then((label) => {
-        if (label) {
-          this.label = label
-          this.label.rotation = this.theta
-          this.label.moveTo(...this.center)
-          if (
-            this.renderer.zoom > MIN_LABEL_ZOOM &&
-            this.visible(Math.min(this.x0, this.x1), Math.min(this.y0, this.y1), Math.max(this.x0, this.x1), Math.max(this.y0, this.y1))
-          ) {
-            this.labelMounted = true
-            this.renderer.labelObjectManager.mount(this.label)
-          }
-        }
-      })
+      this.label = new Text(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
     } else {
       this.label.update(edge.label, edge.style?.label)
     }

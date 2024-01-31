@@ -1,4 +1,4 @@
-import { TextStyle as PixiTextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
+import { TextStyle as PixiTextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
 import { Bounds, TextStyle, AnchorPosition, TextAlign, TextHighlightStyle } from '../../../types/api'
 import { DEFAULT_TEXT_STYLE } from '../../../utils/constants'
 import { isNumber } from '../../../utils'
@@ -40,22 +40,27 @@ export default class TextStyleTexture {
 
   private _style: DefaultTextStyle = TextStyleTexture.defaultStyle
   private _textStyle: TextStyle | undefined
+  private _fontLoading = false
 
   constructor(style: TextStyle | undefined) {
-    this.style = style
+    this.update(style)
   }
 
   compare(style: TextStyle | undefined) {
     return this._textStyle !== style
   }
 
-  get style(): DefaultTextStyle {
+  get current(): DefaultTextStyle {
     return this._style
   }
 
-  set style(style: TextStyle | undefined) {
-    this._textStyle = style
+  get original(): TextStyle | undefined {
+    return this._textStyle
+  }
 
+  update(style: TextStyle | undefined) {
+    this._textStyle = style
+    this._fontLoading = false
     const next = { ...TextStyleTexture.defaultStyle, ...(style ?? {}) }
     this._style = {
       ...next,
@@ -63,9 +68,23 @@ export default class TextStyleTexture {
     }
   }
 
-  getTextStyle(): PixiTextStyle {
-    const { align, color: fill, fontFamily, fontSize, fontWeight, wordWrap, stroke, letterSpacing } = this.style
-    return new PixiTextStyle({
+  get fontLoading() {
+    return this._fontLoading
+  }
+
+  set fontLoading(loading: boolean) {
+    this._fontLoading = loading
+
+    if (loading) {
+      this._style.fontFamily = TextStyleTexture.defaultStyle.fontFamily
+    } else {
+      this._style.fontFamily = this._textStyle?.fontFamily ?? TextStyleTexture.defaultStyle.fontFamily
+    }
+  }
+
+  getTextStyle(): Partial<ITextStyle> {
+    const { align, color: fill, fontFamily, fontSize, fontWeight, wordWrap, stroke, letterSpacing } = this.current
+    return {
       fill,
       align,
       fontSize,
@@ -77,16 +96,16 @@ export default class TextStyleTexture {
       wordWrap: isNumber(wordWrap),
       wordWrapWidth: isNumber(wordWrap) ? wordWrap : undefined,
       lineHeight: fontSize * 1.3
-    })
+    }
   }
 
   getBitmapStyle(): Partial<IBitmapTextStyle> {
-    const { fontName, fontSize, align, letterSpacing } = this.style
+    const { fontName, fontSize, align, letterSpacing } = this.current
     return { fontName, fontSize, align, letterSpacing }
   }
 
   anchorPoint(): [x: number, y: number] {
-    switch (this.style.anchor) {
+    switch (this.current.anchor) {
       case 'bottom':
         return [0.5, 0]
       case 'left':
@@ -99,7 +118,7 @@ export default class TextStyleTexture {
   }
 
   textCoordinates(x: number, y: number, offset: number, isBitmapText: boolean) {
-    const shift = this.style.margin + offset
+    const shift = this.current.margin + offset
     const text = { x, y }
     const highlight = { x, y }
 
@@ -107,8 +126,8 @@ export default class TextStyleTexture {
     let right = 0
     let bottom = 0
     let left = 0
-    if (this.style.highlight !== undefined) {
-      const [t, r, b, l] = TextStyleTexture.highlightPadding(this.style.highlight.padding)
+    if (this.current.highlight !== undefined) {
+      const [t, r, b, l] = TextStyleTexture.highlightPadding(this.current.highlight.padding)
       top += t
       right += r
       bottom += b
@@ -116,10 +135,10 @@ export default class TextStyleTexture {
     }
 
     if (isBitmapText) {
-      text.y -= this.style.anchor === 'bottom' ? 1 : 2
+      text.y -= this.current.anchor === 'bottom' ? 1 : 2
     }
 
-    switch (this.style.anchor) {
+    switch (this.current.anchor) {
       case 'bottom':
         text.y += shift + top
         highlight.y += shift

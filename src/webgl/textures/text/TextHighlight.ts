@@ -3,7 +3,7 @@ import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.
 import { DEFAULT_TEXT_STYLE, equals } from '../../../utils'
 // import utils, { STYLE_DEFAULTS } from '../../../utils/text'
 import RenderObject from '../../RenderObject'
-import TextStyleTexture from './TextStyleTexture'
+import TextStyle from './TextStyleTexture'
 
 export default class TextHighlight extends RenderObject<Sprite> {
   static defaultStyle: Required<TextHighlightStyle> = {
@@ -125,19 +125,12 @@ export default class TextHighlight extends RenderObject<Sprite> {
   }
 
   private setBounds() {
-    this._bounds = TextStyleTexture.textBounds(
-      this.x,
-      this.y,
-      this.object.width,
-      this.object.height,
-      this.object.anchor.x,
-      this.object.anchor.y
-    )
+    this._bounds = TextStyle.textBounds(this.x, this.y, this.object.width, this.object.height, this.object.anchor.x, this.object.anchor.y)
     return this._bounds
   }
 
   private getSize() {
-    const [top, right, bottom, left] = TextStyleTexture.highlightPadding(this.style.padding)
+    const [top, right, bottom, left] = TextStyle.highlightPadding(this.style.padding)
     return [this._width + right + left, this._height + top + bottom]
   }
 

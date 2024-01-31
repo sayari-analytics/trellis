@@ -4,7 +4,7 @@ import { isNumber } from '../../../utils'
 import TextStyleTexture from './TextStyleTexture'
 import TextHighlight from './TextHighlight'
 import RenderObject from '../../RenderObject'
-import FontBook from './FontBook'
+import FontBook, { FontSubscription } from '../FontBook'
 
 /**
  * TODO
@@ -17,65 +17,66 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
   protected dirty = false
   protected transformed = false
   protected object: BitmapText | PixiText
+  protected style: TextStyleTexture
+  protected font: FontSubscription | undefined
   protected _highlight: TextHighlight | null = null
   protected _bounds!: Bounds
 
-  static async init(fontBook: FontBook, container: Container, text: string, style: TextStyle | undefined) {
-    const texture = new TextStyleTexture(style)
-    const ready = await fontBook.loadFontFamily(texture.style.fontFamily, texture.style.fontWeight, 5000)
-
-    if (ready) {
-      return new Text(fontBook, container, text, texture)
-    }
-  }
-
-  private constructor(
+  constructor(
     protected fontBook: FontBook,
     container: Container,
     protected text: string,
-    protected texture: TextStyleTexture
+    style: TextStyle | undefined
   ) {
     super(container)
-    this.fontBook = fontBook
     this.text = text
-    this.texture = texture
+    this.fontBook = fontBook
+    this.style = new TextStyleTexture(style)
+    this.font = this.loadFontFamily()
     this.object = this.create()
-    this.setBounds()
-    if (this.texture.style.highlight !== undefined) {
-      this._highlight = new TextHighlight(this.container, this.object, this.texture.style.highlight)
+    this._bounds = this.getBounds()
+    if (this.style.current.highlight !== undefined) {
+      this._highlight = new TextHighlight(this.container, this.object, this.style.current.highlight)
     }
   }
 
-  async update(text: string, textStyle: TextStyle | undefined) {
+  update(text: string, textStyle: TextStyle | undefined) {
     const textHasChanged = this.text !== text
-    const styleHasChanged = !this.texture.compare(textStyle)
+    const styleHasChanged = !this.style.compare(textStyle)
+    const fontLoading = this.style.fontLoading && this.font?.ready === false
+    const fontLoaded = this.style.fontLoading && this.font?.ready === true
+
+    if (fontLoaded) {
+      this.style.fontLoading = false
+      this.font = undefined
+    }
 
     if (styleHasChanged) {
-      const prevFontFamily = this.texture.style.fontFamily
+      const prevFontFamily = this.style.current.fontFamily
 
-      this.texture.style = textStyle
+      this.style.update(textStyle)
 
-      const { fontFamily, fontWeight } = this.texture.style
-
-      if (prevFontFamily !== fontFamily) {
-        const ready = await this.fontBook.loadFontFamily(fontFamily, fontWeight, 5000)
-        if (!ready) {
-          this.texture.style.fontFamily = prevFontFamily
-        }
+      const fontFamily = this.style.current.fontFamily
+      if (fontLoading && this.font?.fontFamily === fontFamily) {
+        this.style.fontLoading = true
+      } else if (prevFontFamily !== fontFamily) {
+        this.font = this.loadFontFamily()
       }
 
-      const style = this.texture.style
+      const style = this.style.current
 
       this.stroke = style.stroke
       this.wordWrap = style.wordWrap
       this.fontWeight = style.fontWeight
       this.color = style.color
       this.letterSpacing = style.letterSpacing
-      this.anchor = this.texture.anchorPoint()
+      this.anchor = this.style.anchorPoint()
       this.align = style.align
       this.fontSize = style.fontSize
       this.fontFamily = style.fontFamily
       this.fontName = style.fontName
+    } else if (fontLoaded) {
+      this.fontFamily = this.style.current.fontFamily
     }
 
     if (textHasChanged) {
@@ -84,6 +85,7 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
 
       const isBitmapText = this.isBitmapText()
       const isASCII = TextStyleTexture.isASCII(text)
+
       // if the text type has changed, regenerate a new text object
       if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
         this.transformText()
@@ -108,14 +110,14 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
       this.highlight = textStyle?.highlight
     }
     if (textHasChanged || styleHasChanged) {
-      this.setBounds()
+      this._bounds = this.getBounds()
     }
 
     return this
   }
 
   override moveTo(x: number, y: number) {
-    const { text, highlight } = this.texture.textCoordinates(x, y, this.offset, this.isBitmapText())
+    const { text, highlight } = this.style.textCoordinates(x, y, this.offset, this.isBitmapText())
 
     const dirty = text.x !== this.x || text.y !== this.y
 
@@ -123,7 +125,7 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     this._highlight?.moveTo(highlight.x, highlight.y)
 
     if (dirty) {
-      this._bounds = this.setBounds()
+      this._bounds = this.getBounds()
     }
 
     return this
@@ -144,6 +146,7 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
   override delete() {
     if (!this.transformed) {
       this._highlight?.delete()
+      this.font?.unsubscribe()
     }
 
     super.delete()
@@ -165,15 +168,37 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     let text: PixiText | BitmapText
 
     if (TextStyleTexture.isASCII(this.text)) {
-      this.fontBook.createBitmapFont(this.texture.style.fontName, this.texture.getTextStyle())
-      text = new BitmapText(this.text, this.texture.getBitmapStyle())
+      this.fontBook.createBitmapFont(this.style.current.fontName, this.style.getTextStyle())
+      text = new BitmapText(this.text, this.style.getBitmapStyle())
     } else {
-      text = new PixiText(this.text, this.texture.getTextStyle())
+      text = new PixiText(this.text, this.style.getTextStyle())
     }
 
     text.resolution = this.fontBook.resolution
-    text.anchor.set(...this.texture.anchorPoint())
+    text.anchor.set(...this.style.anchorPoint())
     return text
+  }
+
+  private loadFontFamily() {
+    const { fontFamily, fontWeight } = this.style.current
+
+    if (this.fontBook.available(fontFamily, fontWeight)) {
+      return undefined
+    }
+
+    this.font?.unsubscribe()
+    this.style.fontLoading = true
+
+    return this.fontBook.loadFontFamily(
+      fontFamily,
+      fontWeight,
+      (available: boolean) => {
+        if (available) {
+          this.update(this.text, this.style.original)
+        }
+      },
+      5000
+    )
   }
 
   private updateText() {
@@ -202,17 +227,8 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     return text instanceof BitmapText
   }
 
-  private setBounds() {
-    this._bounds = TextStyleTexture.textBounds(
-      this.x,
-      this.y,
-      this.object.width,
-      this.object.height,
-      this.object.anchor.x,
-      this.object.anchor.y
-    )
-
-    return this._bounds
+  private getBounds() {
+    return TextStyleTexture.textBounds(this.x, this.y, this.object.width, this.object.height, this.object.anchor.x, this.object.anchor.y)
   }
 
   private set highlight(highlight: TextHighlightStyle | undefined) {

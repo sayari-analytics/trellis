@@ -20,7 +20,7 @@ import {
 } from '../types'
 import { Zoom, Drag, Decelerate } from './interactions'
 import { Grid } from './grid'
-import FontBook from './textures/text/FontBook'
+import FontBook from './textures/FontBook'
 import Stats from 'stats.js'
 
 export const defaultOptions = {

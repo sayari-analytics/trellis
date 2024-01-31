@@ -25,14 +25,16 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
     this.scaleFactor = scaleFactor
   }
 
-  async create({ content, fontFamily, fontSize = 10, fontWeight, color: fill }: TextIcon) {
+  async create({ content, fontFamily = 'sans-serif', fontSize = 10, fontWeight, color: fill }: TextIcon) {
     const key = `${content}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
 
     if (this.cache[key] === undefined) {
-      let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
-      if (!ready) {
-        ready = await this.renderer.fontBook.loadFontFamily(fontFamily, fontWeight)
-      }
+      const ready = false
+      // TODO+
+      // let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
+      // if (!ready) {
+      //   ready = await this.renderer.fontBook.loadFontFamily(fontFamily, fontWeight)
+      // }
 
       if (!ready) {
         return null
