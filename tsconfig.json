@@ -12,7 +12,8 @@
     "strict": true,
     "esModuleInterop": true,
     "types": ["node"],
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "noImplicitOverride": true
   },
   "include": ["src"],
   "exclude": ["v6"]

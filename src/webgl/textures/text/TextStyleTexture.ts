@@ -1,4 +1,4 @@
-import { TextStyle as PixiTextStyle, IBitmapTextStyle, LINE_JOIN, ITextStyle } from 'pixi.js'
+import { TextStyle as PixiTextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
 import { Bounds, TextStyle, AnchorPosition, TextAlign, TextHighlightStyle } from '../../../types/api'
 import { DEFAULT_TEXT_STYLE } from '../../../utils/constants'
 import { isNumber } from '../../../utils'
@@ -40,8 +40,10 @@ export default class TextStyleTexture {
 
   private _style: DefaultTextStyle = TextStyleTexture.defaultStyle
   private _textStyle: TextStyle | undefined
+  private _fontLoading = false
 
   constructor(style: TextStyle | undefined) {
+    this.update(style)
     this.update(style)
   }
 
@@ -59,11 +61,25 @@ export default class TextStyleTexture {
 
   update(style: TextStyle | undefined) {
     this._textStyle = style
-
+    this._fontLoading = false
     const next = { ...TextStyleTexture.defaultStyle, ...(style ?? {}) }
     this._style = {
       ...next,
       align: style?.align ?? TextStyleTexture.textAlignFromAnchor(next.anchor)
+    }
+  }
+
+  get fontLoading() {
+    return this._fontLoading
+  }
+
+  set fontLoading(loading: boolean) {
+    this._fontLoading = loading
+
+    if (loading) {
+      this._style.fontFamily = TextStyleTexture.defaultStyle.fontFamily
+    } else {
+      this._style.fontFamily = this._textStyle?.fontFamily ?? TextStyleTexture.defaultStyle.fontFamily
     }
   }
 

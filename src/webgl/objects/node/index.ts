@@ -58,16 +58,17 @@ export class NodeRenderer {
         this.label = undefined
       }
     } else if (this.label === undefined) {
-      this.labelLoading = true
-      Text.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
-        if (label) {
-          this.label = label
-          this.labelLoading = false
-          this.label.offset = this.strokes.radius
-          this.label.moveTo(this.x, this.y)
-          this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
-        }
-      })
+      this.label = new Text(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle)
+      // this.labelLoading = true
+      // Text.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
+      //   if (label) {
+      //     this.label = label
+      //     this.labelLoading = false
+      //     this.label.offset = this.strokes.radius
+      //     this.label.moveTo(this.x, this.y)
+      //     this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+      //   }
+      // })
     } else {
       this.label.update(nodeLabel, labelStyle)
     }

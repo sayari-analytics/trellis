@@ -32,10 +32,12 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
     const key = `${content}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
 
     if (this.cache[key] === undefined) {
-      let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
-      if (!ready) {
-        ready = await this.renderer.fontBook.loadFontFamily(fontFamily, fontWeight)
-      }
+      const ready = false
+      // TODO+
+      // let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
+      // if (!ready) {
+      //   ready = await this.renderer.fontBook.loadFontFamily(fontFamily, fontWeight)
+      // }
 
       if (!ready) {
         return null
