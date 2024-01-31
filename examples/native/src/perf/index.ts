@@ -21,16 +21,22 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
 const PURPLE = '#7A5DC5'
 const LIGHT_PURPLE = '#CAD'
 const ARIAL_PINK = 'ArialPink'
-const TEXT_ICON: Graph.TextIcon = { type: 'textIcon', text: 'T', fontFamily: 'sans-serif', fontSize: 14, color: '#fff', fontWeight: '400' }
+const TEXT_ICON: Graph.TextIcon = {
+  type: 'textIcon',
+  content: 'T',
+  fontFamily: 'sans-serif',
+  fontSize: 14,
+  color: '#fff',
+  fontWeight: '400'
+}
 
 const NODE_STYLE: Graph.NodeStyle = {
   color: PURPLE,
   stroke: [{ width: 2, color: LIGHT_PURPLE }],
   icon: TEXT_ICON,
   label: {
-    position: 'bottom',
+    anchor: 'bottom',
     fontName: ARIAL_PINK,
-    fontFamily: 'Roboto',
     margin: 2
   }
 }
@@ -38,19 +44,19 @@ const NODE_STYLE: Graph.NodeStyle = {
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: '#f66',
   stroke: [{ width: 2, color: '#fcc' }],
-  label: { position: 'bottom', color: '#fcc' },
+  label: { anchor: 'bottom', color: '#fcc' },
   icon: TEXT_ICON
 }
 
 const EDGE_STYLE: Graph.EdgeStyle = {
   width: 1,
-  stroke: '#aaa',
+  color: '#aaa',
   arrow: 'reverse'
 }
 
 const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
   width: 2,
-  stroke: '#f66',
+  color: '#f66',
   arrow: 'reverse'
 }
 
@@ -86,11 +92,11 @@ for (const [_x, _y] of sampleCoordinatePlane(50000, step, 0.5)) {
 
 const container = document.querySelector('#graph') as HTMLDivElement
 
-const options: Graph.Options = {
+const options: Graph.OptionsV1 = {
   x: 0,
   y: 0,
   zoom: 1,
-  minZoom: 0.025,
+  minZoom: 0.25,
   width: 1250, // 1700,
   height: 650, // 940,
   onViewportDrag: (event: Graph.ViewportDragEvent | Graph.ViewportDragDecelerateEvent) => {

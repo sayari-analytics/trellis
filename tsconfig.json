@@ -11,7 +11,8 @@
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
-    "types": ["node"]
+    "types": ["node"],
+    "useDefineForClassFields": true
   },
   "include": ["src"],
   "exclude": ["v6"]

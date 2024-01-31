@@ -1,4 +1,4 @@
-import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, angle, movePoint } from './../../../utils'
+import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM, angle, midPoint, movePoint } from './../../../utils'
 import { NodeRenderer } from '../node'
 import { type Renderer } from '../..'
 import { FederatedPointerEvent } from 'pixi.js'
@@ -6,6 +6,7 @@ import { LineSegment } from './lineSegment'
 import { EdgeHitArea } from './hitArea'
 import { Edge } from './../../../types'
 import { Arrow } from './arrow'
+import Text from '../../textures/text/Text'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -18,11 +19,12 @@ export class EdgeRenderer {
   lineSegment: LineSegment
   source!: NodeRenderer
   target!: NodeRenderer
-  x0?: number
-  y0?: number
-  x1?: number
-  y1?: number
-  theta?: number
+  x0 = 0
+  y0 = 0
+  x1 = 0
+  y1 = 0
+  theta = 0
+  center: [number, number] = [0, 0]
   width?: number
   stroke?: string | number
   strokeOpacity?: number
@@ -31,9 +33,11 @@ export class EdgeRenderer {
 
   private hitArea: EdgeHitArea
   private arrow?: { forward: Arrow; reverse?: undefined } | { forward?: undefined; reverse: Arrow } | { forward: Arrow; reverse: Arrow }
+  private label?: Text
   private lineMounted = false
   private forwardArrowMounted = false
   private reverseArrowMounted = false
+  private labelMounted = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
 
@@ -69,6 +73,31 @@ export class EdgeRenderer {
             reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
           }
       }
+    }
+
+    if (edge.label === undefined || edge.label.trim() === '') {
+      if (this.label) {
+        this.renderer.labelObjectManager.delete(this.label)
+        this.label = undefined
+        this.labelMounted = false
+      }
+    } else if (this.label === undefined) {
+      Text.init(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label).then((label) => {
+        if (label) {
+          this.label = label
+          this.label.rotation = this.theta
+          this.label.moveTo(...this.center)
+          if (
+            this.renderer.zoom > MIN_LABEL_ZOOM &&
+            this.visible(Math.min(this.x0, this.x1), Math.min(this.y0, this.y1), Math.max(this.x0, this.x1), Math.max(this.y0, this.y1))
+          ) {
+            this.labelMounted = true
+            this.renderer.labelObjectManager.mount(this.label)
+          }
+        }
+      })
+    } else {
+      this.label.update(edge.label, edge.style?.label)
     }
 
     this.edge = edge
@@ -129,9 +158,20 @@ export class EdgeRenderer {
       }
     }
 
+    if (this.label) {
+      const shouldMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+      if (shouldMount && !this.labelMounted) {
+        this.renderer.labelObjectManager.mount(this.label)
+        this.labelMounted = true
+      } else if (!shouldMount && this.labelMounted) {
+        this.renderer.labelObjectManager.unmount(this.label)
+        this.labelMounted = false
+      }
+    }
+
     if (isVisible) {
-      const width = this.edge?.style?.stroke?.width ?? DEFAULT_EDGE_WIDTH
-      const stroke = this.edge?.style?.stroke?.color ?? DEFAULT_EDGE_COLOR
+      const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
+      const stroke = this.edge?.style?.color ?? DEFAULT_EDGE_COLOR
       const strokeOpacity = this.edge?.style?.opacity ?? 1
 
       if (
@@ -182,6 +222,12 @@ export class EdgeRenderer {
           const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius)
           edgeX0 = edgePoint[0]
           edgeY0 = edgePoint[1]
+        }
+
+        this.center = midPoint(edgeX0, edgeY0, edgeX1, edgeY1)
+        if (this.label) {
+          this.label.rotation = this.theta
+          this.label.moveTo(...this.center)
         }
 
         this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.stroke, this.strokeOpacity)
