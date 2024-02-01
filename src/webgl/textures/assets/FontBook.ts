@@ -1,39 +1,35 @@
-import { AssetPublisher, AssetSubscription, Subscriber } from './AssetPublisher'
 import { BitmapFont, ITextStyle } from 'pixi.js'
-import { isString, throttle } from '../../utils'
-import { FontWeight } from '../../types'
+import { GENERIC_FONT_FAMILIES } from '../../../utils/constants'
+import { isString } from '../../../utils'
+import { FontWeight } from '../../../types'
+import Publisher, { Subscription, Subscriber } from '../abstracts/PubSub'
 import FontFaceObserver from 'fontfaceobserver'
-import TextureCache from './TextureCache'
+import TextureCache from '../abstracts/TextureCache'
 // import RendererOptions from 'src/webgl/RendererOptions'
 
-const warn = throttle((err) => console.warn(err), 0)
-
-const GENERIC_FONT_FAMILIES = new Set([
-  'serif',
-  'sans-serif',
-  'monospace',
-  'cursive',
-  'fantasy',
-  'system-ui',
-  'emoji',
-  'math',
-  'fangsong',
-  'ui-serif',
-  'ui-sans-serif',
-  'ui-monospace'
-])
-
-export class FontSubscription extends AssetSubscription<true, FontFamily> {
-  constructor(font: FontFamily, subscriber: Subscriber<true>) {
-    super(font, subscriber)
+export class FontSubscription implements Subscription {
+  constructor(
+    private _font: FontFamily,
+    private _subscriber: Subscriber<string>
+  ) {
+    this._font = _font
+    this._subscriber = _subscriber
   }
 
   get fontFamily() {
-    return this._publisher.fontFamily
+    return this._font.fontFamily
+  }
+
+  get ready() {
+    return this._font.ready
+  }
+
+  unsubscribe() {
+    this._font.unsubscribe(this._subscriber)
   }
 }
 
-export class FontFamily extends AssetPublisher<true> {
+export class FontFamily extends Publisher<string, FontSubscription> {
   observer: FontFaceObserver
   fontFamily: string
   weight: string | number
@@ -50,34 +46,26 @@ export class FontFamily extends AssetPublisher<true> {
     return `${weight} 1em ${FontFamily.sanitize(fontFamily)}`
   }
 
-  constructor(fontFamily: string, fontWeight: FontWeight, timeout?: number) {
+  constructor(
+    fontFamily: string,
+    fontWeight: FontWeight,
+    private _timeout?: number
+  ) {
     super()
     this.fontFamily = fontFamily
     this.weight = isString(fontWeight) && !isNaN(+fontWeight) ? +fontWeight : fontWeight
-
     this.observer = new FontFaceObserver(fontFamily, { weight: this.weight })
-    this.load(timeout)
+    this._timeout = _timeout
+    this.load()
   }
 
-  subscribe(fn: Subscriber<true>) {
-    if (this.ready) {
-      fn(true)
-    } else {
-      this.subscribers.add(fn)
-    }
-
-    return new FontSubscription(this, fn)
+  protected async caller(): Promise<string> {
+    await this.observer.load(null, this._timeout)
+    return this.fontFamily
   }
 
-  protected async load(timeout?: number) {
-    try {
-      await this.observer.load(null, timeout)
-      this.asset = true
-      this.notify(true)
-    } catch (error) {
-      warn(error)
-      this.notify(false)
-    }
+  protected subscription(subscriber: Subscriber<string>) {
+    return new FontSubscription(this, subscriber)
   }
 }
 
@@ -90,14 +78,14 @@ export default class FontBook extends TextureCache<FontFamily> {
     return this.cache[key]?.ready || FontFamily.isGenericFont(fontFamily) || document.fonts.check(key)
   }
 
-  loadFontFamily(fontFamily: string, fontWeight: FontWeight, onComplete: Subscriber<true>, timeout?: number): FontSubscription {
+  loadFontFamily(fontFamily: string, fontWeight: FontWeight, subscriber: Subscriber<string>, timeout?: number): FontSubscription {
     const font = FontFamily.toFontString(fontFamily, fontWeight)
 
     if (this.cache[font] === undefined) {
       this.cache[font] = new FontFamily(fontFamily, fontWeight, timeout)
     }
 
-    return this.cache[font].subscribe(onComplete)
+    return this.cache[font].subscribe(subscriber)
   }
 
   findBitmapFont(fontName: string): BitmapFont | undefined {

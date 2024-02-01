@@ -1,6 +1,6 @@
 import { MSAA_QUALITY, RenderTexture, Renderer as PixiRenderer, IRenderableObject, IRendererRenderOptions } from 'pixi.js'
-import { MIN_ZOOM } from '../../utils'
-import { Renderer } from '..'
+import { MIN_ZOOM } from '../../../utils'
+import { Renderer } from '../..'
 
 export default abstract class TextureAbstract {
   resolution = 2

@@ -1,10 +1,10 @@
 import { Bounds, Stroke, FontWeight, TextStyle, TextHighlightStyle, TextAlign } from '../../../types/api'
 import { BitmapText, Container, Text as PixiText } from 'pixi.js'
 import { isNumber } from '../../../utils'
+import FontBook, { FontSubscription } from '../assets/FontBook'
 import TextStyleTexture from './TextStyleTexture'
 import TextHighlight from './TextHighlight'
 import RenderObject from '../../RenderObject'
-import FontBook, { FontSubscription } from '../FontBook'
 
 /**
  * TODO
@@ -44,7 +44,7 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     const textHasChanged = this.text !== text
     const styleHasChanged = !this.style.compare(textStyle)
     const fontLoading = this.style.fontLoading && this.font?.ready === false
-    const fontLoaded = this.style.fontLoading && this.font?.ready === true
+    const fontLoaded = this.style.fontLoading && (!this.font || this.font.ready)
 
     if (fontLoaded) {
       this.style.fontLoading = false
@@ -192,10 +192,9 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     return this.fontBook.loadFontFamily(
       fontFamily,
       fontWeight,
-      (available: boolean) => {
-        if (available) {
-          this.update(this.text, this.style.original)
-        }
+      () => {
+        this.font = undefined
+        this.update(this.text, this.style.original)
       },
       5000
     )

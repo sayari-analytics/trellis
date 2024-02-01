@@ -99,3 +99,18 @@ export const DEFAULT_TEXT_STYLE = {
   WORD_WRAP: false as const,
   FONT_STYLE: 'normal' as const
 }
+
+export const GENERIC_FONT_FAMILIES = new Set([
+  'serif',
+  'sans-serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+  'system-ui',
+  'emoji',
+  'math',
+  'fangsong',
+  'ui-serif',
+  'ui-sans-serif',
+  'ui-monospace'
+])

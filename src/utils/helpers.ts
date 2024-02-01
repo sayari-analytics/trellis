@@ -125,3 +125,5 @@ export const interpolate = (from: number, to: number, duration: number) => {
     return { done: false, value: ease(elapsed / duration) }
   }
 }
+
+export const warn = throttle((err) => console.warn(err), 0)
