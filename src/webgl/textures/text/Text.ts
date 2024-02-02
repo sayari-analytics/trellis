@@ -21,34 +21,62 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
   protected _bounds!: Bounds
 
   static async init(fontBook: FontBook, container: Container, text: string, style: TextStyle | undefined) {
-    const texture = new TextStyleTexture(fontBook, style)
-    const ready = await texture.loadFont()
+    const texture = new TextStyleTexture(style)
+    const ready = await fontBook.loadFontFamily(texture.current.fontFamily, texture.current.fontWeight, 5000)
 
     if (ready) {
-      return new Text(container, text, texture)
+      return new Text(fontBook, container, text, texture)
     }
   }
 
   private constructor(
+    protected fontBook: FontBook,
     container: Container,
     protected text: string,
-    protected texture: TextStyleTexture
+    protected style: TextStyleTexture
   ) {
     super(container)
+    this.fontBook = fontBook
     this.text = text
-    this.texture = texture
+    this.style = style
     this.object = this.create()
     this.setBounds()
-    if (this.texture.style.highlight !== undefined) {
-      this._highlight = new TextHighlight(this.container, this.object, this.texture.style.highlight)
+    if (this.style.current.highlight !== undefined) {
+      this._highlight = new TextHighlight(this.container, this.object, this.style.current.highlight)
     }
   }
 
   async update(text: string, textStyle: TextStyle | undefined) {
     const textHasChanged = this.text !== text
-    const styleHasChanged = !this.texture.compare(textStyle)
+    const styleHasChanged = !this.style.compare(textStyle)
 
-    this.texture.update(textStyle)
+    if (styleHasChanged) {
+      const prevFontFamily = this.style.current.fontFamily
+
+      this.style.update(textStyle)
+
+      const { fontFamily, fontWeight } = this.style.current
+
+      if (prevFontFamily !== fontFamily) {
+        const ready = await this.fontBook.loadFontFamily(fontFamily, fontWeight, 5000)
+        if (!ready) {
+          this.style.current.fontFamily = prevFontFamily
+        }
+      }
+
+      const style = this.style.current
+
+      this.stroke = style.stroke
+      this.wordWrap = style.wordWrap
+      this.fontWeight = style.fontWeight
+      this.color = style.color
+      this.letterSpacing = style.letterSpacing
+      this.anchor = this.style.anchorPoint()
+      this.align = style.align
+      this.fontSize = style.fontSize
+      this.fontFamily = style.fontFamily
+      this.fontName = style.fontName
+    }
 
     if (textHasChanged) {
       this.text = text
@@ -60,20 +88,6 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
       if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
         this.transformText()
       }
-    }
-
-    if (styleHasChanged) {
-      const style = this.texture.style
-      this.stroke = style.stroke
-      this.wordWrap = style.wordWrap
-      this.fontWeight = style.fontWeight
-      this.color = style.color
-      this.letterSpacing = style.letterSpacing
-      this.anchor = this.texture.anchorPoint()
-      this.align = style.align
-      this.fontSize = style.fontSize
-      this.fontFamily = style.fontFamily
-      this.fontName = style.fontName
     }
 
     if (this.dirty) {
@@ -101,7 +115,7 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
   }
 
   override moveTo(x: number, y: number) {
-    const { text, highlight } = this.texture.textCoordinates(x, y, this.offset, this.isBitmapText())
+    const { text, highlight } = this.style.textCoordinates(x, y, this.offset, this.isBitmapText())
 
     const dirty = text.x !== this.x || text.y !== this.y
 
@@ -151,14 +165,14 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
     let text: PixiText | BitmapText
 
     if (TextStyleTexture.isASCII(this.text)) {
-      this.texture.createFont()
-      text = new BitmapText(this.text, this.texture.getBitmapStyle())
+      this.fontBook.createBitmapFont(this.style.current.fontName, this.style.getTextStyle())
+      text = new BitmapText(this.text, this.style.getBitmapStyle())
     } else {
-      text = new PixiText(this.text, this.texture.getTextStyle())
+      text = new PixiText(this.text, this.style.getTextStyle())
     }
 
-    text.resolution = this.texture.fontBook.resolution
-    text.anchor.set(...this.texture.anchorPoint())
+    text.resolution = this.fontBook.resolution
+    text.anchor.set(...this.style.anchorPoint())
     return text
   }
 

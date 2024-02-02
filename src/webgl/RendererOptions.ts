@@ -20,6 +20,7 @@ export default class RendererOptions implements DefaultOptions {
   maxRadius: number = DEFAULT_OPTIONS.maxRadius
   arrowSize: Dimensions = DEFAULT_OPTIONS.arrowSize
   minLineHoverRadius: number = DEFAULT_OPTIONS.minLineHoverRadius
+  maxFontSize: number = DEFAULT_OPTIONS.maxFontSize
 
   constructor(defaultOptions: DefaultOptions) {
     this._defaultOptions = defaultOptions

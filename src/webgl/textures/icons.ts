@@ -2,6 +2,7 @@ import { Text, Matrix, Assets, RenderTexture, Renderer as PixiRenderer, Texture,
 import type { TextIcon, ImageIcon } from './../../types'
 import type { Renderer } from '..'
 import { MIN_ZOOM } from './../../utils'
+import TextStyleTexture from './text/TextStyleTexture'
 
 export class IconTexture<T extends Texture = Texture> {
   protected cache: { [key: string]: T } = {}
@@ -25,25 +26,22 @@ export class TextIconTexture extends IconTexture<RenderTexture> {
     this.scaleFactor = scaleFactor
   }
 
-  async create({ content, fontFamily, fontSize = 10, fontWeight, color: fill }: TextIcon) {
+  async create({ content, type: _, offset: __, ...textStyle }: TextIcon) {
+    const style = new TextStyleTexture(textStyle)
+    const { fontFamily, fontSize, color: fill, fontWeight } = style.current
     const key = `${content}-${fontFamily}-${fontSize}-${fontWeight}-${fill}`
 
     if (this.cache[key] === undefined) {
       let ready = this.renderer.fontBook.available(fontFamily, fontWeight)
       if (!ready) {
-        ready = await this.renderer.fontBook.load(fontFamily, fontWeight)
+        ready = await this.renderer.fontBook.loadFontFamily(fontFamily, fontWeight)
       }
 
       if (!ready) {
         return null
       }
 
-      const textObject = new Text(content, {
-        fontFamily,
-        fontSize: fontSize * this.scaleFactor,
-        fontWeight,
-        fill
-      })
+      const textObject = new Text(content, { ...style.getTextStyle(), fontSize: fontSize * this.scaleFactor })
 
       textObject.updateText(true)
 
