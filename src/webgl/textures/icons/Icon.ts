@@ -8,7 +8,7 @@ import RenderObject from '../../RenderObject'
 import AssetLoader from '../assets/AssetLoader'
 import FontBook from '../assets/FontBook'
 
-export class Icon extends RenderObject<Sprite> {
+export default class Icon extends RenderObject<Sprite> {
   protected object: Sprite
   protected subscription: Subscription | undefined
 
@@ -16,13 +16,14 @@ export class Icon extends RenderObject<Sprite> {
     container: Container,
     private fontBook: FontBook,
     private textIconCache: TextIconCache,
-    private assetLoader: AssetLoader,
-    private fill: RenderObject,
+    private assets: AssetLoader,
+    // private fill: RenderObject, // TODO
+    private fill: { getContainerIndex: () => number },
     private style: IconStyle
   ) {
     super(container)
     this.textIconCache = textIconCache
-    this.assetLoader = assetLoader
+    this.assets = assets
     this.fill = fill
     this.style = style
     this.object = this.create(this.getIconTexture())
@@ -55,10 +56,10 @@ export class Icon extends RenderObject<Sprite> {
       case 'imageIcon': {
         const { url } = this.style
 
-        if (this.assetLoader.available(url)) {
-          return this.assetLoader.get(url)
+        if (this.assets.available(url)) {
+          return this.assets.get(url)
         } else {
-          this.subscription = this.assetLoader.load(url, (texture) => {
+          this.subscription = this.assets.load(url, (texture) => {
             this.transform(texture)
             this.subscription = undefined
           })

@@ -1,10 +1,10 @@
 import { RenderTexture, Text as PixiText, Matrix } from 'pixi.js'
 import { FontFamily } from '../assets/FontBook'
 import { Renderer } from '../..'
+import { MIN_ZOOM } from '../../../utils'
 import TextStyleTexture from '../text/TextStyleTexture'
 import TextureAbstract from '../abstracts/TextureAbstract'
 import TextureCache from '../abstracts/TextureCache'
-import { MIN_ZOOM } from 'src/utils'
 
 class TextIconTexture extends TextureAbstract {
   texture: RenderTexture

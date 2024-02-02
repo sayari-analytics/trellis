@@ -4,9 +4,9 @@ import { type Renderer } from '../..'
 import { Node } from './../../../types'
 import { NodeStrokes } from './strokes'
 import { NodeFill } from './fill'
-import { Icon } from './icon'
 import { NodeHitArea } from './hitArea'
 import Text from '../../textures/text/Text'
+import Icon from '../../textures/icons/Icon'
 
 export class NodeRenderer {
   x = 0
@@ -59,16 +59,6 @@ export class NodeRenderer {
       }
     } else if (this.label === undefined) {
       this.label = new Text(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle)
-      // this.labelLoading = true
-      // Text.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
-      //   if (label) {
-      //     this.label = label
-      //     this.labelLoading = false
-      //     this.label.offset = this.strokes.radius
-      //     this.label.moveTo(this.x, this.y)
-      //     this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
-      //   }
-      // })
     } else {
       this.label.update(nodeLabel, labelStyle)
     }
@@ -81,13 +71,14 @@ export class NodeRenderer {
         this.icon = undefined
       }
     } else if (this.icon === undefined) {
-      this.iconLoading = true
-      Icon.init(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, iconStyle).then((icon) => {
-        this.icon = icon
-        this.iconLoading = false
-        this.icon?.moveTo(this.x, this.y)
-        this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
-      })
+      this.icon = new Icon(
+        this.renderer.nodesContainer,
+        this.renderer.fontBook,
+        this.renderer.textIcon,
+        this.renderer.assets,
+        this.fill,
+        iconStyle
+      )
     } else {
       this.icon.update(iconStyle)
     }
