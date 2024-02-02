@@ -1,5 +1,5 @@
 import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
-import { ArrowTexture, CircleTexture, TextIconTexture, ImageIconTexture } from './textures'
+import { ArrowTexture, CircleTexture, ImageIconTexture } from './textures'
 import { NodeRenderer, EdgeRenderer, ObjectManager } from './objects'
 import { interpolate, logUnknownEdgeError } from '../utils'
 import {
@@ -22,6 +22,8 @@ import { Zoom, Drag, Decelerate } from './interactions'
 import { Grid } from './grid'
 import FontBook from './textures/assets/FontBook'
 import Stats from 'stats.js'
+import TextIconCache from './textures/icons/TextIconCache'
+import AssetLoader from './textures/assets/AssetLoader'
 
 export const defaultOptions = {
   x: 0,
@@ -81,8 +83,9 @@ export class Renderer {
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   circle: CircleTexture
   arrow: ArrowTexture
-  textIcon: TextIconTexture
+  textIcon: TextIconCache
   imageIcon: ImageIconTexture
+  assets = new AssetLoader()
   fontBook = new FontBook() // TODO -> make configurable
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
@@ -161,7 +164,7 @@ export class Renderer {
     this.app.stage.addChild(this.root)
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
-    this.textIcon = new TextIconTexture(this)
+    this.textIcon = new TextIconCache(this)
     this.imageIcon = new ImageIconTexture()
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view

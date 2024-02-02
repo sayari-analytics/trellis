@@ -30,6 +30,7 @@ export class AssetPublisher extends Publisher<Texture, AssetSubscription> {
   constructor(url: string) {
     super()
     this.url = url
+    this.load()
   }
 
   protected caller() {
