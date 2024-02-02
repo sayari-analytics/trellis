@@ -3,7 +3,7 @@ import { ArrowTexture, CircleTexture, FontBook, TextIconTexture, ImageIconTextur
 import { NodeRenderer, EdgeRenderer, ObjectManager } from './objects'
 import { interpolate, logUnknownEdgeError } from '../utils'
 import { Viewport, Node, Edge, Annotation } from '../types'
-import { Zoom, Drag, Decelerate } from './interaction'
+import { Zoom, Drag, Decelerate } from './interactions'
 import { Grid } from './grid'
 import Stats from 'stats.js'
 
