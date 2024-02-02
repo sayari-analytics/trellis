@@ -85,7 +85,6 @@ export default class Text extends RenderObject<BitmapText | PixiText> {
 
       const isBitmapText = this.isBitmapText()
       const isASCII = TextStyleTexture.isASCII(text)
-
       // if the text type has changed, regenerate a new text object
       if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
         this.transformText()
