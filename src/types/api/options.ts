@@ -1,5 +1,4 @@
 import { Viewport } from '.'
-import { Concrete } from '../internal'
 
 // renderer options
 export interface Options {
@@ -80,7 +79,7 @@ export interface Options {
   minLineHoverRadius?: number
 }
 
-export interface DefaultOptions extends Concrete<Options> {
+export interface DefaultOptions extends Required<Options> {
   defaultViewport: Viewport
   animateViewport: number | false
   animateNodePosition: number | false

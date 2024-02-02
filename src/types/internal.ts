@@ -4,10 +4,6 @@ export type Extend<T, R> = {
   [K in Exclude<keyof T, keyof R>]: T[K]
 } & R
 
-export type Concrete<Type extends object> = {
-  [Property in keyof Type]-?: Type[Property]
-}
-
 export interface RenderObject {
   mounted: boolean
   // moveTo(...args: number[]): this

@@ -1,5 +1,5 @@
 import { Options, DefaultOptions, Viewport, Dimensions } from '../types/api'
-import { DEFAULT_OPTIONS, isNumber } from 'src/utils'
+import { DEFAULT_OPTIONS, isNumber } from '../utils'
 
 export default class RendererOptions implements DefaultOptions {
   private _defaultOptions: DefaultOptions
