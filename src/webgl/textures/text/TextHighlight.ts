@@ -3,7 +3,7 @@ import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.
 import { DEFAULT_TEXT_STYLE, equals } from '../../../utils'
 // import utils, { STYLE_DEFAULTS } from '../../../utils/text'
 import RenderObject from '../../RenderObject'
-import TextStyle from './TextStyleTexture'
+import TextStyleTexture from './TextStyleTexture'
 
 export default class TextHighlight extends RenderObject<Sprite> {
   static defaultStyle: Required<TextHighlightStyle> = {
@@ -28,7 +28,7 @@ export default class TextHighlight extends RenderObject<Sprite> {
     this._width = this._text.width
     this._height = this._text.height
     this.object = this.create()
-    this.setBounds()
+    this._bounds = this.getBounds()
   }
 
   update(style: TextHighlightStyle) {
@@ -44,7 +44,7 @@ export default class TextHighlight extends RenderObject<Sprite> {
     if (this.dirty) {
       this.dirty = false
       this.resize()
-      this.setBounds()
+      this._bounds = this.getBounds()
     }
 
     return this
@@ -56,7 +56,7 @@ export default class TextHighlight extends RenderObject<Sprite> {
     super.moveTo(x, y)
 
     if (dirty) {
-      this.setBounds()
+      this._bounds = this.getBounds()
     }
 
     return this
@@ -124,13 +124,12 @@ export default class TextHighlight extends RenderObject<Sprite> {
     return [width, height]
   }
 
-  private setBounds() {
-    this._bounds = TextStyle.textBounds(this.x, this.y, this.object.width, this.object.height, this.object.anchor.x, this.object.anchor.y)
-    return this._bounds
+  private getBounds() {
+    return TextStyleTexture.textBounds(this.x, this.y, this.object.width, this.object.height, this.object.anchor.x, this.object.anchor.y)
   }
 
   private getSize() {
-    const [top, right, bottom, left] = TextStyle.highlightPadding(this.style.padding)
+    const [top, right, bottom, left] = TextStyleTexture.highlightPadding(this.style.padding)
     return [this._width + right + left, this._height + top + bottom]
   }
 
