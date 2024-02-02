@@ -1,5 +1,5 @@
 import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
-import { ArrowTexture, CircleTexture, ImageIconTexture } from './textures'
+import { ArrowTexture, CircleTexture } from './textures'
 import { NodeRenderer, EdgeRenderer, ObjectManager } from './objects'
 import { interpolate, logUnknownEdgeError } from '../utils'
 import {
@@ -84,7 +84,6 @@ export class Renderer {
   circle: CircleTexture
   arrow: ArrowTexture
   textIcon: TextIconCache
-  imageIcon: ImageIconTexture
   assets = new AssetLoader()
   fontBook = new FontBook() // TODO -> make configurable
   draggedNode?: NodeRenderer
@@ -165,7 +164,6 @@ export class Renderer {
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
     this.textIcon = new TextIconCache(this)
-    this.imageIcon = new ImageIconTexture()
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer
