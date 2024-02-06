@@ -1,6 +1,6 @@
 import { warn } from '../../../utils'
 
-export interface Subscriber<T, E = Error> {
+export type Subscriber<T, E = Error> = {
   resolve: (result: T) => void
   reject: (error: E) => void
 }
