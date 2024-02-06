@@ -27,16 +27,6 @@ export class Label {
   private transformed = false
   private dirty = false
 
-  // static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
-  //   const fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
-  //   const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-  //   const ready = await fontBook.load(fontFamily, fontWeight, 10000)
-
-  //   if (ready) {
-  //     return new Label(fontBook, container, label, style)
-  //   }
-  // }
-
   constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
     this.label = label
     this.fontBook = fontBook
@@ -51,11 +41,6 @@ export class Label {
   update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
     const styleHasChanged = !equals(this._style, style)
-
-    // const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-    // if (style?.fontFamily !== undefined && style.fontFamily !== this.style.fontFamily) {
-    //   await this.fontBook.load(style.fontFamily, fontWeight)
-    // }
 
     this._style = style
 

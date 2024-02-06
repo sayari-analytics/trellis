@@ -2,18 +2,22 @@ import { Publisher, Subscriber, Subscription } from './PubSub'
 import { Assets, Texture } from 'pixi.js'
 import { noop } from '../../../utils'
 
-export type ResourceSubscription = Subscription<Texture>
+export type AssetSubscription = Subscription<Texture>
 
-type LoadResourceProps = Partial<Subscriber<Texture>> & { url: string }
+type LoadAssetProps = Partial<Subscriber<Texture>> & { url: string }
 
-export default class ResourceLoader {
-  private cache: { [key: string]: Publisher<Texture> } = {}
+export default class AssetLoader {
+  private cache: { [url: string]: Publisher<Texture> } = {}
 
-  static available(url: string) {
-    return Assets.cache.has(url)
+  static get(url: string): Texture | null {
+    if (Assets.cache.has(url)) {
+      return Assets.cache.get(url)
+    } else {
+      return null
+    }
   }
 
-  load({ url, resolve = noop, reject = noop }: LoadResourceProps) {
+  load({ url, resolve = noop, reject = noop }: LoadAssetProps) {
     if (this.cache[url] === undefined) {
       this.cache[url] = this.createPublisher(url)
     }
@@ -23,7 +27,7 @@ export default class ResourceLoader {
 
   private createPublisher(url: string) {
     return new Publisher<Texture>(
-      async function loadResource(): Promise<Texture> {
+      async function loadAsset(): Promise<Texture> {
         try {
           return await Assets.load<Texture>(url)
         } catch (error) {
@@ -31,12 +35,8 @@ export default class ResourceLoader {
           throw new Error(`Error loading asset: ${url}`)
         }
       },
-      function checkCache(): Texture | null {
-        if (ResourceLoader.available(url)) {
-          return Assets.cache.get(url)
-        }
-
-        return null
+      function checkCache() {
+        return AssetLoader.get(url)
       }
     )
   }

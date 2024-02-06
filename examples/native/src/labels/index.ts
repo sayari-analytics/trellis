@@ -24,7 +24,7 @@ const TEXT_ICON: Graph.TextIcon = {
 
 const NODE_STYLE: Graph.NodeStyle = {
   color: GREEN,
-  icon: IMAGE_ICON,
+  icon: TEXT_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
     position: 'right',
@@ -37,7 +37,7 @@ const NODE_STYLE: Graph.NodeStyle = {
 
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: DARK_GREEN,
-  icon: TEXT_ICON,
+  icon: IMAGE_ICON,
   stroke: [{ width: 2, color: GREEN_LIGHT }],
   label: {
     position: 'right',
