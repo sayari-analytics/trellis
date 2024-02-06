@@ -103,6 +103,10 @@ export class LabelBackground {
     this.label = text
   }
 
+  set rotation(rotation: number) {
+    this.sprite.rotation = rotation
+  }
+
   get bounds() {
     return this.backgroundBounds
   }

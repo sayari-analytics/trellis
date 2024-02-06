@@ -139,3 +139,91 @@ export const interpolate = (from: number, to: number, duration: number) => {
     return { done: false, value: ease(elapsed / duration) }
   }
 }
+
+/**
+ * generic function for representing a value that is possibly asynchronous
+ * think of this as a promise, except that
+ * - it can resolve synchronously
+ * - it can be cancelled
+ * - it is lazy
+ * - it doesn't automatically catch unhandled errors
+ * - it can't be chained
+ *
+ * // given the following promise
+ * const delay = new Promise((resolve) => setTimeout(() => resolve('done'), 1000))
+ * delay
+ *   .then((message) => console.log(message))
+ *   .catch((error) => console.error(message))
+ *
+ * // the above can be rewritten using Async as
+ * const delay = Async((resolve, reject) => setTimeout(() => resolve('done'), 1000))
+ * delay(
+ *   (message) => console.log(message),
+ *   (error) => console.error(error)
+ * )
+ *
+ * // to illustrate what an Async function can do that a Promise can't:
+ * // create the Async function delay, which randomly resolves synchronously, asynchronously, or rejects
+ * const delay = Async((resolve, reject) => {
+ *   let timeout: NodeJS.Timeout
+ *
+ *   const random = Math.random() > 0.5
+ *   if (random < 0.3) {
+ *     // resolve synchronously
+ *     resolve('done synchronously')
+ *   } else if (random < 0.6) {
+ *     // resolve asynchronously
+ *     timeout = setTimeout(() => resolve('done asynchronously'), 1000)
+ *   } else {
+ *     // reject
+ *     timeout = setTimeout(() => reject(new Error('nope')), 1000)
+ *   }
+ *
+ *   return () => clearTimeout(timeout)
+ * })
+ *
+ * // delay's inner logic is lazy, so not run until delay is invoked
+ * const cancel = delay(
+ *   (message) => console.log(message),
+ *   (error) => console.error(error)
+ * )
+ *
+ * // a new execution of delay is run every time delay is invoked
+ * const cancel2 = delay(
+ *   (message) => console.log(message),
+ *   (error) => console.error(error)
+ * )
+ *
+ * // any execution of delay can be cancelled at any time
+ * cancel()
+ * setTimeout(() => cancel2(), 100)
+ *
+ */
+
+export type Executor<T, E> = (resolve: (result: T) => void, reject: (error: E) => void) => CancelAsyncHandler
+
+export type CancelAsyncHandler = void | (() => void)
+
+export const Async = <T, E>(executor: Executor<T, E>) => {
+  return (onResolved: (result: T) => void = noop, onRejected: (error: E) => void = noop) => {
+    let cancelled = false
+
+    const onCancelled = executor(
+      (result: T) => {
+        if (!cancelled) {
+          onResolved(result)
+        }
+      },
+      (error: E) => {
+        if (!cancelled) {
+          onRejected(error)
+        }
+      }
+    )
+
+    return () => {
+      cancelled = true
+      onCancelled?.()
+    }
+  }
+}

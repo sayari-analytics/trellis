@@ -14,6 +14,7 @@ import { equals } from '../../../../'
  */
 export class Label {
   mounted = false
+  offset = 0
 
   private x?: number
   private y?: number
@@ -28,17 +29,7 @@ export class Label {
   private activeStyle!: StyleWithDefaults
   private labelBounds!: LabelBounds
 
-  static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
-    const fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
-    const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-    const ready = await fontBook.load(fontFamily, fontWeight, 10000)
-
-    if (ready) {
-      return new Label(fontBook, container, label, style)
-    }
-  }
-
-  private constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+  constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
     this.label = label
     this.fontBook = fontBook
     this.container = container
@@ -50,14 +41,9 @@ export class Label {
     }
   }
 
-  async update(label: string, style: LabelStyle | undefined) {
+  update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
     const styleHasChanged = !equals(this.assignedStyle, style)
-
-    const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-    if (style?.fontFamily !== undefined && style.fontFamily !== this.style.fontFamily) {
-      await this.fontBook.load(style.fontFamily, fontWeight)
-    }
 
     this.style = style
 
@@ -76,7 +62,7 @@ export class Label {
     if (styleHasChanged) {
       this.stroke = style?.stroke
       this.wordWrap = style?.wordWrap
-      this.fontWeight = fontWeight
+      this.fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
       this.color = style?.color ?? STYLE_DEFAULTS.COLOR
       this.letterSpacing = style?.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
       this.position = style?.position ?? STYLE_DEFAULTS.POSITION
@@ -104,10 +90,10 @@ export class Label {
     return this
   }
 
-  moveTo(x: number, y: number, offset = 0) {
+  moveTo(x: number, y: number) {
     let dirty = false
 
-    const { label, bg } = utils.getLabelCoordinates(x, y, offset, this.isBitmapText(), this.style)
+    const { label, bg } = utils.getLabelCoordinates(x, y, this.offset, this.isBitmapText(), this.style)
 
     this.labelBackground?.moveTo(bg.x, bg.y)
 
@@ -157,6 +143,13 @@ export class Label {
     }
 
     return undefined
+  }
+
+  set rotation(rotation: number) {
+    this.text.rotation = rotation
+    if (this.labelBackground) {
+      this.labelBackground.rotation = rotation
+    }
   }
 
   get bounds() {

@@ -12,8 +12,9 @@ import { CircleTexture } from './textures/circle'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
-import { TextIconTexture, ImageIconTexture } from './textures/icons'
 import { FontBook } from './textures/font'
+import TextIconCache from './textures/textIcon/TextIconCache'
+import AssetManager from './loaders/AssetManager'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -144,11 +145,11 @@ export class Renderer {
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   circle: CircleTexture
   arrow: ArrowTexture
-  textIcon: TextIconTexture
-  imageIcon: ImageIconTexture
+  textIcon: TextIconCache
   fontBook = new FontBook() // TODO -> make configurable
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
+  assets = new AssetManager()
 
   private doubleClick = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
@@ -224,8 +225,7 @@ export class Renderer {
     this.app.stage.addChild(this.root)
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
-    this.textIcon = new TextIconTexture(this)
-    this.imageIcon = new ImageIconTexture()
+    this.textIcon = new TextIconCache(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer
