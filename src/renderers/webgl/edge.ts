@@ -1,5 +1,5 @@
 import { type Renderer } from '.'
-import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM } from './utils'
+import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM, midPoint } from './utils'
 import { movePoint } from './utils'
 import { NodeRenderer } from './node'
 import * as Graph from '../..'
@@ -7,6 +7,8 @@ import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'
 import { FederatedPointerEvent } from 'pixi.js'
 import { EdgeHitArea } from './interaction/edgeHitArea'
+import { Label } from './objects/label'
+import { FontSubscription } from './loaders/AssetManager'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -14,16 +16,17 @@ const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer {
   edge?: Graph.Edge
-
+  label?: Label
   renderer: Renderer
   lineSegment: LineSegment
   source!: NodeRenderer
   target!: NodeRenderer
-  x0?: number
-  y0?: number
-  x1?: number
-  y1?: number
-  theta?: number
+  x0 = 0
+  y0 = 0
+  x1 = 0
+  y1 = 0
+  theta = 0
+  center: [x: number, y: number] = [0, 0]
   width?: number
   stroke?: string | number
   strokeOpacity?: number
@@ -35,8 +38,10 @@ export class EdgeRenderer {
   private lineMounted = false
   private forwardArrowMounted = false
   private reverseArrowMounted = false
+  private labelMounted = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
+  private _loader?: FontSubscription
 
   constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
@@ -70,6 +75,44 @@ export class EdgeRenderer {
             reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
           }
       }
+    }
+
+    this._loader?.unsubscribe()
+    if (edge.label === undefined || edge.label.trim() === '') {
+      if (this.label) {
+        this.renderer.labelObjectManager.delete(this.label)
+        this.labelMounted = false
+        this.label = undefined
+      }
+    } else if (this.renderer.assets.shouldLoadFont(edge.style?.label)) {
+      this._loader = this.renderer.assets.loadFont({
+        fontFamily: edge.style.label.fontFamily,
+        fontWeight: edge.style.label.fontWeight,
+        timeout: 10000,
+        resolve: () => {
+          this._loader = undefined
+          if (!edge.label) {
+            return
+          } else if (this.label) {
+            this.label.update(edge.label, edge.style?.label)
+          } else {
+            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
+            this.label.rotation = this.theta
+            this.label.moveTo(...this.center)
+            if (
+              this.renderer.zoom > MIN_LABEL_ZOOM &&
+              this.visible(Math.min(this.x0, this.x1), Math.min(this.y0, this.y1), Math.max(this.x0, this.x1), Math.max(this.y0, this.y1))
+            ) {
+              this.renderer.labelObjectManager.mount(this.label)
+              this.labelMounted = true
+            }
+          }
+        }
+      })
+    } else if (this.label === undefined) {
+      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
+    } else {
+      this.label.update(edge.label, edge.style?.label)
     }
 
     this.edge = edge
@@ -130,6 +173,17 @@ export class EdgeRenderer {
       }
     }
 
+    if (this.label) {
+      const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+      if (shouldLabelMount && !this.labelMounted) {
+        this.renderer.labelObjectManager.mount(this.label)
+        this.labelMounted = true
+      } else if (!shouldLabelMount && this.labelMounted) {
+        this.renderer.labelObjectManager.unmount(this.label)
+        this.labelMounted = false
+      }
+    }
+
     if (isVisible) {
       const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
       const stroke = this.edge?.style?.stroke ?? DEFAULT_EDGE_COLOR
@@ -185,6 +239,12 @@ export class EdgeRenderer {
           edgeY0 = edgePoint[1]
         }
 
+        this.center = midPoint(edgeX0, edgeY0, edgeX1, edgeY1)
+        if (this.label) {
+          this.label.rotation = this.theta
+          this.label.moveTo(...this.center)
+        }
+
         this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.stroke, this.strokeOpacity)
         // TODO - draw hitArea over arrow
         this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.theta)
@@ -193,6 +253,8 @@ export class EdgeRenderer {
   }
 
   delete() {
+    this._loader?.unsubscribe()
+    this._loader = undefined
     this.renderer.edgeObjectManager.delete(this.lineSegment)
     if (this.arrow?.forward) {
       this.renderer.edgeArrowObjectManager.delete(this.arrow.forward)

@@ -14,6 +14,7 @@ import { equals } from '../../../../'
  */
 export class Label {
   mounted = false
+  offset = 0
 
   private x?: number
   private y?: number
@@ -85,8 +86,8 @@ export class Label {
     return this
   }
 
-  moveTo(x: number, y: number, offset = 0) {
-    const { label, bg } = utils.getLabelCoordinates(x, y, offset, this.isBitmapText(), this.style)
+  moveTo(x: number, y: number) {
+    const { label, bg } = utils.getLabelCoordinates(x, y, this.offset, this.isBitmapText(), this.style)
 
     this.labelBackground?.moveTo(bg.x, bg.y)
 
@@ -128,6 +129,13 @@ export class Label {
     }
 
     return undefined
+  }
+
+  set rotation(rotation: number) {
+    this.text.rotation = rotation
+    if (this.labelBackground) {
+      this.labelBackground.rotation = rotation
+    }
   }
 
   private create() {

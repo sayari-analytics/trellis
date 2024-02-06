@@ -1,8 +1,6 @@
-import { Publisher, Subscriber, Subscription } from './PubSub'
+import { Publisher, Subscriber } from './PubSub'
 import { Assets, Texture } from 'pixi.js'
 import { noop } from '../../../utils'
-
-export type AssetSubscription = Subscription<Texture>
 
 type LoadAssetProps = Partial<Subscriber<Texture>> & { url: string }
 

@@ -56,6 +56,7 @@ export class NodeRenderer {
 
     this.node = node
 
+    this._labelLoader?.unsubscribe()
     // TODO -> manage asset loading in object's class
     if (node.label === undefined || node.label.trim() === '') {
       if (this.label) {
@@ -64,7 +65,6 @@ export class NodeRenderer {
         this.label = undefined
       }
     } else if (this.renderer.assets.shouldLoadFont(node.style?.label)) {
-      this._labelLoader?.unsubscribe()
       this._labelLoader = this.renderer.assets.loadFont({
         fontFamily: node.style.label.fontFamily,
         fontWeight: node.style.label.fontWeight,
@@ -78,7 +78,8 @@ export class NodeRenderer {
             this.label.update(node.label, node.style?.label)
           } else {
             this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
-            this.label.moveTo(this.x, this.y, this.strokes.radius)
+            this.label.offset = this.strokes.radius
+            this.label.moveTo(this.x, this.y)
             this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
           }
         }
@@ -565,7 +566,12 @@ export class NodeRenderer {
 
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
-    this.label?.moveTo(this.x, this.y, this.strokes.radius)
+
+    if (this.label) {
+      this.label.offset = this.strokes.radius
+      this.label.moveTo(this.x, this.y)
+    }
+
     this.icon?.moveTo(this.x, this.y)
     this.hitArea.update(this.x, this.y, radius)
   }

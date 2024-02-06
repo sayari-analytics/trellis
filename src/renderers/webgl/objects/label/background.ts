@@ -98,6 +98,10 @@ export class LabelBackground {
     this.label = text
   }
 
+  set rotation(rotation: number) {
+    this.sprite.rotation = rotation
+  }
+
   private resize() {
     const { height, width } = this.size
     if (height !== this.sprite.height) {

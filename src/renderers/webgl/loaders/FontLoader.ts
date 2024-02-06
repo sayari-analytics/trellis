@@ -1,9 +1,7 @@
-import { Subscriber, Publisher, Subscription } from './PubSub'
+import { Subscriber, Publisher } from './PubSub'
 import { STYLE_DEFAULTS } from '../objects/label/utils'
 import { noop } from '../../../utils'
 import FontFaceObserver from 'fontfaceobserver'
-
-export type FontSubscription = Subscription<true>
 
 type LoadFontProps = Partial<Subscriber<true>> & {
   fontFamily: string

@@ -1,7 +1,10 @@
-import FontLoader, { FontSubscription } from './FontLoader'
-import AssetLoader, { AssetSubscription } from './AssetLoader'
+import FontLoader from './FontLoader'
+import AssetLoader from './AssetLoader'
+import { Subscription } from './PubSub'
+import { Texture } from 'pixi.js'
 
-export type { FontSubscription, AssetSubscription }
+export type FontSubscription = Subscription<true>
+export type AssetSubscription = Subscription<Texture>
 
 export default class AssetManager {
   private _font = new FontLoader()
