@@ -32,17 +32,6 @@ export type StyleWithDefaults = Omit<LabelStyle, _StyleDefaults> & {
   margin: number
 }
 
-export type LabelBounds = {
-  x: number
-  y: number
-  width: number
-  height: number
-  top: number
-  bottom: number
-  right: number
-  left: number
-}
-
 export const RESOLUTION = 2
 export const STYLE_DEFAULTS = {
   FONT_SIZE: 10,
@@ -229,17 +218,6 @@ const getLabelCoordinates = (
   return { label, bg }
 }
 
-const getLabelBounds = (x: number, y: number, width: number, height: number, anchorX: number, anchorY: number): LabelBounds => ({
-  x,
-  y,
-  width,
-  height,
-  right: anchorX === 0 ? x + width : anchorX === 0.5 ? x + width / 2 : x,
-  left: anchorX === 0 ? x : anchorX === 0.5 ? x - width / 2 : x - width,
-  bottom: anchorY === 0 ? y + height : anchorY === 0.5 ? y + height / 2 : y,
-  top: anchorY === 0 ? y : anchorY === 0.5 ? y - height / 2 : y - height
-})
-
 export default {
   isASCII,
   mergeDefaults,
@@ -249,6 +227,5 @@ export default {
   getAnchorPoint,
   getTextStyle,
   getBitmapStyle,
-  getBackgroundPadding,
-  getLabelBounds
+  getBackgroundPadding
 }
