@@ -1,5 +1,5 @@
 import utils, { STYLE_DEFAULTS } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle, StyleWithDefaults, LabelBounds } from './utils'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle, StyleWithDefaults } from './utils'
 import type { Stroke, TextAlign, FontWeight } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
@@ -16,26 +16,28 @@ export class Label {
   mounted = false
   offset = 0
 
-  private x?: number
-  private y?: number
+  private x = 0
+  private y = 0
   private dirty = false
   private transformed = false
-  private label: string
-  private fontBook: FontBook
-  private container: Container
+
   private text: BitmapText | Text
   private labelBackground: LabelBackground | null = null
-  private assignedStyle: LabelStyle | undefined
-  private activeStyle!: StyleWithDefaults
-  private labelBounds!: LabelBounds
+  private _currentStyle!: StyleWithDefaults
+  private _rect: { top: number; bottom: number; right: number; left: number }
 
-  constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+  constructor(
+    private fontBook: FontBook,
+    private container: Container,
+    private label: string,
+    private _style: LabelStyle | undefined
+  ) {
     this.label = label
     this.fontBook = fontBook
     this.container = container
-    this.style = style
+    this.style = _style
     this.text = this.create()
-    this.setBounds()
+    this._rect = this.getRect()
     if (this.style.background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
@@ -43,21 +45,11 @@ export class Label {
 
   update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
-    const styleHasChanged = !equals(this.assignedStyle, style)
+    const styleHasChanged = !equals(this._style, style)
+
+    const prevMargin = [this.style.margin, this.labelBackground?.padding]
 
     this.style = style
-
-    if (labelHasChanged) {
-      this.label = label
-      this.text.text = label
-
-      const isBitmapText = this.isBitmapText()
-      const isASCII = utils.isASCII(label)
-      // if the text type has changed, regenerate a new text object
-      if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
-        this.transformText()
-      }
-    }
 
     if (styleHasChanged) {
       this.stroke = style?.stroke
@@ -69,6 +61,20 @@ export class Label {
       this.fontSize = style?.fontSize ?? STYLE_DEFAULTS.FONT_SIZE
       this.fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
       this.fontName = style?.fontName ?? STYLE_DEFAULTS.FONT_NAME
+      this.background = style?.background
+    }
+
+    if (labelHasChanged) {
+      this.label = label
+      this.text.text = label
+
+      const isBitmapText = this.isBitmapText()
+      const isASCII = utils.isASCII(label)
+      // if the text type has changed, regenerate a new text object
+      if ((isBitmapText && !isASCII) || (!isBitmapText && isASCII)) {
+        this.transformText()
+        this.dirty = false
+      }
     }
 
     if (this.dirty) {
@@ -76,23 +82,22 @@ export class Label {
       this.updateText()
     }
 
-    if (this.transformed && this.labelBackground) {
-      this.labelBackground.text = this.text
+    if (this.transformed) {
+      this.transformed = false
+      if (this.labelBackground) {
+        this.labelBackground.text = this.text
+      }
     }
 
-    this.transformed = false
-
-    if (labelHasChanged || styleHasChanged) {
-      this.setBounds()
-      this.background = style?.background
+    if (labelHasChanged || !equals(prevMargin, [this.style.margin, this.labelBackground?.padding])) {
+      this._rect = this.getRect()
+      this.labelBackground?.resize(this.text.width, this.text.height)
     }
 
     return this
   }
 
   moveTo(x: number, y: number) {
-    let dirty = false
-
     const { label, bg } = utils.getLabelCoordinates(x, y, this.offset, this.isBitmapText(), this.style)
 
     this.labelBackground?.moveTo(bg.x, bg.y)
@@ -100,16 +105,10 @@ export class Label {
     if (label.x !== this.x) {
       this.text.x = label.x
       this.x = label.x
-      dirty = true
     }
     if (label.y !== this.y) {
       this.text.y = label.y
       this.y = label.y
-      dirty = true
-    }
-
-    if (dirty) {
-      this.labelBounds = this.setBounds()
     }
 
     return this
@@ -152,8 +151,8 @@ export class Label {
     }
   }
 
-  get bounds() {
-    return this.labelBackground?.bounds ?? this.labelBounds
+  get rect() {
+    return this._rect
   }
 
   private create() {
@@ -189,8 +188,8 @@ export class Label {
 
     this.delete()
     this.text = this.create()
-    this.text.x = this.x ?? 0
-    this.text.y = this.y ?? 0
+    this.text.x = this.x
+    this.text.y = this.y
 
     if (isMounted) {
       this.mount()
@@ -201,32 +200,42 @@ export class Label {
     return text instanceof BitmapText
   }
 
-  private setBounds() {
-    this.labelBounds = utils.getLabelBounds(
-      this.x ?? 0,
-      this.y ?? 0,
-      this.text.width,
-      this.text.height,
-      this.text.anchor.x,
-      this.text.anchor.y
-    )
-    return this.labelBounds
+  private getRect() {
+    const position = this.style.position
+    const margin = this.offset + this.style.margin
+    const height = this.text.height
+    const width = this.text.width
+    const [pt, pr, pb, pl] = utils.getBackgroundPadding(this.labelBackground?.padding ?? 0)
+
+    switch (position) {
+      case 'bottom':
+      case 'top': {
+        const vertical = { top: 0, bottom: 0, right: width / 2 + pr, left: width / 2 + pl }
+        return { ...vertical, [position]: margin + pt + pb + height }
+      }
+
+      case 'left':
+      case 'right': {
+        const horizontal = { left: 0, right: 0, top: height / 2 + pt, bottom: height / 2 + pb }
+        return { ...horizontal, [position]: margin + pl + pr + width }
+      }
+    }
   }
 
   private get style(): StyleWithDefaults {
-    return this.activeStyle
+    return this._currentStyle
   }
 
   private set style(style: LabelStyle | undefined) {
-    this.assignedStyle = style
-    this.activeStyle = utils.mergeDefaults(style)
+    this._style = style
+    this._currentStyle = utils.mergeDefaults(style)
   }
 
   private set background(background: LabelBackgroundStyle | undefined) {
     if (this.labelBackground === null && background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, background)
     } else if (this.labelBackground && background !== undefined) {
-      this.labelBackground.update([this.text.width, this.text.height], [this.text.anchor.x, this.text.anchor.y], background)
+      this.labelBackground.update(background)
     } else if (this.labelBackground && background === undefined) {
       this.labelBackground.delete()
       this.labelBackground = null
@@ -255,6 +264,7 @@ export class Label {
   private set anchor([x, y]: [x: number, y: number]) {
     if (!this.text.anchor.equals({ x, y })) {
       this.text.anchor.set(x, y)
+      this.labelBackground?.anchor.set(x, y)
     }
   }
 

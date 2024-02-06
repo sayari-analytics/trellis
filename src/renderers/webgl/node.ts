@@ -577,19 +577,23 @@ export class NodeRenderer {
   }
 
   private visible() {
-    let left = this.x - this.strokes.radius
-    let right = this.x + this.strokes.radius
-    let top = this.y - this.strokes.radius
-    let bottom = this.y + this.strokes.radius
+    let left: number, right: number, top: number, bottom: number
 
     if (this.label) {
-      left = Math.min(left, this.label.bounds.left)
-      right = Math.max(right, this.label.bounds.right)
-      top = Math.min(top, this.label.bounds.top)
-      bottom = Math.max(bottom, this.label.bounds.bottom)
+      left = this.x - Math.max(this.strokes.radius, this.label.rect.left)
+      right = this.x + Math.max(this.strokes.radius, this.label.rect.right)
+      top = this.y - Math.max(this.strokes.radius, this.label.rect.top)
+      bottom = this.y + Math.max(this.strokes.radius, this.label.rect.bottom)
+    } else {
+      left = this.x - this.strokes.radius
+      right = this.x + this.strokes.radius
+      top = this.y - this.strokes.radius
+      bottom = this.y + this.strokes.radius
     }
 
-    return right >= this.renderer.minX && left <= this.renderer.maxX && bottom >= this.renderer.minY && top <= this.renderer.maxY
+    const { minX, maxX, minY, maxY } = this.renderer
+
+    return right >= minX && left <= maxX && bottom >= minY && top <= maxY
   }
 
   private mountLabel(shouldMount: boolean) {
