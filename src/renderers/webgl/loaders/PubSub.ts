@@ -1,5 +1,3 @@
-import { warn } from '../../../utils'
-
 export type Subscriber<T, E = Error> = {
   resolve: (result: T) => void
   reject: (error: E) => void
@@ -84,7 +82,7 @@ export class Publisher<T, E = Error> {
       const asset = await this._loader()
       this._resolve(asset)
     } catch (error) {
-      warn(error)
+      console.warn(error)
       this._reject(error as unknown as E)
     }
   }

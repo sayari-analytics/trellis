@@ -27,17 +27,17 @@ export class Label {
   private transformed = false
   private dirty = false
 
-  static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
-    const fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
-    const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-    const ready = await fontBook.load(fontFamily, fontWeight, 10000)
+  // static async init(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+  //   const fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
+  //   const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
+  //   const ready = await fontBook.load(fontFamily, fontWeight, 10000)
 
-    if (ready) {
-      return new Label(fontBook, container, label, style)
-    }
-  }
+  //   if (ready) {
+  //     return new Label(fontBook, container, label, style)
+  //   }
+  // }
 
-  private constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+  constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
     this.label = label
     this.fontBook = fontBook
     this.container = container
@@ -48,14 +48,14 @@ export class Label {
     }
   }
 
-  async update(label: string, style: LabelStyle | undefined) {
+  update(label: string, style: LabelStyle | undefined) {
     const labelHasChanged = this.label !== label
     const styleHasChanged = !equals(this._style, style)
 
-    const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-    if (style?.fontFamily !== undefined && style.fontFamily !== this.style.fontFamily) {
-      await this.fontBook.load(style.fontFamily, fontWeight)
-    }
+    // const fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
+    // if (style?.fontFamily !== undefined && style.fontFamily !== this.style.fontFamily) {
+    //   await this.fontBook.load(style.fontFamily, fontWeight)
+    // }
 
     this._style = style
 
@@ -74,7 +74,7 @@ export class Label {
     if (styleHasChanged) {
       this.stroke = style?.stroke
       this.wordWrap = style?.wordWrap
-      this.fontWeight = fontWeight
+      this.fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
       this.color = style?.color ?? STYLE_DEFAULTS.COLOR
       this.letterSpacing = style?.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
       this.position = style?.position ?? STYLE_DEFAULTS.POSITION

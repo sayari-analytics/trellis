@@ -73,8 +73,6 @@ export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => 
 
 export const identity = <T>(value: T) => value
 
-export const warn = throttle((err) => console.warn(err), 0)
-
 // export const interpolateInterval = (count: number, duration: number) => {
 //   let i = 0
 //   let interval: number | undefined = undefined

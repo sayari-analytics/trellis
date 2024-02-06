@@ -8,6 +8,7 @@ import { NodeStrokes } from './objects/nodeStrokes'
 import { Icon } from './objects/icon'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils'
+import { FontSubscription, ResourceSubscription } from './loaders'
 
 export class NodeRenderer {
   node!: Graph.Node
@@ -32,9 +33,11 @@ export class NodeRenderer {
   private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
-  private labelLoading = false
   private iconMounted = false
   private iconLoading = false
+
+  private _labelLoader?: FontSubscription
+  private _iconLoader?: FontSubscription | ResourceSubscription
 
   constructor(renderer: Renderer, node: Graph.Node) {
     this.renderer = renderer
@@ -45,45 +48,6 @@ export class NodeRenderer {
   }
 
   update(node: Graph.Node) {
-    const nodeLabel = node.label
-    const labelStyle = node.style?.label
-    if (nodeLabel === undefined || nodeLabel.trim() === '') {
-      if (this.label) {
-        this.renderer.labelObjectManager.delete(this.label)
-        this.labelMounted = false
-        this.label = undefined
-      }
-    } else if (this.label === undefined) {
-      this.labelLoading = true
-      Label.init(this.renderer.fontBook, this.renderer.labelsContainer, nodeLabel, labelStyle).then((label) => {
-        this.label = label
-        this.labelLoading = false
-        this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
-        this.label?.moveTo(this.x, this.y, this.strokes.radius)
-      })
-    } else {
-      this.label.update(nodeLabel, labelStyle)
-    }
-
-    const iconStyle = node.style?.icon
-    if (iconStyle === undefined) {
-      if (this.icon) {
-        this.icon.delete()
-        this.iconMounted = false
-        this.icon = undefined
-      }
-    } else if (this.icon === undefined) {
-      this.iconLoading = true
-      Icon.init(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, iconStyle).then((icon) => {
-        this.icon = icon
-        this.iconLoading = false
-        this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
-        this.icon?.moveTo(this.x, this.y)
-      })
-    } else {
-      this.icon.update(iconStyle)
-    }
-
     /**
      * interpolate position/radius if all of the following are true:
      * - x/y/node has changed
@@ -120,6 +84,56 @@ export class NodeRenderer {
     }
 
     this.node = node
+
+    if (node.label === undefined || node.label.trim() === '') {
+      if (this.label) {
+        this.renderer.labelObjectManager.delete(this.label)
+        this.labelMounted = false
+        this.label = undefined
+      }
+    } else if (this.renderer.assets.shouldLoadFont(node.style?.label)) {
+      this._labelLoader?.unsubscribe()
+      this._labelLoader = this.renderer.assets.loadFont({
+        fontFamily: node.style.label.fontFamily,
+        fontWeight: node.style.label.fontWeight,
+        timeout: 10000,
+        resolve: () => {
+          this._labelLoader = undefined
+
+          if (!node.label) {
+            return
+          } else if (this.label) {
+            this.label.update(node.label, node.style?.label)
+          } else {
+            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
+            this.label.moveTo(this.x, this.y, this.strokes.radius)
+            this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+          }
+        }
+      })
+    } else if (this.label === undefined) {
+      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
+    } else {
+      this.label.update(node.label, node.style?.label)
+    }
+
+    if (node.style?.icon === undefined) {
+      if (this.icon) {
+        this.icon.delete()
+        this.iconMounted = false
+        this.icon = undefined
+      }
+    } else if (this.icon === undefined) {
+      this.iconLoading = true
+      Icon.init(this.renderer.nodesContainer, this.renderer.textIcon, this.renderer.imageIcon, this.fill, node.style.icon).then((icon) => {
+        this.icon = icon
+        this.iconLoading = false
+        this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
+        this.icon?.moveTo(this.x, this.y)
+      })
+    } else {
+      this.icon.update(node.style.icon)
+    }
 
     return this
   }
@@ -200,6 +214,11 @@ export class NodeRenderer {
   }
 
   delete() {
+    this._labelLoader?.unsubscribe()
+    this._labelLoader = undefined
+    this._iconLoader?.unsubscribe()
+    this._iconLoader = undefined
+
     clearTimeout(this.doubleClickTimeout)
     this.fill.delete()
     this.renderer.nodeStrokeObjectManager.delete(this.strokes)
@@ -510,7 +529,7 @@ export class NodeRenderer {
   }
 
   private mountLabel(shouldMount: boolean) {
-    if (!this.labelLoading && this.label) {
+    if (this.label) {
       if (shouldMount && !this.labelMounted) {
         this.renderer.labelObjectManager.mount(this.label)
         this.labelMounted = true
