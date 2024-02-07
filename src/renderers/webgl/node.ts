@@ -30,11 +30,9 @@ export class NodeRenderer {
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
   private interpolateRadius?: (dt: number) => { value: number; done: boolean }
-  private fillMounted = false
   private strokeMounted = false
   private labelMounted = false
   private iconMounted = false
-  private iconLoading = false
 
   private _labelLoader?: FontSubscription
   private _iconLoader?: FontSubscription | AssetSubscription
@@ -80,7 +78,10 @@ export class NodeRenderer {
             this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
             this.label.offset = this.strokes.radius
             this.label.moveTo(this.x, this.y)
-            this.mountLabel(this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM)
+            if (this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM) {
+              this.renderer.labelObjectManager.mount(this.label)
+              this.labelMounted = true
+            }
           }
         }
       })
@@ -119,7 +120,10 @@ export class NodeRenderer {
             } else {
               this.icon = new Icon(this.renderer.nodesContainer, texture, this.fill, offset, scale)
               this.icon?.moveTo(this.x, this.y)
-              this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
+              if (this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
+                this.renderer.nodeIconObjectManager.mount(this.icon)
+                this.iconMounted = true
+              }
             }
           }
         })
@@ -147,8 +151,11 @@ export class NodeRenderer {
               this.icon.update(texture, scale, offset)
             } else {
               this.icon = new Icon(this.renderer.nodesContainer, texture, this.fill, offset, scale)
-              this.mountIcon(this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
               this.icon?.moveTo(this.x, this.y)
+              if (this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
+                this.renderer.nodeIconObjectManager.mount(this.icon)
+                this.iconMounted = true
+              }
             }
           }
         })
@@ -238,16 +245,10 @@ export class NodeRenderer {
       this.renderer.interactionObjectManager.unmount(this.hitArea)
     }
 
-    if (isVisible) {
-      if (!this.fillMounted) {
-        this.fill.mount()
-        this.fillMounted = true
-      }
-    } else {
-      if (this.fillMounted) {
-        this.fill.unmount()
-        this.fillMounted = false
-      }
+    if (isVisible && !this.fill.mounted) {
+      this.fill.mount()
+    } else if (!isVisible && this.fill.mounted) {
+      this.fill.unmount()
     }
 
     if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
@@ -262,8 +263,27 @@ export class NodeRenderer {
       }
     }
 
-    this.mountLabel(isVisible && this.renderer.zoom > MIN_LABEL_ZOOM)
-    this.mountIcon(isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM)
+    if (this.label) {
+      const shouldMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+      if (shouldMount && !this.labelMounted) {
+        this.renderer.labelObjectManager.mount(this.label)
+        this.labelMounted = true
+      } else if (!shouldMount && this.labelMounted) {
+        this.renderer.labelObjectManager.unmount(this.label)
+        this.labelMounted = false
+      }
+    }
+
+    if (this.icon) {
+      const shouldMount = isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM
+      if (shouldMount && !this.iconMounted) {
+        this.renderer.nodeIconObjectManager.mount(this.icon)
+        this.iconMounted = true
+      } else if (!shouldMount && this.iconMounted) {
+        this.renderer.nodeIconObjectManager.unmount(this.icon)
+        this.iconMounted = false
+      }
+    }
   }
 
   delete() {
@@ -584,29 +604,5 @@ export class NodeRenderer {
       this.y + this.strokes.radius >= this.renderer.minY &&
       this.y - this.strokes.radius <= this.renderer.maxY
     )
-  }
-
-  private mountLabel(shouldMount: boolean) {
-    if (this.label) {
-      if (shouldMount && !this.labelMounted) {
-        this.renderer.labelObjectManager.mount(this.label)
-        this.labelMounted = true
-      } else if (!shouldMount && this.labelMounted) {
-        this.renderer.labelObjectManager.unmount(this.label)
-        this.labelMounted = false
-      }
-    }
-  }
-
-  private mountIcon(shouldMount: boolean) {
-    if (!this.iconLoading && this.icon) {
-      if (shouldMount && !this.iconMounted) {
-        this.renderer.nodeIconObjectManager.mount(this.icon)
-        this.iconMounted = true
-      } else if (!shouldMount && this.iconMounted) {
-        this.renderer.nodeIconObjectManager.unmount(this.icon)
-        this.iconMounted = false
-      }
-    }
   }
 }
