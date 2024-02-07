@@ -1,6 +1,6 @@
 import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.js'
 import type { LabelBackgroundStyle } from './utils'
-import utils from './utils'
+import utils, { DEFAULT_LABEL_BG_STYLE } from './utils'
 
 export class LabelBackground {
   mounted = false
@@ -11,7 +11,7 @@ export class LabelBackground {
 
   private _width: number
   private _height: number
-  private style: Required<LabelBackgroundStyle>
+  private _style: Required<LabelBackgroundStyle> = DEFAULT_LABEL_BG_STYLE
 
   constructor(
     private container: Container,
@@ -22,12 +22,12 @@ export class LabelBackground {
     this.container = container
     this._width = this.label.width
     this._height = this.label.height
-    this.style = utils.mergeBackgroundDefaults(style)
+    this.style = style
     this.sprite = this.create()
   }
 
   update(style: LabelBackgroundStyle) {
-    this.style = utils.mergeBackgroundDefaults(style)
+    this.style = style
     this.color = this.style.color
     this.opacity = this.style.opacity
 
@@ -113,6 +113,14 @@ export class LabelBackground {
 
   get padding() {
     return this.style.padding
+  }
+
+  private set style(style: LabelBackgroundStyle) {
+    this._style = { ...DEFAULT_LABEL_BG_STYLE, ...style }
+  }
+
+  private get style(): Required<LabelBackgroundStyle> {
+    return this._style
   }
 
   private getSize(): [width: number, height: number] {
