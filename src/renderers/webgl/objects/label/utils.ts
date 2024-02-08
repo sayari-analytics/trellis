@@ -1,28 +1,6 @@
 import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
-import type { Stroke, FontWeight, TextAlign } from '../../../../types'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign } from '../../../../types/api'
 import { isNumber } from '../../../../utils'
-
-export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
-
-export type LabelBackgroundStyle = {
-  color: string
-  opacity?: number
-  padding?: number | number[]
-}
-
-export type LabelStyle = Partial<{
-  fontName: string
-  fontSize: number
-  margin: number
-  position: LabelPosition
-  fontFamily: string
-  letterSpacing: number
-  wordWrap: number | false
-  fontWeight: FontWeight
-  stroke: Stroke
-  color: string
-  background: LabelBackgroundStyle
-}>
 
 export type DefaultLabelStyle = Required<Omit<LabelStyle, 'background'>> & {
   background?: LabelBackgroundStyle

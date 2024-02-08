@@ -1,10 +1,10 @@
 import utils, { DEFAULT_LABEL_STYLE } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle, DefaultLabelStyle } from './utils'
-import type { Stroke, TextAlign, FontWeight } from '../../../../types'
+import type { DefaultLabelStyle } from './utils'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle, Stroke, TextAlign, FontWeight, Bounds } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
 import { LabelBackground } from './background'
 import { FontBook } from '../../textures/font'
-import { Bounds, equals } from '../../../../'
+import { equals } from '../../../../utils/api'
 import { isNumber } from '../../../../utils'
 
 /**
@@ -385,4 +385,3 @@ export class Label {
 }
 
 export { LabelBackground } from './background'
-export type { LabelStyle, LabelBackgroundStyle, LabelPosition } from './utils'

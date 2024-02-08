@@ -1,5 +1,5 @@
 import { BitmapText, ColorSource, Container, Sprite, Text, Texture } from 'pixi.js'
-import type { LabelBackgroundStyle } from './utils'
+import type { LabelBackgroundStyle } from '../../../../types'
 import utils, { DEFAULT_LABEL_BG_STYLE } from './utils'
 
 export class LabelBackground {

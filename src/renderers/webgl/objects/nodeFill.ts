@@ -1,5 +1,5 @@
 import { Container, Sprite } from 'pixi.js'
-import * as Graph from '../../..'
+import type { NodeStyle } from '../../../types'
 import { CircleTexture } from '../textures/circle'
 
 const DEFAULT_NODE_FILL = 0xaaaaaa
@@ -11,7 +11,7 @@ export class NodeFill {
   private container: Container
   private circleTexture: CircleTexture
   private radius?: number
-  private style?: Graph.NodeStyle
+  private style?: NodeStyle
 
   constructor(container: Container, circleTexture: CircleTexture) {
     this.container = container
@@ -23,7 +23,7 @@ export class NodeFill {
     this.container.addChild(this.fill)
   }
 
-  update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
+  update(x: number, y: number, radius: number, style?: NodeStyle) {
     if ((style?.color ?? DEFAULT_NODE_FILL) !== (this.style?.color ?? DEFAULT_NODE_FILL)) {
       this.fill.tint = style?.color ?? DEFAULT_NODE_FILL
     }

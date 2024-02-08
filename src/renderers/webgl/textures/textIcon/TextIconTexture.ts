@@ -1,5 +1,5 @@
 import { RenderTexture, Text as PixiText, MSAA_QUALITY, Matrix, Renderer as PixiRenderer } from 'pixi.js'
-import type { TextIcon } from '../../../../'
+import type { TextIcon } from '../../../../types/api'
 import type { Renderer } from '../..'
 
 export default class TextIconTexture {

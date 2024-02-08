@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture } from 'pixi.js'
 import { HALF_PI } from '../utils'
-import { angle, distance } from '../../..'
+import { angle, distance } from '../../../utils/api'
 
 export class LineSegment {
   mounted = false

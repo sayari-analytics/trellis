@@ -1,7 +1,7 @@
 import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from './utils'
 import { FederatedPointerEvent } from 'pixi.js'
 import { type Renderer } from '.'
-import * as Graph from '../..'
+import type { Node } from '../../types'
 import { Label } from './objects/label'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
@@ -11,7 +11,7 @@ import { FontSubscription, AssetSubscription } from './loaders/AssetManager'
 import Icon from './objects/Icon'
 
 export class NodeRenderer {
-  node!: Graph.Node
+  node!: Node
   x!: number
   y!: number
   fill: NodeFill
@@ -37,7 +37,7 @@ export class NodeRenderer {
   private _labelLoader?: FontSubscription
   private _iconLoader?: FontSubscription | AssetSubscription
 
-  constructor(renderer: Renderer, node: Graph.Node) {
+  constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
     this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
     this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
@@ -45,7 +45,7 @@ export class NodeRenderer {
     this.update(node)
   }
 
-  update(node: Graph.Node) {
+  update(node: Node) {
     const x = node.x ?? 0
     const y = node.y ?? 0
     const xChanged = x !== this.x
@@ -55,6 +55,7 @@ export class NodeRenderer {
     this.node = node
 
     this._labelLoader?.unsubscribe()
+    const labelStyle = node.style?.label
     // TODO -> manage asset loading in object's class
     if (node.label === undefined || node.label.trim() === '') {
       if (this.label) {
@@ -62,10 +63,10 @@ export class NodeRenderer {
         this.labelMounted = false
         this.label = undefined
       }
-    } else if (this.renderer.assets.shouldLoadFont(node.style?.label)) {
+    } else if (this.renderer.assets.shouldLoadFont(labelStyle)) {
       this._labelLoader = this.renderer.assets.loadFont({
-        fontFamily: node.style.label.fontFamily,
-        fontWeight: node.style.label.fontWeight,
+        fontFamily: labelStyle.fontFamily,
+        fontWeight: labelStyle.fontWeight,
         timeout: 10000,
         resolve: () => {
           this._labelLoader = undefined
@@ -73,9 +74,9 @@ export class NodeRenderer {
           if (!node.label) {
             return
           } else if (this.label) {
-            this.label.update(node.label, node.style?.label)
+            this.label.update(node.label, labelStyle)
           } else {
-            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
+            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, labelStyle)
             this.label.offset = this.strokes.radius
             this.label.moveTo(this.x, this.y)
             if (this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM) {
@@ -86,9 +87,9 @@ export class NodeRenderer {
         }
       })
     } else if (this.label === undefined) {
-      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
+      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, labelStyle)
     } else {
-      this.label.update(node.label, node.style?.label)
+      this.label.update(node.label, labelStyle)
     }
 
     if (node.style?.icon === undefined) {
@@ -580,7 +581,7 @@ export class NodeRenderer {
     this.doubleClick = false
   }
 
-  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
+  private setPosition(node: Node, x: number, y: number, radius: number) {
     this.x = x
     this.y = y
 

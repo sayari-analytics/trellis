@@ -1,7 +1,7 @@
 import { Container, Sprite } from 'pixi.js'
 import { CircleTexture } from '../textures/circle'
 import { NodeFill } from './nodeFill'
-import * as Graph from '../../..'
+import type { NodeStyle } from '../../../types'
 
 export class NodeStrokes {
   mounted = false
@@ -11,7 +11,7 @@ export class NodeStrokes {
   private container: Container
   private circleTexture: CircleTexture
   private fill: NodeFill
-  private style?: Graph.NodeStyle
+  private style?: NodeStyle
 
   constructor(container: Container, circleTexture: CircleTexture, fill: NodeFill) {
     this.container = container
@@ -19,7 +19,7 @@ export class NodeStrokes {
     this.fill = fill
   }
 
-  update(x: number, y: number, radius: number, style?: Graph.NodeStyle) {
+  update(x: number, y: number, radius: number, style?: NodeStyle) {
     if (style?.stroke !== this.style?.stroke) {
       // exit
       const isMounted = this.mounted

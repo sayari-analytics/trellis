@@ -1,6 +1,7 @@
 import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
+import type { Node, Edge, Annotation, Viewport } from '../../types'
 import Stats from 'stats.js'
-import * as Graph from '../..'
+// import * as Graph from '../..'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
@@ -19,13 +20,13 @@ import AssetManager from './loaders/AssetManager'
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
 export type Position = 'nw' | 'ne' | 'se' | 'sw'
-export type NodePointerEvent = { type: 'nodePointer'; target: Graph.Node; targetIdx: number } & MousePosition & Keys
-export type NodeDragEvent = { type: 'nodeDrag'; dx: number; dy: number; target: Graph.Node; targetIdx: number } & MousePosition & Keys
-export type EdgePointerEvent = { type: 'edgePointer'; target: Graph.Edge; targetIdx: number } & MousePosition & Keys
+export type NodePointerEvent = { type: 'nodePointer'; target: Node; targetIdx: number } & MousePosition & Keys
+export type NodeDragEvent = { type: 'nodeDrag'; dx: number; dy: number; target: Node; targetIdx: number } & MousePosition & Keys
+export type EdgePointerEvent = { type: 'edgePointer'; target: Edge; targetIdx: number } & MousePosition & Keys
 export type AnnotationPointerEvent = {
   type: 'annotationPointer'
   position?: Position
-  target: Graph.Annotation
+  target: Annotation
   targetIdx: number
 } & MousePosition &
   Keys
@@ -33,18 +34,18 @@ export type AnnotationDragEvent = {
   type: 'annotationDrag'
   dx: number
   dy: number
-  target: Graph.Annotation
+  target: Annotation
   targetIdx: number
 } & MousePosition &
   Keys
 export type AnnotationResizeEvent = {
   type: 'annotationResize'
   position: Position
-  target: Graph.Annotation
+  target: Annotation
   targetIdx: number
 } & MousePosition &
   Keys
-export type ViewportPointerEvent = { type: 'viewportPointer'; target: Graph.Viewport } & MousePosition & Keys
+export type ViewportPointerEvent = { type: 'viewportPointer'; target: Viewport } & MousePosition & Keys
 export type ViewportDragEvent = { type: 'viewportDrag'; dx: number; dy: number } & MousePosition & Keys
 export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate'; dx: number; dy: number } & Keys
 export type ViewportWheelEvent = { type: 'viewportWheel'; dx: number; dy: number; dz: number } & MousePosition & Keys
@@ -134,9 +135,9 @@ export class Renderer {
   labelObjectManager = new ObjectManager(2000)
   interactionObjectManager = new ObjectManager(2000)
   eventSystem: EventSystem
-  nodes: Graph.Node[] = []
+  nodes: Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}
-  edges: Graph.Edge[] = []
+  edges: Edge[] = []
   edgeRenderersById: Record<string, EdgeRenderer> = {}
   renderedNodes = false
   dragInertia = defaultOptions.dragInertia
@@ -262,7 +263,7 @@ export class Renderer {
     }
   }
 
-  update({ nodes, edges, options }: { nodes: Graph.Node[]; edges: Graph.Edge[]; annotations?: Graph.Annotation[]; options: Options }) {
+  update({ nodes, edges, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
     this.animateViewport =
       options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
     this.animateNodePosition =

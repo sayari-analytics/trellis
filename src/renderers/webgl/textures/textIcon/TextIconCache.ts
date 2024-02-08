@@ -1,5 +1,5 @@
 import type { Renderer } from '../..'
-import type { TextIcon } from '../../../../'
+import type { TextIcon } from '../../../../types/api'
 import { MIN_ZOOM } from '../../utils'
 import TextIconTexture from './TextIconTexture'
 

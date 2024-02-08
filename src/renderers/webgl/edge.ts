@@ -2,20 +2,21 @@ import { type Renderer } from '.'
 import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM, midPoint } from './utils'
 import { movePoint } from './utils'
 import { NodeRenderer } from './node'
-import * as Graph from '../..'
+import type { Edge } from '../../types'
 import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'
 import { FederatedPointerEvent } from 'pixi.js'
 import { EdgeHitArea } from './interaction/edgeHitArea'
 import { Label } from './objects/label'
 import { FontSubscription } from './loaders/AssetManager'
+import { angle } from '../../utils/api'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
 const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer {
-  edge?: Graph.Edge
+  edge?: Edge
   label?: Label
   renderer: Renderer
   lineSegment: LineSegment
@@ -43,14 +44,14 @@ export class EdgeRenderer {
   private doubleClick = false
   private _loader?: FontSubscription
 
-  constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
+  constructor(renderer: Renderer, edge: Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
     this.lineSegment = new LineSegment(this.renderer.edgesContainer)
     this.hitArea = new EdgeHitArea(this.renderer.interactionContainer, this)
     this.update(edge, source, target)
   }
 
-  update(edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
+  update(edge: Edge, source: NodeRenderer, target: NodeRenderer) {
     this.source = source
     this.target = target
 
@@ -78,25 +79,26 @@ export class EdgeRenderer {
     }
 
     this._loader?.unsubscribe()
+    const labelStyle = edge.style?.label
     if (edge.label === undefined || edge.label.trim() === '') {
       if (this.label) {
         this.renderer.labelObjectManager.delete(this.label)
         this.labelMounted = false
         this.label = undefined
       }
-    } else if (this.renderer.assets.shouldLoadFont(edge.style?.label)) {
+    } else if (this.renderer.assets.shouldLoadFont(labelStyle)) {
       this._loader = this.renderer.assets.loadFont({
-        fontFamily: edge.style.label.fontFamily,
-        fontWeight: edge.style.label.fontWeight,
+        fontFamily: labelStyle.fontFamily,
+        fontWeight: labelStyle.fontWeight,
         timeout: 10000,
         resolve: () => {
           this._loader = undefined
           if (!edge.label) {
             return
           } else if (this.label) {
-            this.label.update(edge.label, edge.style?.label)
+            this.label.update(edge.label, labelStyle)
           } else {
-            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
+            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, labelStyle)
             this.label.rotation = this.theta
             this.label.moveTo(...this.center)
             if (
@@ -110,9 +112,9 @@ export class EdgeRenderer {
         }
       })
     } else if (this.label === undefined) {
-      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
+      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, labelStyle)
     } else {
-      this.label.update(edge.label, edge.style?.label)
+      this.label.update(edge.label, labelStyle)
     }
 
     this.edge = edge
@@ -209,7 +211,7 @@ export class EdgeRenderer {
         this.y0 = y0
         this.x1 = x1
         this.y1 = y1
-        this.theta = Graph.angle(this.x0, this.y0, this.x1, this.y1)
+        this.theta = angle(this.x0, this.y0, this.x1, this.y1)
         let edgeX0 = this.x0
         let edgeY0 = this.y0
         let edgeX1 = this.x1
