@@ -6,33 +6,36 @@ export type Dimensions = { width: number; height: number }
 export type Viewport = { x: number; y: number; zoom: number }
 
 // style
+export type FillStyle = { color: string; opacity?: number }
+
 export type Stroke = { color: string; width: number }
 
 export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 
-export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
+export type AnchorPosition = 'bottom' | 'left' | 'top' | 'right'
 
-export type LabelBackgroundStyle = {
-  color: string
-  opacity?: number
+export type TextHighlightStyle = FillStyle & {
   padding?: number | number[]
 }
 
-export type LabelStyle = Partial<{
+export type TextStyle = Partial<{
+  color: string
+  stroke: Stroke
   fontName: string
   fontSize: number
-  margin: number
-  position: LabelPosition
   fontFamily: string
   letterSpacing: number
   wordWrap: number | false
   fontWeight: FontWeight
-  stroke: Stroke
-  color: string
-  background: LabelBackgroundStyle
+  highlight: TextHighlightStyle
 }>
+
+export type LabelStyle = TextStyle & {
+  margin?: number
+  position?: AnchorPosition
+}
 
 // icons
 export type ImageIcon = {
@@ -55,6 +58,21 @@ export type TextIcon = {
 export type IconStyle = ImageIcon | TextIcon
 
 // nodes
+export type NodeStyle = {
+  color?: string
+  icon?: IconStyle
+  stroke?: Stroke[]
+  badge?: {
+    position: number
+    radius: number
+    color: string
+    stroke?: string
+    strokeWidth?: number
+    icon?: IconStyle
+  }[]
+  label?: LabelStyle
+}
+
 export type Node = {
   id: string
   radius: number
@@ -71,6 +89,21 @@ export type Node = {
   }
 }
 
+// edges
+export type ArrowStyle = 'forward' | 'reverse' | 'both' | 'none'
+
+export type EdgeLabelStyle = LabelStyle & {
+  position?: Exclude<AnchorPosition, 'left' | 'right'>
+}
+
+export type EdgeStyle = {
+  width?: number
+  stroke?: string
+  strokeOpacity?: number
+  arrow?: ArrowStyle
+  label?: EdgeLabelStyle
+}
+
 export type Edge = {
   id: string
   source: string
@@ -79,90 +112,41 @@ export type Edge = {
   style?: EdgeStyle
 }
 
-export type NodeStyle = {
-  color?: string
-  icon?: IconStyle
+// annotations
+export type AnnotationStyle = {
+  background?: FillStyle
   stroke?: Stroke[]
-  badge?: {
-    position: number
-    radius: number
-    color: string
-    stroke?: string
-    strokeWidth?: number
-    icon?: IconStyle
-  }[]
-  label?: LabelStyle
 }
 
-export type EdgeStyle = {
-  width?: number
-  stroke?: string
-  strokeOpacity?: number
-  arrow?: 'forward' | 'reverse' | 'both' | 'none'
-  label?: LabelStyle
+export type TextAnnotationStyle = AnnotationStyle & {
+  text?: Omit<LabelStyle, 'position'>
+  padding?: number | number[]
 }
 
-export type CircleAnnotation = {
-  type: 'circle'
+type AnnotationBase<Type extends string> = {
+  type: Type
   id: string
   x: number
   y: number
+  resize?: boolean
+}
+
+export type CircleAnnotation = AnnotationBase<'circle'> & {
   radius: number
-  style: {
-    backgroundColor: string
-    stroke: {
-      color: string
-      width: number
-    }
-  }
+  style: AnnotationStyle
 }
 
-export type RectangleAnnotation = {
-  type: 'rectangle'
-  id: string
-  x: number
-  y: number
+export type RectangleAnnotation = AnnotationBase<'rectangle'> & {
   width: number
   height: number
-  resize?: boolean
-  style: {
-    backgroundColor: string
-    stroke: {
-      color: string
-      width: number
-    }
-  }
+  style: AnnotationStyle
 }
 
-export type TextAnnotation = {
-  type: 'text'
-  id: string
-  x: number
-  y: number
+export type TextAnnotation = AnnotationBase<'text'> & {
   width: number
   height: number
   content: string
-  resize?: boolean
-  style: Partial<{
-    backgroundColor: string
-    padding: number
-    stroke: {
-      color: string
-      width: number
-    }
-    text: Partial<{
-      fontName: string
-      fontSize: number
-      fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
-      fontStyle: 'normal' | 'italic' | 'oblique'
-      weight: string
-      color: string
-      align: 'left' | 'center' | 'right' | 'justify'
-      letterSpacing: number
-      lineSpacing: number
-      maxWidth: number
-    }>
-  }>
+  style: TextAnnotationStyle
 }
 
 export type Annotation = CircleAnnotation | RectangleAnnotation | TextAnnotation

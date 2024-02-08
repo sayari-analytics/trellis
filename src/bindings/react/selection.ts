@@ -209,11 +209,15 @@ export const Selection = <N extends Node>(props: Props<N>) => {
             y: state.annotation.y,
             radius: state.annotation.radius,
             style: {
-              backgroundColor: props.color ?? '#eee',
-              stroke: {
-                color: props.strokeColor ?? '#ccc',
-                width: props.strokeWidth ?? 2
-              }
+              background: {
+                color: props.color ?? '#eee'
+              },
+              stroke: [
+                {
+                  color: props.strokeColor ?? '#ccc',
+                  width: props.strokeWidth ?? 2
+                }
+              ]
             }
           }
         : state.annotation?.type === 'rectangle'
@@ -225,11 +229,15 @@ export const Selection = <N extends Node>(props: Props<N>) => {
             width: state.annotation.width,
             height: state.annotation.height,
             style: {
-              backgroundColor: props.color ?? '#eee',
-              stroke: {
-                color: props.strokeColor ?? '#ccc',
-                width: props.strokeWidth ?? 2
-              }
+              background: {
+                color: props.color ?? '#eee'
+              },
+              stroke: [
+                {
+                  color: props.strokeColor ?? '#ccc',
+                  width: props.strokeWidth ?? 2
+                }
+              ]
             }
           }
         : undefined

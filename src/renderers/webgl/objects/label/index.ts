@@ -1,8 +1,8 @@
 import utils, { DEFAULT_LABEL_STYLE } from './utils'
 import type { DefaultLabelStyle } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle, Stroke, TextAlign, FontWeight, Bounds } from '../../../../types'
+import type { AnchorPosition, LabelStyle, TextHighlightStyle, Stroke, TextAlign, FontWeight, Bounds } from '../../../../types'
 import { BitmapText, Container, Text } from 'pixi.js'
-import { LabelBackground } from './background'
+import { LabelHighlight } from './highlight'
 import { FontBook } from '../../textures/font'
 import { equals } from '../../../../utils/api'
 import { isNumber } from '../../../../utils'
@@ -21,7 +21,7 @@ export class Label {
   private transformed = false
 
   private text: BitmapText | Text
-  private labelBackground: LabelBackground | null = null
+  private labelBackground: LabelHighlight | null = null
   private _currentStyle: DefaultLabelStyle = DEFAULT_LABEL_STYLE
   private _rect: Bounds
 
@@ -37,8 +37,8 @@ export class Label {
     this.style = _style
     this.text = this.create()
     this._rect = this.getRect()
-    if (this.style.background !== undefined) {
-      this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
+    if (this.style.highlight !== undefined) {
+      this.labelBackground = new LabelHighlight(this.container, this.text, this.style.highlight)
     }
   }
 
@@ -74,7 +74,7 @@ export class Label {
       this.fontSize = this.style.fontSize
       this.fontFamily = this.style.fontFamily
       this.fontName = this.style.fontName
-      this.background = this.style.background
+      this.background = this.style.highlight
     }
 
     this.transformed = false
@@ -101,7 +101,7 @@ export class Label {
   }
 
   moveTo(_x: number, _y: number) {
-    const { position, margin } = this.style
+    const { position: position, margin } = this.style
 
     let [x, y] = this.offsetCoordinates(_x, _y, this.offset + margin)
 
@@ -232,7 +232,7 @@ export class Label {
      * This rect defines the min/max distance away from its reference; it does not represent the label's exact position.
      * This should only be recalculated when the size could have changed. i.e. content, margin, or background padding updates
      */
-    const { position, margin } = this.style
+    const { position: position, margin } = this.style
     const offset = this.offset + margin
     const [width, height] = this.size
     const [pt, pr, pb, pl] = utils.getBackgroundPadding(this.labelBackground?.padding ?? 0)
@@ -265,9 +265,9 @@ export class Label {
     this._currentStyle = { ...DEFAULT_LABEL_STYLE, ...(style ?? {}) }
   }
 
-  private set background(background: LabelBackgroundStyle | undefined) {
+  private set background(background: TextHighlightStyle | undefined) {
     if (this.labelBackground === null && background !== undefined) {
-      this.labelBackground = new LabelBackground(this.container, this.text, background)
+      this.labelBackground = new LabelHighlight(this.container, this.text, background)
     } else if (this.labelBackground && background !== undefined) {
       this.labelBackground.update(background)
     } else if (this.labelBackground && background === undefined) {
@@ -276,7 +276,7 @@ export class Label {
     }
   }
 
-  private set position(position: LabelPosition) {
+  private set position(position: AnchorPosition) {
     this.align = utils.getTextAlign(position)
     this.anchor = utils.getAnchorPoint(position)
   }
@@ -384,4 +384,4 @@ export class Label {
   }
 }
 
-export { LabelBackground } from './background'
+export { LabelHighlight as LabelBackground } from './highlight'

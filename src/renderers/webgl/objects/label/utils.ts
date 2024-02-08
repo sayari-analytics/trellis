@@ -1,9 +1,9 @@
 import { Text, TextStyle, ITextStyle, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle, TextAlign } from '../../../../types/api'
+import type { AnchorPosition, LabelStyle, TextHighlightStyle, TextAlign } from '../../../../types/api'
 import { isNumber } from '../../../../utils'
 
-export type DefaultLabelStyle = Required<Omit<LabelStyle, 'background'>> & {
-  background?: LabelBackgroundStyle
+export type DefaultLabelStyle = Required<Omit<LabelStyle, 'highlight'>> & {
+  highlight?: TextHighlightStyle
 }
 
 export const RESOLUTION = 2
@@ -38,7 +38,7 @@ export const DEFAULT_LABEL_STYLE: DefaultLabelStyle = {
   color: STYLE_DEFAULTS.COLOR
 }
 
-export const DEFAULT_LABEL_BG_STYLE: Required<LabelBackgroundStyle> = {
+export const DEFAULT_LABEL_BG_STYLE: Required<TextHighlightStyle> = {
   color: '#FFF',
   opacity: STYLE_DEFAULTS.OPACITY,
   padding: STYLE_DEFAULTS.PADDING
@@ -71,11 +71,11 @@ const isASCII = (str: string) => {
   return true
 }
 
-const getTextAlign = (position: LabelPosition): TextAlign => {
+const getTextAlign = (position: AnchorPosition): TextAlign => {
   return position === 'left' || position === 'right' ? position : 'center'
 }
 
-const getAnchorPoint = (position: LabelPosition): [x: number, y: number] => {
+const getAnchorPoint = (position: AnchorPosition): [x: number, y: number] => {
   switch (position) {
     case 'bottom':
       return [0.5, 0]
@@ -95,7 +95,7 @@ const getTextStyle = ({
   fontWeight,
   wordWrap,
   stroke,
-  position,
+  position: position,
   letterSpacing
 }: DefaultLabelStyle): Partial<ITextStyle> => ({
   fill: color,
