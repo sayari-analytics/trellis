@@ -14,7 +14,7 @@ import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
 import { FontBook } from './textures/font'
-import TextIconCache from './textures/textIcon/TextIconCache'
+import TextIconCache from './textures/text/TextIconCache'
 import AssetManager from './loaders/AssetManager'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }

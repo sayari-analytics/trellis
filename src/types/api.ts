@@ -30,9 +30,10 @@ export type TextStyle = Partial<{
   wordWrap: number | false
   fontWeight: FontWeight
   highlight: TextHighlightStyle
+  align: TextAlign
 }>
 
-export type LabelStyle = TextStyle & {
+export type LabelStyle = Omit<TextStyle, 'align'> & {
   margin?: number
   position?: AnchorPosition
 }
