@@ -40,21 +40,19 @@ export type LabelStyle = Omit<TextStyle, 'align' | 'position'> & {
 }
 
 // icons
-export type ImageIcon = {
-  type: 'imageIcon'
-  url: string
-  scale?: number
+type IconBase<T extends string> = {
+  type: T
   offset?: { x?: number; y?: number }
 }
 
-export type TextIcon = {
-  type: 'textIcon'
-  text: string
-  fontSize: number
-  fontFamily: string
-  color: string
-  fontWeight?: FontWeight
-  offset?: { x?: number; y?: number }
+export type ImageIcon = IconBase<'imageIcon'> & {
+  url: string
+  scale?: number
+}
+
+export type TextIcon = IconBase<'textIcon'> & {
+  content: string
+  style?: Pick<TextStyle, 'color' | 'stroke' | 'fontSize' | 'fontFamily' | 'fontWeight'>
 }
 
 export type IconStyle = ImageIcon | TextIcon
@@ -115,8 +113,7 @@ export type Edge = {
 }
 
 // annotations
-export type AnnotationStyle = {
-  background?: FillStyle
+export type AnnotationStyle = FillStyle & {
   stroke?: Stroke[]
 }
 

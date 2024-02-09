@@ -1,13 +1,15 @@
 import type { Renderer } from '../..'
 import type { TextIcon } from '../../../../types/api'
+import { DEFAULT_TEXT_STYLE } from '../../../../utils/constants'
 import { MIN_ZOOM } from '../../utils'
 import TextIconTexture from './TextIconTexture'
 
 export default class TextIconCache {
   protected cache: { [key: string]: TextIconTexture } = {}
 
-  static getCacheKey({ text, fontFamily, fontSize, fontWeight = 'normal', color }: TextIcon) {
-    return [text, fontFamily, fontSize, fontWeight ?? 'normal', color].join('-')
+  static getCacheKey({ content, style = {} }: TextIcon) {
+    const { color, stroke, fontFamily, fontSize, fontWeight } = { ...style, ...DEFAULT_TEXT_STYLE }
+    return [content, color, stroke.color, stroke.width, fontFamily, fontSize, fontWeight].join('-')
   }
 
   constructor(private renderer: Renderer) {

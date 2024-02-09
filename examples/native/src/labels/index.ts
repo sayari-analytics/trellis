@@ -15,11 +15,12 @@ const IMAGE_ICON: Graph.ImageIcon = {
 
 const TEXT_ICON: Graph.TextIcon = {
   type: 'textIcon',
-  fontFamily: 'sans-serif',
-  fontWeight: '400',
-  fontSize: 14,
-  color: '#fff',
-  text: '!'
+  content: '!',
+  style: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#fff'
+  }
 }
 
 const NODE_STYLE: Graph.NodeStyle = {

@@ -33,7 +33,6 @@ export class NodeRenderer {
   private strokeMounted = false
   private labelMounted = false
   private iconMounted = false
-  private iconLoading = false
 
   constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer

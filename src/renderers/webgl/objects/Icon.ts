@@ -25,7 +25,7 @@ export default class Icon {
     this.fill = fill
     this.icon = icon
 
-    if (this.icon.type === 'imageIcon' || this.assets.shouldLoadFont(this.icon)) {
+    if (this.icon.type === 'imageIcon' || this.assets.shouldLoadFont(this.icon.style)) {
       this.object = this.create(Texture.EMPTY)
       this.loadTexture()
     } else {
@@ -38,7 +38,7 @@ export default class Icon {
       this.cancel()
       this.icon = icon
 
-      if (this.icon.type === 'imageIcon' || this.assets.shouldLoadFont(this.icon)) {
+      if (this.icon.type === 'imageIcon' || this.assets.shouldLoadFont(this.icon.style)) {
         this.loadTexture()
       } else {
         this.texture = this.textIconCache.create(this.icon)
@@ -138,10 +138,10 @@ export default class Icon {
           this.texture = texture
         }
       })
-    } else {
+    } else if (this.assets.shouldLoadFont(this.icon.style)) {
       this.subscription = this.assets.loadFont({
-        fontFamily: this.icon.fontFamily,
-        fontWeight: this.icon.fontWeight,
+        fontFamily: this.icon.style.fontFamily,
+        fontWeight: this.icon.style.fontWeight,
         resolve: () => {
           this.subscription = undefined
           if (this.icon.type === 'textIcon') {
