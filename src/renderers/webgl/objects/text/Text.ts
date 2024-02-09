@@ -68,8 +68,7 @@ export default class Text {
     const styleHasChanged = !this.style.compare(style)
     const prevSpacing = [this.style.margin, this.style.highlight?.padding ?? 0]
 
-    this.font?.unsubscribe()
-    this.font = undefined
+    this.cancel()
     this.style.update(style)
 
     const { fontFamily, fontWeight } = this.style
@@ -175,12 +174,17 @@ export default class Text {
   delete() {
     this.unmount()
     this.object.destroy()
-    this.font?.unsubscribe()
     if (!this.transformed) {
       this.highlight?.delete()
+      this.cancel()
     }
 
     return undefined
+  }
+
+  cancel() {
+    this.font?.unsubscribe()
+    this.font = undefined
   }
 
   get rotation() {
