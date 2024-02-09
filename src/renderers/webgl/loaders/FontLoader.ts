@@ -28,7 +28,7 @@ export default class FontLoader {
     return FontLoader.isGenericFont(fontFamily) || document.fonts.check(FontLoader.toFontString(fontFamily, fontWeight))
   }
 
-  load({ fontFamily, fontWeight = DEFAULT_TEXT_STYLE.fontWeight, timeout = 5000, resolve = noop, reject = noop }: LoadFontProps) {
+  load({ fontFamily, fontWeight = DEFAULT_TEXT_STYLE.fontWeight, timeout = 10000, resolve = noop, reject = noop }: LoadFontProps) {
     const font = FontLoader.toFontString(fontFamily, fontWeight)
 
     if (this.cache[font] === undefined) {
