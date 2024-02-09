@@ -1,5 +1,5 @@
+import { DEFAULT_TEXT_STYLE, GENERIC_FONT_FAMILIES } from '../../../utils/constants'
 import { Subscriber, Publisher } from './PubSub'
-import { STYLE_DEFAULTS } from '../objects/label/utils'
 import { noop } from '../../../utils'
 import FontFaceObserver from 'fontfaceobserver'
 
@@ -8,21 +8,6 @@ type LoadFontProps = Partial<Subscriber<true>> & {
   fontWeight?: string | number
   timeout?: number
 }
-
-const GENERIC_FONT_FAMILIES = new Set([
-  'serif',
-  'sans-serif',
-  'monospace',
-  'cursive',
-  'fantasy',
-  'system-ui',
-  'emoji',
-  'math',
-  'fangsong',
-  'ui-serif',
-  'ui-sans-serif',
-  'ui-monospace'
-])
 
 export default class FontLoader {
   private cache: { [key: string]: Publisher<true> } = {}
@@ -39,11 +24,11 @@ export default class FontLoader {
     return `${weight} 1em ${FontLoader.sanitize(fontFamily)}`
   }
 
-  static available(fontFamily: string, fontWeight: string | number = STYLE_DEFAULTS.FONT_WEIGHT) {
+  static available(fontFamily: string, fontWeight: string | number = DEFAULT_TEXT_STYLE.fontWeight) {
     return FontLoader.isGenericFont(fontFamily) || document.fonts.check(FontLoader.toFontString(fontFamily, fontWeight))
   }
 
-  load({ fontFamily, fontWeight = STYLE_DEFAULTS.FONT_WEIGHT, timeout = 5000, resolve = noop, reject = noop }: LoadFontProps) {
+  load({ fontFamily, fontWeight = DEFAULT_TEXT_STYLE.fontWeight, timeout = 5000, resolve = noop, reject = noop }: LoadFontProps) {
     const font = FontLoader.toFontString(fontFamily, fontWeight)
 
     if (this.cache[font] === undefined) {

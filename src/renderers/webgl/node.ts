@@ -2,20 +2,21 @@ import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_IC
 import { FederatedPointerEvent } from 'pixi.js'
 import { type Renderer } from '.'
 import type { Node } from '../../types'
-import { Label } from './objects/label'
+import Text from './objects/text/Text'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils'
 import { FontSubscription, AssetSubscription } from './loaders/AssetManager'
 import Icon from './objects/Icon'
+import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 
 export class NodeRenderer {
   node!: Node
   x!: number
   y!: number
   fill: NodeFill
-  label?: Label
+  label?: Text
   icon?: Icon
   strokes: NodeStrokes
 
@@ -76,7 +77,7 @@ export class NodeRenderer {
           } else if (this.label) {
             this.label.update(node.label, labelStyle)
           } else {
-            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, labelStyle)
+            this.label = new Text(this.renderer.labelsContainer, node.label, labelStyle, DEFAULT_LABEL_STYLE)
             this.label.offset = this.strokes.radius
             this.label.moveTo(this.x, this.y)
             if (this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM) {
@@ -87,7 +88,7 @@ export class NodeRenderer {
         }
       })
     } else if (this.label === undefined) {
-      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, labelStyle)
+      this.label = new Text(this.renderer.labelsContainer, node.label, labelStyle, DEFAULT_LABEL_STYLE)
     } else {
       this.label.update(node.label, labelStyle)
     }

@@ -1,30 +1,36 @@
+import type { TextStyle, TextHighlightStyle, TextAlign, Stroke, FontWeight, AnchorPosition } from '../../../../types/api'
 import { TextStyle as PixiTextStyle, ITextStyle as IPixiTextStyle, BitmapFont, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
 import { DEFAULT_HIGHLIGHT_STYLE, DEFAULT_TEXT_STYLE, MIN_TEXTURE_ZOOM, DEFAULT_RESOLUTION } from '../../../../utils/constants'
-import type { TextStyle, TextHighlightStyle, TextAlign, Stroke, FontWeight } from '../../../../types/api'
 import { isNumber } from '../../../../utils'
 import { equals } from '../../../../utils/api'
 
-export type DefaultTextStyle = Required<Omit<TextStyle, 'highlight'>> & {
-  highlight?: TextHighlightStyle
+export type TextTextureOptions = {
+  defaultTextStyle?: Omit<TextStyle, 'highlight'>
+  defaultHighlightStyle?: Partial<TextHighlightStyle>
 }
+
+export type DefaultTextStyle = Required<Omit<TextStyle, 'highlight'>>
 
 PixiTextStyle.defaultStyle.lineJoin = LINE_JOIN.ROUND
 PixiTextStyle.defaultStyle.textBaseline = 'alphabetic'
 
 export default class TextTexture {
-  static defaultTextStyle: DefaultTextStyle = DEFAULT_TEXT_STYLE
-  static defaultHighlightStyle: Required<TextHighlightStyle> = DEFAULT_HIGHLIGHT_STYLE
+  private defaultTextStyle: DefaultTextStyle = DEFAULT_TEXT_STYLE
+  private defaultHighlightStyle: Required<TextHighlightStyle> = DEFAULT_HIGHLIGHT_STYLE
 
-  color: string = TextTexture.defaultTextStyle.color
-  stroke: Stroke = TextTexture.defaultTextStyle.stroke
-  fontName: string = TextTexture.defaultTextStyle.fontName
-  fontSize: number = TextTexture.defaultTextStyle.fontSize
-  fontFamily: string = TextTexture.defaultTextStyle.fontFamily
-  fontWeight: FontWeight = TextTexture.defaultTextStyle.fontWeight
-  letterSpacing: number = TextTexture.defaultTextStyle.letterSpacing
-  wordWrap: number | false = TextTexture.defaultTextStyle.wordWrap
-  align: TextAlign = TextTexture.defaultTextStyle.align
+  color: string
+  stroke: Stroke
+  fontName: string
+  fontSize: number
+  fontFamily: string
+  fontWeight: FontWeight
+  letterSpacing: number
+  margin: number
+  align: TextAlign
+  position: AnchorPosition
   highlight?: Required<TextHighlightStyle>
+
+  private _wordWrap: number | false = DEFAULT_TEXT_STYLE.wordWrap
 
   // TODO -> make configurable
   maxFontSize = 16
@@ -45,7 +51,21 @@ export default class TextTexture {
     return true
   }
 
-  constructor(style: TextStyle | undefined) {
+  constructor(style: TextStyle | undefined, options?: TextTextureOptions) {
+    this.defaultTextStyle = Object.assign(this.defaultTextStyle, options?.defaultTextStyle)
+    this.defaultHighlightStyle = Object.assign(this.defaultHighlightStyle, options?.defaultHighlightStyle)
+
+    this.color = this.defaultTextStyle.color
+    this.stroke = this.defaultTextStyle.stroke
+    this.fontName = this.defaultTextStyle.fontName
+    this.fontSize = this.defaultTextStyle.fontSize
+    this.fontFamily = this.defaultTextStyle.fontFamily
+    this.fontWeight = this.defaultTextStyle.fontWeight
+    this.letterSpacing = this.defaultTextStyle.letterSpacing
+    this.margin = this.defaultTextStyle.margin
+    this.align = this.defaultTextStyle.align
+    this.position = this.defaultTextStyle.position
+
     this.update(style)
   }
 
@@ -57,8 +77,17 @@ export default class TextTexture {
     this._style = style
     this._fontLoading = false
 
-    Object.assign(this, TextTexture.defaultTextStyle, style)
-    this.highlight = style?.highlight !== undefined ? { ...TextTexture.defaultHighlightStyle, ...style.highlight } : undefined
+    Object.assign(this, this.defaultTextStyle, style)
+
+    if (style?.align === undefined && this.position !== 'center') {
+      this.align = this.position === 'left' || this.position === 'right' ? this.position : 'center'
+    }
+
+    if (style?.highlight !== undefined) {
+      this.highlight = Object.assign(this.defaultHighlightStyle, style.highlight)
+    } else {
+      this.highlight = undefined
+    }
 
     return this
   }
@@ -71,8 +100,35 @@ export default class TextTexture {
     return this.fontSize * 1.3
   }
 
-  get wordWrapWidth(): number | undefined {
-    return isNumber(this.wordWrap) ? this.wordWrap : undefined
+  set wordWrap(wordWrap: number | false) {
+    this._wordWrap = wordWrap
+  }
+
+  get wordWrap(): boolean {
+    return isNumber(this._wordWrap)
+  }
+
+  get wordWrapWidth(): number {
+    if (isNumber(this._wordWrap)) {
+      return this._wordWrap
+    } else {
+      return PixiTextStyle.defaultStyle.wordWrapWidth
+    }
+  }
+
+  get anchor(): [x: number, y: number] {
+    switch (this.position) {
+      case 'bottom':
+        return [0.5, 0]
+      case 'left':
+        return [1, 0.5]
+      case 'top':
+        return [0.5, 1]
+      case 'right':
+        return [0, 0.5]
+      default:
+        return [0.5, 0.5]
+    }
   }
 
   get fontLoading() {
@@ -83,9 +139,9 @@ export default class TextTexture {
     this._fontLoading = loading
 
     if (loading) {
-      this.fontFamily = TextTexture.defaultTextStyle.fontFamily
+      this.fontFamily = this.defaultTextStyle.fontFamily
     } else {
-      this.fontFamily = this._style?.fontFamily ?? TextTexture.defaultTextStyle.fontFamily
+      this.fontFamily = this._style?.fontFamily ?? this.defaultTextStyle.fontFamily
     }
   }
 
@@ -114,16 +170,17 @@ export default class TextTexture {
     }
   }
 
-  getHighlightPadding(): [top: number, right: number, bottom: number, left: number] {
+  getHighlightPadding(): [py: number, px: number] {
     const padding = this.highlight?.padding ?? 0
-
-    const [top, right, bottom, left]: number[] = isNumber(padding) ? [padding] : padding
-
-    return [top, right ?? top, bottom ?? top, left ?? right]
+    return isNumber(padding) ? [padding, padding] : padding
   }
 
-  createBitmapFont() {
-    const font = BitmapFont.available[this.fontName]
+  findFont(fontName = this.fontName): BitmapFont | undefined {
+    return BitmapFont.available[fontName]
+  }
+
+  createFont() {
+    const font = this.findFont()
 
     if (font === undefined) {
       const fontSize = this.maxFontSize * this.resolution * this.scaleFactor
@@ -138,7 +195,7 @@ export default class TextTexture {
     return font
   }
 
-  destroyBitmapFont(fontName: string) {
-    BitmapFont.available[fontName]?.destroy()
+  destroyFont(fontName: string) {
+    this.findFont(fontName)?.destroy()
   }
 }

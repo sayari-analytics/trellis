@@ -14,14 +14,15 @@ export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 
-export type AnchorPosition = 'bottom' | 'left' | 'top' | 'right'
+export type AnchorPosition = 'bottom' | 'left' | 'top' | 'right' | 'center'
 
 export type TextHighlightStyle = FillStyle & {
-  padding?: number | number[]
+  padding?: number | [px: number, py: number]
 }
 
 export type TextStyle = Partial<{
   color: string
+  margin: number
   stroke: Stroke
   fontName: string
   fontSize: number
@@ -30,12 +31,12 @@ export type TextStyle = Partial<{
   wordWrap: number | false
   fontWeight: FontWeight
   highlight: TextHighlightStyle
+  position: AnchorPosition
   align: TextAlign
 }>
 
-export type LabelStyle = Omit<TextStyle, 'align'> & {
-  margin?: number
-  position?: AnchorPosition
+export type LabelStyle = Omit<TextStyle, 'align' | 'position'> & {
+  position?: Exclude<AnchorPosition, 'center'>
 }
 
 // icons
@@ -94,7 +95,7 @@ export type Node = {
 export type ArrowStyle = 'forward' | 'reverse' | 'both' | 'none'
 
 export type EdgeLabelStyle = LabelStyle & {
-  position?: Exclude<AnchorPosition, 'left' | 'right'>
+  position?: Exclude<AnchorPosition, 'left' | 'right' | 'center'>
 }
 
 export type EdgeStyle = {
@@ -121,7 +122,7 @@ export type AnnotationStyle = {
 
 export type TextAnnotationStyle = AnnotationStyle & {
   text?: Omit<LabelStyle, 'position'>
-  padding?: number | number[]
+  padding?: number | [px: number, py: number]
 }
 
 type AnnotationBase<Type extends string> = {

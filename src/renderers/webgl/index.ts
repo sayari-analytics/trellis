@@ -13,7 +13,6 @@ import { CircleTexture } from './textures/circle'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
-import { FontBook } from './textures/font'
 import TextIconCache from './textures/text/TextIconCache'
 import AssetManager from './loaders/AssetManager'
 
@@ -147,7 +146,6 @@ export class Renderer {
   circle: CircleTexture
   arrow: ArrowTexture
   textIcon: TextIconCache
-  fontBook = new FontBook() // TODO -> make configurable
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
   assets = new AssetManager()

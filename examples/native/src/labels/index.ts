@@ -30,7 +30,7 @@ const NODE_STYLE: Graph.NodeStyle = {
     position: 'bottom',
     fontName: 'NodeLabel',
     fontFamily: 'Roboto',
-    background: { color: GREEN_LIGHT },
+    highlight: { color: GREEN_LIGHT },
     margin: 4
   }
 }
@@ -43,7 +43,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
     position: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: 'Roboto',
-    background: { color: DARK_GREEN },
+    highlight: { color: DARK_GREEN },
     color: '#FFF',
     margin: 4
   }

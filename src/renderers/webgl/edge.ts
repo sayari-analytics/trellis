@@ -7,9 +7,10 @@ import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'
 import { FederatedPointerEvent } from 'pixi.js'
 import { EdgeHitArea } from './interaction/edgeHitArea'
-import { Label } from './objects/label'
 import { FontSubscription } from './loaders/AssetManager'
 import { angle } from '../../utils/api'
+import Text from './objects/text/Text'
+import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -17,7 +18,7 @@ const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer {
   edge?: Edge
-  label?: Label
+  label?: Text
   renderer: Renderer
   lineSegment: LineSegment
   source!: NodeRenderer
@@ -98,7 +99,7 @@ export class EdgeRenderer {
           } else if (this.label) {
             this.label.update(edge.label, labelStyle)
           } else {
-            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, labelStyle)
+            this.label = new Text(this.renderer.labelsContainer, edge.label, labelStyle, DEFAULT_LABEL_STYLE)
             this.label.rotation = this.theta
             this.label.moveTo(...this.center)
             if (
@@ -112,7 +113,7 @@ export class EdgeRenderer {
         }
       })
     } else if (this.label === undefined) {
-      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, labelStyle)
+      this.label = new Text(this.renderer.labelsContainer, edge.label, labelStyle, DEFAULT_LABEL_STYLE)
     } else {
       this.label.update(edge.label, labelStyle)
     }

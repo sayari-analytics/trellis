@@ -1,12 +1,9 @@
-import type { AnchorPosition, LabelStyle, TextHighlightStyle, Stroke, TextAlign, FontWeight, Bounds, TextStyle } from '../../../../types'
+import type { Bounds, TextStyle, TextObject } from '../../../../types'
 import { BitmapText, Container, Text as PixiText } from 'pixi.js'
-import { FontBook } from '../../textures/font'
 import { equals } from '../../../../utils/api'
-import { isNumber } from '../../../../utils'
-import TextTexture from '../../textures/text/TextTexture'
+import TextTexture, { TextTextureOptions } from '../../textures/text/TextTexture'
 import TextHighlight from './TextHighlight'
 
-type TextObject = BitmapText | PixiText
 export default class Text {
   mounted = false
 
@@ -15,33 +12,34 @@ export default class Text {
 
   private x = 0
   private y = 0
-  private dirty = false
   private transformed = false
 
   private object: TextObject
   private highlight?: TextHighlight
+  private _rect: Bounds
 
   constructor(
     private container: Container,
     private content: string,
-    style: TextStyle | undefined
+    style: TextStyle | undefined,
+    options?: TextTextureOptions
   ) {
     this.container = container
     this.content = content
-    this.style = new TextTexture(style)
+    this.style = new TextTexture(style, options)
     this.object = this.create()
-    if (this.style.highlight) {
-      // this.highlight = new TextHighlight(this.container, this.object, this.style.highlight)
-    }
+    this._rect = this.getRect()
+    this.applyHighlight()
   }
 
   update(content: string, style: TextStyle | undefined) {
-    const contentChanged = this.content !== content
-    const styleChanged = !this.style.compare(style)
+    const contentHasChanged = this.content !== content
+    const styleHasChanged = !this.style.compare(style)
+    const prevSpacing = [this.style.margin, this.style.highlight?.padding ?? 0]
 
     this.style.update(style)
 
-    if (contentChanged) {
+    if (contentHasChanged) {
       this.content = content
       this.object.text = content
 
@@ -54,33 +52,54 @@ export default class Text {
       }
     }
 
-    const transformed = this.transformed
+    if (styleHasChanged) {
+      this.applyStyle().applyHighlight()
+    }
 
-    if (styleChanged || transformed) {
-      //
+    if (this.transformed && this.highlight) {
+      this.highlight.text = this.object
+    }
+
+    const nextSpacing = [this.style.margin, this.style.highlight?.padding ?? 0]
+    const sizeHasChanged = contentHasChanged || !equals(prevSpacing, nextSpacing)
+
+    if (contentHasChanged || sizeHasChanged) {
+      this._rect = this.getRect()
+    }
+
+    if (this.highlight && (this.transformed || sizeHasChanged)) {
+      this.highlight.resize(...this.size)
     }
 
     this.transformed = false
 
-    if (this.dirty) {
-      this.dirty = false
-      this.updateText()
-    }
-
-    if (transformed && this.highlight) {
-      // this.highlight.text = this.object
-    }
-
-    if (contentChanged) {
-      // this.highlight?.resize(...this.size)
-    } else if (transformed && this.highlight) {
-      // this.highlight.resize(...this.size)
-    }
-
     return this
   }
 
-  moveTo(x: number, y: number) {
+  moveTo(_x: number, _y: number) {
+    const { position, margin } = this.style
+
+    let [x, y] = this.offsetPosition(_x, _y, this.offset + margin)
+
+    if (this.highlight) {
+      this.highlight.moveTo(x, y)
+
+      const [px, py] = this.style.getHighlightPadding()
+
+      if (position === 'center') {
+        x -= px
+        y -= py
+      } else {
+        const [nextX, nextY] = this.offsetPosition(x, y, position === 'bottom' || position === 'top' ? py : px)
+        x = nextX
+        y = nextY
+      }
+    }
+
+    if (this.isBitmapText()) {
+      y -= position === 'bottom' ? 1 : 2
+    }
+
     if (this.x !== x) {
       this.x = x
       this.object.x = x
@@ -91,17 +110,12 @@ export default class Text {
       this.object.y = y
     }
 
-    if (this.highlight) {
-      // const [pt, pr] = this.style.getHighlightPadding()
-      // this.highlight.moveTo(x - pt, y - pr)
-    }
-
     return this
   }
 
   mount() {
     if (!this.mounted) {
-      // this.highlight?.mount()
+      this.highlight?.mount()
       this.container.addChild(this.object)
       this.mounted = true
     }
@@ -111,7 +125,7 @@ export default class Text {
 
   unmount() {
     if (this.mounted) {
-      // this.highlight?.unmount()
+      this.highlight?.unmount()
       this.container.removeChild(this.object)
       this.mounted = false
     }
@@ -123,7 +137,7 @@ export default class Text {
     this.unmount()
     this.object.destroy()
     if (!this.transformed) {
-      // this.highlight?.delete()
+      this.highlight?.delete()
     }
 
     return undefined
@@ -136,41 +150,39 @@ export default class Text {
   set rotation(rotation: number) {
     this.object.rotation = rotation
     if (this.highlight) {
-      // this.highlight.rotation = rotation
+      this.highlight.rotation = rotation
     }
   }
 
-  set anchor([x, y]: [number, number]) {
-    this.object.anchor.set(x, y)
-    if (this.highlight) {
-      // this.highlight.anchor = [x, y]
-    }
+  get rect() {
+    return this._rect
+  }
+
+  private get size(): [width: number, height: number] {
+    const [px, py] = this.style.getHighlightPadding()
+    return [this.object.width + px * 2, this.object.height + py * 2]
+  }
+
+  private isBitmapText(object: TextObject = this.object): object is BitmapText {
+    return object instanceof BitmapText
   }
 
   private create() {
-    let text: TextObject
+    let object: TextObject
 
     if (TextTexture.isASCII(this.content)) {
-      this.style.createBitmapFont()
-      text = new BitmapText(this.content, this.style.getBitmapStyle())
+      this.style.createFont()
+      object = new BitmapText(this.content, this.style.getBitmapStyle())
     } else {
-      text = new PixiText(this.content, this.style.getTextStyle())
+      object = new PixiText(this.content, this.style.getTextStyle())
     }
 
-    text.resolution = this.style.resolution
-    return text
-  }
-
-  private updateText() {
-    if (this.isBitmapText(this.object)) {
-      this.object.updateText()
-    } else {
-      this.object.updateText(true)
-    }
+    object.anchor.set(...this.style.anchor)
+    object.resolution = this.style.resolution
+    return object
   }
 
   private transformText() {
-    this.dirty = false
     this.transformed = true
     const isMounted = this.mounted
 
@@ -184,7 +196,85 @@ export default class Text {
     }
   }
 
-  private isBitmapText(text: TextObject = this.object): text is BitmapText {
-    return text instanceof BitmapText
+  private applyStyle() {
+    if (this.isBitmapText(this.object)) {
+      this.object.align = this.style.align
+      this.object.fontSize = this.style.fontSize
+      this.object.letterSpacing = this.style.letterSpacing
+      if (this.object.fontName !== this.style.fontName) {
+        this.style.createFont()
+        this.object.fontName = this.style.fontName
+      }
+
+      // TODO -> regenerate bitmap texture if any of the below styles change
+    } else {
+      this.object.style.stroke = this.style.stroke.color
+      this.object.style.strokeThickness = this.style.stroke.width
+      this.object.style.wordWrap = this.style.wordWrap
+      this.object.style.wordWrapWidth = this.style.wordWrapWidth
+      this.object.style.fontWeight = this.style.fontWeight
+      this.object.style.fill = this.style.color
+      this.object.style.letterSpacing = this.style.letterSpacing
+      this.object.style.align = this.style.align
+      this.object.style.fontSize = this.style.fontSize
+      this.object.style.fontFamily = this.style.fontFamily
+    }
+
+    this.object.anchor.set(...this.style.anchor)
+    this.highlight?.anchor.set(...this.style.anchor)
+
+    return this
+  }
+
+  private applyHighlight() {
+    if (!this.highlight && this.style.highlight) {
+      this.highlight = new TextHighlight(this.container, this.object, this.style.highlight).resize(...this.size)
+    } else if (this.highlight && this.style.highlight) {
+      this.highlight.update(this.style.highlight)
+    } else if (this.highlight && !this.style.highlight) {
+      this.highlight.delete()
+      this.highlight = undefined
+    }
+
+    return this
+  }
+
+  private offsetPosition(x: number, y: number, offset: number): [x: number, y: number] {
+    switch (this.style.position) {
+      case 'bottom':
+        return [x, y + offset]
+      case 'left':
+        return [x - offset, y]
+      case 'top':
+        return [x, y - offset]
+      case 'right':
+        return [x + offset, y]
+      default:
+        return [x, y]
+    }
+  }
+
+  private getRect(): Bounds {
+    /**
+     * This rect defines the min/max distance away from its reference; it does not represent the label's exact position.
+     * This should only be recalculated when the size could have changed. i.e. content, margin, or background padding updates
+     */
+    const empty = { top: 0, right: 0, bottom: 0, left: 0 }
+    const offset = this.offset + this.style.margin
+    const position = this.style.position
+
+    const [width, height] = this.size
+    const [hx, hy] = [width / 2, height / 2]
+
+    switch (position) {
+      case 'top':
+      case 'bottom':
+        return { ...empty, left: hx, right: hx, [position]: offset + height }
+      case 'left':
+      case 'right':
+        return { ...empty, top: hy, bottom: hy, [position]: offset + width }
+      case 'center':
+        return { top: hy, right: hx, bottom: hy, left: hx }
+    }
   }
 }
