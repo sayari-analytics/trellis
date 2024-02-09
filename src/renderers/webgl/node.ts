@@ -7,9 +7,9 @@ import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils'
-import { FontSubscription, AssetSubscription } from './loaders/AssetManager'
-import Icon from './objects/Icon'
+import { AssetSubscription, FontSubscription } from './loaders/AssetManager'
 import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
+import Icon from './objects/Icon'
 
 export class NodeRenderer {
   node!: Node
@@ -35,7 +35,6 @@ export class NodeRenderer {
   private labelMounted = false
   private iconMounted = false
 
-  private _labelLoader?: FontSubscription
   private _iconLoader?: FontSubscription | AssetSubscription
 
   constructor(renderer: Renderer, node: Node) {
@@ -55,42 +54,16 @@ export class NodeRenderer {
 
     this.node = node
 
-    this._labelLoader?.unsubscribe()
-    const labelStyle = node.style?.label
-    // TODO -> manage asset loading in object's class
     if (node.label === undefined || node.label.trim() === '') {
       if (this.label) {
         this.renderer.labelObjectManager.delete(this.label)
         this.labelMounted = false
         this.label = undefined
       }
-    } else if (this.renderer.assets.shouldLoadFont(labelStyle)) {
-      this._labelLoader = this.renderer.assets.loadFont({
-        fontFamily: labelStyle.fontFamily,
-        fontWeight: labelStyle.fontWeight,
-        timeout: 10000,
-        resolve: () => {
-          this._labelLoader = undefined
-
-          if (!node.label) {
-            return
-          } else if (this.label) {
-            this.label.update(node.label, labelStyle)
-          } else {
-            this.label = new Text(this.renderer.labelsContainer, node.label, labelStyle, DEFAULT_LABEL_STYLE)
-            this.label.offset = this.strokes.radius
-            this.label.moveTo(this.x, this.y)
-            if (this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM) {
-              this.renderer.labelObjectManager.mount(this.label)
-              this.labelMounted = true
-            }
-          }
-        }
-      })
     } else if (this.label === undefined) {
-      this.label = new Text(this.renderer.labelsContainer, node.label, labelStyle, DEFAULT_LABEL_STYLE)
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, node.label, node.style?.label, DEFAULT_LABEL_STYLE)
     } else {
-      this.label.update(node.label, labelStyle)
+      this.label.update(node.label, node.style?.label)
     }
 
     if (node.style?.icon === undefined) {
@@ -289,8 +262,6 @@ export class NodeRenderer {
   }
 
   delete() {
-    this._labelLoader?.unsubscribe()
-    this._labelLoader = undefined
     this._iconLoader?.unsubscribe()
     this._iconLoader = undefined
 

@@ -6,11 +6,10 @@ import type { Edge } from '../../types'
 import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'
 import { FederatedPointerEvent } from 'pixi.js'
+import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 import { EdgeHitArea } from './interaction/edgeHitArea'
-import { FontSubscription } from './loaders/AssetManager'
 import { angle } from '../../utils/api'
 import Text from './objects/text/Text'
-import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
@@ -43,7 +42,6 @@ export class EdgeRenderer {
   private labelMounted = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
-  private _loader?: FontSubscription
 
   constructor(renderer: Renderer, edge: Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
@@ -79,43 +77,16 @@ export class EdgeRenderer {
       }
     }
 
-    this._loader?.unsubscribe()
-    const labelStyle = edge.style?.label
     if (edge.label === undefined || edge.label.trim() === '') {
       if (this.label) {
         this.renderer.labelObjectManager.delete(this.label)
         this.labelMounted = false
         this.label = undefined
       }
-    } else if (this.renderer.assets.shouldLoadFont(labelStyle)) {
-      this._loader = this.renderer.assets.loadFont({
-        fontFamily: labelStyle.fontFamily,
-        fontWeight: labelStyle.fontWeight,
-        timeout: 10000,
-        resolve: () => {
-          this._loader = undefined
-          if (!edge.label) {
-            return
-          } else if (this.label) {
-            this.label.update(edge.label, labelStyle)
-          } else {
-            this.label = new Text(this.renderer.labelsContainer, edge.label, labelStyle, DEFAULT_LABEL_STYLE)
-            this.label.rotation = this.theta
-            this.label.moveTo(...this.center)
-            if (
-              this.renderer.zoom > MIN_LABEL_ZOOM &&
-              this.visible(Math.min(this.x0, this.x1), Math.min(this.y0, this.y1), Math.max(this.x0, this.x1), Math.max(this.y0, this.y1))
-            ) {
-              this.renderer.labelObjectManager.mount(this.label)
-              this.labelMounted = true
-            }
-          }
-        }
-      })
     } else if (this.label === undefined) {
-      this.label = new Text(this.renderer.labelsContainer, edge.label, labelStyle, DEFAULT_LABEL_STYLE)
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, edge.label, edge.style?.label, DEFAULT_LABEL_STYLE)
     } else {
-      this.label.update(edge.label, labelStyle)
+      this.label.update(edge.label, edge.style?.label)
     }
 
     this.edge = edge
@@ -256,8 +227,6 @@ export class EdgeRenderer {
   }
 
   delete() {
-    this._loader?.unsubscribe()
-    this._loader = undefined
     this.renderer.edgeObjectManager.delete(this.lineSegment)
     if (this.arrow?.forward) {
       this.renderer.edgeArrowObjectManager.delete(this.arrow.forward)

@@ -1,7 +1,8 @@
-import type { Bounds, TextStyle, TextObject } from '../../../../types'
+import type { Bounds, TextStyle, TextObject, FontWeight } from '../../../../types'
 import { BitmapText, Container, Text as PixiText } from 'pixi.js'
 import { equals } from '../../../../utils/api'
 import TextTexture, { TextTextureOptions } from '../../textures/text/TextTexture'
+import AssetManager, { FontSubscription } from '../../loaders/AssetManager'
 import TextHighlight from './TextHighlight'
 
 export default class Text {
@@ -16,20 +17,50 @@ export default class Text {
 
   private object: TextObject
   private highlight?: TextHighlight
+  private font?: FontSubscription
   private _rect: Bounds
 
   constructor(
+    private assets: AssetManager,
     private container: Container,
     private content: string,
     style: TextStyle | undefined,
     options?: TextTextureOptions
   ) {
+    this.assets = assets
     this.container = container
     this.content = content
     this.style = new TextTexture(style, options)
+
+    const { fontFamily, fontWeight } = this.style
+    if (this.assets.shouldLoadFont({ fontFamily, fontWeight })) {
+      this.style.fontLoading = true
+    }
+
     this.object = this.create()
     this._rect = this.getRect()
     this.applyHighlight()
+
+    if (this.style.fontLoading) {
+      this.font = this.loadFont(fontFamily, fontWeight)
+    }
+  }
+
+  private loadFont(fontFamily: string, fontWeight: FontWeight) {
+    return this.assets.loadFont({
+      fontFamily,
+      fontWeight,
+      resolve: () => {
+        this.font = undefined
+        this.style.fontLoading = false
+        if (this.isBitmapText()) {
+          this.transformText()
+          this.transformed = false
+        } else {
+          this.applyStyle()
+        }
+      }
+    })
   }
 
   update(content: string, style: TextStyle | undefined) {
@@ -37,7 +68,15 @@ export default class Text {
     const styleHasChanged = !this.style.compare(style)
     const prevSpacing = [this.style.margin, this.style.highlight?.padding ?? 0]
 
+    this.font?.unsubscribe()
+    this.font = undefined
     this.style.update(style)
+
+    const { fontFamily, fontWeight } = this.style
+    if (this.assets.shouldLoadFont({ fontFamily, fontWeight })) {
+      this.style.fontLoading = true
+      this.font = this.loadFont(fontFamily, fontWeight)
+    }
 
     if (contentHasChanged) {
       this.content = content
@@ -136,6 +175,7 @@ export default class Text {
   delete() {
     this.unmount()
     this.object.destroy()
+    this.font?.unsubscribe()
     if (!this.transformed) {
       this.highlight?.delete()
     }
