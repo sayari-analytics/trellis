@@ -597,12 +597,22 @@ export class NodeRenderer {
   }
 
   private visible() {
-    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    return (
-      this.x + this.strokes.radius >= this.renderer.minX &&
-      this.x - this.strokes.radius <= this.renderer.maxX &&
-      this.y + this.strokes.radius >= this.renderer.minY &&
-      this.y - this.strokes.radius <= this.renderer.maxY
-    )
+    let left: number, right: number, top: number, bottom: number
+
+    if (this.label) {
+      left = this.x - Math.max(this.strokes.radius, this.label.rect.left)
+      right = this.x + Math.max(this.strokes.radius, this.label.rect.right)
+      top = this.y - Math.max(this.strokes.radius, this.label.rect.top)
+      bottom = this.y + Math.max(this.strokes.radius, this.label.rect.bottom)
+    } else {
+      left = this.x - this.strokes.radius
+      right = this.x + this.strokes.radius
+      top = this.y - this.strokes.radius
+      bottom = this.y + this.strokes.radius
+    }
+
+    const { minX, maxX, minY, maxY } = this.renderer
+
+    return right >= minX && left <= maxX && bottom >= minY && top <= maxY
   }
 }

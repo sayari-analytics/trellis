@@ -1,39 +1,42 @@
-import utils, { STYLE_DEFAULTS } from './utils'
-import type { LabelPosition, LabelStyle, LabelBackgroundStyle } from './utils'
+import utils, { DEFAULT_LABEL_STYLE } from './utils'
+import type { LabelPosition, LabelStyle, LabelBackgroundStyle, DefaultLabelStyle } from './utils'
 import type { Stroke, TextAlign, FontWeight } from '../../../../types'
-import { BitmapText, Container, Text, Point } from 'pixi.js'
-import { LabelBackground, Rectangle } from './background'
+import { BitmapText, Container, Text } from 'pixi.js'
+import { LabelBackground } from './background'
 import { FontBook } from '../../textures/font'
-import { equals } from '../../../../'
+import { Bounds, equals } from '../../../../'
+import { isNumber } from '../../../../utils'
 
 /**
  * TODO
- * - add support for background color, custom font loading
- * - add support for loading custom fonts as asset bundles
  * - moving/scaling labels is slow. render ASCII text characters as sprites to partical container?
  */
 export class Label {
   mounted = false
   offset = 0
 
-  private x?: number
-  private y?: number
+  private x = 0
+  private y = 0
+  private dirty = false
+  private transformed = false
 
-  private _style: LabelStyle | undefined
-  private label: string
-  private fontBook: FontBook
-  private container: Container
   private text: BitmapText | Text
   private labelBackground: LabelBackground | null = null
-  private transformed = false
-  private dirty = false
+  private _currentStyle: DefaultLabelStyle = DEFAULT_LABEL_STYLE
+  private _rect: Bounds
 
-  constructor(fontBook: FontBook, container: Container, label: string, style: LabelStyle | undefined) {
+  constructor(
+    private fontBook: FontBook,
+    private container: Container,
+    private label: string,
+    private _style: LabelStyle | undefined
+  ) {
     this.label = label
     this.fontBook = fontBook
     this.container = container
-    this._style = style
+    this.style = _style
     this.text = this.create()
+    this._rect = this.getRect()
     if (this.style.background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, this.style.background)
     }
@@ -43,7 +46,9 @@ export class Label {
     const labelHasChanged = this.label !== label
     const styleHasChanged = !equals(this._style, style)
 
-    this._style = style
+    const prevSpacing = [this.style.margin, this.labelBackground?.padding ?? 0]
+
+    this.style = style
 
     if (labelHasChanged) {
       this.label = label
@@ -57,48 +62,65 @@ export class Label {
       }
     }
 
-    if (styleHasChanged) {
-      this.stroke = style?.stroke
-      this.wordWrap = style?.wordWrap
-      this.fontWeight = style?.fontWeight ?? STYLE_DEFAULTS.FONT_WEIGHT
-      this.color = style?.color ?? STYLE_DEFAULTS.COLOR
-      this.letterSpacing = style?.letterSpacing ?? STYLE_DEFAULTS.LETTER_SPACING
-      this.position = style?.position ?? STYLE_DEFAULTS.POSITION
-      this.fontSize = style?.fontSize ?? STYLE_DEFAULTS.FONT_SIZE
-      this.fontFamily = style?.fontFamily ?? STYLE_DEFAULTS.FONT_FAMILY
-      this.fontName = style?.fontName ?? STYLE_DEFAULTS.FONT_NAME
+    const transformed = this.transformed
+
+    if (styleHasChanged && !transformed) {
+      this.stroke = this.style.stroke
+      this.wordWrap = this.style.wordWrap
+      this.fontWeight = this.style.fontWeight
+      this.color = this.style.color
+      this.letterSpacing = this.style.letterSpacing
+      this.position = this.style.position
+      this.fontSize = this.style.fontSize
+      this.fontFamily = this.style.fontFamily
+      this.fontName = this.style.fontName
+      this.background = this.style.background
     }
+
+    this.transformed = false
 
     if (this.dirty) {
       this.dirty = false
       this.updateText()
     }
 
-    if (this.transformed && this.labelBackground) {
-      this.transformed = false
+    if (transformed && this.labelBackground) {
       this.labelBackground.text = this.text
     }
 
-    if (labelHasChanged || styleHasChanged) {
-      this.setBackground({ ...this.text.getLocalBounds() }, this.text.anchor.clone(), style?.background)
+    const nextSpacing = [this.style.margin, this.labelBackground?.padding ?? 0]
+
+    if (labelHasChanged || !equals(prevSpacing, nextSpacing)) {
+      this._rect = this.getRect()
+      this.labelBackground?.resize(...this.size)
+    } else if (transformed && this.labelBackground) {
+      this.labelBackground.resize(...this.size)
     }
 
     return this
   }
 
-  moveTo(x: number, y: number) {
-    const { label, bg } = utils.getLabelCoordinates(x, y, this.offset, this.isBitmapText(), this.style)
+  moveTo(_x: number, _y: number) {
+    const { position, margin } = this.style
 
-    this.labelBackground?.moveTo(bg.x, bg.y)
+    let [x, y] = this.offsetCoordinates(_x, _y, this.offset + margin)
 
-    if (label.x !== this.x) {
-      this.text.x = label.x
-      this.x = label.x
+    if (this.labelBackground) {
+      this.labelBackground.moveTo(x, y)
+      const [pt, pr, pb, pl] = utils.getBackgroundPadding(this.labelBackground.padding)
+      ;[x, y] = this.offsetCoordinates(x, y, position === 'bottom' ? pt : position === 'left' ? pr : position === 'top' ? pb : pl)
     }
-    if (label.y !== this.y) {
-      this.text.y = label.y
-      this.y = label.y
+
+    if (x !== this.x) {
+      this.text.x = x
+      this.x = x
     }
+    if (y !== this.y) {
+      this.text.y = y
+      this.y = y
+    }
+
+    return this
   }
 
   mount() {
@@ -131,11 +153,19 @@ export class Label {
     return undefined
   }
 
+  get rotation() {
+    return this.text.rotation
+  }
+
   set rotation(rotation: number) {
     this.text.rotation = rotation
     if (this.labelBackground) {
       this.labelBackground.rotation = rotation
     }
+  }
+
+  get rect() {
+    return this._rect
   }
 
   private create() {
@@ -157,10 +187,6 @@ export class Label {
     return text
   }
 
-  private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {
-    return text instanceof BitmapText
-  }
-
   private updateText() {
     if (this.isBitmapText(this.text)) {
       this.text.updateText()
@@ -170,32 +196,84 @@ export class Label {
   }
 
   private transformText() {
+    this.dirty = false
     this.transformed = true
     const isMounted = this.mounted
 
     this.delete()
     this.text = this.create()
-    this.text.x = this.x ?? 0
-    this.text.y = this.y ?? 0
+    this.text.x = this.x
+    this.text.y = this.y
 
     if (isMounted) {
       this.mount()
     }
   }
 
-  private setBackground(rect: Rectangle, anchor: Point, background: LabelBackgroundStyle | undefined) {
+  private offsetCoordinates(x: number, y: number, offset: number): [x: number, y: number] {
+    switch (this.style.position) {
+      case 'bottom':
+        return [x, y + offset]
+      case 'left':
+        return [x - offset, y]
+      case 'top':
+        return [x, y - offset]
+      case 'right':
+        return [x + offset, y]
+    }
+  }
+
+  private isBitmapText(text: Text | BitmapText = this.text): text is BitmapText {
+    return text instanceof BitmapText
+  }
+
+  private getRect(): Bounds {
+    /**
+     * This rect defines the min/max distance away from its reference; it does not represent the label's exact position.
+     * This should only be recalculated when the size could have changed. i.e. content, margin, or background padding updates
+     */
+    const { position, margin } = this.style
+    const offset = this.offset + margin
+    const [width, height] = this.size
+    const [pt, pr, pb, pl] = utils.getBackgroundPadding(this.labelBackground?.padding ?? 0)
+
+    switch (position) {
+      case 'bottom':
+      case 'top': {
+        const vertical = { top: 0, bottom: 0, right: width / 2 + pr, left: width / 2 + pl }
+        return { ...vertical, [position]: offset + pt + pb + height }
+      }
+
+      case 'left':
+      case 'right': {
+        const horizontal = { left: 0, right: 0, top: height / 2 + pt, bottom: height / 2 + pb }
+        return { ...horizontal, [position]: offset + pl + pr + width }
+      }
+    }
+  }
+
+  private get size(): [width: number, height: number] {
+    return [this.text.width, this.text.height]
+  }
+
+  private get style(): DefaultLabelStyle {
+    return this._currentStyle
+  }
+
+  private set style(style: LabelStyle | undefined) {
+    this._style = style
+    this._currentStyle = { ...DEFAULT_LABEL_STYLE, ...(style ?? {}) }
+  }
+
+  private set background(background: LabelBackgroundStyle | undefined) {
     if (this.labelBackground === null && background !== undefined) {
       this.labelBackground = new LabelBackground(this.container, this.text, background)
     } else if (this.labelBackground && background !== undefined) {
-      this.labelBackground.update(rect, anchor, background)
+      this.labelBackground.update(background)
     } else if (this.labelBackground && background === undefined) {
       this.labelBackground.delete()
       this.labelBackground = null
     }
-  }
-
-  private get style() {
-    return utils.mergeDefaults(this._style)
   }
 
   private set position(position: LabelPosition) {
@@ -220,6 +298,7 @@ export class Label {
   private set anchor([x, y]: [x: number, y: number]) {
     if (!this.text.anchor.equals({ x, y })) {
       this.text.anchor.set(x, y)
+      this.labelBackground?.anchor.set(x, y)
     }
   }
 
@@ -237,12 +316,17 @@ export class Label {
     }
   }
 
-  private set wordWrap(wordWrap: number | undefined) {
-    const wordWrapWidth = wordWrap ?? 0
-    if (!this.isBitmapText(this.text) && this.text.style.wordWrapWidth !== wordWrapWidth) {
-      this.dirty = true
-      this.text.style.wordWrap = wordWrap !== undefined
-      this.text.style.wordWrapWidth = wordWrapWidth
+  private set wordWrap(value: number | false) {
+    if (!this.isBitmapText(this.text)) {
+      const wordWrap = isNumber(value)
+      if (this.text.style.wordWrap !== wordWrap) {
+        this.dirty = true
+        this.text.style.wordWrap = wordWrap
+      }
+      if (isNumber(value) && this.text.style.wordWrapWidth !== value) {
+        this.dirty = true
+        this.text.style.wordWrapWidth = value
+      }
     }
   }
 
@@ -253,14 +337,15 @@ export class Label {
     }
   }
 
-  private set stroke(value: Stroke | undefined) {
+  private set stroke(stroke: Stroke) {
     if (!this.isBitmapText(this.text)) {
-      const stroke = value?.color ?? STYLE_DEFAULTS.STROKE
-      const strokeThickness = value?.width ?? STYLE_DEFAULTS.STROKE_THICKNESS
-      if (this.text.style.stroke !== stroke || this.text.style.strokeThickness !== strokeThickness) {
+      if (this.text.style.stroke !== stroke.color) {
         this.dirty = true
-        this.text.style.stroke = stroke
-        this.text.style.strokeThickness = strokeThickness
+        this.text.style.stroke = stroke.color
+      }
+      if (this.text.style.strokeThickness !== stroke.width) {
+        this.dirty = true
+        this.text.style.strokeThickness = stroke.width
       }
     }
   }

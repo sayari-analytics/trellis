@@ -1,4 +1,4 @@
-import { BitmapFont, TextStyle } from 'pixi.js'
+import { BitmapFont, ITextStyle, TextStyle } from 'pixi.js'
 import { MIN_ZOOM } from '../utils'
 
 export class FontBook {
@@ -28,11 +28,13 @@ export class FontBook {
     return BitmapFont.available[fontName]
   }
 
-  create(fontName: string, style: TextStyle) {
+  create(fontName: string, style: Partial<ITextStyle> | TextStyle) {
     const font = FontBook.find(fontName)
 
     if (font === undefined) {
-      style.fontSize = this.maxFontSize * this.resolution * this.scaleFactor
+      const fontSize = this.maxFontSize * this.resolution * this.scaleFactor
+      style.fontSize = fontSize
+      style.lineHeight = fontSize * 1.3
       return BitmapFont.from(fontName, style, { chars: this.chars, resolution: this.resolution })
     }
 
