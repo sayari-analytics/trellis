@@ -8,12 +8,12 @@ import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
-import { ArrowTexture } from './textures/arrow'
-import { CircleTexture } from './textures/circle'
 import { interpolate } from '../../utils'
 import { logUnknownEdgeError } from './utils'
 import { ObjectManager } from './objectManager'
-import TextIconCache from './textures/text/TextIconCache'
+import ArrowTexture from './textures/ArrowTexture'
+import CircleTexture from './textures/CircleTexture'
+import TextIconTexture from './textures/TextIconTexture'
 import AssetManager from './loaders/AssetManager'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
@@ -145,7 +145,7 @@ export class Renderer {
   animateNodeRadius: number | false = defaultOptions.animateNodeRadius
   circle: CircleTexture
   arrow: ArrowTexture
-  textIcon: TextIconCache
+  textIcon: TextIconTexture
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
   assets = new AssetManager()
@@ -224,7 +224,7 @@ export class Renderer {
     this.app.stage.addChild(this.root)
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
-    this.textIcon = new TextIconCache(this)
+    this.textIcon = new TextIconTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer

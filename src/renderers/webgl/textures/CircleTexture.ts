@@ -1,10 +1,10 @@
 import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js'
-import { MIN_ZOOM } from '../utils'
-import { type Renderer } from '..'
+import { MIN_TEXTURE_ZOOM } from '../../../utils/constants'
+import { Texture } from '../../../types'
+import { Renderer } from '..'
 
-export class CircleTexture {
-  texture: RenderTexture
-  scaleFactor = 10 * MIN_ZOOM // maxRadius * minZoom -- TODO make configurable
+export default class CircleTexture implements Texture {
+  private texture: RenderTexture
 
   constructor(renderer: Renderer) {
     const graphic = new Graphics().beginFill(0xffffff).drawCircle(0, 0, this.scaleFactor)
@@ -28,7 +28,18 @@ export class CircleTexture {
     graphic.destroy(true)
   }
 
+  get() {
+    return this.texture
+  }
+
   delete() {
     this.texture.destroy()
+    return undefined
+  }
+
+  // TODO -> make configurable
+  get scaleFactor() {
+    // maxRadius * minZoom
+    return 10 * MIN_TEXTURE_ZOOM
   }
 }

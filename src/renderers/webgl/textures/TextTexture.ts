@@ -1,8 +1,8 @@
-import type { TextStyle, TextHighlightStyle, TextAlign, Stroke, FontWeight, AnchorPosition } from '../../../../types/api'
+import type { TextStyle, TextHighlightStyle, TextAlign, Stroke, FontWeight, AnchorPosition } from '../../../types/api'
 import { TextStyle as PixiTextStyle, ITextStyle as IPixiTextStyle, BitmapFont, IBitmapTextStyle, LINE_JOIN } from 'pixi.js'
-import { DEFAULT_HIGHLIGHT_STYLE, DEFAULT_TEXT_STYLE, MIN_TEXTURE_ZOOM, DEFAULT_RESOLUTION } from '../../../../utils/constants'
-import { isNumber } from '../../../../utils'
-import { equals } from '../../../../utils/api'
+import { DEFAULT_HIGHLIGHT_STYLE, DEFAULT_TEXT_STYLE, MIN_TEXTURE_ZOOM, DEFAULT_RESOLUTION } from '../../../utils/constants'
+import { isNumber } from '../../../utils'
+import { equals } from '../../../utils/api'
 
 export type TextTextureOptions = {
   defaultTextStyle?: Omit<TextStyle, 'highlight'>

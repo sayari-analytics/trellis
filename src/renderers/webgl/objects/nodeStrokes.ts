@@ -1,5 +1,5 @@
 import { Container, Sprite } from 'pixi.js'
-import { CircleTexture } from '../textures/circle'
+import CircleTexture from '../textures/CircleTexture'
 import { NodeFill } from './nodeFill'
 import type { NodeStyle } from '../../../types'
 
@@ -34,7 +34,7 @@ export class NodeStrokes {
 
         for (let i = 0; i < style.stroke.length; i++) {
           this.radius += style.stroke[i].width
-          const circle = new Sprite(this.circleTexture.texture)
+          const circle = new Sprite(this.circleTexture.get())
           circle.anchor.set(0.5)
           circle.scale.set(this.radius / this.circleTexture.scaleFactor)
           circle.tint = style.stroke[i].color

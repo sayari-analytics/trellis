@@ -1,6 +1,6 @@
 import { Container, Sprite } from 'pixi.js'
 import type { NodeStyle } from '../../../types'
-import { CircleTexture } from '../textures/circle'
+import CircleTexture from '../textures/CircleTexture'
 
 const DEFAULT_NODE_FILL = 0xaaaaaa
 
@@ -16,7 +16,7 @@ export class NodeFill {
   constructor(container: Container, circleTexture: CircleTexture) {
     this.container = container
     this.circleTexture = circleTexture
-    this.fill = new Sprite(this.circleTexture.texture)
+    this.fill = new Sprite(this.circleTexture.get())
     this.fill.anchor.set(0.5)
     this.fill.visible = false
 

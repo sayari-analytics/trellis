@@ -2,7 +2,7 @@ import { Container, Sprite, Texture } from 'pixi.js'
 import { IconStyle } from '../../../types'
 import { equals } from '../../../utils/api'
 import AssetManager, { AssetSubscription, FontSubscription } from '../loaders/AssetManager'
-import TextIconCache from '../textures/text/TextIconCache'
+import TextIconTexture from '../textures/TextIconTexture'
 
 export default class Icon {
   mounted = false
@@ -14,13 +14,13 @@ export default class Icon {
 
   constructor(
     private assets: AssetManager,
-    private textIconCache: TextIconCache,
+    private textIconTexture: TextIconTexture,
     private container: Container,
     private fill: { getContainerIndex: () => number },
     private icon: IconStyle
   ) {
     this.assets = assets
-    this.textIconCache = textIconCache
+    this.textIconTexture = textIconTexture
     this.container = container
     this.fill = fill
     this.icon = icon
@@ -29,7 +29,7 @@ export default class Icon {
       this.object = this.create(Texture.EMPTY)
       this.loadTexture()
     } else {
-      this.object = this.create(this.textIconCache.create(this.icon))
+      this.object = this.create(this.textIconTexture.get(this.icon))
     }
   }
 
@@ -41,7 +41,7 @@ export default class Icon {
       if (this.icon.type === 'imageIcon' || this.assets.shouldLoadFont(this.icon.style)) {
         this.loadTexture()
       } else {
-        this.texture = this.textIconCache.create(this.icon)
+        this.texture = this.textIconTexture.get(this.icon)
       }
     }
 
@@ -99,7 +99,7 @@ export default class Icon {
 
   private get scale() {
     if (this.icon.type === 'textIcon') {
-      return 1 / this.textIconCache.scaleFactor
+      return 1 / this.textIconTexture.scaleFactor
     } else {
       return this.icon.scale ?? 1
     }
@@ -145,7 +145,7 @@ export default class Icon {
         resolve: () => {
           this.subscription = undefined
           if (this.icon.type === 'textIcon') {
-            this.texture = this.textIconCache.create(this.icon)
+            this.texture = this.textIconTexture.get(this.icon)
           }
         }
       })
