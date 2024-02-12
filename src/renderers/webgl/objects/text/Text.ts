@@ -46,23 +46,6 @@ export default class Text {
     }
   }
 
-  private loadFont(fontFamily: string, fontWeight: FontWeight) {
-    return this.assets.loadFont({
-      fontFamily,
-      fontWeight,
-      resolve: () => {
-        this.font = undefined
-        this.style.fontLoading = false
-        if (this.isBitmapText()) {
-          this.transformText()
-          this.transformed = false
-        } else {
-          this.applyStyle()
-        }
-      }
-    })
-  }
-
   update(content: string, style: TextStyle | undefined) {
     const contentHasChanged = this.content !== content
     const styleHasChanged = !this.style.compare(style)
@@ -91,11 +74,10 @@ export default class Text {
     }
 
     if (styleHasChanged) {
-      this.applyStyle().applyHighlight()
-    }
-
-    if (this.transformed && this.highlight) {
-      this.highlight.text = this.object
+      this.applyHighlight()
+      if (!this.transformed) {
+        this.applyStyle()
+      }
     }
 
     const nextSpacing = [this.style.margin, this.style.highlight?.padding ?? 0]
@@ -227,6 +209,8 @@ export default class Text {
   }
 
   private transformText() {
+    const rotation = this.object.rotation
+
     this.transformed = true
     const isMounted = this.mounted
 
@@ -234,6 +218,11 @@ export default class Text {
     this.object = this.create()
     this.object.x = this.x
     this.object.y = this.y
+    this.object.rotation = rotation
+
+    if (this.highlight) {
+      this.highlight.text = this.object
+    }
 
     if (isMounted) {
       this.mount()
@@ -241,17 +230,10 @@ export default class Text {
   }
 
   private applyStyle() {
-    if (this.isBitmapText(this.object)) {
-      this.object.align = this.style.align
-      this.object.fontSize = this.style.fontSize
-      this.object.letterSpacing = this.style.letterSpacing
-      if (this.object.fontName !== this.style.fontName) {
-        this.style.createFont()
-        this.object.fontName = this.style.fontName
-      }
+    this.object.anchor.set(...this.style.anchor)
+    this.highlight?.anchor.set(...this.style.anchor)
 
-      // TODO -> regenerate bitmap texture if any of the below styles change
-    } else {
+    if (!this.isBitmapText(this.object)) {
       this.object.style.stroke = this.style.stroke.color
       this.object.style.strokeThickness = this.style.stroke.width
       this.object.style.wordWrap = this.style.wordWrap
@@ -262,10 +244,9 @@ export default class Text {
       this.object.style.align = this.style.align
       this.object.style.fontSize = this.style.fontSize
       this.object.style.fontFamily = this.style.fontFamily
+    } else {
+      this.transformText()
     }
-
-    this.object.anchor.set(...this.style.anchor)
-    this.highlight?.anchor.set(...this.style.anchor)
 
     return this
   }
@@ -320,5 +301,17 @@ export default class Text {
       case 'center':
         return { top: hy, right: hx, bottom: hy, left: hx }
     }
+  }
+
+  private loadFont(fontFamily: string, fontWeight: FontWeight) {
+    return this.assets.loadFont({
+      fontFamily,
+      fontWeight,
+      resolve: () => {
+        this.font = undefined
+        this.style.fontLoading = false
+        this.applyStyle()
+      }
+    })
   }
 }

@@ -35,7 +35,8 @@ export class EdgeRenderer {
   targetRadius?: number
 
   private hitArea: EdgeHitArea
-  private arrow?: { forward: Arrow; reverse?: undefined } | { forward?: undefined; reverse: Arrow } | { forward: Arrow; reverse: Arrow }
+  private forwardArrow?: Arrow
+  private reverseArrow?: Arrow
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
 
@@ -52,35 +53,34 @@ export class EdgeRenderer {
     this.target = target
 
     const arrow = edge.style?.arrow ?? DEFAULT_ARROW
-    if (arrow !== this.arrowStyle) {
-      this.arrow?.forward?.delete()
-      this.arrow?.reverse?.delete()
-      this.arrow = undefined
 
+    if (arrow !== this.arrow) {
       switch (arrow) {
         case 'forward':
-          this.arrow = { forward: new Arrow(this.renderer.edgesContainer, this.renderer.arrow) }
+          this.createArrow('forward').deleteArrow('reverse')
           break
+
         case 'reverse':
-          this.arrow = { reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow) }
+          this.deleteArrow('forward').createArrow('reverse')
           break
+
         case 'both':
-          this.arrow = {
-            forward: new Arrow(this.renderer.edgesContainer, this.renderer.arrow),
-            reverse: new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
-          }
+          this.createArrow('forward').createArrow('reverse')
+          break
+
+        case 'none':
+          this.deleteArrow('forward').deleteArrow('reverse')
+          break
       }
     }
 
-    if (edge.label === undefined || edge.label.trim() === '') {
-      if (this.label) {
+    if (this.label) {
+      if (edge.label === undefined || edge.label.trim() === '') {
         this.managers.labels.delete(this.label)
         this.label = undefined
+      } else {
+        this.label.update(edge.label, edge.style?.label)
       }
-    } else if (this.label === undefined) {
-      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, edge.label, edge.style?.label, DEFAULT_LABEL_STYLE)
-    } else {
-      this.label.update(edge.label, edge.style?.label)
     }
 
     return this
@@ -94,51 +94,6 @@ export class EdgeRenderer {
     const sourceRadius = this.source.strokes.radius
     const targetRadius = this.target.strokes.radius
     const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
-
-    // TODO - disable events if edge has no event handlers
-    // TODO - disable events when dragging/scrolling
-    const shouldHitAreaMount = isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM
-    const hitAreaMounted = this.managers.interactions.isMounted(this.hitArea)
-    if (shouldHitAreaMount && !hitAreaMounted) {
-      this.managers.interactions.mount(this.hitArea)
-    } else if (!shouldHitAreaMount && hitAreaMounted) {
-      this.managers.interactions.unmount(this.hitArea)
-    }
-
-    const lineMounted = this.managers.edges.isMounted(this.lineSegment)
-    if (isVisible && !lineMounted) {
-      this.managers.edges.mount(this.lineSegment)
-    } else if (!isVisible && lineMounted) {
-      this.managers.edges.unmount(this.lineSegment)
-    }
-
-    if (this.arrow?.forward) {
-      const forwardArrowMounted = this.managers.arrows.isMounted(this.arrow.forward)
-      if (isVisible && !forwardArrowMounted) {
-        this.managers.arrows.mount(this.arrow.forward)
-      } else if (!isVisible && forwardArrowMounted) {
-        this.managers.arrows.unmount(this.arrow.forward)
-      }
-    }
-
-    if (this.arrow?.reverse) {
-      const reverseArrowMounted = this.managers.arrows.isMounted(this.arrow.reverse)
-      if (isVisible && !reverseArrowMounted) {
-        this.managers.arrows.mount(this.arrow.reverse)
-      } else if (!isVisible && reverseArrowMounted) {
-        this.managers.arrows.unmount(this.arrow.reverse)
-      }
-    }
-
-    if (this.label) {
-      const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
-      const labelMounted = this.managers.labels.isMounted(this.label)
-      if (shouldLabelMount && !labelMounted) {
-        this.managers.labels.mount(this.label)
-      } else if (!shouldLabelMount && labelMounted) {
-        this.managers.labels.unmount(this.label)
-      }
-    }
 
     if (isVisible) {
       const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
@@ -171,24 +126,24 @@ export class EdgeRenderer {
         let edgeX1 = this.x1
         let edgeY1 = this.y1
 
-        if (this.arrow?.forward) {
-          const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius + this.arrow.forward.height)
+        if (this.forwardArrow) {
+          const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius + this.forwardArrow.height)
           edgeX1 = edgePoint[0]
           edgeY1 = edgePoint[1]
           const [arrowX1, arrowY1] = movePoint(x1, y1, this.theta, this.targetRadius)
-          this.arrow.forward.update(arrowX1, arrowY1, this.theta, this.stroke, this.strokeOpacity)
+          this.forwardArrow.update(arrowX1, arrowY1, this.theta, this.stroke, this.strokeOpacity)
         } else {
           const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius)
           edgeX1 = edgePoint[0]
           edgeY1 = edgePoint[1]
         }
 
-        if (this.arrow?.reverse) {
-          const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius - this.arrow.reverse.height)
+        if (this.reverseArrow) {
+          const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius - this.reverseArrow.height)
           edgeX0 = edgePoint[0]
           edgeY0 = edgePoint[1]
           const [arrowX0, arrowY0] = movePoint(x0, y0, this.theta, -this.sourceRadius)
-          this.arrow.reverse.update(arrowX0, arrowY0, this.theta + Math.PI, this.stroke, this.strokeOpacity)
+          this.reverseArrow.update(arrowX0, arrowY0, this.theta + Math.PI, this.stroke, this.strokeOpacity)
         } else {
           const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius)
           edgeX0 = edgePoint[0]
@@ -196,6 +151,7 @@ export class EdgeRenderer {
         }
 
         this.center = midPoint(edgeX0, edgeY0, edgeX1, edgeY1)
+
         if (this.label) {
           this.label.rotation = this.theta
           this.label.moveTo(...this.center)
@@ -206,6 +162,56 @@ export class EdgeRenderer {
         this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.theta)
       }
     }
+
+    // TODO - disable events if edge has no event handlers
+    // TODO - disable events when dragging/scrolling
+    const shouldHitAreaMount = isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM
+    const hitAreaMounted = this.managers.interactions.isMounted(this.hitArea)
+    if (shouldHitAreaMount && !hitAreaMounted) {
+      this.managers.interactions.mount(this.hitArea)
+    } else if (!shouldHitAreaMount && hitAreaMounted) {
+      this.managers.interactions.unmount(this.hitArea)
+    }
+
+    const lineMounted = this.managers.edges.isMounted(this.lineSegment)
+    if (isVisible && !lineMounted) {
+      this.managers.edges.mount(this.lineSegment)
+    } else if (!isVisible && lineMounted) {
+      this.managers.edges.unmount(this.lineSegment)
+    }
+
+    if (this.forwardArrow) {
+      const forwardArrowMounted = this.managers.arrows.isMounted(this.forwardArrow)
+      if (isVisible && !forwardArrowMounted) {
+        this.managers.arrows.mount(this.forwardArrow)
+      } else if (!isVisible && forwardArrowMounted) {
+        this.managers.arrows.unmount(this.forwardArrow)
+      }
+    }
+
+    if (this.reverseArrow) {
+      const reverseArrowMounted = this.managers.arrows.isMounted(this.reverseArrow)
+      if (isVisible && !reverseArrowMounted) {
+        this.managers.arrows.mount(this.reverseArrow)
+      } else if (!isVisible && reverseArrowMounted) {
+        this.managers.arrows.unmount(this.reverseArrow)
+      }
+    }
+
+    const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+
+    if (shouldLabelMount) {
+      this.applyLabel()
+    }
+
+    if (this.label) {
+      const labelMounted = this.managers.labels.isMounted(this.label)
+      if (shouldLabelMount && !labelMounted) {
+        this.managers.labels.mount(this.label)
+      } else if (!shouldLabelMount && labelMounted) {
+        this.managers.labels.unmount(this.label)
+      }
+    }
   }
 
   delete() {
@@ -213,11 +219,11 @@ export class EdgeRenderer {
 
     this.managers.edges.delete(this.lineSegment)
     this.managers.interactions.delete(this.hitArea)
-    if (this.arrow?.forward) {
-      this.managers.arrows.delete(this.arrow.forward)
+    if (this.forwardArrow) {
+      this.managers.arrows.delete(this.forwardArrow)
     }
-    if (this.arrow?.reverse) {
-      this.managers.arrows.delete(this.arrow.reverse)
+    if (this.reverseArrow) {
+      this.managers.arrows.delete(this.reverseArrow)
     }
   }
 
@@ -385,15 +391,49 @@ export class EdgeRenderer {
     return this.renderer.managers
   }
 
-  private get arrowStyle(): ArrowStyle {
-    if (this.arrow === undefined) {
+  private get arrow(): ArrowStyle {
+    if (this.forwardArrow === undefined && this.reverseArrow === undefined) {
       return 'none'
-    } else if (this.arrow.forward !== undefined && this.arrow.reverse !== undefined) {
-      return 'both'
-    } else if (this.arrow.forward !== undefined) {
+    } else if (this.reverseArrow === undefined) {
       return 'forward'
-    } else {
+    } else if (this.forwardArrow === undefined) {
       return 'reverse'
+    } else {
+      return 'both'
     }
+  }
+
+  private deleteArrow(arrow: 'forward' | 'reverse') {
+    if (arrow === 'forward' && this.forwardArrow) {
+      this.managers.arrows.delete(this.forwardArrow)
+      this.forwardArrow = undefined
+    } else if (arrow === 'reverse' && this.reverseArrow) {
+      this.managers.arrows.delete(this.reverseArrow)
+      this.reverseArrow = undefined
+    }
+
+    return this
+  }
+
+  private createArrow(arrow: 'forward' | 'reverse') {
+    if (arrow === 'forward' && this.forwardArrow === undefined) {
+      this.forwardArrow = new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
+    } else if (arrow === 'reverse' && this.reverseArrow === undefined) {
+      this.reverseArrow = new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
+    }
+
+    return this
+  }
+
+  private applyLabel() {
+    const label = this.edge.label
+    const style = this.edge.style?.label
+    if (label !== undefined && label.trim() !== '' && this.label === undefined) {
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, label, style, DEFAULT_LABEL_STYLE)
+      this.label.rotation = this.theta
+      this.label.moveTo(...this.center)
+    }
+
+    return this
   }
 }

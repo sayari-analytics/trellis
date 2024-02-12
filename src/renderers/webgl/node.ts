@@ -39,26 +39,22 @@ export class NodeRenderer {
   }
 
   update(node: Node) {
-    if (node.label === undefined || node.label.trim() === '') {
-      if (this.label) {
+    if (this.label) {
+      if (node.label === undefined || node.label.trim() === '') {
         this.managers.labels.delete(this.label)
         this.label = undefined
+      } else {
+        this.label.update(node.label, node.style?.label)
       }
-    } else if (this.label === undefined) {
-      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, node.label, node.style?.label, DEFAULT_LABEL_STYLE)
-    } else {
-      this.label.update(node.label, node.style?.label)
     }
 
-    if (node.style?.icon === undefined) {
-      if (this.icon) {
+    if (this.icon) {
+      if (node.style?.icon === undefined) {
         this.icon.delete()
         this.icon = undefined
+      } else {
+        this.icon.update(node.style.icon)
       }
-    } else if (this.icon === undefined) {
-      this.icon = new Icon(this.renderer.assets, this.renderer.textIcon, this.renderer.nodesContainer, this.fill, node.style.icon)
-    } else {
-      this.icon.update(node.style.icon)
     }
 
     /**
@@ -140,6 +136,10 @@ export class NodeRenderer {
 
     const isVisible = this.visible()
 
+    if (isVisible) {
+      this.applyLabel().applyIcon()
+    }
+
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node pixel width < ~5px
     // TODO - disable events when dragging/scrolling
@@ -155,9 +155,9 @@ export class NodeRenderer {
     const fillMounted = this.managers.nodes.isMounted(this.fill)
 
     if (isVisible && !fillMounted) {
-      this.fill.mount()
-    } else if (!isVisible && this.fill.mounted) {
-      this.fill.unmount()
+      this.managers.nodes.mount(this.fill)
+    } else if (!isVisible && fillMounted) {
+      this.managers.nodes.unmount(this.fill)
     }
 
     const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM
@@ -519,5 +519,27 @@ export class NodeRenderer {
 
   private get managers() {
     return this.renderer.managers
+  }
+
+  private applyLabel() {
+    const label = this.node.label
+    const style = this.node.style?.label
+    if (label !== undefined && label.trim() !== '' && this.label === undefined) {
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, label, style, DEFAULT_LABEL_STYLE)
+      this.label.offset = this.strokes.radius
+      this.label.moveTo(this.x, this.y)
+    }
+
+    return this
+  }
+
+  private applyIcon() {
+    const icon = this.node.style?.icon
+    if (icon !== undefined && this.icon === undefined) {
+      this.icon = new Icon(this.renderer.assets, this.renderer.textIcon, this.renderer.nodesContainer, this.fill, icon)
+      this.icon.moveTo(this.x, this.y)
+    }
+
+    return this
   }
 }

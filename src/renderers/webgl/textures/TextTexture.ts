@@ -139,8 +139,10 @@ export default class TextTexture {
     this._fontLoading = loading
 
     if (loading) {
+      this.fontName = `LoadingFont:${this.fontName}`
       this.fontFamily = this.defaultTextStyle.fontFamily
     } else {
+      this.fontName = this._style?.fontName ?? this.defaultTextStyle.fontName
       this.fontFamily = this._style?.fontFamily ?? this.defaultTextStyle.fontFamily
     }
   }
