@@ -450,11 +450,13 @@ export class Renderer {
   }
 
   image() {
-    if (this.assets.loading) {
-      return
-    }
+    return new Promise((resolve) => {
+      if (this.assets.loading) {
+        return
+      }
 
-    return new Promise((resolve) => resolve(new Blob())) // TODO
+      return resolve(new Blob())
+    }) // TODO
   }
 
   private render(dt: number) {
