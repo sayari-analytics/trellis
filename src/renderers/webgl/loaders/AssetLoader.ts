@@ -1,6 +1,6 @@
 import { Publisher, Subscriber } from './PubSub'
 import { Assets, Texture } from 'pixi.js'
-import { noop } from '../../../utils'
+import { noop } from '../../../utils/helpers'
 
 type LoadAssetProps = Partial<Subscriber<Texture>> & { url: string }
 

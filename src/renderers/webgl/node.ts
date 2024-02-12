@@ -6,7 +6,7 @@ import Text from './objects/text/Text'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
-import { interpolate } from '../../utils'
+import { interpolate } from '../../utils/helpers'
 import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 import Icon from './objects/Icon'
 

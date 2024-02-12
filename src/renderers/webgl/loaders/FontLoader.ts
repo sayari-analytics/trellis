@@ -1,6 +1,6 @@
 import { DEFAULT_TEXT_STYLE, GENERIC_FONT_FAMILIES } from '../../../utils/constants'
 import { Subscriber, Publisher } from './PubSub'
-import { noop } from '../../../utils'
+import { noop } from '../../../utils/helpers'
 import FontFaceObserver from 'fontfaceobserver'
 
 type LoadFontProps = Partial<Subscriber<true>> & {
