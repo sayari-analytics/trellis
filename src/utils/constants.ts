@@ -39,17 +39,4 @@ export const DEFAULT_HIGHLIGHT_STYLE = {
   padding: [8, 4] as [number, number]
 }
 
-export const GENERIC_FONT_FAMILIES = new Set([
-  'serif',
-  'sans-serif',
-  'monospace',
-  'cursive',
-  'fantasy',
-  'system-ui',
-  'emoji',
-  'math',
-  'fangsong',
-  'ui-serif',
-  'ui-sans-serif',
-  'ui-monospace'
-])
+export const GENERIC_FONT_FAMILIES = new Set(['serif', 'sans-serif', 'monospace', 'cursive'])
