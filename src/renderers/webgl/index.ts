@@ -10,11 +10,11 @@ import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
 import { interpolate } from '../../utils/helpers'
 import { logUnknownEdgeError } from './utils'
-import { ObjectManager } from './objectManager'
 import ArrowTexture from './textures/ArrowTexture'
 import CircleTexture from './textures/CircleTexture'
 import TextIconTexture from './textures/TextIconTexture'
 import AssetManager from './loaders/AssetManager'
+import LifecycleManager from './LifecycleManager'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -127,12 +127,7 @@ export class Renderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  nodeStrokeObjectManager = new ObjectManager(1000)
-  nodeIconObjectManager = new ObjectManager(1000)
-  edgeObjectManager = new ObjectManager(2000)
-  edgeArrowObjectManager = new ObjectManager(1000)
-  labelObjectManager = new ObjectManager(2000)
-  interactionObjectManager = new ObjectManager(2000)
+  managers = new LifecycleManager()
   eventSystem: EventSystem
   nodes: Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}
@@ -505,13 +500,7 @@ export class Renderer {
       this.edgeRenderersById[edge.id].render()
     }
 
-    this.nodeStrokeObjectManager.render()
-    this.nodeIconObjectManager.render()
-    this.edgeObjectManager.render()
-    this.edgeArrowObjectManager.render()
-    this.labelObjectManager.render()
-    this.interactionObjectManager.render()
-
+    this.managers.render()
     this.app.render()
   }
 

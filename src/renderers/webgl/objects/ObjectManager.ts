@@ -1,31 +1,21 @@
-export interface RenderObject {
-  mounted: boolean
+import { RenderObjectLifecycle } from '../../../types'
 
-  mount(): this
+export default class ObjectManager<T extends RenderObjectLifecycle> {
+  private batch = new Map<T, 0 | 1 | 2>()
 
-  unmount(): this
-
-  delete(): void
-}
-
-export class ObjectManager {
-  private batchSize: number
-
-  private batch = new Map<RenderObject, 0 | 1 | 2>()
-
-  constructor(batchSize: number) {
-    this.batchSize = batchSize
+  constructor(private limit: number) {
+    this.limit = limit
   }
 
-  mount(object: RenderObject) {
+  mount(object: T) {
     this.batch.set(object, 0)
   }
 
-  unmount(object: RenderObject) {
+  unmount(object: T) {
     this.batch.set(object, 1)
   }
 
-  delete(object: RenderObject) {
+  delete(object: T) {
     this.batch.set(object, 2)
   }
 
@@ -33,7 +23,7 @@ export class ObjectManager {
     let count = 0
 
     for (const [object, operation] of this.batch) {
-      if (count === this.batchSize) {
+      if (count === this.limit) {
         break
       }
 
@@ -52,5 +42,10 @@ export class ObjectManager {
 
       count++
     }
+  }
+
+  isMounted(object: T) {
+    const code = this.batch.get(object)
+    return code === 0 || (code === undefined && object.mounted)
   }
 }

@@ -1,4 +1,5 @@
 // zoom limits
+// TODO - extends to renderer options
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
 export const MIN_NODE_ICON_ZOOM = 0.3

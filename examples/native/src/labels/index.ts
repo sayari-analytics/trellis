@@ -72,8 +72,9 @@ const edges: Graph.Edge[] = [
     id: '0::1',
     source: '0',
     target: '1',
-    label: 'EDGE LABEL 0 --> 1',
+    label: '0 <- EDGE LABEL -> 1',
     style: {
+      arrow: 'both',
       label: {
         fontName: 'EdgeLabel',
         fontFamily: 'Roboto',

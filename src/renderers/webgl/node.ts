@@ -1,13 +1,12 @@
-import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from './utils'
+import { DEFAULT_LABEL_STYLE, MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../../utils/constants'
 import { FederatedPointerEvent } from 'pixi.js'
-import { type Renderer } from '.'
-import type { Node } from '../../types'
-import Text from './objects/text/Text'
-import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils/helpers'
-import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
+import { NodeFill } from './objects/nodeFill'
+import { type Renderer } from '.'
+import type { Node } from '../../types'
+import Text from './objects/text/Text'
 import Icon from './objects/Icon'
 
 export class NodeRenderer {
@@ -30,9 +29,6 @@ export class NodeRenderer {
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
   private interpolateRadius?: (dt: number) => { value: number; done: boolean }
-  private strokeMounted = false
-  private labelMounted = false
-  private iconMounted = false
 
   constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
@@ -45,8 +41,7 @@ export class NodeRenderer {
   update(node: Node) {
     if (node.label === undefined || node.label.trim() === '') {
       if (this.label) {
-        this.renderer.labelObjectManager.delete(this.label)
-        this.labelMounted = false
+        this.managers.labels.delete(this.label)
         this.label = undefined
       }
     } else if (this.label === undefined) {
@@ -58,7 +53,6 @@ export class NodeRenderer {
     if (node.style?.icon === undefined) {
       if (this.icon) {
         this.icon.delete()
-        this.iconMounted = false
         this.icon = undefined
       }
     } else if (this.icon === undefined) {
@@ -149,63 +143,65 @@ export class NodeRenderer {
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node pixel width < ~5px
     // TODO - disable events when dragging/scrolling
-    if (isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM) {
-      this.renderer.interactionObjectManager.mount(this.hitArea)
-    } else {
-      this.renderer.interactionObjectManager.unmount(this.hitArea)
+    const shouldHitAreaMount = isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM
+    const hitAreaMounted = this.managers.interactions.isMounted(this.hitArea)
+
+    if (shouldHitAreaMount && !hitAreaMounted) {
+      this.managers.interactions.mount(this.hitArea)
+    } else if (!shouldHitAreaMount && hitAreaMounted) {
+      this.managers.interactions.unmount(this.hitArea)
     }
 
-    if (isVisible && !this.fill.mounted) {
+    const fillMounted = this.managers.nodes.isMounted(this.fill)
+
+    if (isVisible && !fillMounted) {
       this.fill.mount()
     } else if (!isVisible && this.fill.mounted) {
       this.fill.unmount()
     }
 
-    if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
-      if (!this.strokeMounted) {
-        this.renderer.nodeStrokeObjectManager.mount(this.strokes)
-        this.strokeMounted = true
-      }
-    } else {
-      if (this.strokeMounted) {
-        this.renderer.nodeStrokeObjectManager.unmount(this.strokes)
-        this.strokeMounted = false
-      }
+    const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM
+    const strokesMounted = this.managers.nodes.isMounted(this.strokes)
+
+    if (shouldStrokesMount && !strokesMounted) {
+      this.managers.nodes.mount(this.strokes)
+    } else if (!shouldStrokesMount && strokesMounted) {
+      this.managers.nodes.unmount(this.strokes)
     }
 
     if (this.label) {
-      const shouldMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
-      if (shouldMount && !this.labelMounted) {
-        this.renderer.labelObjectManager.mount(this.label)
-        this.labelMounted = true
-      } else if (!shouldMount && this.labelMounted) {
-        this.renderer.labelObjectManager.unmount(this.label)
-        this.labelMounted = false
+      const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+      const labelMounted = this.managers.labels.isMounted(this.label)
+      if (shouldLabelMount && !labelMounted) {
+        this.managers.labels.mount(this.label)
+      } else if (!shouldLabelMount && labelMounted) {
+        this.managers.labels.unmount(this.label)
       }
     }
 
     if (this.icon) {
-      const shouldMount = isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM
-      if (shouldMount && !this.iconMounted) {
-        this.renderer.nodeIconObjectManager.mount(this.icon)
-        this.iconMounted = true
-      } else if (!shouldMount && this.iconMounted) {
-        this.renderer.nodeIconObjectManager.unmount(this.icon)
-        this.iconMounted = false
+      const shouldIconMount = isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM
+      const iconMounted = this.managers.icons.isMounted(this.icon)
+      if (shouldIconMount && !iconMounted) {
+        this.managers.icons.mount(this.icon)
+      } else if (!shouldIconMount && iconMounted) {
+        this.managers.icons.unmount(this.icon)
       }
     }
   }
 
   delete() {
     clearTimeout(this.doubleClickTimeout)
-    this.fill.delete()
-    this.renderer.nodeStrokeObjectManager.delete(this.strokes)
-    this.renderer.interactionObjectManager.delete(this.hitArea)
+
+    this.managers.nodes.delete(this.fill)
+    this.managers.nodes.delete(this.strokes)
+    this.managers.interactions.delete(this.hitArea)
+
     if (this.label) {
-      this.renderer.labelObjectManager.delete(this.label)
+      this.managers.labels.delete(this.label)
     }
     if (this.icon) {
-      this.renderer.nodeIconObjectManager.delete(this.icon)
+      this.managers.icons.delete(this.icon)
     }
   }
 
@@ -519,5 +515,9 @@ export class NodeRenderer {
     const { minX, maxX, minY, maxY } = this.renderer
 
     return right >= minX && left <= maxX && bottom >= minY && top <= maxY
+  }
+
+  private get managers() {
+    return this.renderer.managers
   }
 }
