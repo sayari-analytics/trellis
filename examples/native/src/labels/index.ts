@@ -15,11 +15,12 @@ const IMAGE_ICON: Graph.ImageIcon = {
 
 const TEXT_ICON: Graph.TextIcon = {
   type: 'textIcon',
-  fontFamily: 'sans-serif',
-  fontWeight: '400',
-  fontSize: 14,
-  color: '#fff',
-  text: '!'
+  content: '!',
+  style: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#fff'
+  }
 }
 
 const NODE_STYLE: Graph.NodeStyle = {
@@ -30,7 +31,7 @@ const NODE_STYLE: Graph.NodeStyle = {
     position: 'bottom',
     fontName: 'NodeLabel',
     fontFamily: 'Roboto',
-    background: { color: GREEN_LIGHT },
+    highlight: { color: GREEN_LIGHT },
     margin: 4
   }
 }
@@ -43,7 +44,7 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
     position: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: 'Roboto',
-    background: { color: DARK_GREEN },
+    highlight: { color: DARK_GREEN },
     color: '#FFF',
     margin: 4
   }

@@ -77,6 +77,10 @@ export class Publisher<T, E = Error> {
     return this._cancelled
   }
 
+  get loading() {
+    return !this.completed && !this.cancelled && this.subscribers.size > 0
+  }
+
   private async _load() {
     try {
       const asset = await this._loader()

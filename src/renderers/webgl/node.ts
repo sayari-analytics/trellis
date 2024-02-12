@@ -1,21 +1,21 @@
 import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from './utils'
 import { FederatedPointerEvent } from 'pixi.js'
 import { type Renderer } from '.'
-import * as Graph from '../..'
-import { Label } from './objects/label'
+import type { Node } from '../../types'
+import Text from './objects/text/Text'
 import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils'
-import { FontSubscription, AssetSubscription } from './loaders/AssetManager'
+import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 import Icon from './objects/Icon'
 
 export class NodeRenderer {
-  node!: Graph.Node
+  node!: Node
   x!: number
   y!: number
   fill: NodeFill
-  label?: Label
+  label?: Text
   icon?: Icon
   strokes: NodeStrokes
 
@@ -34,10 +34,7 @@ export class NodeRenderer {
   private labelMounted = false
   private iconMounted = false
 
-  private _labelLoader?: FontSubscription
-  private _iconLoader?: FontSubscription | AssetSubscription
-
-  constructor(renderer: Renderer, node: Graph.Node) {
+  constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
     this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
     this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
@@ -45,48 +42,15 @@ export class NodeRenderer {
     this.update(node)
   }
 
-  update(node: Graph.Node) {
-    const x = node.x ?? 0
-    const y = node.y ?? 0
-    const xChanged = x !== this.x
-    const yChanged = y !== this.y
-    const radiusChanged = node.radius !== this.node?.radius
-
-    this.node = node
-
-    this._labelLoader?.unsubscribe()
-    // TODO -> manage asset loading in object's class
+  update(node: Node) {
     if (node.label === undefined || node.label.trim() === '') {
       if (this.label) {
         this.renderer.labelObjectManager.delete(this.label)
         this.labelMounted = false
         this.label = undefined
       }
-    } else if (this.renderer.assets.shouldLoadFont(node.style?.label)) {
-      this._labelLoader = this.renderer.assets.loadFont({
-        fontFamily: node.style.label.fontFamily,
-        fontWeight: node.style.label.fontWeight,
-        timeout: 10000,
-        resolve: () => {
-          this._labelLoader = undefined
-
-          if (!node.label) {
-            return
-          } else if (this.label) {
-            this.label.update(node.label, node.style?.label)
-          } else {
-            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
-            this.label.offset = this.strokes.radius
-            this.label.moveTo(this.x, this.y)
-            if (this.visible() && this.renderer.zoom > MIN_LABEL_ZOOM) {
-              this.renderer.labelObjectManager.mount(this.label)
-              this.labelMounted = true
-            }
-          }
-        }
-      })
     } else if (this.label === undefined) {
-      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, node.label, node.style?.label)
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, node.label, node.style?.label, DEFAULT_LABEL_STYLE)
     } else {
       this.label.update(node.label, node.style?.label)
     }
@@ -97,73 +61,10 @@ export class NodeRenderer {
         this.iconMounted = false
         this.icon = undefined
       }
-    } else if (node.style.icon.type === 'textIcon') {
-      const scale = 1 / this.renderer.textIcon.scaleFactor
-      const offset = node.style.icon.offset
-
-      if (this.renderer.assets.shouldLoadFont(node.style.icon)) {
-        this._iconLoader?.unsubscribe()
-        this._iconLoader = this.renderer.assets.loadFont({
-          fontFamily: node.style.icon.fontFamily,
-          fontWeight: node.style.icon.fontWeight,
-          timeout: 10000,
-          resolve: () => {
-            this._iconLoader = undefined
-
-            if (!node.style?.icon || node.style.icon.type !== 'textIcon') {
-              return
-            }
-            const texture = this.renderer.textIcon.create(node.style.icon)
-
-            if (this.icon) {
-              this.icon.update(texture, scale, offset)
-            } else {
-              this.icon = new Icon(this.renderer.nodesContainer, texture, this.fill, offset, scale)
-              this.icon?.moveTo(this.x, this.y)
-              if (this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
-                this.renderer.nodeIconObjectManager.mount(this.icon)
-                this.iconMounted = true
-              }
-            }
-          }
-        })
-      } else {
-        const texture = this.renderer.textIcon.create(node.style.icon)
-
-        if (this.icon) {
-          this.icon.update(texture, scale, offset)
-        } else {
-          this.icon = new Icon(this.renderer.nodesContainer, texture, this.fill, offset, scale)
-        }
-      }
+    } else if (this.icon === undefined) {
+      this.icon = new Icon(this.renderer.assets, this.renderer.textIcon, this.renderer.nodesContainer, this.fill, node.style.icon)
     } else {
-      const scale = node.style.icon.scale ?? 1
-      const offset = node.style.icon.offset
-      const texture = this.renderer.assets.checkAssetCache(node.style.icon.url)
-      if (texture === null) {
-        this._iconLoader?.unsubscribe()
-        this._iconLoader = this.renderer.assets.loadUrl({
-          url: node.style.icon.url,
-          resolve: (texture) => {
-            this._iconLoader = undefined
-
-            if (this.icon) {
-              this.icon.update(texture, scale, offset)
-            } else {
-              this.icon = new Icon(this.renderer.nodesContainer, texture, this.fill, offset, scale)
-              this.icon?.moveTo(this.x, this.y)
-              if (this.visible() && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
-                this.renderer.nodeIconObjectManager.mount(this.icon)
-                this.iconMounted = true
-              }
-            }
-          }
-        })
-      } else if (this.icon) {
-        this.icon.update(texture, scale, offset)
-      } else {
-        this.icon = new Icon(this.renderer.nodesContainer, texture, this.fill, offset, scale)
-      }
+      this.icon.update(node.style.icon)
     }
 
     /**
@@ -173,6 +74,13 @@ export class NodeRenderer {
      * - the animateViewport option is not disabled
      * - it's not the first render
      */
+
+    const x = node.x ?? 0
+    const y = node.y ?? 0
+    const xChanged = x !== this.x
+    const yChanged = y !== this.y
+    const radiusChanged = node.radius !== this.node?.radius
+
     if (
       (xChanged || yChanged || radiusChanged) &&
       this.renderer.draggedNode !== this &&
@@ -194,6 +102,8 @@ export class NodeRenderer {
       this.interpolateY = undefined
       this.interpolateRadius = undefined
     }
+
+    this.node = node
 
     return this
   }
@@ -287,11 +197,6 @@ export class NodeRenderer {
   }
 
   delete() {
-    this._labelLoader?.unsubscribe()
-    this._labelLoader = undefined
-    this._iconLoader?.unsubscribe()
-    this._iconLoader = undefined
-
     clearTimeout(this.doubleClickTimeout)
     this.fill.delete()
     this.renderer.nodeStrokeObjectManager.delete(this.strokes)
@@ -580,7 +485,7 @@ export class NodeRenderer {
     this.doubleClick = false
   }
 
-  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
+  private setPosition(node: Node, x: number, y: number, radius: number) {
     this.x = x
     this.y = y
 

@@ -2,21 +2,22 @@ import { type Renderer } from '.'
 import { MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM, midPoint } from './utils'
 import { movePoint } from './utils'
 import { NodeRenderer } from './node'
-import * as Graph from '../..'
+import type { Edge } from '../../types'
 import { Arrow } from './objects/arrow'
 import { LineSegment } from './objects/lineSegment'
 import { FederatedPointerEvent } from 'pixi.js'
+import { DEFAULT_LABEL_STYLE } from '../../utils/constants'
 import { EdgeHitArea } from './interaction/edgeHitArea'
-import { Label } from './objects/label'
-import { FontSubscription } from './loaders/AssetManager'
+import { angle } from '../../utils/api'
+import Text from './objects/text/Text'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = 0xaaaaaa
 const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer {
-  edge?: Graph.Edge
-  label?: Label
+  edge?: Edge
+  label?: Text
   renderer: Renderer
   lineSegment: LineSegment
   source!: NodeRenderer
@@ -41,16 +42,15 @@ export class EdgeRenderer {
   private labelMounted = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
-  private _loader?: FontSubscription
 
-  constructor(renderer: Renderer, edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
+  constructor(renderer: Renderer, edge: Edge, source: NodeRenderer, target: NodeRenderer) {
     this.renderer = renderer
     this.lineSegment = new LineSegment(this.renderer.edgesContainer)
     this.hitArea = new EdgeHitArea(this.renderer.interactionContainer, this)
     this.update(edge, source, target)
   }
 
-  update(edge: Graph.Edge, source: NodeRenderer, target: NodeRenderer) {
+  update(edge: Edge, source: NodeRenderer, target: NodeRenderer) {
     this.source = source
     this.target = target
 
@@ -77,40 +77,14 @@ export class EdgeRenderer {
       }
     }
 
-    this._loader?.unsubscribe()
     if (edge.label === undefined || edge.label.trim() === '') {
       if (this.label) {
         this.renderer.labelObjectManager.delete(this.label)
         this.labelMounted = false
         this.label = undefined
       }
-    } else if (this.renderer.assets.shouldLoadFont(edge.style?.label)) {
-      this._loader = this.renderer.assets.loadFont({
-        fontFamily: edge.style.label.fontFamily,
-        fontWeight: edge.style.label.fontWeight,
-        timeout: 10000,
-        resolve: () => {
-          this._loader = undefined
-          if (!edge.label) {
-            return
-          } else if (this.label) {
-            this.label.update(edge.label, edge.style?.label)
-          } else {
-            this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
-            this.label.rotation = this.theta
-            this.label.moveTo(...this.center)
-            if (
-              this.renderer.zoom > MIN_LABEL_ZOOM &&
-              this.visible(Math.min(this.x0, this.x1), Math.min(this.y0, this.y1), Math.max(this.x0, this.x1), Math.max(this.y0, this.y1))
-            ) {
-              this.renderer.labelObjectManager.mount(this.label)
-              this.labelMounted = true
-            }
-          }
-        }
-      })
     } else if (this.label === undefined) {
-      this.label = new Label(this.renderer.fontBook, this.renderer.labelsContainer, edge.label, edge.style?.label)
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, edge.label, edge.style?.label, DEFAULT_LABEL_STYLE)
     } else {
       this.label.update(edge.label, edge.style?.label)
     }
@@ -209,7 +183,7 @@ export class EdgeRenderer {
         this.y0 = y0
         this.x1 = x1
         this.y1 = y1
-        this.theta = Graph.angle(this.x0, this.y0, this.x1, this.y1)
+        this.theta = angle(this.x0, this.y0, this.x1, this.y1)
         let edgeX0 = this.x0
         let edgeY0 = this.y0
         let edgeX1 = this.x1
@@ -253,8 +227,6 @@ export class EdgeRenderer {
   }
 
   delete() {
-    this._loader?.unsubscribe()
-    this._loader = undefined
     this.renderer.edgeObjectManager.delete(this.lineSegment)
     if (this.arrow?.forward) {
       this.renderer.edgeArrowObjectManager.delete(this.arrow.forward)

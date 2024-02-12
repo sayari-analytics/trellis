@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import * as Graph from '../..'
+import type { Node } from '../../types'
 
 export const HALF_PI = Math.PI / 2
 
@@ -17,7 +17,7 @@ export const MIN_INTERACTION_ZOOM = 0.15
 export const MIN_EDGES_ZOOM = 0.1
 export const MIN_ZOOM = 3
 
-export const logUnknownEdgeError = (source: Graph.Node | undefined, target: Graph.Node | undefined) => {
+export const logUnknownEdgeError = (source: Node | undefined, target: Node | undefined) => {
   if (source === undefined && target === undefined) {
     console.error(`Error: Cannot render edge between unknown nodes ${source} and ${target}`)
   } else if (source === undefined) {

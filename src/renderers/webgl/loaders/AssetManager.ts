@@ -22,4 +22,13 @@ export default class AssetManager {
   checkAssetCache(url: string) {
     return AssetLoader.get(url)
   }
+
+  cancel() {
+    this._font.cancel()
+    this._asset.cancel()
+  }
+
+  get loading() {
+    return this._font.loading || this._asset.loading
+  }
 }

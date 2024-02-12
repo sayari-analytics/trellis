@@ -22,7 +22,15 @@ const sampleCoordinatePlane = function* (count: number, step: number, sample: nu
 const PURPLE = '#7A5DC5'
 const LIGHT_PURPLE = '#CAD'
 const ARIAL_PINK = 'ArialPink'
-const TEXT_ICON: Graph.TextIcon = { type: 'textIcon', text: 'T', fontFamily: 'sans-serif', fontSize: 14, color: '#fff', fontWeight: '400' }
+const TEXT_ICON: Graph.TextIcon = {
+  type: 'textIcon',
+  content: 'T',
+  style: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '400'
+  }
+}
 
 const NODE_STYLE: Graph.NodeStyle = {
   color: PURPLE,

@@ -1,4 +1,4 @@
-import type { Node, Edge } from '../..'
+import type { Node, Edge } from '../../types'
 import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
 import { HierarchyNode } from 'd3-hierarchy'
 import tree from './tree'
