@@ -23,6 +23,25 @@ export default class AssetLoader {
     return this.cache[url].subscribe({ resolve, reject })
   }
 
+  cancel() {
+    for (const url in this.cache) {
+      this.cache[url].cancel()
+    }
+
+    this.cache = {}
+    return undefined
+  }
+
+  get loading() {
+    for (const url in this.cache) {
+      if (this.cache[url].loading) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   private createPublisher(url: string) {
     return new Publisher<Texture>(
       async function loadAsset(): Promise<Texture> {

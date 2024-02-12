@@ -38,6 +38,25 @@ export default class FontLoader {
     return this.cache[font].subscribe({ resolve, reject })
   }
 
+  cancel() {
+    for (const font in this.cache) {
+      this.cache[font].cancel()
+    }
+
+    this.cache = {}
+    return undefined
+  }
+
+  get loading() {
+    for (const font in this.cache) {
+      if (this.cache[font].loading) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   private createPublisher(fontFamily: string, fontWeight: string | number, timeout: number) {
     return new Publisher<true>(
       async function loadBrowserFont(): Promise<true> {

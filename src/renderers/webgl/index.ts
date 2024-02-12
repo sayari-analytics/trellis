@@ -450,6 +450,10 @@ export class Renderer {
   }
 
   image() {
+    if (this.assets.loading) {
+      return
+    }
+
     return new Promise((resolve) => resolve(new Blob())) // TODO
   }
 
