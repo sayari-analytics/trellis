@@ -1,13 +1,11 @@
-import { RenderTexture, Text as PixiText, MSAA_QUALITY, Matrix, Renderer as PixiRenderer } from 'pixi.js'
-import { DEFAULT_RESOLUTION, DEFAULT_TEXT_STYLE, MIN_TEXTURE_ZOOM } from '../../../utils/constants'
+import { RenderTexture, Text as PixiText } from 'pixi.js'
+import { createRenderTexture } from '../../../utils/webgl'
 import { TextIcon, Texture } from '../../../types'
+import { MIN_TEXTURE_ZOOM } from '../../../utils/constants'
 import { Renderer } from '..'
 import TextTexture from './TextTexture'
 
-const getCacheKey = ({ content, style = {} }: TextIcon) => {
-  const { color, stroke, fontFamily, fontSize, fontWeight } = { ...style, ...DEFAULT_TEXT_STYLE }
-  return [content, color, stroke.color, stroke.width, fontFamily, fontSize, fontWeight].join('-')
-}
+const join = (...args: (string | number)[]) => args.join('-')
 
 export default class TextIconTexture implements Texture {
   protected cache: { [key: string]: RenderTexture } = {}
@@ -17,10 +15,16 @@ export default class TextIconTexture implements Texture {
   }
 
   get(icon: TextIcon) {
-    const key = getCacheKey(icon)
+    const style = new TextTexture(icon.style, { defaultTextStyle: { align: 'center' } })
+    const key = join(icon.content, style.color, style.stroke.color, style.stroke.width, style.fontFamily, style.fontSize, style.fontWeight)
 
     if (this.cache[key] === undefined) {
-      this.cache[key] = this.createTexture(icon)
+      style.fontSize = style.fontSize * this.scaleFactor
+
+      const object = new PixiText(icon.content, style.getTextStyle())
+      object.updateText(true)
+
+      this.cache[key] = createRenderTexture(this.renderer.app, object)
     }
 
     return this.cache[key]
@@ -38,34 +42,5 @@ export default class TextIconTexture implements Texture {
   // TODO -> intergrate with renderer options
   get scaleFactor() {
     return MIN_TEXTURE_ZOOM
-  }
-  get resolution() {
-    return DEFAULT_RESOLUTION
-  }
-
-  private createTexture(icon: TextIcon) {
-    const style = new TextTexture(icon.style, { defaultTextStyle: { align: 'center' } })
-    style.fontSize = style.fontSize * this.scaleFactor
-
-    const object = new PixiText(icon.content, style.getTextStyle())
-
-    object.updateText(true)
-
-    const renderTexture = RenderTexture.create({
-      width: object.width,
-      height: object.height,
-      multisample: MSAA_QUALITY.HIGH,
-      resolution: this.resolution
-    })
-
-    this.renderer.app.renderer.render(object, { renderTexture, transform: new Matrix() })
-
-    if (this.renderer.app.renderer instanceof PixiRenderer) {
-      this.renderer.app.renderer.framebuffer.blit()
-    }
-
-    object.destroy(true)
-
-    return renderTexture
   }
 }
