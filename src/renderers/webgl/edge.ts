@@ -57,19 +57,19 @@ export class EdgeRenderer {
     if (arrow !== this.arrow) {
       switch (arrow) {
         case 'forward':
-          this.createArrow('forward').deleteArrow('reverse')
+          this.applyArrow({ forward: true, reverse: false })
           break
 
         case 'reverse':
-          this.deleteArrow('forward').createArrow('reverse')
+          this.applyArrow({ forward: false, reverse: true })
           break
 
         case 'both':
-          this.createArrow('forward').createArrow('reverse')
+          this.applyArrow({ forward: true, reverse: true })
           break
 
         case 'none':
-          this.deleteArrow('forward').deleteArrow('reverse')
+          this.applyArrow({ forward: false, reverse: false })
           break
       }
     }
@@ -93,7 +93,8 @@ export class EdgeRenderer {
     const y1 = this.target.y
     const sourceRadius = this.source.strokes.radius
     const targetRadius = this.target.strokes.radius
-    const isVisible = this.visible(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1))
+
+    const isVisible = this.visible(x0, y0, x1, y1)
 
     if (isVisible) {
       const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
@@ -157,8 +158,8 @@ export class EdgeRenderer {
           this.label.moveTo(...this.center)
         }
 
-        this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.stroke, this.strokeOpacity)
         // TODO - draw hitArea over arrow
+        this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.stroke, this.strokeOpacity)
         this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.theta)
       }
     }
@@ -376,7 +377,8 @@ export class EdgeRenderer {
     this.doubleClick = false
   }
 
-  private visible(minX: number, minY: number, maxX: number, maxY: number) {
+  private visible(x0: number, y0: number, x1: number, y1: number) {
+    const [minX, minY, maxX, maxY] = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)]
     // TODO - also calculate whether edge intersects with any of the 4 bbox edges
     return (
       this.renderer.zoom > MIN_EDGES_ZOOM &&
@@ -403,23 +405,19 @@ export class EdgeRenderer {
     }
   }
 
-  private deleteArrow(arrow: 'forward' | 'reverse') {
-    if (arrow === 'forward' && this.forwardArrow) {
+  private applyArrow({ forward, reverse }: { forward: boolean; reverse: boolean }) {
+    if (forward && this.forwardArrow === undefined) {
+      this.forwardArrow = new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
+    } else if (!forward && this.forwardArrow !== undefined) {
       this.managers.arrows.delete(this.forwardArrow)
       this.forwardArrow = undefined
-    } else if (arrow === 'reverse' && this.reverseArrow) {
-      this.managers.arrows.delete(this.reverseArrow)
-      this.reverseArrow = undefined
     }
 
-    return this
-  }
-
-  private createArrow(arrow: 'forward' | 'reverse') {
-    if (arrow === 'forward' && this.forwardArrow === undefined) {
-      this.forwardArrow = new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
-    } else if (arrow === 'reverse' && this.reverseArrow === undefined) {
+    if (reverse && this.reverseArrow === undefined) {
       this.reverseArrow = new Arrow(this.renderer.edgesContainer, this.renderer.arrow)
+    } else if (!reverse && this.reverseArrow !== undefined) {
+      this.managers.arrows.delete(this.reverseArrow)
+      this.reverseArrow = undefined
     }
 
     return this

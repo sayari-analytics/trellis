@@ -136,10 +136,6 @@ export class NodeRenderer {
 
     const isVisible = this.visible()
 
-    if (isVisible) {
-      this.applyLabel().applyIcon()
-    }
-
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node pixel width < ~5px
     // TODO - disable events when dragging/scrolling
@@ -169,8 +165,13 @@ export class NodeRenderer {
       this.managers.nodes.unmount(this.strokes)
     }
 
+    const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+
+    if (shouldLabelMount) {
+      this.applyLabel()
+    }
+
     if (this.label) {
-      const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
       const labelMounted = this.managers.labels.isMounted(this.label)
       if (shouldLabelMount && !labelMounted) {
         this.managers.labels.mount(this.label)
@@ -179,8 +180,13 @@ export class NodeRenderer {
       }
     }
 
+    const shouldIconMount = isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM
+
+    if (shouldIconMount) {
+      this.applyIcon()
+    }
+
     if (this.icon) {
-      const shouldIconMount = isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM
       const iconMounted = this.managers.icons.isMounted(this.icon)
       if (shouldIconMount && !iconMounted) {
         this.managers.icons.mount(this.icon)
