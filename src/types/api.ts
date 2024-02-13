@@ -8,7 +8,7 @@ export type Viewport = { x: number; y: number; zoom: number }
 // style
 export type FillStyle = { color: string; opacity?: number }
 
-export type Stroke = { color: string; width: number }
+export type Stroke = FillStyle & { width: number }
 
 export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 
@@ -58,8 +58,7 @@ export type TextIcon = IconBase<'textIcon'> & {
 export type IconStyle = ImageIcon | TextIcon
 
 // nodes
-export type NodeStyle = {
-  color?: string
+export type NodeStyle = Partial<FillStyle> & {
   icon?: IconStyle
   stroke?: Stroke[]
   badge?: {
@@ -96,10 +95,8 @@ export type EdgeLabelStyle = LabelStyle & {
   position?: Exclude<AnchorPosition, 'left' | 'right' | 'center'>
 }
 
-export type EdgeStyle = {
-  width?: number
-  stroke?: string
-  strokeOpacity?: number
+export type EdgeStyle = Partial<Stroke> & {
+  stroke?: Stroke[]
   arrow?: ArrowStyle
   label?: EdgeLabelStyle
 }

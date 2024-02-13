@@ -43,7 +43,7 @@ export class NodeRenderer {
   update(node: Node) {
     this.node = node
 
-    this.fill.update(node.style?.color)
+    this.fill.update(node.style?.color, node.style?.opacity)
     this.strokes.update(node.style?.stroke)
 
     if (this.label) {

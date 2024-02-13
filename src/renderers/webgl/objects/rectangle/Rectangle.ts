@@ -1,6 +1,6 @@
 import { Dimensions, FillStyle, RenderObject } from '../../../../types'
 import { Container, Sprite } from 'pixi.js'
-import { DEFAULT_FILL_STYLE } from '../../../../utils/constants'
+import { DEFAULT_FILL, DEFAULT_FILL_STYLE, DEFAULT_OPACITY } from '../../../../utils/constants'
 import { isNumber } from '../../../../utils/helpers'
 import RectangleTexture from '../../textures/RectangleTexture'
 
@@ -24,16 +24,10 @@ export default class Rectangle implements RenderObject {
     this.object = this.create(index)
   }
 
-  update(color = DEFAULT_FILL_STYLE.color, opacity = DEFAULT_FILL_STYLE.opacity) {
-    if (color !== this.style.color) {
-      this.style.color = color
-      this.object.tint = color
-    }
-
-    if (opacity !== this.style.opacity) {
-      this.style.opacity = opacity
-      this.object.alpha = opacity
-    }
+  update(color = DEFAULT_FILL, opacity = DEFAULT_OPACITY) {
+    this.style = { color, opacity }
+    this.object.tint = color
+    this.object.alpha = opacity
 
     return this
   }

@@ -6,6 +6,8 @@ export type Extend<T, R> = {
 
 export type TextObject = PixiText | BitmapText
 
+export type PointTuple = [x: number, y: number]
+
 export type Texture = {
   get(...args: unknown[]): RenderTexture
   delete(): void

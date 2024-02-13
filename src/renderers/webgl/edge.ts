@@ -1,48 +1,49 @@
-import { DEFAULT_LABEL_STYLE, MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM } from '../../utils/constants'
+import { DEFAULT_ARROW, DEFAULT_LABEL_STYLE, MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM } from '../../utils/constants'
 import { type Renderer } from '.'
 import { midPoint } from './utils'
 import { movePoint } from './utils'
 import { NodeRenderer } from './node'
-import type { ArrowStyle, Edge } from '../../types'
-import { Arrow } from './objects/arrow'
-import { LineSegment } from './objects/lineSegment'
+import type { ArrowStyle, Edge, PointTuple } from '../../types'
+import Arrow from './objects/Arrow'
+import LineSegment from './objects/line/LineSegment'
+import LineStrokes from './objects/line/LineStrokes'
 import { FederatedPointerEvent } from 'pixi.js'
 import { EdgeHitArea } from './interaction/edgeHitArea'
-import { angle } from '../../utils/api'
+import { angle, distance } from '../../utils/api'
 import Text from './objects/text/Text'
-
-const DEFAULT_EDGE_WIDTH = 1
-const DEFAULT_EDGE_COLOR = 0xaaaaaa
-const DEFAULT_ARROW = 'none'
 
 export class EdgeRenderer {
   edge!: Edge
   source!: NodeRenderer
   target!: NodeRenderer
-  label?: Text
-  renderer: Renderer
-  lineSegment: LineSegment
-  x0 = 0
-  y0 = 0
-  x1 = 0
-  y1 = 0
-  theta = 0
-  center: [x: number, y: number] = [0, 0]
-  width?: number
-  stroke?: string | number
-  strokeOpacity?: number
   sourceRadius?: number
   targetRadius?: number
 
+  private x0 = 0
+  private y0 = 0
+  private x1 = 0
+  private y1 = 0
+  private length = 0
+  private theta = 0
+  private center: PointTuple = [0, 0]
+  private lineSegment: LineSegment
+  private strokes: LineStrokes
   private hitArea: EdgeHitArea
+  private label?: Text
   private forwardArrow?: Arrow
   private reverseArrow?: Arrow
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
 
-  constructor(renderer: Renderer, edge: Edge, source: NodeRenderer, target: NodeRenderer) {
+  constructor(
+    private renderer: Renderer,
+    edge: Edge,
+    source: NodeRenderer,
+    target: NodeRenderer
+  ) {
     this.renderer = renderer
     this.lineSegment = new LineSegment(this.renderer.edgesContainer)
+    this.strokes = new LineStrokes(this.renderer.edgesContainer, this.lineSegment)
     this.hitArea = new EdgeHitArea(this.renderer.interactionContainer, this)
     this.update(edge, source, target)
   }
@@ -51,6 +52,9 @@ export class EdgeRenderer {
     this.edge = edge
     this.source = source
     this.target = target
+
+    this.lineSegment.update(edge.style?.color, edge.style?.width, edge.style?.opacity)
+    this.strokes.update(edge.style?.stroke)
 
     const arrow = edge.style?.arrow ?? DEFAULT_ARROW
 
@@ -73,6 +77,9 @@ export class EdgeRenderer {
           break
       }
     }
+
+    this.forwardArrow?.update(edge.style?.color, edge.style?.opacity)
+    this.reverseArrow?.update(edge.style?.color, edge.style?.opacity)
 
     if (this.label) {
       if (edge.label === undefined || edge.label.trim() === '') {
@@ -97,24 +104,14 @@ export class EdgeRenderer {
     const isVisible = this.visible(x0, y0, x1, y1)
 
     if (isVisible) {
-      const width = this.edge?.style?.width ?? DEFAULT_EDGE_WIDTH
-      const stroke = this.edge?.style?.stroke ?? DEFAULT_EDGE_COLOR
-      const strokeOpacity = this.edge?.style?.strokeOpacity ?? 1
-
       if (
         x0 !== this.x0 ||
         y0 !== this.y0 ||
         x1 !== this.x1 ||
         y1 !== this.y1 ||
         sourceRadius !== this.sourceRadius ||
-        targetRadius !== this.targetRadius ||
-        width !== this.width ||
-        stroke !== this.stroke ||
-        strokeOpacity !== this.strokeOpacity
+        targetRadius !== this.targetRadius
       ) {
-        this.width = width
-        this.stroke = stroke
-        this.strokeOpacity = strokeOpacity
         this.sourceRadius = sourceRadius
         this.targetRadius = targetRadius
         this.x0 = x0
@@ -131,8 +128,8 @@ export class EdgeRenderer {
           const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius + this.forwardArrow.height)
           edgeX1 = edgePoint[0]
           edgeY1 = edgePoint[1]
-          const [arrowX1, arrowY1] = movePoint(x1, y1, this.theta, this.targetRadius)
-          this.forwardArrow.update(arrowX1, arrowY1, this.theta, this.stroke, this.strokeOpacity)
+
+          this.forwardArrow.rotate(this.theta).moveTo(...movePoint(x1, y1, this.theta, this.targetRadius))
         } else {
           const edgePoint = movePoint(x1, y1, this.theta, this.targetRadius)
           edgeX1 = edgePoint[0]
@@ -143,8 +140,8 @@ export class EdgeRenderer {
           const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius - this.reverseArrow.height)
           edgeX0 = edgePoint[0]
           edgeY0 = edgePoint[1]
-          const [arrowX0, arrowY0] = movePoint(x0, y0, this.theta, -this.sourceRadius)
-          this.reverseArrow.update(arrowX0, arrowY0, this.theta + Math.PI, this.stroke, this.strokeOpacity)
+
+          this.reverseArrow.rotate(this.theta + Math.PI).moveTo(...movePoint(x0, y0, this.theta, -this.sourceRadius))
         } else {
           const edgePoint = movePoint(x0, y0, this.theta, -this.sourceRadius)
           edgeX0 = edgePoint[0]
@@ -152,15 +149,17 @@ export class EdgeRenderer {
         }
 
         this.center = midPoint(edgeX0, edgeY0, edgeX1, edgeY1)
+        this.length = distance(edgeX0, edgeY0, edgeX1, edgeY1)
+
+        // TODO -> draw hitArea/strokes over arrows
+        this.lineSegment.rotate(this.theta).resize(this.length).moveTo(edgeX0, edgeY0)
+        this.strokes.rotate(this.theta).resize(this.length).moveTo(edgeX0, edgeY0)
+        this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.strokes.width, this.theta)
 
         if (this.label) {
-          this.label.rotation = this.theta
-          this.label.moveTo(...this.center)
+          this.label.offset = this.strokes.width
+          this.label.rotate(this.theta).moveTo(...this.center)
         }
-
-        // TODO - draw hitArea over arrow
-        this.lineSegment.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.stroke, this.strokeOpacity)
-        this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.theta)
       }
     }
 
@@ -179,6 +178,13 @@ export class EdgeRenderer {
       this.managers.edges.mount(this.lineSegment)
     } else if (!isVisible && lineMounted) {
       this.managers.edges.unmount(this.lineSegment)
+    }
+
+    const strokesMounted = this.managers.edges.isMounted(this.strokes)
+    if (isVisible && !strokesMounted) {
+      this.managers.edges.mount(this.strokes)
+    } else if (!isVisible && strokesMounted) {
+      this.managers.edges.unmount(this.strokes)
     }
 
     if (this.forwardArrow) {
@@ -219,6 +225,7 @@ export class EdgeRenderer {
     clearTimeout(this.doubleClickTimeout)
 
     this.managers.edges.delete(this.lineSegment)
+    this.managers.edges.delete(this.strokes)
     this.managers.interactions.delete(this.hitArea)
     if (this.forwardArrow) {
       this.managers.arrows.delete(this.forwardArrow)
@@ -428,8 +435,8 @@ export class EdgeRenderer {
     const style = this.edge.style?.label
     if (label !== undefined && label.trim() !== '' && this.label === undefined) {
       this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, label, style, DEFAULT_LABEL_STYLE)
-      this.label.rotation = this.theta
-      this.label.moveTo(...this.center)
+      this.label.offset = this.strokes.width
+      this.label.rotate(this.theta).moveTo(...this.center)
     }
 
     return this

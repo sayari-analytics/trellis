@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import type { Node } from '../../types'
+import type { Node, PointTuple } from '../../types'
 
 export const HALF_PI = Math.PI / 2
 
@@ -19,11 +19,11 @@ export const logUnknownEdgeError = (source: Node | undefined, target: Node | und
   }
 }
 
-export const movePoint = (x: number, y: number, angle: number, distance: number): [x: number, y: number] => [
+export const movePoint = (x: number, y: number, angle: number, distance: number): PointTuple => [
   x + Math.cos(angle) * distance,
   y + Math.sin(angle) * distance
 ]
 
-export const midPoint = (x0: number, y0: number, x1: number, y1: number): [x: number, y: number] => [(x0 + x1) / 2, (y0 + y1) / 2]
+export const midPoint = (x0: number, y0: number, x1: number, y1: number): PointTuple => [(x0 + x1) / 2, (y0 + y1) / 2]
 
 export const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)

@@ -84,6 +84,11 @@ export default class TextHighlight implements RenderObject {
     return undefined
   }
 
+  rotate(rotation: number) {
+    this.object.rotation = rotation
+    return this
+  }
+
   get text() {
     return this.textObject
   }
@@ -94,14 +99,6 @@ export default class TextHighlight implements RenderObject {
 
   get anchor() {
     return this.object.anchor
-  }
-
-  get rotation() {
-    return this.object.rotation
-  }
-
-  set rotation(rotation: number) {
-    this.object.rotation = rotation
   }
 
   private create() {

@@ -1,5 +1,5 @@
 import { FillStyle, RenderObject } from '../../../../types'
-import { DEFAULT_FILL_STYLE } from '../../../../utils/constants'
+import { DEFAULT_FILL, DEFAULT_FILL_STYLE, DEFAULT_OPACITY } from '../../../../utils/constants'
 import { Container, Sprite } from 'pixi.js'
 import CircleTexture from '../../textures/CircleTexture'
 import { isNumber } from '../../../../utils/helpers'
@@ -24,17 +24,10 @@ export default class Circle implements RenderObject {
     this.object = this.create(index)
   }
 
-  update(color = DEFAULT_FILL_STYLE.color, opacity = DEFAULT_FILL_STYLE.opacity) {
-    if (color !== this.style.color) {
-      this.style.color = color
-      this.object.tint = color
-    }
-
-    if (opacity !== this.style.opacity) {
-      this.style.opacity = opacity
-      this.object.alpha = opacity
-    }
-
+  update(color = DEFAULT_FILL, opacity = DEFAULT_OPACITY) {
+    this.style = { color, opacity }
+    this.object.tint = this.style.color
+    this.object.alpha = this.style.opacity
     return this
   }
 

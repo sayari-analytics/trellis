@@ -1,4 +1,4 @@
-import type { Bounds, TextStyle, TextObject, FontWeight, RenderObject } from '../../../../types'
+import type { Bounds, TextStyle, TextObject, FontWeight, RenderObject, PointTuple } from '../../../../types'
 import { BitmapText, Container, Text as PixiText } from 'pixi.js'
 import { equals } from '../../../../utils/api'
 import TextTexture, { TextTextureOptions } from '../../textures/TextTexture'
@@ -169,15 +169,10 @@ export default class Text implements RenderObject {
     this.font = undefined
   }
 
-  get rotation() {
-    return this.object.rotation
-  }
-
-  set rotation(rotation: number) {
+  rotate(rotation: number) {
     this.object.rotation = rotation
-    if (this.highlight) {
-      this.highlight.rotation = rotation
-    }
+    this.highlight?.rotate(rotation)
+    return this
   }
 
   get rect() {
@@ -264,7 +259,7 @@ export default class Text implements RenderObject {
     return this
   }
 
-  private offsetPosition(x: number, y: number, offset: number): [x: number, y: number] {
+  private offsetPosition(x: number, y: number, offset: number): PointTuple {
     switch (this.style.position) {
       case 'bottom':
         return [x, y + offset]

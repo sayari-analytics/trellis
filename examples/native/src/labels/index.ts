@@ -57,6 +57,28 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
   }
 }
 
+const EDGE_STYLE: Graph.EdgeStyle = {
+  arrow: 'both',
+  label: {
+    fontName: 'EdgeLabel',
+    fontFamily: 'Roboto',
+    fontSize: 10,
+    color: DARK_GREEN,
+    margin: 4
+  }
+}
+const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
+  arrow: 'both',
+  stroke: [{ width: 1, color: DARK_GREEN }],
+  label: {
+    fontName: 'EdgeLabel',
+    fontFamily: 'Roboto',
+    fontSize: 10,
+    color: DARK_GREEN,
+    margin: 4
+  }
+}
+
 const data = [
   'Myriel',
   'Napoleon',
@@ -74,22 +96,13 @@ const data = [
 
 const collide = Collide.Layout()
 
-const edges: Graph.Edge[] = [
+let edges: Graph.Edge[] = [
   {
     id: '0::1',
     source: '0',
     target: '1',
     label: '0 <- EDGE LABEL -> 1',
-    style: {
-      arrow: 'both',
-      label: {
-        fontName: 'EdgeLabel',
-        fontFamily: 'Roboto',
-        fontSize: 10,
-        color: DARK_GREEN,
-        margin: 4
-      }
-    }
+    style: EDGE_STYLE
   }
 ]
 
@@ -143,6 +156,26 @@ const options: Renderer.Options = {
     nodes = nodes.map((node) =>
       node.id === event.target.id ? { ...node, radius: 10, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
     )
+    renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
+    edges = edges.map((edge) => {
+      if (edge.id === event.target.id) {
+        return { ...edge, style: EDGE_HOVER_STYLE }
+      }
+      return edge
+    })
+
+    renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
+    edges = edges.map((edge) => {
+      if (edge.id === event.target.id) {
+        return { ...edge, style: EDGE_STYLE }
+      }
+      return edge
+    })
+
     renderer.update({ nodes, edges, options })
   }
 }

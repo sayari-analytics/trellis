@@ -1,38 +1,54 @@
 import { Container, Sprite } from 'pixi.js'
+import { FillStyle, RenderObject } from '../../../types'
 import ArrowTexture from '../textures/ArrowTexture'
+import { DEFAULT_FILL, DEFAULT_FILL_STYLE, DEFAULT_OPACITY } from '../../../utils/constants'
 
-export class Arrow {
+export default class Arrow implements RenderObject {
   mounted = false
-  height: number
-  width: number
 
-  private container: Container
-  private arrowTexture: ArrowTexture
-  private arrow: Sprite
+  private x = 0
+  private y = 0
+  private object: Sprite
+  private style: Required<FillStyle> = DEFAULT_FILL_STYLE
 
-  constructor(container: Container, arrowTexture: ArrowTexture) {
+  constructor(
+    private container: Container,
+    private texture: ArrowTexture
+  ) {
     this.container = container
-    this.arrowTexture = arrowTexture
-    this.arrow = new Sprite(this.arrowTexture.get())
-    this.height = this.arrowTexture.height
-    this.width = this.arrowTexture.width
-    this.arrow.anchor.set(0, 0.5)
-    this.arrow.scale.set(1 / this.arrowTexture.scaleFactor)
+    this.texture = texture
+    this.object = this.create()
   }
 
-  update(x: number, y: number, rotation: number, color: string | number, opacity: number) {
-    this.arrow.x = x
-    this.arrow.y = y
-    this.arrow.rotation = rotation
-    this.arrow.tint = color
-    this.arrow.alpha = opacity
+  update(color = DEFAULT_FILL, opacity = DEFAULT_OPACITY) {
+    this.style = { color, opacity }
+    this.object.tint = this.style.color
+    this.object.alpha = this.style.opacity
+    return this
+  }
 
+  moveTo(x: number, y: number) {
+    if (x !== this.x) {
+      this.x = x
+      this.object.x = x
+    }
+
+    if (y !== this.y) {
+      this.y = y
+      this.object.y = y
+    }
+
+    return this
+  }
+
+  rotate(angle: number) {
+    this.object.rotation = angle
     return this
   }
 
   mount() {
     if (!this.mounted) {
-      this.container.addChild(this.arrow)
+      this.container.addChild(this.object)
       this.mounted = true
     }
 
@@ -41,7 +57,7 @@ export class Arrow {
 
   unmount() {
     if (this.mounted) {
-      this.container.removeChild(this.arrow)
+      this.container.removeChild(this.object)
       this.mounted = false
     }
 
@@ -50,8 +66,29 @@ export class Arrow {
 
   delete() {
     this.unmount()
-    this.arrow.destroy()
+    this.object.destroy()
 
     return undefined
+  }
+
+  get width() {
+    return this.texture.width
+  }
+
+  get height() {
+    return this.texture.height
+  }
+
+  private get scale() {
+    return 1 / this.texture.scaleFactor
+  }
+
+  private create() {
+    const object = new Sprite(this.texture.get())
+    object.anchor.set(0, 0.5)
+    object.scale.set(this.scale)
+    object.tint = this.style.color
+    object.alpha = this.style.opacity
+    return object
   }
 }

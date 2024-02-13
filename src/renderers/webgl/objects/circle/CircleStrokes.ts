@@ -123,9 +123,9 @@ export default class CircleStrokes implements RenderObject {
 
     const index = this.fill.getContainerIndex()
 
-    for (const { color, width } of strokes) {
+    for (const { width, color, opacity } of strokes) {
       const object = new Circle(this.container, this.texture, index)
-      this.objects.push(object.update(color).resize(this.increment(width)).moveTo(this.x, this.y))
+      this.objects.push(object.update(color, opacity).resize(this.increment(width)).moveTo(this.x, this.y))
     }
 
     return this
