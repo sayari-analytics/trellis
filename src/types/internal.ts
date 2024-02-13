@@ -17,3 +17,7 @@ export interface RenderObjectLifecycle {
   unmount(): this
   delete(): void
 }
+
+export interface RenderObject extends RenderObjectLifecycle {
+  moveTo(...args: number[]): this
+}

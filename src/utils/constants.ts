@@ -13,7 +13,13 @@ export const DEFAULT_OPACITY = 1
 
 export const COLORS = {
   BLACK: '#000000',
-  WHITE: '#FFFFFF'
+  WHITE: '#FFFFFF',
+  GREY: '#AAAAAA'
+}
+
+export const DEFAULT_FILL_STYLE = {
+  color: COLORS.GREY,
+  opacity: DEFAULT_OPACITY
 }
 
 export const DEFAULT_TEXT_STYLE = {

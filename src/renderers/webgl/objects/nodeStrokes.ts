@@ -1,6 +1,5 @@
 import { Container, Sprite } from 'pixi.js'
 import CircleTexture from '../textures/CircleTexture'
-import { NodeFill } from './nodeFill'
 import type { NodeStyle } from '../../../types'
 
 export class NodeStrokes {
@@ -8,12 +7,13 @@ export class NodeStrokes {
   radius = 0
   sprites?: Sprite[] // TODO - make private
 
-  private container: Container
-  private circleTexture: CircleTexture
-  private fill: NodeFill
   private style?: NodeStyle
 
-  constructor(container: Container, circleTexture: CircleTexture, fill: NodeFill) {
+  constructor(
+    private container: Container,
+    private circleTexture: CircleTexture,
+    private fill: { getContainerIndex: () => number }
+  ) {
     this.container = container
     this.circleTexture = circleTexture
     this.fill = fill

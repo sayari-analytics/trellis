@@ -1,11 +1,11 @@
-import type { Bounds, TextStyle, TextObject, FontWeight } from '../../../../types'
+import type { Bounds, TextStyle, TextObject, FontWeight, RenderObject } from '../../../../types'
 import { BitmapText, Container, Text as PixiText } from 'pixi.js'
 import { equals } from '../../../../utils/api'
 import TextTexture, { TextTextureOptions } from '../../textures/TextTexture'
 import AssetManager, { FontSubscription } from '../../loaders/AssetManager'
 import TextHighlight from './TextHighlight'
 
-export default class Text {
+export default class Text implements RenderObject {
   mounted = false
 
   offset = 0

@@ -1,7 +1,7 @@
 import { Container, Sprite, Texture } from 'pixi.js'
-import { FillStyle, TextObject } from '../../../../types'
+import { FillStyle, RenderObject, TextObject } from '../../../../types'
 
-export default class TextHighlight {
+export default class TextHighlight implements RenderObject {
   mounted = false
 
   private x = 0

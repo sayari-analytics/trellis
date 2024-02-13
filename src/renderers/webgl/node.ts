@@ -3,9 +3,9 @@ import { FederatedPointerEvent } from 'pixi.js'
 import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils/helpers'
-import { NodeFill } from './objects/nodeFill'
 import { type Renderer } from '.'
 import type { Node } from '../../types'
+import Circle from './objects/circle/Circle'
 import Text from './objects/text/Text'
 import Icon from './objects/Icon'
 
@@ -13,7 +13,7 @@ export class NodeRenderer {
   node!: Node
   x!: number
   y!: number
-  fill: NodeFill
+  fill: Circle
   label?: Text
   icon?: Icon
   strokes: NodeStrokes
@@ -32,7 +32,7 @@ export class NodeRenderer {
 
   constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
-    this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
+    this.fill = new Circle(renderer.nodesContainer, renderer.circle, node.style?.color)
     this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
     this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
     this.update(node)
@@ -491,7 +491,7 @@ export class NodeRenderer {
     this.x = x
     this.y = y
 
-    this.fill.update(this.x, this.y, radius, node.style)
+    this.fill.moveTo(this.x, this.y).resize(radius)
     this.strokes.update(this.x, this.y, radius, node.style)
 
     if (this.label) {
