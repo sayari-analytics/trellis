@@ -62,8 +62,7 @@ export default class CircleStrokes implements RenderObject {
       this.maxRadius = radius
 
       for (let i = 0; i < this.strokes.length; i += 1) {
-        this.maxRadius += this.strokes[i].width
-        this.objects[i].resize(this.maxRadius)
+        this.objects[i].resize(this.increment(this.strokes[i].width))
       }
     }
 
@@ -103,12 +102,17 @@ export default class CircleStrokes implements RenderObject {
 
     this.strokes = []
     this.objects = []
-    this.maxRadius = 0
+    this.maxRadius = this.minRadius
 
     return undefined
   }
 
   get radius() {
+    return this.maxRadius
+  }
+
+  private increment(width: number) {
+    this.maxRadius += width
     return this.maxRadius
   }
 
@@ -120,9 +124,8 @@ export default class CircleStrokes implements RenderObject {
     const index = this.fill.getContainerIndex()
 
     for (const { color, width } of strokes) {
-      this.maxRadius += width
       const object = new Circle(this.container, this.texture, index)
-      this.objects.push(object.update(color).resize(this.maxRadius).moveTo(this.x, this.y))
+      this.objects.push(object.update(color).resize(this.increment(width)).moveTo(this.x, this.y))
     }
 
     return this

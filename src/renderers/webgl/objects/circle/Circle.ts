@@ -7,8 +7,8 @@ import { isNumber } from '../../../../utils/helpers'
 export default class Circle implements RenderObject {
   mounted = false
 
-  private _x = 0
-  private _y = 0
+  private x = 0
+  private y = 0
   private _radius = 0
 
   private object: Sprite
@@ -40,12 +40,12 @@ export default class Circle implements RenderObject {
 
   moveTo(x: number, y: number) {
     if (x !== this.x) {
-      this._x = x
+      this.x = x
       this.object.x = x
     }
 
     if (y !== this.y) {
-      this._y = y
+      this.y = y
       this.object.y = y
     }
 
@@ -65,7 +65,7 @@ export default class Circle implements RenderObject {
     // TODO - why is mounting/unmouting fill Sprite less efficient?
     if (!this.mounted) {
       this.mounted = true
-      this.object.visible = true
+      this.object.visible = this.mounted
     }
 
     return this
@@ -74,7 +74,7 @@ export default class Circle implements RenderObject {
   unmount() {
     if (this.mounted) {
       this.mounted = false
-      this.object.visible = false
+      this.object.visible = this.mounted
     }
 
     return this
@@ -92,14 +92,6 @@ export default class Circle implements RenderObject {
     return this.container.getChildIndex(this.object)
   }
 
-  get x() {
-    return this._x
-  }
-
-  get y() {
-    return this._y
-  }
-
   get radius() {
     return this._radius
   }
@@ -108,8 +100,8 @@ export default class Circle implements RenderObject {
     const object = new Sprite(this.texture.get())
 
     object.anchor.set(0.5)
-    object.x = this._x
-    object.y = this._y
+    object.x = this.x
+    object.y = this.y
     object.visible = this.mounted
     object.tint = this.style.color
     object.alpha = this.style.opacity

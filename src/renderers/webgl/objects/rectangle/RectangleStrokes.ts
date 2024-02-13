@@ -1,20 +1,135 @@
-import { RenderObject } from '../../../../types'
+import { Dimensions, RenderObject, Stroke } from '../../../../types'
+import { Container } from 'pixi.js'
+import { equals } from '../../../../utils/api'
+import RectangleTexture from '../../textures/RectangleTexture'
+import Rectangle from './Rectangle'
 
 export default class RectangleStrokes implements RenderObject {
   mounted = false
 
-  moveTo(): this {
+  private x = 0
+  private y = 0
+
+  private minSize: Dimensions = { width: 0, height: 0 }
+  private maxSize: Dimensions = { width: 0, height: 0 }
+  private objects: Rectangle[] = []
+  private strokes: Stroke[] = []
+
+  constructor(
+    private container: Container,
+    private texture: RectangleTexture,
+    private fill: Rectangle
+  ) {
+    this.container = container
+    this.texture = texture
+    this.fill = fill
+    this.minSize = this.fill.size
+    this.maxSize = this.minSize
+  }
+
+  update(strokes: Stroke[] = []) {
+    if (!equals(this.strokes, strokes)) {
+      const isMounted = this.mounted
+
+      this.delete()
+      this.applyStrokes(strokes)
+
+      if (isMounted) {
+        this.mount()
+      }
+    }
+
     return this
   }
+
+  moveTo(x: number, y: number) {
+    const dirty = x !== this.x || y !== this.y
+
+    if (dirty) {
+      this.x = x
+      this.y = y
+
+      for (const object of this.objects) {
+        object.moveTo(x, y)
+      }
+    }
+
+    return this
+  }
+
+  resize(width: number, height: number) {
+    if (width !== this.minSize.width || height !== this.minSize.height) {
+      this.minSize = { width, height }
+      this.maxSize = this.minSize
+
+      for (let i = 0; i < this.strokes.length; i += 1) {
+        this.objects[i].resize(this.increment(this.strokes[i].width))
+      }
+    }
+
+    return this
+  }
+
   mount() {
-    this.mounted = true
+    if (!this.mounted) {
+      this.mounted = true
+
+      for (const object of this.objects) {
+        object.mount()
+      }
+    }
+
     return this
   }
-  unmount(): this {
+
+  unmount() {
+    if (this.mounted) {
+      this.mounted = false
+
+      for (const object of this.objects) {
+        object.unmount()
+      }
+    }
+
+    return this
+  }
+
+  delete() {
     this.mounted = false
-    return this
+
+    for (const object of this.objects) {
+      object.delete()
+    }
+
+    this.strokes = []
+    this.objects = []
+    this.maxSize = this.minSize
+
+    return undefined
   }
-  delete(): void {
-    this.unmount()
+
+  get size() {
+    return this.maxSize
+  }
+
+  private increment(value: number) {
+    this.maxSize.height += value
+    this.maxSize.width += value
+    return this.maxSize
+  }
+
+  private applyStrokes(strokes: Stroke[]) {
+    this.objects = []
+    this.strokes = strokes
+    this.maxSize = this.minSize
+
+    const index = this.fill.getContainerIndex()
+
+    for (const { color, width } of strokes) {
+      const object = new Rectangle(this.container, this.texture, index)
+      this.objects.push(object.update(color).resize(this.increment(width)).moveTo(this.x, this.y))
+    }
+
+    return this
   }
 }
