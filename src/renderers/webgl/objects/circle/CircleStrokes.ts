@@ -1,75 +1,82 @@
-import { FillStyle, RenderObject } from '../../../../types'
-import { DEFAULT_FILL_STYLE } from '../../../../utils/constants'
-import { Container, Sprite } from 'pixi.js'
+import { RenderObject, Stroke } from '../../../../types'
+import { Container } from 'pixi.js'
+import { equals } from '../../../../utils/api'
 import CircleTexture from '../../textures/CircleTexture'
+import Circle from './Circle'
 
 export default class CircleStrokes implements RenderObject {
   mounted = false
 
-  private _x = 0
-  private _y = 0
-  private _radius = 0
-
-  private object: Sprite
-  private style: Required<FillStyle> = DEFAULT_FILL_STYLE
+  private x = 0
+  private y = 0
+  private minRadius = 0
+  private maxRadius = 0
+  private objects: Circle[] = []
+  private strokes: Stroke[] = []
 
   constructor(
     private container: Container,
     private texture: CircleTexture,
-    style?: FillStyle
+    private fill: Circle
   ) {
     this.container = container
     this.texture = texture
-
-    if (style) {
-      this.style = { ...DEFAULT_FILL_STYLE, ...style }
-    }
-
-    this.object = this.create()
+    this.fill = fill
+    this.minRadius = fill.radius
+    this.maxRadius = fill.radius
   }
 
-  update(color = this.style.color, opacity = this.style.opacity) {
-    if (color !== this.style.color) {
-      this.style.color = color
-      this.object.tint = color
-    }
+  update(strokes: Stroke[] = []) {
+    if (!equals(this.strokes, strokes)) {
+      const isMounted = this.mounted
 
-    if (opacity !== this.style.opacity) {
-      this.style.opacity = opacity
-      this.object.alpha = opacity
+      this.delete()
+      this.applyStrokes(strokes)
+
+      if (isMounted) {
+        this.mount()
+      }
     }
 
     return this
   }
 
   moveTo(x: number, y: number) {
-    if (x !== this.x) {
-      this._x = x
-      this.object.x = x
-    }
+    const dirty = x !== this.x || y !== this.y
 
-    if (y !== this.y) {
-      this._y = y
-      this.object.y = y
+    if (dirty) {
+      this.x = x
+      this.y = y
+
+      for (const object of this.objects) {
+        object.moveTo(x, y)
+      }
     }
 
     return this
   }
 
   resize(radius: number) {
-    if (this._radius !== radius) {
-      this._radius = radius
-      this.object.scale.set(radius / this.texture.scaleFactor)
+    if (radius !== this.minRadius) {
+      this.minRadius = radius
+      this.maxRadius = radius
+
+      for (let i = 0; i < this.strokes.length; i += 1) {
+        this.maxRadius += this.strokes[i].width
+        this.objects[i].resize(this.maxRadius)
+      }
     }
 
     return this
   }
 
   mount() {
-    // TODO - why is mounting/unmouting fill Sprite less efficient?
     if (!this.mounted) {
       this.mounted = true
-      this.object.visible = true
+
+      for (const object of this.objects) {
+        object.mount()
+      }
     }
 
     return this
@@ -78,41 +85,46 @@ export default class CircleStrokes implements RenderObject {
   unmount() {
     if (this.mounted) {
       this.mounted = false
-      this.object.visible = false
+
+      for (const object of this.objects) {
+        object.unmount()
+      }
     }
 
     return this
   }
 
   delete() {
-    this.unmount()
-    this.container.removeChild(this.object)
-    this.object.destroy()
+    this.mounted = false
+
+    for (const object of this.objects) {
+      object.delete()
+    }
+
+    this.strokes = []
+    this.objects = []
+    this.maxRadius = 0
 
     return undefined
   }
 
-  get x() {
-    return this._x
-  }
-
-  get y() {
-    return this._y
-  }
-
   get radius() {
-    return this._radius
+    return this.maxRadius
   }
 
-  private create() {
-    const object = new Sprite(this.texture.get())
-    object.anchor.set(0.5)
-    object.x = this._x
-    object.y = this._y
-    object.visible = this.mounted
-    object.tint = this.style.color
-    object.alpha = this.style.opacity
-    this.container.addChild(object)
-    return object
+  private applyStrokes(strokes: Stroke[]) {
+    this.objects = []
+    this.strokes = strokes
+    this.maxRadius = this.minRadius
+
+    const index = this.fill.getContainerIndex()
+
+    for (const { color, width } of strokes) {
+      this.maxRadius += width
+      const object = new Circle(this.container, this.texture, index)
+      this.objects.push(object.update(color).resize(this.maxRadius).moveTo(this.x, this.y))
+    }
+
+    return this
   }
 }

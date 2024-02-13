@@ -2,6 +2,7 @@ import { FillStyle, RenderObject } from '../../../../types'
 import { DEFAULT_FILL_STYLE } from '../../../../utils/constants'
 import { Container, Sprite } from 'pixi.js'
 import CircleTexture from '../../textures/CircleTexture'
+import { isNumber } from '../../../../utils/helpers'
 
 export default class Circle implements RenderObject {
   mounted = false
@@ -16,21 +17,14 @@ export default class Circle implements RenderObject {
   constructor(
     private container: Container,
     private texture: CircleTexture,
-    color?: string,
-    opacity?: number
+    index?: number
   ) {
     this.container = container
     this.texture = texture
-
-    this.style = {
-      color: color ?? this.style.color,
-      opacity: opacity ?? this.style.opacity
-    }
-
-    this.object = this.create()
+    this.object = this.create(index)
   }
 
-  update(color = this.style.color, opacity = this.style.opacity) {
+  update(color = DEFAULT_FILL_STYLE.color, opacity = DEFAULT_FILL_STYLE.opacity) {
     if (color !== this.style.color) {
       this.style.color = color
       this.object.tint = color
@@ -110,15 +104,22 @@ export default class Circle implements RenderObject {
     return this._radius
   }
 
-  private create() {
+  private create(index?: number) {
     const object = new Sprite(this.texture.get())
+
     object.anchor.set(0.5)
     object.x = this._x
     object.y = this._y
     object.visible = this.mounted
     object.tint = this.style.color
     object.alpha = this.style.opacity
-    this.container.addChild(object)
+
+    if (isNumber(index)) {
+      this.container.addChildAt(object, index)
+    } else {
+      this.container.addChild(object)
+    }
+
     return object
   }
 }

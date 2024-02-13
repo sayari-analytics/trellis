@@ -1,22 +1,23 @@
 import { DEFAULT_LABEL_STYLE, MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../../utils/constants'
 import { FederatedPointerEvent } from 'pixi.js'
-import { NodeStrokes } from './objects/nodeStrokes'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils/helpers'
 import { type Renderer } from '.'
 import type { Node } from '../../types'
 import Circle from './objects/circle/Circle'
+import CircleStrokes from './objects/circle/CircleStrokes'
 import Text from './objects/text/Text'
 import Icon from './objects/Icon'
 
 export class NodeRenderer {
-  node!: Node
-  x!: number
-  y!: number
+  node: Node
+  x = 0
+  y = 0
+  radius = 0
   fill: Circle
+  strokes: CircleStrokes
   label?: Text
   icon?: Icon
-  strokes: NodeStrokes
 
   private hitArea: NodeHitArea
   private renderer: Renderer
@@ -32,13 +33,19 @@ export class NodeRenderer {
 
   constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
-    this.fill = new Circle(renderer.nodesContainer, renderer.circle, node.style?.color)
-    this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
+    this.fill = new Circle(renderer.nodesContainer, renderer.circle)
+    this.strokes = new CircleStrokes(renderer.nodesContainer, renderer.circle, this.fill)
     this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
+    this.node = node
     this.update(node)
   }
 
   update(node: Node) {
+    this.node = node
+
+    this.fill.update(node.style?.color)
+    this.strokes.update(node.style?.stroke)
+
     if (this.label) {
       if (node.label === undefined || node.label.trim() === '') {
         this.managers.labels.delete(this.label)
@@ -67,9 +74,10 @@ export class NodeRenderer {
 
     const x = node.x ?? 0
     const y = node.y ?? 0
+    const radius = node.radius
     const xChanged = x !== this.x
     const yChanged = y !== this.y
-    const radiusChanged = node.radius !== this.node?.radius
+    const radiusChanged = radius !== this.radius
 
     if (
       (xChanged || yChanged || radiusChanged) &&
@@ -84,54 +92,56 @@ export class NodeRenderer {
         this.interpolateY = interpolate(this.y, y, this.renderer.animateNodePosition)
       }
       if (radiusChanged && this.renderer.animateNodeRadius) {
-        this.interpolateRadius = interpolate(this.y, y, this.renderer.animateNodeRadius)
+        this.interpolateRadius = interpolate(this.radius, radius, this.renderer.animateNodeRadius)
       }
     } else {
-      this.setPosition(node, x, y, node.radius)
+      this.resize(radius).moveTo(x, y)
       this.interpolateX = undefined
       this.interpolateY = undefined
       this.interpolateRadius = undefined
     }
 
-    this.node = node
-
     return this
   }
 
   render(dt: number) {
-    let _x: number | undefined
-    let _y: number | undefined
-    let _radius: number | undefined
-
-    if (this.interpolateX) {
-      const { value, done } = this.interpolateX(dt)
-      _x = value
-
-      if (done) {
-        this.interpolateX = undefined
-      }
-    }
-
-    if (this.interpolateY) {
-      const { value, done } = this.interpolateY(dt)
-      _y = value
-
-      if (done) {
-        this.interpolateY = undefined
-      }
-    }
-
     if (this.interpolateRadius) {
       const { value, done } = this.interpolateRadius(dt)
-      _radius = value
+
+      this.resize(value)
 
       if (done) {
         this.interpolateRadius = undefined
       }
+
+      if (this.label && !this.interpolateX && !this.interpolateY) {
+        this.label.moveTo(this.x, this.y)
+      }
     }
 
-    if (_x !== undefined || _y !== undefined || _radius !== undefined) {
-      this.setPosition(this.node, _x ?? this.x, _y ?? this.y, _radius ?? this.node.radius)
+    if (this.interpolateX || this.interpolateY) {
+      let x = this.x
+      let y = this.y
+
+      if (this.interpolateX) {
+        const { value, done } = this.interpolateX(dt)
+        x = value
+
+        if (done) {
+          this.interpolateX = undefined
+        }
+      }
+
+      if (this.interpolateY) {
+        const { value, done } = this.interpolateY(dt)
+        y = value
+
+        if (done) {
+          this.interpolateY = undefined
+        }
+      }
+
+      this.moveTo(x, y)
     }
 
     const isVisible = this.visible()
@@ -487,20 +497,34 @@ export class NodeRenderer {
     this.doubleClick = false
   }
 
-  private setPosition(node: Node, x: number, y: number, radius: number) {
-    this.x = x
-    this.y = y
+  private resize(radius: number) {
+    if (radius !== this.radius) {
+      this.radius = radius
+      this.fill.resize(radius)
+      this.strokes.resize(radius)
 
-    this.fill.moveTo(this.x, this.y).resize(radius)
-    this.strokes.update(this.x, this.y, radius, node.style)
+      if (this.label) {
+        this.label.offset = this.strokes.radius
+      }
 
-    if (this.label) {
-      this.label.offset = this.strokes.radius
-      this.label.moveTo(this.x, this.y)
+      this.hitArea.update(this.x, this.y, radius)
     }
 
-    this.icon?.moveTo(this.x, this.y)
-    this.hitArea.update(this.x, this.y, radius)
+    return this
+  }
+
+  private moveTo(x: number, y: number) {
+    if (x !== this.x || y !== this.y) {
+      this.x = x
+      this.y = y
+      this.fill.moveTo(x, y)
+      this.strokes.moveTo(x, y)
+      this.label?.moveTo(x, y)
+      this.icon?.moveTo(x, y)
+      this.hitArea.update(x, y, this.radius)
+    }
+
+    return this
   }
 
   private visible() {

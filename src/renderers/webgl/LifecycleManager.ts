@@ -1,13 +1,13 @@
-import { NodeStrokes } from './objects/nodeStrokes'
 import { LineSegment } from './objects/lineSegment'
 import { Arrow } from './objects/arrow'
 import ObjectManager from './objects/ObjectManager'
+import CircleStrokes from './objects/circle/CircleStrokes'
 import Circle from './objects/circle/Circle'
 import Icon from './objects/Icon'
 import Text from './objects/text/Text'
 
 export default class LifecycleManager {
-  nodes = new ObjectManager<NodeStrokes | Circle>(2000)
+  nodes = new ObjectManager<CircleStrokes | Circle>(2000)
   icons = new ObjectManager<Icon>(1000)
   edges = new ObjectManager<LineSegment>(2000)
   arrows = new ObjectManager<Arrow>(1000)
