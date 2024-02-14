@@ -1,5 +1,5 @@
 import { FillStyle, RenderObject } from '../../../../types'
-import { DEFAULT_FILL, DEFAULT_FILL_STYLE, DEFAULT_OPACITY } from '../../../../utils/constants'
+import { DEFAULT_FILL, DEFAULT_OPACITY } from '../../../../utils/constants'
 import { Container, Sprite } from 'pixi.js'
 import CircleTexture from '../../textures/CircleTexture'
 import { isNumber } from '../../../../utils/helpers'
@@ -12,15 +12,17 @@ export default class Circle implements RenderObject {
   private _radius = 0
 
   private object: Sprite
-  private style: Required<FillStyle> = DEFAULT_FILL_STYLE
+  private style: Required<FillStyle>
 
   constructor(
     private container: Container,
     private texture: CircleTexture,
+    { color = DEFAULT_FILL, opacity = DEFAULT_OPACITY }: Partial<FillStyle> = {},
     index?: number
   ) {
     this.container = container
     this.texture = texture
+    this.style = { color, opacity }
     this.object = this.create(index)
   }
 
@@ -92,7 +94,7 @@ export default class Circle implements RenderObject {
   private create(index?: number) {
     const object = new Sprite(this.texture.get())
 
-    object.anchor.set(0.5)
+    object.anchor.set(0.5, 0.5)
     object.x = this.x
     object.y = this.y
     object.visible = this.mounted

@@ -9,14 +9,17 @@ export default class ObjectManager<T extends RenderObjectLifecycle> {
 
   mount(object: T) {
     this.batch.set(object, 0)
+    return object
   }
 
   unmount(object: T) {
     this.batch.set(object, 1)
+    return object
   }
 
   delete(object: T) {
     this.batch.set(object, 2)
+    return undefined
   }
 
   render() {

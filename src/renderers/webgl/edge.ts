@@ -105,8 +105,8 @@ export class EdgeRenderer {
     const y0 = this.source.y
     const x1 = this.target.x
     const y1 = this.target.y
-    const sourceRadius = this.source.strokes.radius
-    const targetRadius = this.target.strokes.radius
+    const sourceRadius = this.source.radius
+    const targetRadius = this.target.radius
 
     const isVisible = this.visible(x0, y0, x1, y1)
 

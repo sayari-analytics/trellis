@@ -1,4 +1,4 @@
-import { InterpolateFn, PointTuple, RectangleAnnotation, TextAnnotation } from '../../../types'
+import { InterpolateFn, PointTuple, RectangleAnnotation } from '../../../types'
 import { DEFAULT_ANIMATE_RESIZE, DEFAULT_RESOLUTION, MIN_ANNOTATION_ZOOM, MIN_STROKE_ZOOM } from '../../../utils/constants'
 import { interpolate } from '../../../utils/helpers'
 import { Renderer } from '..'
@@ -7,7 +7,7 @@ import Rectangle from '../objects/rectangle/Rectangle'
 import Text from '../objects/text/Text'
 
 export default class RectangleAnnotationRenderer {
-  annotation: TextAnnotation | RectangleAnnotation
+  annotation: RectangleAnnotation
 
   private x = 0
   private y = 0
@@ -25,7 +25,7 @@ export default class RectangleAnnotationRenderer {
 
   constructor(
     private renderer: Renderer,
-    annotation: TextAnnotation | RectangleAnnotation
+    annotation: RectangleAnnotation
   ) {
     this.renderer = renderer
     this.fill = new Rectangle(renderer.annotationsContainer, renderer.rectangle, annotation.style)
@@ -34,14 +34,15 @@ export default class RectangleAnnotationRenderer {
     this.annotation = annotation
   }
 
-  update(annotation: TextAnnotation | RectangleAnnotation) {
+  update(annotation: RectangleAnnotation) {
     this.annotation = annotation
+
     this.fill.update(annotation.style.color, annotation.style.opacity)
     this.strokes.update(annotation.style.stroke)
 
-    if (annotation.type === 'text' && this.text) {
+    if (annotation.content && this.text) {
       this.text.update(annotation.content, annotation.style.text)
-    } else if (annotation.type !== 'text' && this.text) {
+    } else if (!annotation.content && this.text) {
       this.managers.text.delete(this.text)
       this.text = undefined
     }
@@ -133,7 +134,7 @@ export default class RectangleAnnotationRenderer {
 
     const isVisible = this.visible()
 
-    if (isVisible && this.annotation.type === 'text' && !this.text) {
+    if (isVisible && this.annotation.content && !this.text) {
       const [hw, hh] = this.halfSize
       this.text = new Text(
         this.renderer.assets,

@@ -53,7 +53,7 @@ const annotations: Graph.Annotation[] = [
   },
   {
     id: 'text-anno-2',
-    type: 'text',
+    type: 'rectangle',
     content: 'Hello, World!',
     width: 200,
     height: 100,
@@ -69,6 +69,44 @@ const annotations: Graph.Annotation[] = [
         fontSize: 14,
         fontWeight: '400',
         color: WHITE
+      }
+    }
+  },
+  {
+    id: 'circle-anno-0',
+    type: 'circle',
+    radius: 50,
+    x: 250,
+    y: 250,
+    style: {
+      color: GREEN,
+      stroke: [
+        { width: 1, color: WHITE },
+        { width: 2, color: GREEN_LIGHT }
+      ]
+    }
+  },
+  {
+    id: 'circle-anno-1',
+    type: 'circle',
+    radius: 50,
+    content: 'CIRCLE!',
+    x: -250,
+    y: 250,
+    style: {
+      color: GREEN,
+      stroke: [
+        { width: 1, color: WHITE },
+        { width: 2, color: GREEN_LIGHT }
+      ],
+      text: {
+        fontSize: 14,
+        fontWeight: '400',
+        color: WHITE,
+        highlight: {
+          color: DARK_GREEN,
+          padding: 0
+        }
       }
     }
   }

@@ -10,15 +10,16 @@ import Text from './objects/text/Text'
 import Icon from './objects/Icon'
 
 export class NodeRenderer {
-  node: Node
   x = 0
   y = 0
-  radius = 0
+
+  node: Node
   fill: Circle
   strokes: CircleStrokes
   label?: Text
   icon?: Icon
 
+  private _radius = 0
   private hitArea: NodeHitArea
   private renderer: Renderer
   private doubleClickTimeout: NodeJS.Timeout | undefined
@@ -33,11 +34,11 @@ export class NodeRenderer {
 
   constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
-    this.fill = new Circle(renderer.nodesContainer, renderer.circle)
-    this.strokes = new CircleStrokes(renderer.nodesContainer, renderer.circle, this.fill)
+    this.fill = new Circle(renderer.nodesContainer, renderer.circle, node.style)
+    this.strokes = new CircleStrokes(renderer.nodesContainer, renderer.circle, this.fill, node.style?.stroke)
     this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
+    this.resize(node.radius).moveTo(node.x ?? 0, node.y ?? 0)
     this.node = node
-    this.update(node)
   }
 
   update(node: Node) {
@@ -77,7 +78,7 @@ export class NodeRenderer {
     const radius = node.radius
     const xChanged = x !== this.x
     const yChanged = y !== this.y
-    const radiusChanged = radius !== this.radius
+    const radiusChanged = radius !== this._radius
 
     if (
       (xChanged || yChanged || radiusChanged) &&
@@ -92,7 +93,7 @@ export class NodeRenderer {
         this.interpolateY = interpolate(this.y, y, this.renderer.animateNodePosition)
       }
       if (radiusChanged && this.renderer.animateNodeRadius) {
-        this.interpolateRadius = interpolate(this.radius, radius, this.renderer.animateNodeRadius)
+        this.interpolateRadius = interpolate(this._radius, radius, this.renderer.animateNodeRadius)
       }
     } else {
       this.resize(radius).moveTo(x, y)
@@ -219,6 +220,10 @@ export class NodeRenderer {
     if (this.icon) {
       this.managers.icons.delete(this.icon)
     }
+  }
+
+  get radius() {
+    return this.strokes.radius
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
@@ -498,13 +503,13 @@ export class NodeRenderer {
   }
 
   private resize(radius: number) {
-    if (radius !== this.radius) {
-      this.radius = radius
+    if (radius !== this._radius) {
+      this._radius = radius
       this.fill.resize(radius)
       this.strokes.resize(radius)
 
       if (this.label) {
-        this.label.offset = this.strokes.radius
+        this.label.offset = this.radius
       }
 
       this.hitArea.update(this.x, this.y, radius)
@@ -521,7 +526,7 @@ export class NodeRenderer {
       this.strokes.moveTo(x, y)
       this.label?.moveTo(x, y)
       this.icon?.moveTo(x, y)
-      this.hitArea.update(x, y, this.radius)
+      this.hitArea.update(x, y, this._radius)
     }
 
     return this
@@ -531,15 +536,15 @@ export class NodeRenderer {
     let left: number, right: number, top: number, bottom: number
 
     if (this.label) {
-      left = this.x - Math.max(this.strokes.radius, this.label.rect.left)
-      right = this.x + Math.max(this.strokes.radius, this.label.rect.right)
-      top = this.y - Math.max(this.strokes.radius, this.label.rect.top)
-      bottom = this.y + Math.max(this.strokes.radius, this.label.rect.bottom)
+      left = this.x - Math.max(this.radius, this.label.rect.left)
+      right = this.x + Math.max(this.radius, this.label.rect.right)
+      top = this.y - Math.max(this.radius, this.label.rect.top)
+      bottom = this.y + Math.max(this.radius, this.label.rect.bottom)
     } else {
-      left = this.x - this.strokes.radius
-      right = this.x + this.strokes.radius
-      top = this.y - this.strokes.radius
-      bottom = this.y + this.strokes.radius
+      left = this.x - this.radius
+      right = this.x + this.radius
+      top = this.y - this.radius
+      bottom = this.y + this.radius
     }
 
     const { minX, maxX, minY, maxY } = this.renderer
@@ -556,7 +561,7 @@ export class NodeRenderer {
     const style = this.node.style?.label
     if (label !== undefined && label.trim() !== '' && this.label === undefined) {
       this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, label, style, DEFAULT_LABEL_STYLE)
-      this.label.offset = this.strokes.radius
+      this.label.offset = this.radius
       this.label.moveTo(this.x, this.y)
     }
 

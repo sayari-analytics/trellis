@@ -112,6 +112,7 @@ export type Edge = {
 // annotations
 export type AnnotationStyle = FillStyle & {
   stroke?: Stroke[]
+  text?: Omit<LabelStyle, 'position'>
 }
 
 export type TextAnnotationStyle = AnnotationStyle & {
@@ -125,6 +126,7 @@ type AnnotationBase<Type extends string> = {
   x: number
   y: number
   resize?: boolean
+  content?: string
 }
 
 export type CircleAnnotation = AnnotationBase<'circle'> & {
@@ -138,11 +140,4 @@ export type RectangleAnnotation = AnnotationBase<'rectangle'> & {
   style: AnnotationStyle
 }
 
-export type TextAnnotation = AnnotationBase<'text'> & {
-  width: number
-  height: number
-  content: string
-  style: TextAnnotationStyle
-}
-
-export type Annotation = CircleAnnotation | RectangleAnnotation | TextAnnotation
+export type Annotation = CircleAnnotation | RectangleAnnotation

@@ -12,18 +12,17 @@ export default class CircleStrokes implements RenderObject {
   private minRadius = 0
   private maxRadius = 0
   private objects: Circle[] = []
-  private strokes: Stroke[] = []
 
   constructor(
     private container: Container,
     private texture: CircleTexture,
-    private fill: Circle
+    private fill: Circle,
+    private strokes: Stroke[] = []
   ) {
     this.container = container
     this.texture = texture
     this.fill = fill
-    this.minRadius = fill.radius
-    this.maxRadius = fill.radius
+    this.applyStrokes(strokes)
   }
 
   update(strokes: Stroke[] = []) {
@@ -119,13 +118,14 @@ export default class CircleStrokes implements RenderObject {
   private applyStrokes(strokes: Stroke[]) {
     this.objects = []
     this.strokes = strokes
+    this.minRadius = this.fill.radius
     this.maxRadius = this.minRadius
 
     const index = this.fill.getContainerIndex()
 
-    for (const { width, color, opacity } of strokes) {
-      const object = new Circle(this.container, this.texture, index)
-      this.objects.push(object.update(color, opacity).resize(this.increment(width)).moveTo(this.x, this.y))
+    for (const { width, ...style } of strokes) {
+      const object = new Circle(this.container, this.texture, style, index)
+      this.objects.push(object.resize(this.increment(width)).moveTo(this.x, this.y))
     }
 
     return this

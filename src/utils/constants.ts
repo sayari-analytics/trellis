@@ -39,13 +39,13 @@ export const DEFAULT_STROKE_STYLE = {
 }
 
 export const DEFAULT_TEXT_STYLE = {
-  margin: 2,
+  margin: 0,
   fontSize: 10,
   color: COLORS.BLACK,
   letterSpacing: 0.5,
   fontName: 'Font',
   fontFamily: 'sans-serif',
-  align: 'left' as const,
+  align: 'center' as const,
   wordWrap: false as const,
   position: 'center' as const,
   fontWeight: 'normal' as const,
@@ -53,7 +53,7 @@ export const DEFAULT_TEXT_STYLE = {
 }
 
 export const DEFAULT_LABEL_STYLE = {
-  defaultTextStyle: { position: 'bottom' as const, align: 'center' as const }
+  defaultTextStyle: { position: 'bottom' as const, margin: 2 }
 }
 
 export const DEFAULT_HIGHLIGHT_STYLE = {

@@ -23,23 +23,15 @@ export default class AnnotationsRenderer {
     for (const annotation of annotations) {
       const renderer = this.lookup[annotation.id]
 
-      if (renderer === undefined) {
-        if (annotation.type === 'circle') {
-          lookup[annotation.id] = new CircleAnnotationRenderer(this.renderer, annotation)
-        } else {
-          lookup[annotation.id] = new RectangleAnnotationRenderer(this.renderer, annotation)
-        }
+      if (annotation.type === 'circle' && renderer instanceof CircleAnnotationRenderer) {
+        renderer.update(annotation)
       } else if (annotation.type === 'circle') {
-        if (renderer instanceof CircleAnnotationRenderer) {
-          renderer.update(annotation)
-        } else {
-          renderer.delete()
-          lookup[annotation.id] = new CircleAnnotationRenderer(this.renderer, annotation)
-        }
+        renderer?.delete()
+        lookup[annotation.id] = new CircleAnnotationRenderer(this.renderer, annotation)
       } else if (renderer instanceof RectangleAnnotationRenderer) {
         renderer.update(annotation)
       } else {
-        renderer.delete()
+        renderer?.delete()
         lookup[annotation.id] = new RectangleAnnotationRenderer(this.renderer, annotation)
       }
     }
