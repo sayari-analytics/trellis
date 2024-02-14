@@ -1,4 +1,4 @@
-import { DEFAULT_LABEL_STYLE, MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../../utils/constants'
+import { DEFAULT_LABEL_STYLE, MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../../utils/constants'
 import { FederatedPointerEvent } from 'pixi.js'
 import { NodeHitArea } from './interaction/nodeHitArea'
 import { interpolate } from '../../utils/helpers'
@@ -166,7 +166,7 @@ export class NodeRenderer {
       this.managers.nodes.unmount(this.fill)
     }
 
-    const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM
+    const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
     const strokesMounted = this.managers.nodes.isMounted(this.strokes)
 
     if (shouldStrokesMount && !strokesMounted) {
@@ -566,8 +566,10 @@ export class NodeRenderer {
   private applyIcon() {
     const icon = this.node.style?.icon
     if (icon !== undefined && this.icon === undefined) {
-      this.icon = new Icon(this.renderer.assets, this.renderer.textIcon, this.renderer.nodesContainer, this.fill, icon)
-      this.icon.moveTo(this.x, this.y)
+      this.icon = new Icon(this.renderer.assets, this.renderer.textIcon, this.renderer.nodesContainer, this.fill, icon).moveTo(
+        this.x,
+        this.y
+      )
     }
 
     return this

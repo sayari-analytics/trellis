@@ -128,7 +128,7 @@ export default class TextTexture {
       case 'right':
         return [0, 0.5]
       default:
-        return [0.5, 0.5]
+        return [0, 0]
     }
   }
 

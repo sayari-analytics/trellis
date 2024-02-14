@@ -6,6 +6,8 @@ import Circle from './objects/circle/Circle'
 import Arrow from './objects/Arrow'
 import Icon from './objects/Icon'
 import Text from './objects/text/Text'
+import RectangleStrokes from './objects/rectangle/RectangleStrokes'
+import Rectangle from './objects/rectangle/Rectangle'
 
 export default class LifecycleManager {
   nodes = new ObjectManager<Circle | CircleStrokes>(2000)
@@ -14,6 +16,8 @@ export default class LifecycleManager {
   arrows = new ObjectManager<Arrow>(1000)
   labels = new ObjectManager<Text>(2000)
   interactions = new ObjectManager(2000)
+  annotations = new ObjectManager<Rectangle | RectangleStrokes | Circle | CircleStrokes>(2000)
+  text = new ObjectManager<Text>(1000)
   // interactions = new ObjectManager<HitArea>(2000) // TODO
 
   render() {
@@ -23,5 +27,7 @@ export default class LifecycleManager {
     this.arrows.render()
     this.labels.render()
     this.interactions.render()
+    this.annotations.render()
+    this.text.render()
   }
 }

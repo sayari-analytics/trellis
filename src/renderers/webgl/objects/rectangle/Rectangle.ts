@@ -1,6 +1,6 @@
 import { Dimensions, FillStyle, RenderObject } from '../../../../types'
+import { DEFAULT_FILL, DEFAULT_OPACITY } from '../../../../utils/constants'
 import { Container, Sprite } from 'pixi.js'
-import { DEFAULT_FILL, DEFAULT_FILL_STYLE, DEFAULT_OPACITY } from '../../../../utils/constants'
 import { isNumber } from '../../../../utils/helpers'
 import RectangleTexture from '../../textures/RectangleTexture'
 
@@ -12,15 +12,17 @@ export default class Rectangle implements RenderObject {
   private width = 0
   private height = 0
   private object: Sprite
-  private style: Required<FillStyle> = DEFAULT_FILL_STYLE
+  private style: Required<FillStyle>
 
   constructor(
     private container: Container,
     private texture: RectangleTexture,
+    { color = DEFAULT_FILL, opacity = DEFAULT_OPACITY }: Partial<FillStyle> = {},
     index?: number
   ) {
     this.container = container
     this.texture = texture
+    this.style = { color, opacity }
     this.object = this.create(index)
   }
 

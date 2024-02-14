@@ -23,3 +23,5 @@ export interface RenderObjectLifecycle {
 export interface RenderObject extends RenderObjectLifecycle {
   moveTo(...args: number[]): this
 }
+
+export type InterpolateFn = (dt: number) => { value: number; done: boolean }

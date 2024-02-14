@@ -15,6 +15,8 @@ import CircleTexture from './textures/CircleTexture'
 import TextIconTexture from './textures/TextIconTexture'
 import AssetManager from './loaders/AssetManager'
 import LifecycleManager from './LifecycleManager'
+import RectangleTexture from './textures/RectangleTexture'
+import AnnotationsRenderer from './annotations/AnnotationsRenderer'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -127,12 +129,14 @@ export class Renderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
+  annotationsContainer = new Container()
   managers = new LifecycleManager()
   eventSystem: EventSystem
   nodes: Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}
   edges: Edge[] = []
   edgeRenderersById: Record<string, EdgeRenderer> = {}
+  annotations: AnnotationsRenderer
   renderedNodes = false
   dragInertia = defaultOptions.dragInertia
   animateViewport: number | false = defaultOptions.animateViewport
@@ -141,6 +145,7 @@ export class Renderer {
   circle: CircleTexture
   arrow: ArrowTexture
   textIcon: TextIconTexture
+  rectangle: RectangleTexture
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
   assets = new AssetManager()
@@ -220,15 +225,18 @@ export class Renderer {
     this.circle = new CircleTexture(this)
     this.arrow = new ArrowTexture(this)
     this.textIcon = new TextIconTexture(this)
+    this.rectangle = new RectangleTexture(this)
     this.eventSystem = new EventSystem(this.app.renderer)
     this.eventSystem.domElement = view
     this.root.eventMode = 'static' // 'passive' // TODO - add viewport events to interactionContainer
     this.edgesContainer.eventMode = 'none'
     this.nodesContainer.eventMode = 'none'
     this.labelsContainer.eventMode = 'none'
+    this.annotationsContainer.eventMode = 'none'
     this.interactionContainer.eventMode = 'passive'
     const MIN_COORDINATE = Number.MIN_SAFE_INTEGER / 2
     this.root.hitArea = new Rectangle(MIN_COORDINATE, MIN_COORDINATE, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
+    this.root.addChild(this.annotationsContainer)
     this.root.addChild(this.edgesContainer)
     this.root.addChild(this.nodesContainer)
     this.root.addChild(this.labelsContainer)
@@ -241,6 +249,8 @@ export class Renderer {
     this.root.addEventListener('pointerleave', this.pointerLeave)
     this.root.addEventListener('pointerupoutside', this.pointerReleaseNode)
     view.addEventListener!('wheel', this.zoomInteraction.wheel, { passive: false })
+
+    this.annotations = new AnnotationsRenderer(this)
 
     if (debug) {
       // this.grid = new Grid(this, 24000, 24000, 100, { hideText: false })
@@ -256,7 +266,7 @@ export class Renderer {
     }
   }
 
-  update({ nodes, edges, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
+  update({ nodes, edges, annotations, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
     this.animateViewport =
       options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
     this.animateNodePosition =
@@ -434,6 +444,8 @@ export class Renderer {
       }
     }
 
+    this.annotations.update(annotations)
+
     this.zoomInteraction.zooming = false
 
     return this
@@ -500,6 +512,7 @@ export class Renderer {
       this.edgeRenderersById[edge.id].render()
     }
 
+    this.annotations.render(dt)
     this.managers.render()
     this.app.render()
   }

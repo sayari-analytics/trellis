@@ -13,18 +13,17 @@ export default class RectangleStrokes implements RenderObject {
   private minSize: Dimensions = { width: 0, height: 0 }
   private maxSize: Dimensions = { width: 0, height: 0 }
   private objects: Rectangle[] = []
-  private strokes: Stroke[] = []
 
   constructor(
     private container: Container,
     private texture: RectangleTexture,
-    private fill: Rectangle
+    private fill: Rectangle,
+    private strokes: Stroke[] = []
   ) {
     this.container = container
     this.texture = texture
     this.fill = fill
-    this.minSize = this.fill.size
-    this.maxSize = this.minSize
+    this.applyStrokes(strokes)
   }
 
   update(strokes: Stroke[] = []) {
@@ -57,7 +56,7 @@ export default class RectangleStrokes implements RenderObject {
     return this
   }
 
-  resize(width: number, height: number) {
+  resize({ width, height }: Dimensions) {
     if (width !== this.minSize.width || height !== this.minSize.height) {
       this.minSize = { width, height }
       this.maxSize = this.minSize
@@ -121,13 +120,14 @@ export default class RectangleStrokes implements RenderObject {
   private applyStrokes(strokes: Stroke[]) {
     this.objects = []
     this.strokes = strokes
+    this.minSize = this.fill.size
     this.maxSize = this.minSize
 
     const index = this.fill.getContainerIndex()
 
-    for (const { width, color, opacity } of strokes) {
-      const object = new Rectangle(this.container, this.texture, index)
-      this.objects.push(object.update(color, opacity).resize(this.increment(width)).moveTo(this.x, this.y))
+    for (const { width, ...style } of strokes) {
+      const object = new Rectangle(this.container, this.texture, style, index)
+      this.objects.push(object.resize(this.increment(width)).moveTo(this.x, this.y))
     }
 
     return this

@@ -7,10 +7,11 @@ export const RADIANS_PER_DEGREE = Math.PI / 180
 // zoom limits
 // TODO - extends to renderer options
 export const MIN_LABEL_ZOOM = 0.25
-export const MIN_NODE_STROKE_ZOOM = 0.3
+export const MIN_STROKE_ZOOM = 0.3
 export const MIN_NODE_ICON_ZOOM = 0.3
 export const MIN_INTERACTION_ZOOM = 0.15
 export const MIN_EDGES_ZOOM = 0.1
+export const MIN_ANNOTATION_ZOOM = 0.25
 export const MIN_TEXTURE_ZOOM = 3
 
 // style
@@ -62,3 +63,6 @@ export const DEFAULT_HIGHLIGHT_STYLE = {
 }
 
 export const GENERIC_FONT_FAMILIES = new Set(['serif', 'sans-serif', 'monospace', 'cursive'])
+
+// animations
+export const DEFAULT_ANIMATE_RESIZE = 800

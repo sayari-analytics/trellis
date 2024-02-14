@@ -1,4 +1,11 @@
-import { DEFAULT_ARROW, DEFAULT_LABEL_STYLE, MIN_EDGES_ZOOM, MIN_INTERACTION_ZOOM, MIN_LABEL_ZOOM } from '../../utils/constants'
+import {
+  DEFAULT_ARROW,
+  DEFAULT_LABEL_STYLE,
+  MIN_EDGES_ZOOM,
+  MIN_INTERACTION_ZOOM,
+  MIN_LABEL_ZOOM,
+  MIN_STROKE_ZOOM
+} from '../../utils/constants'
 import { type Renderer } from '.'
 import { midPoint } from './utils'
 import { movePoint } from './utils'
@@ -180,10 +187,11 @@ export class EdgeRenderer {
       this.managers.edges.unmount(this.lineSegment)
     }
 
+    const strokesShouldMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
     const strokesMounted = this.managers.edges.isMounted(this.strokes)
-    if (isVisible && !strokesMounted) {
+    if (strokesShouldMount && !strokesMounted) {
       this.managers.edges.mount(this.strokes)
-    } else if (!isVisible && strokesMounted) {
+    } else if (!strokesShouldMount && strokesMounted) {
       this.managers.edges.unmount(this.strokes)
     }
 
