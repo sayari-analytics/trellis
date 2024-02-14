@@ -93,10 +93,14 @@ export default class Rectangle implements RenderObject {
     return { width: this.width, height: this.height }
   }
 
+  get anchor() {
+    return this.object.anchor
+  }
+
   private create(index?: number) {
     const object = new Sprite(this.texture.get())
 
-    object.anchor.set(0.5)
+    object.anchor.set(0.5, 0.5)
     object.x = this.x
     object.y = this.y
     object.visible = this.mounted

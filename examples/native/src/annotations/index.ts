@@ -10,18 +10,45 @@ const edges: Graph.Edge[] = []
 const nodes: Graph.Node[] = []
 const annotations: Graph.Annotation[] = [
   {
-    id: 'rect-anno-1',
+    id: 'rect-anno-0',
     type: 'rectangle',
     width: 200,
-    height: 100,
-    x: 100,
-    y: 100,
+    height: 200,
+    x: -100,
+    y: -100,
+    style: { color: GREEN }
+  },
+  {
+    id: 'rect-anno-2',
+    type: 'rectangle',
+    width: 200,
+    height: 200,
+    x: 0,
+    y: -100,
     style: {
-      color: GREEN,
-      stroke: [
-        { width: 1, color: WHITE },
-        { width: 2, color: GREEN_LIGHT }
-      ]
+      color: GREEN_LIGHT
+    }
+  },
+  {
+    id: 'rect-anno-3',
+    type: 'rectangle',
+    width: 200,
+    height: 200,
+    x: -100,
+    y: 0,
+    style: {
+      color: GREEN_LIGHT
+    }
+  },
+  {
+    id: 'rect-anno-4',
+    type: 'rectangle',
+    width: 200,
+    height: 200,
+    x: 0,
+    y: 0,
+    style: {
+      color: GREEN
     }
   },
   {
@@ -30,8 +57,8 @@ const annotations: Graph.Annotation[] = [
     content: 'Hello, World!',
     width: 200,
     height: 100,
-    x: -200,
-    y: -100,
+    x: -300,
+    y: -200,
     style: {
       color: DARK_GREEN,
       stroke: [
@@ -41,7 +68,7 @@ const annotations: Graph.Annotation[] = [
       text: {
         fontSize: 14,
         fontWeight: '400',
-        color: GREEN_LIGHT
+        color: WHITE
       }
     }
   }

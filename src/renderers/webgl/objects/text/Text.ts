@@ -179,6 +179,10 @@ export default class Text implements RenderObject {
     return this._rect
   }
 
+  get anchor() {
+    return this.object.anchor
+  }
+
   private get size(): [width: number, height: number] {
     const [px, py] = this.style.getHighlightPadding()
     return [this.object.width + px * 2, this.object.height + py * 2]

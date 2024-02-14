@@ -1,5 +1,5 @@
-import { InterpolateFn, RectangleAnnotation, TextAnnotation } from '../../../types'
-import { DEFAULT_ANIMATE_RESIZE, MIN_ANNOTATION_ZOOM, MIN_STROKE_ZOOM } from '../../../utils/constants'
+import { InterpolateFn, PointTuple, RectangleAnnotation, TextAnnotation } from '../../../types'
+import { DEFAULT_ANIMATE_RESIZE, DEFAULT_RESOLUTION, MIN_ANNOTATION_ZOOM, MIN_STROKE_ZOOM } from '../../../utils/constants'
 import { interpolate } from '../../../utils/helpers'
 import { Renderer } from '..'
 import RectangleStrokes from '../objects/rectangle/RectangleStrokes'
@@ -134,12 +134,13 @@ export default class RectangleAnnotationRenderer {
     const isVisible = this.visible()
 
     if (isVisible && this.annotation.type === 'text' && !this.text) {
+      const [hw, hh] = this.halfSize
       this.text = new Text(
         this.renderer.assets,
         this.renderer.annotationsContainer,
         this.annotation.content,
         this.annotation.style.text
-      ).moveTo(this.x, this.y)
+      ).moveTo(this.x + hw / this.resolution, this.y + hh / this.resolution)
     }
 
     const fillMounted = this.managers.annotations.isMounted(this.fill)
@@ -198,14 +199,15 @@ export default class RectangleAnnotationRenderer {
       this.y = y
       this.fill.moveTo(x, y)
       this.strokes.moveTo(x, y)
-      this.text?.moveTo(x, y)
+      const [hw, hh] = this.halfSize
+      this.text?.moveTo(x + hw / this.resolution, y + hh / this.resolution)
     }
-    console.log('anno', this.x, this.y, this.x + this.width / 2, this.y + this.height / 2)
     return this
   }
 
   private visible() {
-    const [left, right, top, bottom] = [this.x, this.x + this.width, this.y, this.y + this.height]
+    const [halfWidth, halfHeight] = this.halfSize
+    const [left, right, top, bottom] = [this.x - halfWidth, this.x + halfWidth, this.y - halfHeight, this.y + halfHeight]
     return (
       this.renderer.zoom > MIN_ANNOTATION_ZOOM &&
       right >= this.renderer.minX &&
@@ -215,7 +217,16 @@ export default class RectangleAnnotationRenderer {
     )
   }
 
+  private get halfSize(): PointTuple {
+    return [this.width / 2, this.height / 2]
+  }
+
   private get managers() {
     return this.renderer.managers
+  }
+
+  private get resolution() {
+    // TODO - implement resolution in options
+    return DEFAULT_RESOLUTION
   }
 }

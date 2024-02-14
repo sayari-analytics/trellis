@@ -47,9 +47,13 @@ export default class RectangleStrokes implements RenderObject {
     if (dirty) {
       this.x = x
       this.y = y
+      let _x = x
+      let _y = y
 
-      for (const object of this.objects) {
-        object.moveTo(x, y)
+      for (let i = 0; i < this.strokes.length; i += 1) {
+        _x -= this.strokes[i].width / 2
+        _y -= this.strokes[i].width / 2
+        this.objects[i].moveTo(_x, _y)
       }
     }
 
@@ -112,8 +116,8 @@ export default class RectangleStrokes implements RenderObject {
   }
 
   private increment(value: number) {
-    this.maxSize.height += value
-    this.maxSize.width += value
+    const { width, height } = this.size
+    this.maxSize = { width: width + value * 2, height: height + value * 2 }
     return this.maxSize
   }
 
@@ -125,9 +129,14 @@ export default class RectangleStrokes implements RenderObject {
 
     const index = this.fill.getContainerIndex()
 
+    let x = this.x
+    let y = this.y
+
     for (const { width, ...style } of strokes) {
+      x -= width / 2
+      y -= width / 2
       const object = new Rectangle(this.container, this.texture, style, index)
-      this.objects.push(object.resize(this.increment(width)).moveTo(this.x, this.y))
+      this.objects.push(object.resize(this.increment(width)).moveTo(x, y))
     }
 
     return this
