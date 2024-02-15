@@ -6,17 +6,16 @@ import {
   MIN_LABEL_ZOOM,
   MIN_STROKE_ZOOM
 } from '../../utils/constants'
-import { type Renderer } from '.'
-import { midPoint } from './utils'
-import { movePoint } from './utils'
-import { NodeRenderer } from './node'
 import type { ArrowStyle, Edge, PointTuple } from '../../types'
+import { FederatedPointerEvent } from 'pixi.js'
+import { midPoint, movePoint } from '../../utils/webgl'
+import { angle, distance } from '../../utils/api'
+import { NodeRenderer } from './node'
+import { type Renderer } from '.'
+import { EdgeHitArea } from './interaction/edgeHitArea'
 import Arrow from './objects/Arrow'
 import LineSegment from './objects/line/LineSegment'
 import LineStrokes from './objects/line/LineStrokes'
-import { FederatedPointerEvent } from 'pixi.js'
-import { EdgeHitArea } from './interaction/edgeHitArea'
-import { angle, distance } from '../../utils/api'
 import Text from './objects/text/Text'
 
 export class EdgeRenderer {
@@ -90,8 +89,7 @@ export class EdgeRenderer {
 
     if (this.label) {
       if (edge.label === undefined || edge.label.trim() === '') {
-        this.managers.labels.delete(this.label)
-        this.label = undefined
+        this.label = this.managers.labels.delete(this.label)
       } else {
         this.label.update(edge.label, edge.style?.label)
       }
@@ -235,11 +233,14 @@ export class EdgeRenderer {
     this.managers.edges.delete(this.lineSegment)
     this.managers.edges.delete(this.strokes)
     this.managers.interactions.delete(this.hitArea)
+    if (this.label) {
+      this.label = this.managers.labels.delete(this.label)
+    }
     if (this.forwardArrow) {
-      this.managers.arrows.delete(this.forwardArrow)
+      this.forwardArrow = this.managers.arrows.delete(this.forwardArrow)
     }
     if (this.reverseArrow) {
-      this.managers.arrows.delete(this.reverseArrow)
+      this.reverseArrow = this.managers.arrows.delete(this.reverseArrow)
     }
   }
 

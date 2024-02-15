@@ -109,6 +109,31 @@ const annotations: Graph.Annotation[] = [
         }
       }
     }
+  },
+  {
+    id: 'line-anno-0',
+    type: 'line',
+    points: [
+      { x: 0, y: -400 },
+      { x: 0, y: 400 }
+    ],
+    style: {
+      color: DARK_GREEN,
+      width: 2
+    }
+  },
+  {
+    id: 'line-anno-1',
+    type: 'line',
+    content: 'LINE!',
+    points: [
+      { x: -400, y: 0 },
+      { x: 400, y: 0 }
+    ],
+    style: {
+      color: GREEN_LIGHT,
+      width: 2
+    }
   }
 ]
 

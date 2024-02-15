@@ -8,6 +8,8 @@ export type TextObject = PixiText | BitmapText
 
 export type PointTuple = [x: number, y: number]
 
+export type LinePoints = [x0: number, y0: number, x1: number, y1: number]
+
 export type Texture = {
   get(...args: unknown[]): RenderTexture
   delete(): void

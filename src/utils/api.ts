@@ -1,4 +1,4 @@
-import { TWO_PI } from '../renderers/webgl/utils'
+import { TWO_PI } from './constants'
 import type { Node, Annotation, Edge, Bounds, Viewport, Dimensions } from '../types'
 
 export const getSelectionBounds = (elements: (Node | Annotation)[], padding: number = 0): Bounds => {

@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture } from 'pixi.js'
 import { Dimensions, RenderObject, Stroke } from '../../../../types'
-import { DEFAULT_FILL, DEFAULT_OPACITY, DEFAULT_STROKE_STYLE, DEFAULT_STROKE_WIDTH, HALF_PI } from '../../../../utils/constants'
+import { DEFAULT_FILL, DEFAULT_OPACITY, DEFAULT_STROKE_WIDTH, HALF_PI } from '../../../../utils/constants'
 import { isNumber } from '../../../../utils/helpers'
 
 // TODO -> let LineSegment own arrow rendering
@@ -11,10 +11,14 @@ export default class LineSegment implements RenderObject {
   private y = 0
   private length = 0
   private object: Sprite
-  private style: Required<Stroke> = DEFAULT_STROKE_STYLE
+  private style: Required<Stroke>
 
-  constructor(private container: Container) {
+  constructor(
+    private container: Container,
+    { color = DEFAULT_FILL, width = DEFAULT_STROKE_WIDTH, opacity = DEFAULT_OPACITY }: Partial<Stroke> = {}
+  ) {
     this.container = container
+    this.style = { color, width, opacity }
     this.object = this.create()
   }
 

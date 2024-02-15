@@ -13,16 +13,15 @@ export default class LineStrokes implements RenderObject {
   private minWidth = 0
   private maxWidth = 0
   private objects: LineSegment[] = []
-  private strokes: Stroke[] = []
 
   constructor(
     private container: Container,
-    private fill: LineSegment
+    private fill: LineSegment,
+    private strokes: Stroke[] = []
   ) {
     this.container = container
     this.fill = fill
-    this.minWidth = this.fill.size.width
-    this.maxWidth = this.minWidth
+    this.applyStrokes(strokes)
   }
 
   update(strokes: Stroke[] = []) {
@@ -139,9 +138,9 @@ export default class LineStrokes implements RenderObject {
     this.minWidth = this.fill.size.width
     this.maxWidth = this.minWidth
 
-    for (const { color, width, opacity } of strokes) {
-      const object = new LineSegment(this.container)
-      this.objects.push(object.update(color, this.increment(width), opacity).rotate(this.angle).resize(this.length).moveTo(this.x, this.y))
+    for (const stroke of strokes) {
+      const object = new LineSegment(this.container, { ...stroke, width: this.increment(stroke.width) })
+      this.objects.push(object.rotate(this.angle).resize(this.length).moveTo(this.x, this.y))
     }
 
     return this

@@ -1,9 +1,10 @@
 import { Renderer } from '..'
 import { Annotation } from '../../../types'
 import CircleAnnotationRenderer from './CircleAnnotationRenderer'
+import LineAnnotationRenderer from './LineAnnotationRenderer'
 import RectangleAnnotationRenderer from './RectangleAnnotationRenderer'
 
-type AnnotationRendererLookup = Record<string, CircleAnnotationRenderer | RectangleAnnotationRenderer>
+type AnnotationRendererLookup = Record<string, CircleAnnotationRenderer | RectangleAnnotationRenderer | LineAnnotationRenderer>
 
 export default class AnnotationsRenderer {
   private annotations: Annotation[] = []
@@ -28,11 +29,16 @@ export default class AnnotationsRenderer {
       } else if (annotation.type === 'circle') {
         renderer?.delete()
         lookup[annotation.id] = new CircleAnnotationRenderer(this.renderer, annotation)
-      } else if (renderer instanceof RectangleAnnotationRenderer) {
+      } else if (annotation.type === 'rectangle' && renderer instanceof RectangleAnnotationRenderer) {
         renderer.update(annotation)
-      } else {
+      } else if (annotation.type === 'rectangle') {
         renderer?.delete()
         lookup[annotation.id] = new RectangleAnnotationRenderer(this.renderer, annotation)
+      } else if (annotation.type === 'line' && renderer instanceof LineAnnotationRenderer) {
+        renderer.update(annotation)
+      } else if (annotation.type === 'line') {
+        renderer?.delete()
+        lookup[annotation.id] = new LineAnnotationRenderer(this.renderer, annotation)
       }
     }
 

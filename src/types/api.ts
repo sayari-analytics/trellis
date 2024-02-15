@@ -3,6 +3,8 @@ export type Bounds = { left: number; top: number; right: number; bottom: number 
 
 export type Dimensions = { width: number; height: number }
 
+export type Coordinates = { x: number; y: number }
+
 export type Viewport = { x: number; y: number; zoom: number }
 
 // style
@@ -35,7 +37,7 @@ export type TextStyle = Partial<{
   align: TextAlign
 }>
 
-export type LabelStyle = Omit<TextStyle, 'align' | 'position'> & {
+export type LabelStyle = Omit<TextStyle, 'align'> & {
   position?: Exclude<AnchorPosition, 'center'>
 }
 
@@ -110,23 +112,18 @@ export type Edge = {
 }
 
 // annotations
-export type AnnotationStyle = FillStyle & {
-  stroke?: Stroke[]
-  text?: Omit<LabelStyle, 'position'>
-}
-
-export type TextAnnotationStyle = AnnotationStyle & {
-  text?: Omit<LabelStyle, 'position'>
-  padding?: number | [px: number, py: number]
-}
-
 type AnnotationBase<Type extends string> = {
   type: Type
   id: string
   x: number
   y: number
-  resize?: boolean
   content?: string
+  resize?: boolean
+}
+
+export type AnnotationStyle = FillStyle & {
+  stroke?: Stroke[]
+  text?: Omit<LabelStyle, 'position'>
 }
 
 export type CircleAnnotation = AnnotationBase<'circle'> & {
@@ -140,4 +137,14 @@ export type RectangleAnnotation = AnnotationBase<'rectangle'> & {
   style: AnnotationStyle
 }
 
-export type Annotation = CircleAnnotation | RectangleAnnotation
+export type LineAnnotationStyle = Stroke & {
+  stroke?: Stroke[]
+  text?: EdgeLabelStyle
+}
+
+export type LineAnnotation = Omit<AnnotationBase<'line'>, 'x' | 'y'> & {
+  points: [{ x: number; y: number }, { x: number; y: number }]
+  style: LineAnnotationStyle
+}
+
+export type Annotation = CircleAnnotation | RectangleAnnotation | LineAnnotation

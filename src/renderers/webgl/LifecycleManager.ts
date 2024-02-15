@@ -16,7 +16,7 @@ export default class LifecycleManager {
   arrows = new ObjectManager<Arrow>(1000)
   labels = new ObjectManager<Text>(2000)
   interactions = new ObjectManager(2000)
-  annotations = new ObjectManager<Rectangle | RectangleStrokes | Circle | CircleStrokes>(2000)
+  annotations = new ObjectManager<Rectangle | RectangleStrokes | Circle | CircleStrokes | LineSegment | LineStrokes>(2000)
   text = new ObjectManager<Text>(1000)
   // interactions = new ObjectManager<HitArea>(2000) // TODO
 
