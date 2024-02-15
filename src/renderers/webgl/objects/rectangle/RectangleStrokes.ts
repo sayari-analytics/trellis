@@ -1,7 +1,6 @@
 import { Dimensions, RenderObject, Stroke } from '../../../../types'
 import { Container } from 'pixi.js'
 import { equals } from '../../../../utils/api'
-import RectangleTexture from '../../textures/RectangleTexture'
 import Rectangle from './Rectangle'
 
 export default class RectangleStrokes implements RenderObject {
@@ -16,12 +15,10 @@ export default class RectangleStrokes implements RenderObject {
 
   constructor(
     private container: Container,
-    private texture: RectangleTexture,
     private fill: Rectangle,
     private strokes: Stroke[] = []
   ) {
     this.container = container
-    this.texture = texture
     this.fill = fill
     this.applyStrokes(strokes)
   }
@@ -51,8 +48,8 @@ export default class RectangleStrokes implements RenderObject {
       let _y = y
 
       for (let i = 0; i < this.strokes.length; i += 1) {
-        _x -= this.strokes[i].width / 2
-        _y -= this.strokes[i].width / 2
+        _x -= this.strokes[i].width
+        _y -= this.strokes[i].width
         this.objects[i].moveTo(_x, _y)
       }
     }
@@ -77,8 +74,10 @@ export default class RectangleStrokes implements RenderObject {
     if (!this.mounted) {
       this.mounted = true
 
+      const index = this.fill.getContainerIndex()
+
       for (const object of this.objects) {
-        object.mount()
+        object.mount(index)
       }
     }
 
@@ -127,15 +126,13 @@ export default class RectangleStrokes implements RenderObject {
     this.minSize = this.fill.size
     this.maxSize = this.minSize
 
-    const index = this.fill.getContainerIndex()
-
     let x = this.x
     let y = this.y
 
     for (const { width, ...style } of strokes) {
-      x -= width / 2
-      y -= width / 2
-      const object = new Rectangle(this.container, this.texture, style, index)
+      x -= width
+      y -= width
+      const object = new Rectangle(this.container, style)
       this.objects.push(object.resize(this.increment(width)).moveTo(x, y))
     }
 

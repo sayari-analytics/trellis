@@ -1,5 +1,5 @@
 import { InterpolateFn, PointTuple, RectangleAnnotation } from '../../../types'
-import { DEFAULT_ANIMATE_RESIZE, DEFAULT_RESOLUTION, MIN_ANNOTATION_ZOOM, MIN_STROKE_ZOOM } from '../../../utils/constants'
+import { DEFAULT_ANIMATE_RESIZE, MIN_ANNOTATION_ZOOM, MIN_STROKE_ZOOM } from '../../../utils/constants'
 import { interpolate } from '../../../utils/helpers'
 import { Renderer } from '..'
 import RectangleStrokes from '../objects/rectangle/RectangleStrokes'
@@ -28,8 +28,8 @@ export default class RectangleAnnotationRenderer {
     annotation: RectangleAnnotation
   ) {
     this.renderer = renderer
-    this.fill = new Rectangle(renderer.annotationsContainer, renderer.rectangle, annotation.style)
-    this.strokes = new RectangleStrokes(renderer.annotationsContainer, renderer.rectangle, this.fill, annotation.style.stroke)
+    this.fill = new Rectangle(renderer.annotationsContainer, annotation.style)
+    this.strokes = new RectangleStrokes(renderer.annotationsContainer, this.fill, annotation.style.stroke)
     this.resize(annotation.width, annotation.height).moveTo(annotation.x, annotation.y)
     this.annotation = annotation
   }
@@ -135,13 +135,12 @@ export default class RectangleAnnotationRenderer {
     const isVisible = this.visible()
 
     if (isVisible && this.annotation.content && !this.text) {
-      const [hw, hh] = this.halfSize
       this.text = new Text(
         this.renderer.assets,
         this.renderer.annotationsContainer,
         this.annotation.content,
         this.annotation.style.text
-      ).moveTo(this.x + hw / this.resolution, this.y + hh / this.resolution)
+      ).moveTo(...this.center)
     }
 
     const fillMounted = this.managers.annotations.isMounted(this.fill)
@@ -200,8 +199,7 @@ export default class RectangleAnnotationRenderer {
       this.y = y
       this.fill.moveTo(x, y)
       this.strokes.moveTo(x, y)
-      const [hw, hh] = this.halfSize
-      this.text?.moveTo(x + hw / this.resolution, y + hh / this.resolution)
+      this.text?.moveTo(...this.center)
     }
     return this
   }
@@ -222,12 +220,12 @@ export default class RectangleAnnotationRenderer {
     return [this.width / 2, this.height / 2]
   }
 
-  private get managers() {
-    return this.renderer.managers
+  private get center(): PointTuple {
+    const [halfWidth, halfHeight] = this.halfSize
+    return [this.x + halfWidth, this.y + halfHeight]
   }
 
-  private get resolution() {
-    // TODO - implement resolution in options
-    return DEFAULT_RESOLUTION
+  private get managers() {
+    return this.renderer.managers
   }
 }

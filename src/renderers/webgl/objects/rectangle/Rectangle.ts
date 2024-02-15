@@ -1,8 +1,7 @@
 import { Dimensions, FillStyle, RenderObject } from '../../../../types'
 import { DEFAULT_FILL, DEFAULT_OPACITY } from '../../../../utils/constants'
-import { Container, Sprite } from 'pixi.js'
+import { Container, Sprite, Texture } from 'pixi.js'
 import { isNumber } from '../../../../utils/helpers'
-import RectangleTexture from '../../textures/RectangleTexture'
 
 export default class Rectangle implements RenderObject {
   mounted = false
@@ -16,14 +15,11 @@ export default class Rectangle implements RenderObject {
 
   constructor(
     private container: Container,
-    private texture: RectangleTexture,
-    { color = DEFAULT_FILL, opacity = DEFAULT_OPACITY }: Partial<FillStyle> = {},
-    index?: number
+    { color = DEFAULT_FILL, opacity = DEFAULT_OPACITY }: Partial<FillStyle> = {}
   ) {
     this.container = container
-    this.texture = texture
     this.style = { color, opacity }
-    this.object = this.create(index)
+    this.object = this.create()
   }
 
   update(color = DEFAULT_FILL, opacity = DEFAULT_OPACITY) {
@@ -49,20 +45,28 @@ export default class Rectangle implements RenderObject {
   }
 
   resize({ width, height }: Dimensions) {
-    if (this.width !== width || this.height !== height) {
+    if (this.width !== width) {
       this.width = width
+      this.object.width = width
+    }
+
+    if (this.height !== height) {
       this.height = height
-      this.object.scale.set(width / this.texture.scaleFactor, height / this.texture.scaleFactor)
+      this.object.height = height
     }
 
     return this
   }
 
-  mount() {
-    // TODO - why is mounting/unmouting fill Sprite less efficient?
+  mount(index?: number) {
     if (!this.mounted) {
       this.mounted = true
-      this.object.visible = this.mounted
+
+      if (isNumber(index)) {
+        this.container.addChildAt(this.object, index)
+      } else {
+        this.container.addChild(this.object)
+      }
     }
 
     return this
@@ -71,7 +75,7 @@ export default class Rectangle implements RenderObject {
   unmount() {
     if (this.mounted) {
       this.mounted = false
-      this.object.visible = this.mounted
+      this.container.removeChild(this.object)
     }
 
     return this
@@ -97,21 +101,14 @@ export default class Rectangle implements RenderObject {
     return this.object.anchor
   }
 
-  private create(index?: number) {
-    const object = new Sprite(this.texture.get())
+  private create() {
+    const object = new Sprite(Texture.WHITE)
 
-    object.anchor.set(0.5, 0.5)
+    object.anchor.set(0, 0)
     object.x = this.x
     object.y = this.y
-    object.visible = this.mounted
     object.tint = this.style.color
     object.alpha = this.style.opacity
-
-    if (isNumber(index)) {
-      this.container.addChildAt(object, index)
-    } else {
-      this.container.addChild(object)
-    }
 
     return object
   }

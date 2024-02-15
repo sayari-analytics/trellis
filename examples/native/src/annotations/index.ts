@@ -12,8 +12,8 @@ const annotations: Graph.Annotation[] = [
   {
     id: 'rect-anno-0',
     type: 'rectangle',
-    width: 200,
-    height: 200,
+    width: 100,
+    height: 100,
     x: -100,
     y: -100,
     style: { color: GREEN }
@@ -21,8 +21,8 @@ const annotations: Graph.Annotation[] = [
   {
     id: 'rect-anno-2',
     type: 'rectangle',
-    width: 200,
-    height: 200,
+    width: 100,
+    height: 100,
     x: 0,
     y: -100,
     style: {
@@ -32,8 +32,8 @@ const annotations: Graph.Annotation[] = [
   {
     id: 'rect-anno-3',
     type: 'rectangle',
-    width: 200,
-    height: 200,
+    width: 100,
+    height: 100,
     x: -100,
     y: 0,
     style: {
@@ -43,8 +43,8 @@ const annotations: Graph.Annotation[] = [
   {
     id: 'rect-anno-4',
     type: 'rectangle',
-    width: 200,
-    height: 200,
+    width: 100,
+    height: 100,
     x: 0,
     y: 0,
     style: {
