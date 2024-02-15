@@ -15,7 +15,7 @@ export default class RectangleAnnotationRenderer {
   private height = 0
 
   private fill: Rectangle
-  private strokes: RectangleStrokes
+  private strokes?: RectangleStrokes
   private text?: Text
 
   private interpolateX?: InterpolateFn
@@ -29,7 +29,6 @@ export default class RectangleAnnotationRenderer {
   ) {
     this.renderer = renderer
     this.fill = new Rectangle(renderer.annotationsContainer, annotation.style)
-    this.strokes = new RectangleStrokes(renderer.annotationsContainer, this.fill, annotation.style.stroke)
     this.resize(annotation.width, annotation.height).moveTo(annotation.x, annotation.y)
     this.annotation = annotation
   }
@@ -38,7 +37,7 @@ export default class RectangleAnnotationRenderer {
     this.annotation = annotation
 
     this.fill.update(annotation.style.color, annotation.style.opacity)
-    this.strokes.update(annotation.style.stroke)
+    this.strokes?.update(annotation.style.stroke)
 
     if (annotation.content && this.text) {
       this.text.update(annotation.content, annotation.style.text)
@@ -152,12 +151,21 @@ export default class RectangleAnnotationRenderer {
     }
 
     const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
-    const strokesMounted = this.managers.annotations.isMounted(this.strokes)
+    if (shouldStrokesMount && !this.strokes && this.annotation.style.stroke) {
+      this.strokes = new RectangleStrokes(this.renderer.annotationsContainer, this.fill, this.annotation.style.stroke).moveTo(
+        this.x,
+        this.y
+      )
+    }
 
-    if (shouldStrokesMount && !strokesMounted) {
-      this.managers.annotations.mount(this.strokes)
-    } else if (!shouldStrokesMount && strokesMounted) {
-      this.managers.annotations.unmount(this.strokes)
+    if (this.strokes) {
+      const strokesMounted = this.managers.annotations.isMounted(this.strokes)
+
+      if (shouldStrokesMount && !strokesMounted) {
+        this.managers.annotations.mount(this.strokes)
+      } else if (!shouldStrokesMount && strokesMounted) {
+        this.managers.annotations.unmount(this.strokes)
+      }
     }
 
     if (this.text) {
@@ -175,7 +183,11 @@ export default class RectangleAnnotationRenderer {
 
   delete() {
     this.managers.annotations.delete(this.fill)
-    this.managers.annotations.delete(this.strokes)
+
+    if (this.strokes) {
+      this.strokes = this.managers.annotations.delete(this.strokes)
+    }
+
     if (this.text) {
       this.managers.text.delete(this.text)
       this.text = undefined
@@ -187,7 +199,7 @@ export default class RectangleAnnotationRenderer {
       this.width = width
       this.height = height
       this.fill.resize({ width, height })
-      this.strokes.resize({ width, height })
+      this.strokes?.resize({ width, height })
     }
 
     return this
@@ -198,7 +210,7 @@ export default class RectangleAnnotationRenderer {
       this.x = x
       this.y = y
       this.fill.moveTo(x, y)
-      this.strokes.moveTo(x, y)
+      this.strokes?.moveTo(x, y)
       this.text?.moveTo(...this.center)
     }
     return this

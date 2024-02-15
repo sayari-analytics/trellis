@@ -14,7 +14,7 @@ export default class CircleAnnotationRenderer {
   private _radius = 0
 
   private fill: Circle
-  private strokes: CircleStrokes
+  private strokes?: CircleStrokes
   private text?: Text
 
   private interpolateX?: InterpolateFn
@@ -27,7 +27,6 @@ export default class CircleAnnotationRenderer {
   ) {
     this.renderer = renderer
     this.fill = new Circle(renderer.annotationsContainer, renderer.circle, annotation.style)
-    this.strokes = new CircleStrokes(renderer.annotationsContainer, renderer.circle, this.fill, annotation.style.stroke)
     this.resize(annotation.radius).moveTo(annotation.x, annotation.y)
     this.annotation = annotation
   }
@@ -36,7 +35,7 @@ export default class CircleAnnotationRenderer {
     this.annotation = annotation
 
     this.fill.update(annotation.style.color, annotation.style.opacity)
-    this.strokes.update(annotation.style.stroke)
+    this.strokes?.update(annotation.style.stroke)
 
     if (annotation.content && this.text) {
       this.text.update(annotation.content, annotation.style.text)
@@ -127,12 +126,23 @@ export default class CircleAnnotationRenderer {
     }
 
     const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
-    const strokesMounted = this.managers.annotations.isMounted(this.strokes)
+    if (shouldStrokesMount && !this.strokes && this.annotation.style.stroke) {
+      this.strokes = new CircleStrokes(
+        this.renderer.annotationsContainer,
+        this.renderer.circle,
+        this.fill,
+        this.annotation.style.stroke
+      ).moveTo(this.x, this.y)
+    }
 
-    if (shouldStrokesMount && !strokesMounted) {
-      this.managers.annotations.mount(this.strokes)
-    } else if (!shouldStrokesMount && strokesMounted) {
-      this.managers.annotations.unmount(this.strokes)
+    if (this.strokes) {
+      const strokesMounted = this.managers.annotations.isMounted(this.strokes)
+
+      if (shouldStrokesMount && !strokesMounted) {
+        this.managers.annotations.mount(this.strokes)
+      } else if (!shouldStrokesMount && strokesMounted) {
+        this.managers.annotations.unmount(this.strokes)
+      }
     }
 
     if (this.text) {
@@ -150,7 +160,11 @@ export default class CircleAnnotationRenderer {
 
   delete() {
     this.managers.annotations.delete(this.fill)
-    this.managers.annotations.delete(this.strokes)
+
+    if (this.strokes) {
+      this.strokes = this.managers.annotations.delete(this.strokes)
+    }
+
     if (this.text) {
       this.text = this.managers.text.delete(this.text)
     }
@@ -158,7 +172,7 @@ export default class CircleAnnotationRenderer {
   }
 
   private get radius() {
-    return this.strokes.radius
+    return this.strokes?.radius ?? this._radius
   }
 
   private get managers() {
@@ -169,7 +183,7 @@ export default class CircleAnnotationRenderer {
     if (radius !== this._radius) {
       this._radius = radius
       this.fill.resize(radius)
-      this.strokes.resize(radius)
+      this.strokes?.resize(radius)
     }
 
     return this
@@ -180,7 +194,7 @@ export default class CircleAnnotationRenderer {
       this.x = x
       this.y = y
       this.fill.moveTo(x, y)
-      this.strokes.moveTo(x, y)
+      this.strokes?.moveTo(x, y)
       this.text?.moveTo(x, y)
     }
 

@@ -21,6 +21,7 @@ export default class LineStrokes implements RenderObject {
   ) {
     this.container = container
     this.fill = fill
+    this.length = fill.length
     this.applyStrokes(strokes)
   }
 
@@ -34,8 +35,8 @@ export default class LineStrokes implements RenderObject {
       if (isMounted) {
         this.mount()
       }
-    } else if (this.fill.size.width !== this.minWidth) {
-      this.minWidth = this.fill.size.width
+    } else if (this.fill.width !== this.minWidth) {
+      this.minWidth = this.fill.width
       this.maxWidth = this.minWidth
 
       for (let i = 0; i < this.strokes.length; i += 1) {
@@ -135,7 +136,7 @@ export default class LineStrokes implements RenderObject {
   private applyStrokes(strokes: Stroke[]) {
     this.objects = []
     this.strokes = strokes
-    this.minWidth = this.fill.size.width
+    this.minWidth = this.fill.width
     this.maxWidth = this.minWidth
 
     for (const stroke of strokes) {

@@ -1,5 +1,5 @@
 import { Container, Sprite, Texture } from 'pixi.js'
-import { Dimensions, RenderObject, Stroke } from '../../../../types'
+import { RenderObject, Stroke } from '../../../../types'
 import { DEFAULT_FILL, DEFAULT_OPACITY, DEFAULT_STROKE_WIDTH, HALF_PI } from '../../../../utils/constants'
 import { isNumber } from '../../../../utils/helpers'
 
@@ -9,7 +9,7 @@ export default class LineSegment implements RenderObject {
 
   private x = 0
   private y = 0
-  private length = 0
+  private _length = 0
   private object: Sprite
   private style: Required<Stroke>
 
@@ -37,8 +37,8 @@ export default class LineSegment implements RenderObject {
   }
 
   resize(length: number) {
-    if (length !== this.length) {
-      this.length = length
+    if (length !== this._length) {
+      this._length = length
       this.object.height = length
     }
 
@@ -96,8 +96,12 @@ export default class LineSegment implements RenderObject {
     return -1
   }
 
-  get size(): Dimensions {
-    return { width: this.style.width, height: this.length }
+  get width() {
+    return this.style.width
+  }
+
+  get length() {
+    return this._length
   }
 
   private create() {
@@ -105,7 +109,7 @@ export default class LineSegment implements RenderObject {
     object.tint = this.style.color
     object.alpha = this.style.opacity
     object.width = this.style.width
-    object.height = this.length
+    object.height = this._length
     object.anchor.set(0.5, 0)
 
     return object

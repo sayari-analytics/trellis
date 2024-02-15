@@ -1,4 +1,4 @@
-import { PointTuple, LineAnnotation, Coordinates, LinePoints } from '../../../types'
+import { LineAnnotation, Coordinates, LinePoints } from '../../../types'
 import { DEFAULT_LABEL_STYLE, MIN_ANNOTATION_ZOOM, MIN_STROKE_ZOOM } from '../../../utils/constants'
 import { angle, distance } from '../../../utils/api'
 import { midPoint } from '../../../utils/webgl'
@@ -11,12 +11,11 @@ export default class LineAnnotationRenderer {
   annotation: LineAnnotation
 
   private _points: LinePoints = [0, 0, 0, 0]
-  private center: PointTuple = [0, 0]
   private length = 0
   private theta = 0
 
   private fill: LineSegment
-  private strokes: LineStrokes
+  private strokes?: LineStrokes
   private text?: Text
 
   constructor(
@@ -24,9 +23,8 @@ export default class LineAnnotationRenderer {
     annotation: LineAnnotation
   ) {
     this.renderer = renderer
-    this.fill = new LineSegment(renderer.annotationsContainer, annotation.style)
-    this.strokes = new LineStrokes(renderer.annotationsContainer, this.fill, annotation.style.stroke)
     this.annotation = annotation
+    this.fill = new LineSegment(renderer.annotationsContainer, annotation.style)
     this.setPoints(annotation.points)
   }
 
@@ -34,7 +32,10 @@ export default class LineAnnotationRenderer {
     this.annotation = annotation
 
     this.fill.update(annotation.style.color, annotation.style.width, annotation.style.opacity)
-    this.strokes.update(annotation.style.stroke)
+
+    if (this.strokes) {
+      this.strokes.update(annotation.style.stroke)
+    }
 
     if (this.text) {
       if (annotation.content) {
@@ -44,14 +45,7 @@ export default class LineAnnotationRenderer {
       }
     }
 
-    if (
-      this._points[0] !== annotation.points[0].x ||
-      this._points[1] !== annotation.points[0].y ||
-      this._points[2] !== annotation.points[1].x ||
-      this._points[3] !== annotation.points[1].y
-    ) {
-      this.setPoints(annotation.points)
-    }
+    this.setPoints(annotation.points)
 
     return this
   }
@@ -68,7 +62,7 @@ export default class LineAnnotationRenderer {
         DEFAULT_LABEL_STYLE
       )
       this.text.offset = this.width
-      this.text.rotate(this.theta).moveTo(...this.center)
+      this.text.rotate(this.theta).moveTo(...this.getCenter())
     }
 
     const fillMounted = this.managers.annotations.isMounted(this.fill)
@@ -80,12 +74,18 @@ export default class LineAnnotationRenderer {
     }
 
     const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
-    const strokesMounted = this.managers.annotations.isMounted(this.strokes)
 
-    if (shouldStrokesMount && !strokesMounted) {
-      this.managers.annotations.mount(this.strokes)
-    } else if (!shouldStrokesMount && strokesMounted) {
-      this.managers.annotations.unmount(this.strokes)
+    if (shouldStrokesMount && !this.strokes && this.annotation.style.stroke) {
+      this.strokes = new LineStrokes(this.renderer.annotationsContainer, this.fill, this.annotation.style.stroke).moveTo(this.x, this.y)
+    }
+
+    if (this.strokes) {
+      const strokesMounted = this.managers.annotations.isMounted(this.strokes)
+      if (shouldStrokesMount && !strokesMounted) {
+        this.managers.annotations.mount(this.strokes)
+      } else if (!shouldStrokesMount && strokesMounted) {
+        this.managers.annotations.unmount(this.strokes)
+      }
     }
 
     if (this.text) {
@@ -103,7 +103,11 @@ export default class LineAnnotationRenderer {
 
   delete() {
     this.managers.annotations.delete(this.fill)
-    this.managers.annotations.delete(this.strokes)
+
+    if (this.strokes) {
+      this.strokes = this.managers.annotations.delete(this.strokes)
+    }
+
     if (this.text) {
       this.managers.text.delete(this.text)
       this.text = undefined
@@ -119,22 +123,36 @@ export default class LineAnnotationRenderer {
   }
 
   get width() {
-    return this.strokes.width
+    return this.strokes?.width ?? this.fill.width
+  }
+
+  private compare(points: [Coordinates, Coordinates]) {
+    return (
+      this._points[0] === points[0].x &&
+      this._points[1] === points[0].y &&
+      this._points[2] === points[1].x &&
+      this._points[3] === points[1].y
+    )
   }
 
   private setPoints([a, b]: [Coordinates, Coordinates]) {
-    const points = a.x > b.x ? [a, b] : [b, a]
-    this._points = [points[0].x, points[0].y, points[1].x, points[1].y]
-    this.theta = angle(...this._points)
-    this.center = midPoint(...this._points)
-    this.length = distance(...this._points)
+    const points: [Coordinates, Coordinates] = a.x > b.x ? [a, b] : [b, a]
 
-    this.fill.rotate(this.theta).resize(this.length).moveTo(this.x, this.y)
-    this.strokes.rotate(this.theta).resize(this.length).moveTo(this.x, this.y)
+    if (!this.compare(points)) {
+      this._points = [points[0].x, points[0].y, points[1].x, points[1].y]
 
-    if (this.text) {
-      this.text.offset = this.width
-      this.text.rotate(this.theta).moveTo(...this.center)
+      this.theta = angle(...this._points)
+      this.length = distance(...this._points)
+      this.fill.rotate(this.theta).resize(this.length).moveTo(this.x, this.y)
+
+      if (this.strokes) {
+        this.strokes.rotate(this.theta).resize(this.length).moveTo(this.x, this.y)
+      }
+
+      if (this.text) {
+        this.text.offset = this.width
+        this.text.rotate(this.theta).moveTo(...this.getCenter())
+      }
     }
 
     return this
@@ -150,6 +168,10 @@ export default class LineAnnotationRenderer {
       maxY >= this.renderer.minY &&
       minY <= this.renderer.maxY
     )
+  }
+
+  private getCenter() {
+    return midPoint(...this._points)
   }
 
   private get managers() {

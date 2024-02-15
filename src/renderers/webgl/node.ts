@@ -15,7 +15,7 @@ export class NodeRenderer {
 
   node: Node
   fill: Circle
-  strokes: CircleStrokes
+  strokes?: CircleStrokes
   label?: Text
   icon?: Icon
 
@@ -35,7 +35,6 @@ export class NodeRenderer {
   constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
     this.fill = new Circle(renderer.nodesContainer, renderer.circle, node.style)
-    this.strokes = new CircleStrokes(renderer.nodesContainer, renderer.circle, this.fill, node.style?.stroke)
     this.hitArea = new NodeHitArea(this.renderer.interactionContainer, this)
     this.resize(node.radius).moveTo(node.x ?? 0, node.y ?? 0)
     this.node = node
@@ -45,7 +44,10 @@ export class NodeRenderer {
     this.node = node
 
     this.fill.update(node.style?.color, node.style?.opacity)
-    this.strokes.update(node.style?.stroke)
+
+    if (this.strokes) {
+      this.strokes.update(node.style?.stroke)
+    }
 
     if (this.label) {
       if (node.label === undefined || node.label.trim() === '') {
@@ -168,12 +170,22 @@ export class NodeRenderer {
     }
 
     const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
-    const strokesMounted = this.managers.nodes.isMounted(this.strokes)
 
-    if (shouldStrokesMount && !strokesMounted) {
-      this.managers.nodes.mount(this.strokes)
-    } else if (!shouldStrokesMount && strokesMounted) {
-      this.managers.nodes.unmount(this.strokes)
+    if (shouldStrokesMount && !this.strokes && this.node.style?.stroke) {
+      this.strokes = new CircleStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill, this.node.style.stroke).moveTo(
+        this.x,
+        this.y
+      )
+    }
+
+    if (this.strokes) {
+      const strokesMounted = this.managers.nodes.isMounted(this.strokes)
+
+      if (shouldStrokesMount && !strokesMounted) {
+        this.managers.nodes.mount(this.strokes)
+      } else if (!shouldStrokesMount && strokesMounted) {
+        this.managers.nodes.unmount(this.strokes)
+      }
     }
 
     const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
@@ -211,8 +223,12 @@ export class NodeRenderer {
     clearTimeout(this.doubleClickTimeout)
 
     this.managers.nodes.delete(this.fill)
-    this.managers.nodes.delete(this.strokes)
+
     this.managers.interactions.delete(this.hitArea)
+
+    if (this.strokes) {
+      this.strokes = this.managers.nodes.delete(this.strokes)
+    }
 
     if (this.label) {
       this.managers.labels.delete(this.label)
@@ -223,7 +239,7 @@ export class NodeRenderer {
   }
 
   get radius() {
-    return this.strokes.radius
+    return this.strokes?.radius ?? this._radius
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
@@ -506,7 +522,7 @@ export class NodeRenderer {
     if (radius !== this._radius) {
       this._radius = radius
       this.fill.resize(radius)
-      this.strokes.resize(radius)
+      this.strokes?.resize(radius)
 
       if (this.label) {
         this.label.offset = this.radius
@@ -523,7 +539,7 @@ export class NodeRenderer {
       this.x = x
       this.y = y
       this.fill.moveTo(x, y)
-      this.strokes.moveTo(x, y)
+      this.strokes?.moveTo(x, y)
       this.label?.moveTo(x, y)
       this.icon?.moveTo(x, y)
       this.hitArea.update(x, y, this._radius)

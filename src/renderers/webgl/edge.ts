@@ -33,8 +33,8 @@ export class EdgeRenderer {
   private theta = 0
   private center: PointTuple = [0, 0]
   private lineSegment: LineSegment
-  private strokes: LineStrokes
   private hitArea: EdgeHitArea
+  private strokes?: LineStrokes
   private label?: Text
   private forwardArrow?: Arrow
   private reverseArrow?: Arrow
@@ -49,7 +49,6 @@ export class EdgeRenderer {
   ) {
     this.renderer = renderer
     this.lineSegment = new LineSegment(this.renderer.edgesContainer)
-    this.strokes = new LineStrokes(this.renderer.edgesContainer, this.lineSegment)
     this.hitArea = new EdgeHitArea(this.renderer.interactionContainer, this)
     this.update(edge, source, target)
   }
@@ -60,7 +59,10 @@ export class EdgeRenderer {
     this.target = target
 
     this.lineSegment.update(edge.style?.color, edge.style?.width, edge.style?.opacity)
-    this.strokes.update(edge.style?.stroke)
+
+    if (this.strokes) {
+      this.strokes.update(edge.style?.stroke)
+    }
 
     const arrow = edge.style?.arrow ?? DEFAULT_ARROW
 
@@ -158,11 +160,13 @@ export class EdgeRenderer {
 
         // TODO -> draw hitArea/strokes over arrows
         this.lineSegment.rotate(this.theta).resize(this.length).moveTo(edgeX0, edgeY0)
-        this.strokes.rotate(this.theta).resize(this.length).moveTo(edgeX0, edgeY0)
-        this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.strokes.width, this.theta)
+
+        this.strokes?.rotate(this.theta).resize(this.length).moveTo(edgeX0, edgeY0)
+
+        this.hitArea.update(edgeX0, edgeY0, edgeX1, edgeY1, this.width, this.theta)
 
         if (this.label) {
-          this.label.offset = this.strokes.width
+          this.label.offset = this.width
           this.label.rotate(this.theta).moveTo(...this.center)
         }
       }
@@ -186,11 +190,18 @@ export class EdgeRenderer {
     }
 
     const strokesShouldMount = isVisible && this.renderer.zoom > MIN_STROKE_ZOOM
-    const strokesMounted = this.managers.edges.isMounted(this.strokes)
-    if (strokesShouldMount && !strokesMounted) {
-      this.managers.edges.mount(this.strokes)
-    } else if (!strokesShouldMount && strokesMounted) {
-      this.managers.edges.unmount(this.strokes)
+
+    if (strokesShouldMount && !this.strokes && this.edge.style?.stroke) {
+      this.strokes = new LineStrokes(this.renderer.edgesContainer, this.lineSegment, this.edge.style.stroke).moveTo(this.x0, this.y0)
+    }
+
+    if (this.strokes) {
+      const strokesMounted = this.managers.edges.isMounted(this.strokes)
+      if (strokesShouldMount && !strokesMounted) {
+        this.managers.edges.mount(this.strokes)
+      } else if (!strokesShouldMount && strokesMounted) {
+        this.managers.edges.unmount(this.strokes)
+      }
     }
 
     if (this.forwardArrow) {
@@ -231,8 +242,11 @@ export class EdgeRenderer {
     clearTimeout(this.doubleClickTimeout)
 
     this.managers.edges.delete(this.lineSegment)
-    this.managers.edges.delete(this.strokes)
     this.managers.interactions.delete(this.hitArea)
+
+    if (this.strokes) {
+      this.strokes = this.managers.edges.delete(this.strokes)
+    }
     if (this.label) {
       this.label = this.managers.labels.delete(this.label)
     }
@@ -242,6 +256,10 @@ export class EdgeRenderer {
     if (this.reverseArrow) {
       this.reverseArrow = this.managers.arrows.delete(this.reverseArrow)
     }
+  }
+
+  get width() {
+    return this.strokes?.width ?? this.lineSegment.width
   }
 
   pointerEnter = (event: FederatedPointerEvent) => {
@@ -444,7 +462,7 @@ export class EdgeRenderer {
     const style = this.edge.style?.label
     if (label !== undefined && label.trim() !== '' && this.label === undefined) {
       this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, label, style, DEFAULT_LABEL_STYLE)
-      this.label.offset = this.strokes.width
+      this.label.offset = this.width
       this.label.rotate(this.theta).moveTo(...this.center)
     }
 
