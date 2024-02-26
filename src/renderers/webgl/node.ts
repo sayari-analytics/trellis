@@ -1,19 +1,20 @@
+import { DEFAULT_LABEL_STYLE, MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, MIN_NODE_ICON_ZOOM } from '../../utils/constants'
 import { FederatedPointerEvent } from 'pixi.js'
-import { MIN_LABEL_ZOOM, MIN_INTERACTION_ZOOM, MIN_NODE_STROKE_ZOOM, Renderer, MIN_NODE_ICON_ZOOM } from '.'
-import * as Graph from '../..'
-import { Label } from './objects/label'
-import { NodeFill } from './objects/nodeFill'
 import { NodeStrokes } from './objects/nodeStrokes'
-import { Icon } from './objects/icon'
 import { NodeHitArea } from './interaction/nodeHitArea'
-import { interpolate } from '../../utils'
+import { interpolate } from '../../utils/helpers'
+import { NodeFill } from './objects/nodeFill'
+import { type Renderer } from '.'
+import type { Node } from '../../types'
+import Text from './objects/text/Text'
+import Icon from './objects/Icon'
 
 export class NodeRenderer {
-  node!: Graph.Node
+  node!: Node
   x!: number
   y!: number
   fill: NodeFill
-  label?: Label
+  label?: Text
   icon?: Icon
   strokes: NodeStrokes
 
@@ -28,12 +29,8 @@ export class NodeRenderer {
   private interpolateX?: (dt: number) => { value: number; done: boolean }
   private interpolateY?: (dt: number) => { value: number; done: boolean }
   private interpolateRadius?: (dt: number) => { value: number; done: boolean }
-  private fillMounted = false
-  private strokeMounted = false
-  private labelMounted = false
-  private iconMounted = false
 
-  constructor(renderer: Renderer, node: Graph.Node) {
+  constructor(renderer: Renderer, node: Node) {
     this.renderer = renderer
     this.fill = new NodeFill(this.renderer.nodesContainer, this.renderer.circle)
     this.strokes = new NodeStrokes(this.renderer.nodesContainer, this.renderer.circle, this.fill)
@@ -41,28 +38,22 @@ export class NodeRenderer {
     this.update(node)
   }
 
-  update(node: Graph.Node) {
-    if (this.label === undefined) {
-      if (node.label !== undefined) {
-        this.label = new Label(this.renderer.labelsContainer, node.label, node.style?.label)
+  update(node: Node) {
+    if (this.label) {
+      if (node.label === undefined || node.label.trim() === '') {
+        this.managers.labels.delete(this.label)
+        this.label = undefined
+      } else {
+        this.label.update(node.label, node.style?.label)
       }
-    } else if (node.label === undefined || node.label.trim() === '') {
-      this.renderer.labelObjectManager.delete(this.label)
-      this.labelMounted = false
-      this.label = undefined
-    } else if (!this.label.equals(node.label, node.style?.label)) {
-      this.label.update(node.label, node.style?.label)
     }
 
-    if (this.icon === undefined) {
-      if (node.style?.icon) {
-        this.icon = new Icon(this.renderer.nodesContainer, this.renderer.textIcon, this.fill, node.style.icon)
-      }
-    } else {
+    if (this.icon) {
       if (node.style?.icon === undefined) {
         this.icon.delete()
-        this.iconMounted = false
         this.icon = undefined
+      } else {
+        this.icon.update(node.style.icon)
       }
     }
 
@@ -73,6 +64,7 @@ export class NodeRenderer {
      * - the animateViewport option is not disabled
      * - it's not the first render
      */
+
     const x = node.x ?? 0
     const y = node.y ?? 0
     const xChanged = x !== this.x
@@ -147,75 +139,75 @@ export class NodeRenderer {
     // TODO - disable events if node has no event handlers
     // TODO - disable events if node pixel width < ~5px
     // TODO - disable events when dragging/scrolling
-    if (isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM) {
-      this.renderer.interactionObjectManager.mount(this.hitArea)
-    } else {
-      this.renderer.interactionObjectManager.unmount(this.hitArea)
+    const shouldHitAreaMount = isVisible && this.renderer.zoom > MIN_INTERACTION_ZOOM
+    const hitAreaMounted = this.managers.interactions.isMounted(this.hitArea)
+
+    if (shouldHitAreaMount && !hitAreaMounted) {
+      this.managers.interactions.mount(this.hitArea)
+    } else if (!shouldHitAreaMount && hitAreaMounted) {
+      this.managers.interactions.unmount(this.hitArea)
     }
 
-    if (isVisible) {
-      if (!this.fillMounted) {
-        this.fill.mount()
-        this.fillMounted = true
-      }
-    } else {
-      if (this.fillMounted) {
-        this.fill.unmount()
-        this.fillMounted = false
-      }
+    const fillMounted = this.managers.nodes.isMounted(this.fill)
+
+    if (isVisible && !fillMounted) {
+      this.managers.nodes.mount(this.fill)
+    } else if (!isVisible && fillMounted) {
+      this.managers.nodes.unmount(this.fill)
     }
 
-    if (isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM) {
-      if (!this.strokeMounted) {
-        this.renderer.nodeStrokeObjectManager.mount(this.strokes)
-        this.strokeMounted = true
-      }
-    } else {
-      if (this.strokeMounted) {
-        this.renderer.nodeStrokeObjectManager.unmount(this.strokes)
-        this.strokeMounted = false
-      }
+    const shouldStrokesMount = isVisible && this.renderer.zoom > MIN_NODE_STROKE_ZOOM
+    const strokesMounted = this.managers.nodes.isMounted(this.strokes)
+
+    if (shouldStrokesMount && !strokesMounted) {
+      this.managers.nodes.mount(this.strokes)
+    } else if (!shouldStrokesMount && strokesMounted) {
+      this.managers.nodes.unmount(this.strokes)
+    }
+
+    const shouldLabelMount = isVisible && this.renderer.zoom > MIN_LABEL_ZOOM
+
+    if (shouldLabelMount) {
+      this.applyLabel()
     }
 
     if (this.label) {
-      if (isVisible && this.renderer.zoom > MIN_LABEL_ZOOM) {
-        if (!this.labelMounted) {
-          this.renderer.labelObjectManager.mount(this.label)
-          this.labelMounted = true
-        }
-      } else {
-        if (this.labelMounted) {
-          this.renderer.labelObjectManager.unmount(this.label)
-          this.labelMounted = false
-        }
+      const labelMounted = this.managers.labels.isMounted(this.label)
+      if (shouldLabelMount && !labelMounted) {
+        this.managers.labels.mount(this.label)
+      } else if (!shouldLabelMount && labelMounted) {
+        this.managers.labels.unmount(this.label)
       }
     }
 
+    const shouldIconMount = isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM
+
+    if (shouldIconMount) {
+      this.applyIcon()
+    }
+
     if (this.icon) {
-      if (isVisible && this.renderer.zoom > MIN_NODE_ICON_ZOOM) {
-        if (!this.iconMounted) {
-          this.renderer.nodeIconObjectManager.mount(this.icon)
-          this.iconMounted = true
-        }
-      } else {
-        if (this.iconMounted) {
-          this.renderer.nodeIconObjectManager.unmount(this.icon)
-          this.iconMounted = false
-        }
+      const iconMounted = this.managers.icons.isMounted(this.icon)
+      if (shouldIconMount && !iconMounted) {
+        this.managers.icons.mount(this.icon)
+      } else if (!shouldIconMount && iconMounted) {
+        this.managers.icons.unmount(this.icon)
       }
     }
   }
 
   delete() {
     clearTimeout(this.doubleClickTimeout)
-    this.fill.delete()
-    this.renderer.nodeStrokeObjectManager.delete(this.strokes)
-    this.renderer.interactionObjectManager.delete(this.hitArea)
+
+    this.managers.nodes.delete(this.fill)
+    this.managers.nodes.delete(this.strokes)
+    this.managers.interactions.delete(this.hitArea)
+
     if (this.label) {
-      this.renderer.labelObjectManager.delete(this.label)
+      this.managers.labels.delete(this.label)
     }
     if (this.icon) {
-      this.renderer.nodeIconObjectManager.delete(this.icon)
+      this.managers.icons.delete(this.icon)
     }
   }
 
@@ -495,28 +487,65 @@ export class NodeRenderer {
     this.doubleClick = false
   }
 
-  private setPosition(node: Graph.Node, x: number, y: number, radius: number) {
+  private setPosition(node: Node, x: number, y: number, radius: number) {
     this.x = x
     this.y = y
 
     this.fill.update(this.x, this.y, radius, node.style)
     this.strokes.update(this.x, this.y, radius, node.style)
-    if (this.label !== undefined) {
-      this.label.moveTo(this.x, this.y, this.strokes.radius)
+
+    if (this.label) {
+      this.label.offset = this.strokes.radius
+      this.label.moveTo(this.x, this.y)
     }
-    if (this.icon && node.style?.icon) {
-      this.icon.update(this.x, this.y, node.style.icon)
-    }
-    this.hitArea.update(x, y, radius)
+
+    this.icon?.moveTo(this.x, this.y)
+    this.hitArea.update(this.x, this.y, radius)
   }
 
   private visible() {
-    // TODO - consider label to calculate min/max // this.label?.getBounds(true).width
-    return (
-      this.x + this.strokes.radius >= this.renderer.minX &&
-      this.x - this.strokes.radius <= this.renderer.maxX &&
-      this.y + this.strokes.radius >= this.renderer.minY &&
-      this.y - this.strokes.radius <= this.renderer.maxY
-    )
+    let left: number, right: number, top: number, bottom: number
+
+    if (this.label) {
+      left = this.x - Math.max(this.strokes.radius, this.label.rect.left)
+      right = this.x + Math.max(this.strokes.radius, this.label.rect.right)
+      top = this.y - Math.max(this.strokes.radius, this.label.rect.top)
+      bottom = this.y + Math.max(this.strokes.radius, this.label.rect.bottom)
+    } else {
+      left = this.x - this.strokes.radius
+      right = this.x + this.strokes.radius
+      top = this.y - this.strokes.radius
+      bottom = this.y + this.strokes.radius
+    }
+
+    const { minX, maxX, minY, maxY } = this.renderer
+
+    return right >= minX && left <= maxX && bottom >= minY && top <= maxY
+  }
+
+  private get managers() {
+    return this.renderer.managers
+  }
+
+  private applyLabel() {
+    const label = this.node.label
+    const style = this.node.style?.label
+    if (label !== undefined && label.trim() !== '' && this.label === undefined) {
+      this.label = new Text(this.renderer.assets, this.renderer.labelsContainer, label, style, DEFAULT_LABEL_STYLE)
+      this.label.offset = this.strokes.radius
+      this.label.moveTo(this.x, this.y)
+    }
+
+    return this
+  }
+
+  private applyIcon() {
+    const icon = this.node.style?.icon
+    if (icon !== undefined && this.icon === undefined) {
+      this.icon = new Icon(this.renderer.assets, this.renderer.textIcon, this.renderer.nodesContainer, this.fill, icon)
+      this.icon.moveTo(this.x, this.y)
+    }
+
+    return this
   }
 }

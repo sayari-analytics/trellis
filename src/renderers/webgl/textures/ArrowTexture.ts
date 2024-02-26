@@ -1,11 +1,10 @@
 import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js'
-import { MIN_ZOOM, Renderer } from '..'
+import { MIN_TEXTURE_ZOOM } from '../../../utils/constants'
+import { Texture } from '../../../types'
+import { Renderer } from '..'
 
-export class ArrowTexture {
-  texture: RenderTexture
-  height = 12 // TODO - make configurable
-  width = 6 // TODO - make configurable
-  scaleFactor = MIN_ZOOM // minZoom -- TODO make configurable
+export default class ArrowTexture implements Texture {
+  private texture: RenderTexture
 
   constructor(renderer: Renderer) {
     const graphic = new Graphics()
@@ -32,7 +31,21 @@ export class ArrowTexture {
     graphic.destroy(true)
   }
 
+  get() {
+    return this.texture
+  }
   delete() {
     this.texture.destroy()
+  }
+
+  // TODO -> make configurable
+  get scaleFactor() {
+    return MIN_TEXTURE_ZOOM
+  }
+  get height() {
+    return 12
+  }
+  get width() {
+    return 6
   }
 }

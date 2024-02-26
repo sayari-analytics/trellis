@@ -1,30 +1,31 @@
 import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
+import type { Node, Edge, Annotation, Viewport } from '../../types'
 import Stats from 'stats.js'
-import * as Graph from '../..'
+// import * as Graph from '../..'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
 import { Grid } from './grid'
 import { NodeRenderer } from './node'
 import { EdgeRenderer } from './edge'
-import { ArrowTexture } from './textures/arrow'
-import { CircleTexture } from './textures/circle'
-import { Font } from './textures/font'
-import { interpolate } from '../../utils'
+import { interpolate } from '../../utils/helpers'
 import { logUnknownEdgeError } from './utils'
-import { ObjectManager } from './objectManager'
-import { TextIconTexture } from './textures/textIcon'
+import ArrowTexture from './textures/ArrowTexture'
+import CircleTexture from './textures/CircleTexture'
+import TextIconTexture from './textures/TextIconTexture'
+import AssetManager from './loaders/AssetManager'
+import LifecycleManager from './LifecycleManager'
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
 export type Position = 'nw' | 'ne' | 'se' | 'sw'
-export type NodePointerEvent = { type: 'nodePointer'; target: Graph.Node; targetIdx: number } & MousePosition & Keys
-export type NodeDragEvent = { type: 'nodeDrag'; dx: number; dy: number; target: Graph.Node; targetIdx: number } & MousePosition & Keys
-export type EdgePointerEvent = { type: 'edgePointer'; target: Graph.Edge; targetIdx: number } & MousePosition & Keys
+export type NodePointerEvent = { type: 'nodePointer'; target: Node; targetIdx: number } & MousePosition & Keys
+export type NodeDragEvent = { type: 'nodeDrag'; dx: number; dy: number; target: Node; targetIdx: number } & MousePosition & Keys
+export type EdgePointerEvent = { type: 'edgePointer'; target: Edge; targetIdx: number } & MousePosition & Keys
 export type AnnotationPointerEvent = {
   type: 'annotationPointer'
   position?: Position
-  target: Graph.Annotation
+  target: Annotation
   targetIdx: number
 } & MousePosition &
   Keys
@@ -32,18 +33,18 @@ export type AnnotationDragEvent = {
   type: 'annotationDrag'
   dx: number
   dy: number
-  target: Graph.Annotation
+  target: Annotation
   targetIdx: number
 } & MousePosition &
   Keys
 export type AnnotationResizeEvent = {
   type: 'annotationResize'
   position: Position
-  target: Graph.Annotation
+  target: Annotation
   targetIdx: number
 } & MousePosition &
   Keys
-export type ViewportPointerEvent = { type: 'viewportPointer'; target: Graph.Viewport } & MousePosition & Keys
+export type ViewportPointerEvent = { type: 'viewportPointer'; target: Viewport } & MousePosition & Keys
 export type ViewportDragEvent = { type: 'viewportDrag'; dx: number; dy: number } & MousePosition & Keys
 export type ViewportDragDecelerateEvent = { type: 'viewportDragDecelarate'; dx: number; dy: number } & Keys
 export type ViewportWheelEvent = { type: 'viewportWheel'; dx: number; dy: number; dz: number } & MousePosition & Keys
@@ -99,14 +100,6 @@ export const defaultOptions = {
   dragInertia: 0.88
 }
 
-// TODO - make configurable
-export const MIN_LABEL_ZOOM = 0.25
-export const MIN_NODE_STROKE_ZOOM = 0.3
-export const MIN_NODE_ICON_ZOOM = 0.3
-export const MIN_INTERACTION_ZOOM = 0.15
-export const MIN_EDGES_ZOOM = 0.1
-export const MIN_ZOOM = 3
-
 export class Renderer {
   width: number
   height: number
@@ -134,17 +127,11 @@ export class Renderer {
   zoomInteraction = new Zoom(this)
   dragInteraction = new Drag(this)
   decelerateInteraction = new Decelerate(this)
-  nodeStrokeObjectManager = new ObjectManager(1000)
-  nodeIconObjectManager = new ObjectManager(1000)
-  edgeObjectManager = new ObjectManager(2000)
-  edgeArrowObjectManager = new ObjectManager(1000)
-  labelObjectManager = new ObjectManager(2000)
-  interactionObjectManager = new ObjectManager(2000)
-  font = new Font()
+  managers = new LifecycleManager()
   eventSystem: EventSystem
-  nodes: Graph.Node[] = []
+  nodes: Node[] = []
   nodeRenderersById: Record<string, NodeRenderer> = {}
-  edges: Graph.Edge[] = []
+  edges: Edge[] = []
   edgeRenderersById: Record<string, EdgeRenderer> = {}
   renderedNodes = false
   dragInertia = defaultOptions.dragInertia
@@ -156,6 +143,7 @@ export class Renderer {
   textIcon: TextIconTexture
   draggedNode?: NodeRenderer
   hoveredNode?: NodeRenderer
+  assets = new AssetManager()
 
   private doubleClick = false
   private doubleClickTimeout: NodeJS.Timeout | undefined
@@ -268,7 +256,7 @@ export class Renderer {
     }
   }
 
-  update({ nodes, edges, options }: { nodes: Graph.Node[]; edges: Graph.Edge[]; annotations?: Graph.Annotation[]; options: Options }) {
+  update({ nodes, edges, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
     this.animateViewport =
       options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
     this.animateNodePosition =
@@ -457,7 +445,13 @@ export class Renderer {
   }
 
   image() {
-    return new Promise((resolve) => resolve(new Blob())) // TODO
+    return new Promise((resolve) => {
+      if (this.assets.loading) {
+        return
+      }
+
+      return resolve(new Blob())
+    }) // TODO
   }
 
   private render(dt: number) {
@@ -506,13 +500,7 @@ export class Renderer {
       this.edgeRenderersById[edge.id].render()
     }
 
-    this.nodeStrokeObjectManager.render()
-    this.nodeIconObjectManager.render()
-    this.edgeObjectManager.render()
-    this.edgeArrowObjectManager.render()
-    this.labelObjectManager.render()
-    this.interactionObjectManager.render()
-
+    this.managers.render()
     this.app.render()
   }
 

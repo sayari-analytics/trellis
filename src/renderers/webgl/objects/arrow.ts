@@ -1,5 +1,5 @@
 import { Container, Sprite } from 'pixi.js'
-import { ArrowTexture } from '../textures/arrow'
+import ArrowTexture from '../textures/ArrowTexture'
 
 export class Arrow {
   mounted = false
@@ -13,7 +13,7 @@ export class Arrow {
   constructor(container: Container, arrowTexture: ArrowTexture) {
     this.container = container
     this.arrowTexture = arrowTexture
-    this.arrow = new Sprite(this.arrowTexture.texture)
+    this.arrow = new Sprite(this.arrowTexture.get())
     this.height = this.arrowTexture.height
     this.width = this.arrowTexture.width
     this.arrow.anchor.set(0, 0.5)
