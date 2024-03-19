@@ -1,6 +1,6 @@
 {
   "name": "@sayari/trellis",
-  "version": "0.7.0-rc.14",
+  "version": "0.7.0-rc.15",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "main": "./index.js",
   "exports": "./index.js",
@@ -21,7 +21,11 @@
     "docs:dev": "npm run clean && parcel docs-src/index.html",
     "docs:build": "rm -rf ./docs/ && parcel build ./docs-src/index.html --dist-dir docs/ --public-url https://sayari-analytics.github.io/trellis/ && cp ./docs-src/assets/og-image.png ./docs/",
     "native:dev": "npm run dev --workspace=examples/native",
-    "react:dev": "npm run dev --workspace=examples/react"
+    "react:dev": "npm run dev --workspace=examples/react",
+    "pub:pre": "./deploy.sh prerelease",
+    "pub:patch": "./deploy.sh patch",
+    "pub:minor": "./deploy.sh minor",
+    "pub:major": "./deploy.sh major"
   },
   "source": "./src/index.umd.ts",
   "targets": {
