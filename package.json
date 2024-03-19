@@ -1,6 +1,6 @@
 {
   "name": "@sayari/trellis",
-  "version": "0.7.0-rc.14",
+  "version": "0.7.0-rc.15",
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "main": "./index.js",
   "exports": "./index.js",
@@ -81,7 +81,14 @@
     "vite": "^4.5.0",
     "vitest": "^0.34.6"
   },
-  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
+  "keywords": [
+    "graph",
+    "network",
+    "infovis",
+    "visualization",
+    "react",
+    "webgl"
+  ],
   "peerDependencies": {
     "react": ">=16.0"
   },
@@ -89,5 +96,8 @@
     "type": "git",
     "url": "git+https://github.com/sayari-analytics/trellis.git"
   },
-  "workspaces": ["examples/native", "examples/react"]
+  "workspaces": [
+    "examples/native",
+    "examples/react"
+  ]
 }
