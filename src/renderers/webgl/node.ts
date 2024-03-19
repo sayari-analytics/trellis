@@ -411,8 +411,9 @@ export class NodeRenderer {
       }
 
       if (this.doubleClick) {
-        this.doubleClick = false
         clearTimeout(this.doubleClickTimeout)
+        this.doubleClick = false
+        this.doubleClickTimeout = undefined
         if (this.renderer.onNodeDoubleClick) {
           event.stopPropagation()
           this.renderer.onNodeDoubleClick({

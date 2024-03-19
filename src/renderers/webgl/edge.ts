@@ -326,6 +326,7 @@ export class EdgeRenderer {
     }
 
     if (this.doubleClick) {
+      clearTimeout(this.doubleClickTimeout)
       this.doubleClick = false
       this.doubleClickTimeout = undefined
       if (this.renderer.onEdgeDoubleClick) {
