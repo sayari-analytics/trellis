@@ -1,7 +1,7 @@
 import { Container, Sprite, Texture } from 'pixi.js'
-import { FillStyle, TextObject } from '../../../../types'
+import { FillStyle, RenderObject, TextObject } from '../../../../types'
 
-export default class TextHighlight {
+export default class TextHighlight implements RenderObject {
   mounted = false
 
   private x = 0
@@ -84,6 +84,11 @@ export default class TextHighlight {
     return undefined
   }
 
+  rotate(rotation: number) {
+    this.object.rotation = rotation
+    return this
+  }
+
   get text() {
     return this.textObject
   }
@@ -94,14 +99,6 @@ export default class TextHighlight {
 
   get anchor() {
     return this.object.anchor
-  }
-
-  get rotation() {
-    return this.object.rotation
-  }
-
-  set rotation(rotation: number) {
-    this.object.rotation = rotation
   }
 
   private create() {

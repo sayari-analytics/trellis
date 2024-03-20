@@ -1,14 +1,17 @@
-import { RenderTexture, Graphics, Matrix } from 'pixi.js'
+import { Graphics, Matrix, RenderTexture } from 'pixi.js'
 import { createRenderTexture } from '../../../utils/webgl'
 import { MIN_TEXTURE_ZOOM } from '../../../utils/constants'
-import { Texture } from '../../../types'
 import { Renderer } from '..'
+import { Texture } from '../../../types'
 
-export default class CircleTexture implements Texture {
+export default class RectangleTexture implements Texture {
+  scaleFactor: number
   private texture: RenderTexture
 
   constructor(renderer: Renderer) {
-    const graphic = new Graphics().beginFill(0xffffff).drawCircle(0, 0, this.scaleFactor)
+    this.scaleFactor = Math.max(renderer.width, renderer.height) * this.minTextureZoom
+
+    const graphic = new Graphics().beginFill(0xffffff).drawRect(0, 0, this.scaleFactor, this.scaleFactor)
 
     this.texture = createRenderTexture(renderer.app, graphic, new Matrix(1, 0, 0, 1, graphic.width / 2, graphic.height / 2))
   }
@@ -23,8 +26,7 @@ export default class CircleTexture implements Texture {
   }
 
   // TODO -> make configurable
-  get scaleFactor() {
-    // maxRadius * minZoom
-    return 10 * MIN_TEXTURE_ZOOM
+  private get minTextureZoom() {
+    return MIN_TEXTURE_ZOOM
   }
 }

@@ -1,10 +1,10 @@
 import { Container, Sprite, Texture } from 'pixi.js'
-import { IconStyle } from '../../../types'
+import { IconStyle, RenderObject } from '../../../types'
 import { equals } from '../../../utils/api'
 import AssetManager, { AssetSubscription, FontSubscription } from '../loaders/AssetManager'
 import TextIconTexture from '../textures/TextIconTexture'
 
-export default class Icon {
+export default class Icon implements RenderObject {
   mounted = false
 
   private x = 0
