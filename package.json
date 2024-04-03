@@ -4,7 +4,6 @@
   "description": "High-performance network visualization library, rendering to WebGL as well as other targets",
   "source": "src/index.umd.ts",
   "main": "./index.js",
-  "exports": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
     "clean": "rm -rf dist && rm -rf .parcel-cache",
@@ -30,6 +29,28 @@
       "context": "browser",
       "outputFormat": "global",
       "distDir": "./dist/umd"
+    }
+  },
+  "exports": {
+    ".": {
+      "default": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./renderers/*": {
+      "default": "./renderers/*/index.js",
+      "types": "./renderers/*/index.d.ts"
+    },
+    "./bindings/react/*": {
+      "default": "./bindings/react/*.js",
+      "types": "./bindings/react/*.d.ts"
+    },
+    "./bindings/native/*": {
+      "default": "./bindings/native/*.js",
+      "types": "./bindings/native/*.d.ts"
+    },
+    "./layout/*": {
+      "default": "./layout/*/index.js",
+      "types": "./layout/*/index.d.ts"
     }
   },
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
@@ -82,14 +103,7 @@
     "vite": "^4.4.9",
     "vitest": "^0.34.4"
   },
-  "keywords": [
-    "graph",
-    "network",
-    "infovis",
-    "visualization",
-    "react",
-    "webgl"
-  ],
+  "keywords": ["graph", "network", "infovis", "visualization", "react", "webgl"],
   "peerDependencies": {
     "react": ">=16.0"
   },
