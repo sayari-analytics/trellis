@@ -3,12 +3,14 @@ export type Bounds = { left: number; top: number; right: number; bottom: number 
 
 export type Dimensions = { width: number; height: number }
 
+export type Coordinates = { x: number; y: number }
+
 export type Viewport = { x: number; y: number; zoom: number }
 
 // style
 export type FillStyle = { color: string; opacity?: number }
 
-export type Stroke = { color: string; width: number }
+export type Stroke = FillStyle & { width: number }
 
 export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 
@@ -35,7 +37,7 @@ export type TextStyle = Partial<{
   align: TextAlign
 }>
 
-export type LabelStyle = Omit<TextStyle, 'align' | 'position'> & {
+export type LabelStyle = Omit<TextStyle, 'align'> & {
   position?: Exclude<AnchorPosition, 'center'>
 }
 
@@ -58,8 +60,7 @@ export type TextIcon = IconBase<'textIcon'> & {
 export type IconStyle = ImageIcon | TextIcon
 
 // nodes
-export type NodeStyle = {
-  color?: string
+export type NodeStyle = Partial<FillStyle> & {
   icon?: IconStyle
   stroke?: Stroke[]
   badge?: {
@@ -96,10 +97,8 @@ export type EdgeLabelStyle = LabelStyle & {
   position?: Exclude<AnchorPosition, 'left' | 'right' | 'center'>
 }
 
-export type EdgeStyle = {
-  width?: number
-  stroke?: string
-  strokeOpacity?: number
+export type EdgeStyle = Partial<Stroke> & {
+  stroke?: Stroke[]
   arrow?: ArrowStyle
   label?: EdgeLabelStyle
 }
@@ -113,21 +112,18 @@ export type Edge = {
 }
 
 // annotations
-export type AnnotationStyle = FillStyle & {
-  stroke?: Stroke[]
-}
-
-export type TextAnnotationStyle = AnnotationStyle & {
-  text?: Omit<LabelStyle, 'position'>
-  padding?: number | [px: number, py: number]
-}
-
 type AnnotationBase<Type extends string> = {
   type: Type
   id: string
   x: number
   y: number
+  content?: string
   resize?: boolean
+}
+
+export type AnnotationStyle = FillStyle & {
+  stroke?: Stroke[]
+  text?: Omit<LabelStyle, 'position'>
 }
 
 export type CircleAnnotation = AnnotationBase<'circle'> & {
@@ -141,11 +137,14 @@ export type RectangleAnnotation = AnnotationBase<'rectangle'> & {
   style: AnnotationStyle
 }
 
-export type TextAnnotation = AnnotationBase<'text'> & {
-  width: number
-  height: number
-  content: string
-  style: TextAnnotationStyle
+export type LineAnnotationStyle = Stroke & {
+  stroke?: Stroke[]
+  text?: EdgeLabelStyle
 }
 
-export type Annotation = CircleAnnotation | RectangleAnnotation | TextAnnotation
+export type LineAnnotation = Omit<AnnotationBase<'line'>, 'x' | 'y'> & {
+  points: [{ x: number; y: number }, { x: number; y: number }]
+  style: LineAnnotationStyle
+}
+
+export type Annotation = CircleAnnotation | RectangleAnnotation | LineAnnotation

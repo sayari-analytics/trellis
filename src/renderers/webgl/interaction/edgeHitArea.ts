@@ -1,6 +1,7 @@
 import { Container, Polygon } from 'pixi.js'
-import { HALF_PI, movePoint } from '../utils'
+import { movePoint } from '../../../utils/webgl'
 import { EdgeRenderer } from '../edge'
+import { HALF_PI } from '../../../utils/constants'
 
 const MIN_LINE_HOVER_RADIUS = 2
 
