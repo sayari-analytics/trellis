@@ -1,4 +1,4 @@
-import { RenderTexture, Text as PixiText, MSAA_QUALITY, Matrix, Renderer as PixiRenderer } from 'pixi.js'
+import { RenderTexture, Text as PixiText, Renderer as PixiRenderer } from 'pixi.js'
 import { DEFAULT_RESOLUTION, DEFAULT_TEXT_STYLE, MIN_TEXTURE_ZOOM } from '../../../utils/constants'
 import { TextIcon, Texture } from '../../../types'
 import { Renderer } from '..'
@@ -49,20 +49,19 @@ export default class TextIconTexture implements Texture {
 
     const object = new PixiText(icon.content, style.getTextStyle())
 
-    object.updateText(true)
-
+    // Update to use new RenderTexture options format
     const renderTexture = RenderTexture.create({
       width: object.width,
       height: object.height,
-      multisample: MSAA_QUALITY.HIGH,
-      resolution: this.resolution
+      resolution: this.resolution,
+      scaleMode: 'linear',
+      alphaMode: 'premultiply-alpha-on-upload'
     })
 
-    this.renderer.app.renderer.render(object, { renderTexture, transform: new Matrix() })
-
-    if (this.renderer.app.renderer instanceof PixiRenderer) {
-      this.renderer.app.renderer.framebuffer.blit()
-    }
+    // Render with explicit update handling
+    const renderer = this.renderer.app.renderer as PixiRenderer
+    renderer.render(object, { renderTexture })
+    renderTexture.baseTexture.update()
 
     object.destroy(true)
 

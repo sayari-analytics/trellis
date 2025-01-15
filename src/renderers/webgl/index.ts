@@ -1,7 +1,6 @@
-import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle } from 'pixi.js'
+import { Application, Container, EventSystem, FederatedPointerEvent, Rectangle, Ticker } from 'pixi.js'
 import type { Node, Edge, Annotation, Viewport } from '../../types'
 import Stats from 'stats.js'
-// import * as Graph from '../..'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
@@ -15,6 +14,10 @@ import CircleTexture from './textures/CircleTexture'
 import TextIconTexture from './textures/TextIconTexture'
 import AssetManager from './loaders/AssetManager'
 import LifecycleManager from './LifecycleManager'
+import { initializePixiExtensions } from './extensions'
+
+// Initialize PIXI extensions
+initializePixiExtensions()
 
 export type Keys = { altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }
 export type MousePosition = { x: number; y: number; clientX: number; clientY: number }
@@ -211,7 +214,7 @@ export class Renderer {
       autoDensity: true,
       powerPreference: 'high-performance',
       backgroundAlpha: 0,
-      forceCanvas: forceCanvas
+      preference: forceCanvas ? 'webgl' : undefined
     })
 
     this.width = width
@@ -247,12 +250,12 @@ export class Renderer {
       this.stats = new Stats()
       this.stats.showPanel(0)
       document.body.appendChild(this.stats.dom)
-      this.app.ticker.add((dt: number) => {
+      this.app.ticker.add((ticker) => {
         this.stats?.update()
-        this.render(dt)
+        this.render(ticker.deltaTime)
       })
     } else {
-      this.app.ticker.add(this.render.bind(this))
+      this.app.ticker.add((ticker) => this.render(ticker.deltaTime))
     }
   }
 
@@ -452,6 +455,10 @@ export class Renderer {
 
       return resolve(new Blob())
     }) // TODO
+  }
+
+  private onTick = (_: Ticker) => {
+    this.render(this.app.ticker.deltaTime)
   }
 
   private render(dt: number) {

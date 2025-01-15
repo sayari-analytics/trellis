@@ -1,4 +1,4 @@
-import { RenderTexture, Graphics, Matrix, MSAA_QUALITY, Renderer as PixiRenderer } from 'pixi.js'
+import { RenderTexture, Graphics, Renderer as PixiRenderer } from 'pixi.js'
 import { MIN_TEXTURE_ZOOM } from '../../../utils/constants'
 import { Texture } from '../../../types'
 import { Renderer } from '..'
@@ -15,18 +15,14 @@ export default class ArrowTexture implements Texture {
     this.texture = RenderTexture.create({
       width: graphic.width,
       height: graphic.height,
-      multisample: MSAA_QUALITY.HIGH,
-      resolution: 2
+      resolution: 2,
+      scaleMode: 'linear',
+      alphaMode: 'premultiply-alpha-on-upload'
     })
 
-    renderer.app.renderer.render(graphic, {
-      renderTexture: this.texture,
-      transform: new Matrix(1, 0, 0, 1, 0, graphic.height / 2)
-    })
-
-    if (renderer.app.renderer instanceof PixiRenderer) {
-      renderer.app.renderer.framebuffer.blit()
-    }
+    const pixiRenderer = renderer.app.renderer as PixiRenderer
+    pixiRenderer.render(graphic, { renderTexture: this.texture })
+    this.texture.baseTexture.update()
 
     graphic.destroy(true)
   }

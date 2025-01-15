@@ -61,12 +61,11 @@
   "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io",
   "license": "ISC",
   "dependencies": {
-    "@pixi/events": "^7.3.2",
     "d3-force": "^3.0.0",
     "d3-hierarchy": "^3.1.2",
     "d3-interpolate": "^3.0.1",
     "fontfaceobserver": "^2.3.0",
-    "pixi.js": "^7.3.2",
+    "pixi.js": "^8.6.6",
     "stats.js": "^0.17.0"
   },
   "devDependencies": {
@@ -75,12 +74,14 @@
     "@parcel/transformer-typescript-types": "^2.10.1",
     "@turf/clusters-kmeans": "^6.5.0",
     "@types/css-font-loading-module": "^0.0.10",
+    "@types/d3-color": "^3.1.3",
     "@types/d3-force": "^3.0.7",
     "@types/d3-hierarchy": "^3.1.5",
     "@types/d3-interpolate": "^3.0.3",
     "@types/d3-scale": "^4.0.6",
     "@types/d3-scale-chromatic": "^3.0.1",
     "@types/fontfaceobserver": "^2.1.3",
+    "@types/node": "^22.10.6",
     "@types/react": "^18.2.33",
     "@types/react-dom": "^18.2.14",
     "@types/stats.js": "^0.17.2",
