@@ -1,1 +1,10 @@
 @import '../../reset';
+@import url("https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap");
+
+@font-face {
+  font-family: Roboto;
+  font-weight: 400;
+  font-style: normal;
+  font-stretch: normal;
+  font-display: swap;
+}

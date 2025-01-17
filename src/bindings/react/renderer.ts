@@ -9,33 +9,24 @@ export type Props<N extends Node = Node, E extends Edge = Edge> = Options & {
   debug?: boolean
 }
 
-// const defaultNodesEqual = <N extends Node>(prev: N[], current: N[]) => prev === current
-// const defaultEdgesEqual = <E extends Edge>(prev: E[], current: E[]) => prev === current
-
-export const Renderer = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
+export const Trellis = <N extends Node = Node, E extends Edge = Edge>(props: Props<N, E>) => {
   const ref = useRef<HTMLDivElement>(null)
   const renderer = useRef<WebGLRenderer>()
+  const propsRef = useRef<Props<N, E>>(props)
+  propsRef.current = props
 
   useEffect(() => {
-    const _renderer = new WebGLRenderer({ container: ref.current!, debug: props.debug, width: props.width, height: props.height })
-    renderer.current = _renderer
-
-    const { nodes, edges, annotations, ...options } = props
-    // options.nodesEqual = options.nodesEqual ?? defaultNodesEqual
-    // options.edgesEqual = options.edgesEqual ?? defaultEdgesEqual
-
+    const { debug, nodes, edges, annotations, ...options } = propsRef.current
+    renderer.current = new WebGLRenderer({ container: ref.current!, debug: debug, width: options.width, height: options.height })
     renderer.current.update({ nodes, edges, annotations, options })
 
-    return () => _renderer.delete()
+    return () => renderer.current!.delete()
   }, [])
 
   if (renderer.current) {
     const { nodes, edges, annotations, ...options } = props
-    // options.nodesEqual = options.nodesEqual ?? defaultNodesEqual
-    // options.edgesEqual = options.edgesEqual ?? defaultEdgesEqual
-
     renderer.current.update({ nodes, edges, annotations, options })
   }
 
-  return createElement('div', { ref: ref })
+  return createElement('div', { ref })
 }
