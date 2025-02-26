@@ -1,4 +1,5 @@
-// zoom limits
+import { AnchorPosition, TextAlign } from '../types'
+
 // TODO - extends to renderer options
 export const MIN_LABEL_ZOOM = 0.25
 export const MIN_NODE_STROKE_ZOOM = 0.3
@@ -23,15 +24,16 @@ export const DEFAULT_TEXT_STYLE = {
   letterSpacing: 0.5,
   fontName: 'Font',
   fontFamily: 'sans-serif',
-  align: 'left' as const,
-  wordWrap: false as const,
-  position: 'center' as const,
+  wordWrap: false,
+  position: 'bottom' as const,
   fontWeight: 'normal' as const,
-  stroke: { color: COLORS.WHITE, width: 0 }
+  stroke: undefined
 }
 
+export const DEFAULT_NODE_FILL = '#aaa'
+
 export const DEFAULT_LABEL_STYLE = {
-  defaultTextStyle: { position: 'bottom' as const, align: 'center' as const }
+  defaultTextStyle: { position: 'bottom' as AnchorPosition, align: 'center' as TextAlign }
 }
 
 export const DEFAULT_HIGHLIGHT_STYLE = {

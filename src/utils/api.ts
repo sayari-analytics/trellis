@@ -50,10 +50,10 @@ export const viewportToBounds = ({ x, y, zoom }: Viewport, { width, height }: Di
   const xOffset = width / 2 / zoom
   const yOffset = height / 2 / zoom
   return {
-    left: -(x + xOffset),
-    top: -(y + yOffset),
-    right: -(x - xOffset),
-    bottom: -(y - yOffset)
+    left: x - xOffset,
+    top: y - yOffset,
+    right: x + xOffset,
+    bottom: y + yOffset
   }
 }
 
@@ -117,7 +117,7 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: { nod
   const adjacencyList: Record<string, Record<string, E[]>> = Object.create(null)
   const nodes: Record<string, N> = {}
   const visited = new Set<string>()
-  const components: { nodes: Record<string, N>; edges: Record<string, E> }[] = []
+  const components: { nodes: Set<N>; edges: Set<E> }[] = []
 
   for (const edge of graph.edges) {
     if (adjacencyList[edge.source] === undefined) {
@@ -148,9 +148,9 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: { nod
 
     visited.add(id)
     const toVisit = [id]
-    const component: { nodes: Record<string, N>; edges: Record<string, E> } = {
-      nodes: { [id]: nodes[id] },
-      edges: {}
+    const component: { nodes: Set<N>; edges: Set<E> } = {
+      nodes: new Set([nodes[id]]),
+      edges: new Set()
     }
 
     while (toVisit.length > 0) {
@@ -161,9 +161,9 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: { nod
 
       for (const [adjacentNode, edges] of Object.entries(next)) {
         for (const edge of edges) {
-          component.edges[edge.id] = edge
+          component.edges.add(edge)
         }
-        component.nodes[adjacentNode] = nodes[adjacentNode]
+        component.nodes.add(nodes[adjacentNode])
 
         if (!visited.has(adjacentNode)) {
           toVisit.push(adjacentNode)
@@ -176,8 +176,8 @@ export const connectedComponents = <N extends Node, E extends Edge>(graph: { nod
   }
 
   return components.map(({ nodes, edges }) => ({
-    nodes: Object.values(nodes),
-    edges: Object.values(edges)
+    nodes: Array.from(nodes),
+    edges: Array.from(edges)
   }))
 }
 

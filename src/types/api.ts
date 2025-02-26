@@ -20,47 +20,45 @@ export type TextHighlightStyle = FillStyle & {
   padding?: number | [px: number, py: number]
 }
 
-export type TextStyle = Partial<{
+type TextBase = Partial<{
   color: string
-  margin: number
   stroke: Stroke
-  fontName: string
   fontSize: number
   fontFamily: string
-  letterSpacing: number
-  wordWrap: number | false
   fontWeight: FontWeight
-  highlight: TextHighlightStyle
-  position: AnchorPosition
-  align: TextAlign
 }>
 
-export type LabelStyle = Omit<TextStyle, 'align' | 'position'> & {
-  position?: Exclude<AnchorPosition, 'center'>
-}
-
 // icons
-type IconBase<T extends string> = {
-  type: T
+export type TextIconStyle = TextBase
+
+export type ImageIcon = {
+  type: 'imageIcon'
+  url: string
+  scale?: number
   offset?: { x?: number; y?: number }
 }
 
-export type ImageIcon = IconBase<'imageIcon'> & {
-  url: string
-  scale?: number
-}
-
-export type TextIcon = IconBase<'textIcon'> & {
+export type TextIcon = {
+  type: 'textIcon'
   content: string
-  style?: Pick<TextStyle, 'color' | 'stroke' | 'fontSize' | 'fontFamily' | 'fontWeight'>
+  style?: TextIconStyle
+  scale?: number
+  offset?: { x?: number; y?: number }
 }
-
-export type IconStyle = ImageIcon | TextIcon
 
 // nodes
+export type NodeLabelStyle = TextBase &
+  Partial<{
+    margin: number
+    letterSpacing: number
+    wordWrap: number | false
+    highlight: TextHighlightStyle
+    position: 'bottom' | 'left' | 'top' | 'right'
+  }>
+
 export type NodeStyle = {
   color?: string
-  icon?: IconStyle
+  icon?: ImageIcon | TextIcon
   stroke?: Stroke[]
   badge?: {
     position: number
@@ -68,9 +66,9 @@ export type NodeStyle = {
     color: string
     stroke?: string
     strokeWidth?: number
-    icon?: IconStyle
+    icon?: ImageIcon | TextIcon
   }[]
-  label?: LabelStyle
+  label?: NodeLabelStyle
 }
 
 export type Node = {
@@ -90,11 +88,16 @@ export type Node = {
 }
 
 // edges
-export type ArrowStyle = 'forward' | 'reverse' | 'both' | 'none'
+export type EdgeLabelStyle = TextBase &
+  Partial<{
+    margin: number
+    letterSpacing: number
+    wordWrap: number | false
+    highlight: TextHighlightStyle
+    position: 'left' | 'right' | 'center'
+  }>
 
-export type EdgeLabelStyle = LabelStyle & {
-  position?: Exclude<AnchorPosition, 'left' | 'right' | 'center'>
-}
+export type ArrowStyle = 'forward' | 'reverse' | 'both' | 'none'
 
 export type EdgeStyle = {
   width?: number
@@ -105,7 +108,6 @@ export type EdgeStyle = {
 }
 
 export type Edge = {
-  id: string
   source: string
   target: string
   label?: string
@@ -117,31 +119,42 @@ export type AnnotationStyle = FillStyle & {
   stroke?: Stroke[]
 }
 
+export type AnnotationTextStyle = TextBase &
+  Partial<{
+    margin: number
+    letterSpacing: number
+    wordWrap: number | false
+    highlight: TextHighlightStyle
+    align: TextAlign
+  }>
+
 export type TextAnnotationStyle = AnnotationStyle & {
-  text?: Omit<LabelStyle, 'position'>
+  text?: AnnotationTextStyle
   padding?: number | [px: number, py: number]
 }
 
-type AnnotationBase<Type extends string> = {
-  type: Type
+type AnnotationBase = {
   id: string
   x: number
   y: number
   resize?: boolean
 }
 
-export type CircleAnnotation = AnnotationBase<'circle'> & {
+export type CircleAnnotation = AnnotationBase & {
+  type: 'circle'
   radius: number
   style: AnnotationStyle
 }
 
-export type RectangleAnnotation = AnnotationBase<'rectangle'> & {
+export type RectangleAnnotation = AnnotationBase & {
+  type: 'rectangle'
   width: number
   height: number
   style: AnnotationStyle
 }
 
-export type TextAnnotation = AnnotationBase<'text'> & {
+export type TextAnnotation = AnnotationBase & {
+  type: 'text'
   width: number
   height: number
   content: string

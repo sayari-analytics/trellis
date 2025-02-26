@@ -256,186 +256,9 @@ export class Renderer {
     }
   }
 
-  update({ nodes, edges, options }: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
-    this.animateViewport =
-      options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
-    this.animateNodePosition =
-      options.animateNodePosition === true || options.animateNodePosition === undefined
-        ? defaultOptions.animateNodePosition
-        : options.animateNodePosition
-    this.animateNodeRadius =
-      options.animateNodeRadius === true || options.animateNodeRadius === undefined
-        ? defaultOptions.animateNodeRadius
-        : options.animateNodeRadius
-    this.dragInertia = options.dragInertia ?? defaultOptions.dragInertia
-    this.onViewportPointerEnter = options.onViewportPointerEnter
-    this.onViewportPointerDown = options.onViewportPointerDown
-    this.onViewportDragStart = options.onViewportDragStart
-    this.onViewportDrag = options.onViewportDrag
-    this.onViewportDragEnd = options.onViewportDragEnd
-    this.onViewportPointerMove = options.onViewportPointerMove
-    this.onViewportClick = options.onViewportClick
-    this.onViewportDoubleClick = options.onViewportDoubleClick
-    this.onViewportPointerUp = options.onViewportPointerUp
-    this.onViewportPointerLeave = options.onViewportPointerLeave
-    this.onViewportWheel = options.onViewportWheel
-    this.onNodePointerEnter = options.onNodePointerEnter
-    this.onNodePointerDown = options.onNodePointerDown
-    this.onNodeDragStart = options.onNodeDragStart
-    this.onNodeDrag = options.onNodeDrag
-    this.onNodeDragEnd = options.onNodeDragEnd
-    this.onNodePointerUp = options.onNodePointerUp
-    this.onNodeClick = options.onNodeClick
-    this.onNodeDoubleClick = options.onNodeDoubleClick
-    this.onNodePointerLeave = options.onNodePointerLeave
-    this.onEdgePointerEnter = options.onEdgePointerEnter
-    this.onEdgePointerDown = options.onEdgePointerDown
-    this.onEdgePointerUp = options.onEdgePointerUp
-    this.onEdgeClick = options.onEdgeClick
-    this.onEdgeDoubleClick = options.onEdgeDoubleClick
-    this.onEdgePointerLeave = options.onEdgePointerLeave
-    this.minZoom = options.minZoom ?? defaultOptions.minZoom
-    this.maxZoom = options.maxZoom ?? defaultOptions.maxZoom
-
-    /**
-     * update dimensions
-     */
-    if (options.width !== this.width || options.height !== this.height) {
-      this.width = options.width
-      this.height = options.height
-      this.app.renderer.resize(this.width, this.height)
-    }
-
-    /**
-     * update viewport
-     *
-     * interpolate position if all of the following are true:
-     * - viewport position has changed
-     * - not dragging/zooming
-     * - the animateViewport option is not disabled
-     * - it's not the first render
-     */
-    const zoom = Math.max(this.minZoom, Math.min(this.maxZoom, options.zoom ?? defaultOptions.zoom))
-    const x = options.x ?? defaultOptions.x
-    const y = options.y ?? defaultOptions.y
-    const xChanged = x !== this.x
-    const yChanged = y !== this.y
-    const zoomChanged = zoom !== this.zoom
-
-    if (
-      (xChanged || yChanged || zoomChanged) &&
-      !this.dragInteraction.dragging &&
-      !this.decelerateInteraction.decelerating &&
-      !this.zoomInteraction.zooming &&
-      this.animateViewport &&
-      this.renderedPosition
-    ) {
-      if (xChanged) {
-        this.interpolateX = interpolate(this.x, x, this.animateViewport)
-      }
-      if (yChanged) {
-        this.interpolateY = interpolate(this.y, y, this.animateViewport)
-      }
-      if (zoomChanged) {
-        this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
-      }
-    } else {
-      this.setPosition(x, y, zoom)
-      this.renderedPosition = true
-      this.interpolateX = undefined
-      this.interpolateY = undefined
-      this.interpolateZoom = undefined
-    }
-
-    const shouldUpdateNodes = this.nodes !== nodes && !(this.nodes.length === 0 && nodes.length === 0)
-    const shouldUpdateEdges = this.edges !== edges && !(this.edges.length === 0 && edges.length === 0)
-
-    /**
-     * update nodes
-     */
-    if (shouldUpdateNodes) {
-      const nodeRenderersById: Record<string, NodeRenderer> = {}
-
-      for (const node of nodes) {
-        if (this.nodeRenderersById[node.id] === undefined) {
-          // enter
-          nodeRenderersById[node.id] = new NodeRenderer(this, node)
-        } else if (node !== this.nodeRenderersById[node.id].node) {
-          // update
-          nodeRenderersById[node.id] = this.nodeRenderersById[node.id].update(node)
-        } else {
-          nodeRenderersById[node.id] = this.nodeRenderersById[node.id]
-        }
-      }
-
-      for (const node of this.nodes) {
-        if (nodeRenderersById[node.id] === undefined) {
-          // exit
-          this.nodeRenderersById[node.id].delete()
-        }
-      }
-
-      this.nodes = nodes
-      this.nodeRenderersById = nodeRenderersById
-      this.renderedNodes = true
-    }
-
-    /**
-     * update edges
-     */
-    if (shouldUpdateEdges) {
-      const edgeRenderersById: Record<string, EdgeRenderer> = {}
-
-      for (const edge of edges) {
-        if (this.edgeRenderersById[edge.id] === undefined) {
-          // enter
-          const source = this.nodeRenderersById[edge.source]
-          const target = this.nodeRenderersById[edge.target]
-          if (source !== undefined && target !== undefined) {
-            edgeRenderersById[edge.id] = new EdgeRenderer(this, edge, source, target)
-          } else {
-            logUnknownEdgeError(source.node, target.node)
-          }
-        } else if (edge !== this.edgeRenderersById[edge.id].edge) {
-          // update
-          const source = this.nodeRenderersById[edge.source]
-          const target = this.nodeRenderersById[edge.target]
-          if (source !== undefined && target !== undefined) {
-            edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge, source, target)
-          } else {
-            logUnknownEdgeError(source.node, target.node)
-          }
-        } else {
-          edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
-        }
-      }
-
-      for (const edge of this.edges) {
-        if (edgeRenderersById[edge.id] === undefined) {
-          // exit
-          this.edgeRenderersById[edge.id].delete()
-        }
-      }
-
-      this.edges = edges
-      this.edgeRenderersById = edgeRenderersById
-      this.renderedNodes = true
-    } else if (shouldUpdateNodes) {
-      // TODO - make node move/resize automatically update edge position
-      for (const edge of edges) {
-        const source = this.nodeRenderersById[edge.source]
-        const target = this.nodeRenderersById[edge.target]
-        if (source !== undefined && target !== undefined) {
-          this.edgeRenderersById[edge.id].update(edge, source, target)
-        } else {
-          // eslint-disable-next-line no-console
-          console.error(`Error: Cannot render edge ${source === undefined ? `from unknown node ${source}` : `to unknown Node ${target}`}`)
-        }
-      }
-    }
-
-    this.zoomInteraction.zooming = false
-
+  private _graph: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options } | undefined
+  update(graph: { nodes: Node[]; edges: Edge[]; annotations?: Annotation[]; options: Options }) {
+    this._graph = graph
     return this
   }
 
@@ -455,6 +278,193 @@ export class Renderer {
   }
 
   private render(dt: number) {
+    if (this._graph !== undefined) {
+      const options = this._graph.options
+      const nodes = this._graph.nodes
+      const edges = this._graph.edges
+
+      this.animateViewport =
+        options.animateViewport === true || options.animateViewport === undefined ? defaultOptions.animateViewport : options.animateViewport
+      this.animateNodePosition =
+        options.animateNodePosition === true || options.animateNodePosition === undefined
+          ? defaultOptions.animateNodePosition
+          : options.animateNodePosition
+      this.animateNodeRadius =
+        options.animateNodeRadius === true || options.animateNodeRadius === undefined
+          ? defaultOptions.animateNodeRadius
+          : options.animateNodeRadius
+      this.dragInertia = options.dragInertia ?? defaultOptions.dragInertia
+      this.onViewportPointerEnter = options.onViewportPointerEnter
+      this.onViewportPointerDown = options.onViewportPointerDown
+      this.onViewportDragStart = options.onViewportDragStart
+      this.onViewportDrag = options.onViewportDrag
+      this.onViewportDragEnd = options.onViewportDragEnd
+      this.onViewportPointerMove = options.onViewportPointerMove
+      this.onViewportClick = options.onViewportClick
+      this.onViewportDoubleClick = options.onViewportDoubleClick
+      this.onViewportPointerUp = options.onViewportPointerUp
+      this.onViewportPointerLeave = options.onViewportPointerLeave
+      this.onViewportWheel = options.onViewportWheel
+      this.onNodePointerEnter = options.onNodePointerEnter
+      this.onNodePointerDown = options.onNodePointerDown
+      this.onNodeDragStart = options.onNodeDragStart
+      this.onNodeDrag = options.onNodeDrag
+      this.onNodeDragEnd = options.onNodeDragEnd
+      this.onNodePointerUp = options.onNodePointerUp
+      this.onNodeClick = options.onNodeClick
+      this.onNodeDoubleClick = options.onNodeDoubleClick
+      this.onNodePointerLeave = options.onNodePointerLeave
+      this.onEdgePointerEnter = options.onEdgePointerEnter
+      this.onEdgePointerDown = options.onEdgePointerDown
+      this.onEdgePointerUp = options.onEdgePointerUp
+      this.onEdgeClick = options.onEdgeClick
+      this.onEdgeDoubleClick = options.onEdgeDoubleClick
+      this.onEdgePointerLeave = options.onEdgePointerLeave
+      this.minZoom = options.minZoom ?? defaultOptions.minZoom
+      this.maxZoom = options.maxZoom ?? defaultOptions.maxZoom
+
+      /**
+       * update dimensions
+       */
+      if (options.width !== this.width || options.height !== this.height) {
+        this.width = options.width
+        this.height = options.height
+        this.app.renderer.resize(this.width, this.height)
+      }
+
+      /**
+       * update viewport
+       *
+       * interpolate position if all of the following are true:
+       * - viewport position has changed
+       * - not dragging/zooming
+       * - the animateViewport option is not disabled
+       * - it's not the first render
+       */
+      const zoom = Math.max(this.minZoom, Math.min(this.maxZoom, options.zoom ?? defaultOptions.zoom))
+      const x = options.x ?? defaultOptions.x
+      const y = options.y ?? defaultOptions.y
+      const xChanged = x !== this.x
+      const yChanged = y !== this.y
+      const zoomChanged = zoom !== this.zoom
+
+      if (
+        (xChanged || yChanged || zoomChanged) &&
+        !this.dragInteraction.dragging &&
+        !this.decelerateInteraction.decelerating &&
+        !this.zoomInteraction.zooming &&
+        this.animateViewport &&
+        this.renderedPosition
+      ) {
+        if (xChanged) {
+          this.interpolateX = interpolate(this.x, x, this.animateViewport)
+        }
+        if (yChanged) {
+          this.interpolateY = interpolate(this.y, y, this.animateViewport)
+        }
+        if (zoomChanged) {
+          this.interpolateZoom = interpolate(this.zoom, zoom, this.animateViewport)
+        }
+      } else {
+        this.setPosition(x, y, zoom)
+        this.renderedPosition = true
+        this.interpolateX = undefined
+        this.interpolateY = undefined
+        this.interpolateZoom = undefined
+      }
+
+      const shouldUpdateNodes = this.nodes !== nodes && !(this.nodes.length === 0 && nodes.length === 0)
+      const shouldUpdateEdges = this.edges !== edges && !(this.edges.length === 0 && edges.length === 0)
+
+      /**
+       * update nodes
+       */
+      if (shouldUpdateNodes) {
+        const nodeRenderersById: Record<string, NodeRenderer> = {}
+
+        for (const node of nodes) {
+          if (this.nodeRenderersById[node.id] === undefined) {
+            // enter
+            nodeRenderersById[node.id] = new NodeRenderer(this, node)
+          } else if (node !== this.nodeRenderersById[node.id].node) {
+            // update
+            nodeRenderersById[node.id] = this.nodeRenderersById[node.id].update(node)
+          } else {
+            nodeRenderersById[node.id] = this.nodeRenderersById[node.id]
+          }
+        }
+
+        for (const node of this.nodes) {
+          if (nodeRenderersById[node.id] === undefined) {
+            // exit
+            this.nodeRenderersById[node.id].delete()
+          }
+        }
+
+        this.nodes = nodes
+        this.nodeRenderersById = nodeRenderersById
+        this.renderedNodes = true
+      }
+
+      /**
+       * update edges
+       */
+      if (shouldUpdateEdges) {
+        const edgeRenderersById: Record<string, EdgeRenderer> = {}
+
+        for (const edge of edges) {
+          if (this.edgeRenderersById[edge.id] === undefined) {
+            // enter
+            const source = this.nodeRenderersById[edge.source]
+            const target = this.nodeRenderersById[edge.target]
+            if (source !== undefined && target !== undefined) {
+              edgeRenderersById[edge.id] = new EdgeRenderer(this, edge, source, target)
+            } else {
+              logUnknownEdgeError(source.node, target.node)
+            }
+          } else if (edge !== this.edgeRenderersById[edge.id].edge) {
+            // update
+            const source = this.nodeRenderersById[edge.source]
+            const target = this.nodeRenderersById[edge.target]
+            if (source !== undefined && target !== undefined) {
+              edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id].update(edge, source, target)
+            } else {
+              logUnknownEdgeError(source.node, target.node)
+            }
+          } else {
+            edgeRenderersById[edge.id] = this.edgeRenderersById[edge.id]
+          }
+        }
+
+        for (const edge of this.edges) {
+          if (edgeRenderersById[edge.id] === undefined) {
+            // exit
+            this.edgeRenderersById[edge.id].delete()
+          }
+        }
+
+        this.edges = edges
+        this.edgeRenderersById = edgeRenderersById
+        this.renderedNodes = true
+      } else if (shouldUpdateNodes) {
+        // TODO - make node move/resize automatically update edge position
+        for (const edge of edges) {
+          const source = this.nodeRenderersById[edge.source]
+          const target = this.nodeRenderersById[edge.target]
+          if (source !== undefined && target !== undefined) {
+            this.edgeRenderersById[edge.id].update(edge, source, target)
+          } else {
+            // eslint-disable-next-line no-console
+            console.error(`Error: Cannot render edge ${source === undefined ? `from unknown node ${source}` : `to unknown Node ${target}`}`)
+          }
+        }
+      }
+
+      this.zoomInteraction.zooming = false
+
+      this._graph = undefined
+    }
+
     this.decelerateInteraction.update(dt)
 
     let _x: number | undefined
