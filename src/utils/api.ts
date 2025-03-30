@@ -231,6 +231,8 @@ export function* bfs<N extends Node, E extends Edge>(
 
 export const distance = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
 
+export const distanceSquared = (x0: number, y0: number, x1: number, y1: number) => (x1 - x0) ** 2 + (y1 - y0) ** 2
+
 export const angle = (x0: number, y0: number, x1: number, y1: number) => {
   const angle = Math.atan2(y0 - y1, x0 - x1)
   return angle < 0 ? angle + TWO_PI : angle

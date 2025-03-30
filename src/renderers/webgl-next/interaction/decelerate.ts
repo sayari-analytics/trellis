@@ -7,7 +7,6 @@ import { Renderer } from '..'
 export class Decelerate {
   decelerating = false
 
-  private renderer: Renderer
   private paused = false
   private saved: { x: number; y: number; time: number }[] = []
   private i: number = 0
@@ -15,9 +14,7 @@ export class Decelerate {
   private y: number = 0
   private minSpeed = 0.01
 
-  constructor(renderer: Renderer) {
-    this.renderer = renderer
-  }
+  constructor(private renderer: Renderer) {}
 
   down = () => {
     if (this.renderer.components.events.onViewportDrag === undefined || this.paused) {

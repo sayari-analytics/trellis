@@ -5,59 +5,59 @@ import type { Node } from '../../..'
 
 export class NodesComponent implements IComponent {
   nodes: Node[] = []
-  nodeComponents: { [id: string]: NodeComponent } = {}
+  renderIdx = 0
+  nodeComponents = new Map<string, NodeComponent>()
+  renderedNodes = false
 
   constructor(private renderer: Renderer) {}
 
-  render(dt: number, nextNodes?: Node[]) {
-    let renderCount = 0
-    const shouldCullNodes = this.renderer.components.viewport.previousViewportChanged && !this.renderer.components.viewport.viewportChanged
+  render(dt: number, nextNodes: Node[] = this.nodes) {
+    if (nextNodes !== this.nodes) {
+      let edgeUpdateCount = 0
+      this.renderIdx++
 
-    if (nextNodes !== undefined) {
-      if (nextNodes !== this.nodes || shouldCullNodes) {
-        const nodeComponents: { [id: string]: NodeComponent } = {}
+      for (let i = 0; i < nextNodes.length; i++) {
+        const node = nextNodes[i]
+        const nodeComponent = this.nodeComponents.get(node.id)
 
-        for (const node of nextNodes) {
-          if (this.nodeComponents[node.id] === undefined) {
-            // enter
-            nodeComponents[node.id] = new NodeComponent(this.renderer).render(dt, node)
-            renderCount++
-          } else {
-            // update
-            nodeComponents[node.id] = this.nodeComponents[node.id].render(dt, node)
-            renderCount++
-          }
+        if (nodeComponent === undefined) {
+          // enter
+          this.nodeComponents.set(node.id, new NodeComponent(this.renderer).render(dt, node))
+        } else {
+          // update
+          nodeComponent.render(dt, node)
+          nodeComponent.renderIdx = this.renderIdx
+          edgeUpdateCount++
         }
-
-        if (nextNodes.length !== this.nodes.length) {
-          for (const node of this.nodes) {
-            if (nodeComponents[node.id] === undefined) {
-              // exit
-              this.nodeComponents[node.id].delete()
-              renderCount++
-            }
-          }
-        }
-
-        this.nodes = nextNodes
-        this.nodeComponents = nodeComponents
       }
-    } else {
-      if (shouldCullNodes) {
-        for (const node of this.nodes) {
-          this.nodeComponents[node.id].render(dt, node)
+
+      if (this.nodes.length > edgeUpdateCount) {
+        for (let i = 0; i < this.nodes.length; i++) {
+          const node = this.nodes[i]
+          const nodeComponent = this.nodeComponents.get(node.id)
+
+          if (nodeComponent && nodeComponent.renderIdx !== this.renderIdx) {
+            // exit
+            nodeComponent.delete()
+            this.nodeComponents.delete(nodeComponent.node!.id)
+          }
         }
+      }
+
+      this.nodes = nextNodes
+      this.renderedNodes = this.nodes.length > 0
+    } else {
+      for (const nodeComponent of this.nodeComponents.values()) {
+        nodeComponent.render(dt, nodeComponent.node!)
       }
     }
-
-    this.renderer.debug?.updateNodeCountPanel?.update(renderCount, 100)
 
     return this
   }
 
   delete() {
-    for (const node of this.nodes) {
-      this.nodeComponents[node.id].delete()
+    for (const nodeComponent of this.nodeComponents.values()) {
+      nodeComponent.delete()
     }
   }
 }

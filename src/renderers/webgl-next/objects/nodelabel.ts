@@ -23,7 +23,6 @@ export class NodeLabel {
         ? new BitmapText({ text: label, scale: 1 / this.scaleFactor })
         : new Text({ text: label, scale: 1 / this.scaleFactor })
 
-      // this.text.cullable = true
       this.setTextStyle(style)
 
       const [offsetX, offsetY] = this.getTextOffset(
@@ -40,13 +39,11 @@ export class NodeLabel {
         if (this.text instanceof Text) {
           this.exit()
           this.text = new BitmapText({ text: label, scale: 1 / this.scaleFactor })
-          // this.text.cullable = true
           this.mount()
         }
       } else if (this.text instanceof BitmapText) {
         this.exit()
         this.text = new Text({ text: label, scale: 1 / this.scaleFactor })
-        // this.text.cullable = true
         this.mount()
       }
 

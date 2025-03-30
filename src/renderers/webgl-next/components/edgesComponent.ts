@@ -6,74 +6,83 @@ import type { Edge } from '../../..'
 
 export class EdgesComponent implements IComponent {
   edges: Edge[] = []
-  edgeComponents: { [srcNodeId: string]: { [dstNodeId: string]: EdgeComponent } } = {}
+  renderIdx = 0
+  edgeComponents = new Map<Edge, EdgeComponent>()
 
   constructor(private renderer: Renderer) {}
 
-  render(nextEdges: Edge[] | undefined, nodesChanged: boolean) {
-    let renderCount = 0
-    const shouldCullEdges = this.renderer.components.viewport.previousViewportChanged && !this.renderer.components.viewport.viewportChanged
+  render(nextEdges: Edge[] = this.edges) {
+    if (nextEdges !== this.edges) {
+      let edgeUpdateCount = 0
+      this.renderIdx++
 
-    if (nextEdges !== undefined) {
-      if (nextEdges !== this.edges || shouldCullEdges) {
-        const edgeComponents: { [srcNodeId: string]: { [dstNodeId: string]: EdgeComponent } } = {}
+      for (let i = 0; i < nextEdges.length; i++) {
+        const edge = nextEdges[i]
 
-        for (const edge of nextEdges) {
-          if (this.edgeComponents[edge.source]?.[edge.target] === undefined) {
+        const edgeComponent = this.edgeComponents.get(edge)
+        if (edgeComponent) {
+          edgeComponent.renderIdx = this.renderIdx
+          edgeUpdateCount++
+        } else {
+          const sourceNodeComponent = this.renderer.components.nodes.nodeComponents.get(edge.source)
+          const targetNodeComponent = this.renderer.components.nodes.nodeComponents.get(edge.target)
+
+          if (sourceNodeComponent === undefined || targetNodeComponent === undefined) {
+            logUnknownEdgeError(edge)
+            continue
+          }
+
+          const edgeComponent = sourceNodeComponent.outEdges.get(targetNodeComponent)
+          if (edgeComponent === undefined) {
             // enter
-            const source = this.renderer.components.nodes.nodeComponents[edge.source]
-            const target = this.renderer.components.nodes.nodeComponents[edge.target]
+            const edgeComponent = new EdgeComponent(this.renderer, sourceNodeComponent, targetNodeComponent).render(edge)
+            this.edgeComponents.set(edge, edgeComponent)
+            sourceNodeComponent.outEdges.set(targetNodeComponent, edgeComponent)
+            targetNodeComponent.inEdges.set(sourceNodeComponent, edgeComponent)
+          } else {
+            // update
+            this.edgeComponents.delete(edgeComponent.edge!)
+            this.edgeComponents.set(edge, edgeComponent)
+            edgeComponent.render(edge)
+            edgeComponent.renderIdx = this.renderIdx
+            edgeUpdateCount++
+          }
+        }
+      }
 
-            if (source === undefined || target === undefined) {
+      if (this.edges.length > edgeUpdateCount) {
+        for (let i = 0; i < this.edges.length; i++) {
+          const edge = this.edges[i]
+          const edgeComponent = this.edgeComponents.get(edge)
+
+          if (edgeComponent && edgeComponent.renderIdx !== this.renderIdx) {
+            // exit
+            edgeComponent.delete()
+            this.edgeComponents.delete(edge)
+
+            const sourceNodeComponent = this.renderer.components.nodes.nodeComponents.get(edge.source)
+            const targetNodeComponent = this.renderer.components.nodes.nodeComponents.get(edge.target)
+
+            if (sourceNodeComponent === undefined || targetNodeComponent === undefined) {
               logUnknownEdgeError(edge)
               continue
             }
 
-            edgeComponents[edge.source] ??= {}
-            edgeComponents[edge.source][edge.target] = new EdgeComponent(this.renderer, source, target).render(edge)
-            renderCount++
-          } else {
-            // update
-            edgeComponents[edge.source] ??= {}
-            edgeComponents[edge.source][edge.target] = this.edgeComponents[edge.source][edge.target].render(edge)
-            renderCount++
+            sourceNodeComponent.outEdges.get(targetNodeComponent)?.delete()
+            targetNodeComponent.inEdges.get(sourceNodeComponent)?.delete()
           }
         }
-
-        if (nextEdges.length !== this.edges.length) {
-          for (const edge of this.edges) {
-            if (edgeComponents[edge.source]?.[edge.target] === undefined) {
-              // exit
-              this.edgeComponents[edge.source][edge.target].delete()
-              renderCount++
-            }
-          }
-        }
-
-        this.edges = nextEdges
-        this.edgeComponents = edgeComponents
-      } else if (nodesChanged) {
-        // TODO - make nodeComponent.render automatically update edgeComponent
-        for (const edge of this.edges) {
-          this.edgeComponents[edge.source][edge.target].render(edge)
-        }
       }
-    } else {
-      if (shouldCullEdges) {
-        for (const edge of this.edges) {
-          this.edgeComponents[edge.source][edge.target].render(edge)
-        }
-      }
+
+      this.edges = nextEdges
     }
-
-    this.renderer.debug?.updateEdgeCountPanel?.update(renderCount, 100)
 
     return this
   }
 
   delete() {
-    for (const edge of this.edges) {
-      this.edgeComponents[edge.source][edge.target].delete()
+    for (const edgeComponent of this.edgeComponents.values()) {
+      edgeComponent.delete()
     }
   }
 }

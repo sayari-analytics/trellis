@@ -1,100 +1,56 @@
-import { Circle, Container, FederatedPointerEvent } from 'pixi.js'
+import { FederatedPointerEvent } from 'pixi.js'
+import type { EventHandler } from '.'
+import type { Renderer } from '..'
 import type { NodeComponent } from '../components/nodeComponent'
 import type { EventsComponent } from '../components/eventsComponent'
-import type { Renderer } from '..'
 
-export class NodeHitArea {
-  mounted = false
-
-  private hitArea?: Container
+export class NodeEventHandler implements EventHandler {
   private events: EventsComponent
-  private container: Container
   private doubleClickTimeout: NodeJS.Timeout | undefined
   private doubleClick = false
-  private nodeMoveXOffset: number = 0
-  private nodeMoveYOffset: number = 0
+  private nodeMoveXOffset = 0
+  private nodeMoveYOffset = 0
   private isDragging = false
-  private pointerLeftBeforeDragComplete = false
+  private pointerIsDown = false
+  private minX = Infinity
+  private minY = Infinity
+  private maxX = -Infinity
+  private maxY = -Infinity
+  private x = 0
+  private y = 0
+  private radiusSquared = 0
 
   constructor(
     private renderer: Renderer,
     private nodeComponent: NodeComponent
   ) {
     this.events = this.renderer.components.events
-    this.container = this.renderer.containers.interaction
   }
 
-  update(nextX: number, nextY: number, nextRadius: number) {
-    if (this.hitArea === undefined) {
-      if (this.nodePointerEventsAreDefined()) {
-        this.hitArea = new Container()
-        this.hitArea.hitArea = new Circle(nextX, nextY, nextRadius)
-        // this.hitArea.cullable = true
-        this.hitArea.eventMode = 'static'
-        this.hitArea.addEventListener('pointerenter', this.pointerEnter.bind(this))
-        this.hitArea.addEventListener('pointerdown', this.pointerDown.bind(this))
-        this.hitArea.addEventListener('pointerup', this.pointerUp.bind(this))
-        this.hitArea.addEventListener('pointercancel', this.pointerUp.bind(this))
-        this.hitArea.addEventListener('pointerleave', this.pointerLeave.bind(this))
-        this.mount()
-      }
-    } else {
-      this.hitArea.hitArea = new Circle(nextX, nextY, nextRadius)
-    }
+  update(x: number, y: number, radius: number) {
+    this.minX = x - radius
+    this.minY = y - radius
+    this.maxX = x + radius
+    this.maxY = y + radius
+    this.x = x
+    this.y = y
+    this.radiusSquared = Math.pow(radius, 2)
   }
 
-  mount() {
-    if (!this.mounted && this.hitArea !== undefined) {
-      this.container.addChild(this.hitArea)
-      this.mounted = true
-    }
-  }
-
-  unmount() {
-    if (this.mounted && this.hitArea !== undefined) {
-      this.container.removeChild(this.hitArea)
-      this.mounted = false
-    }
-  }
-
-  exit() {
-    if (this.hitArea) {
-      clearTimeout(this.doubleClickTimeout)
-      this.unmount()
-      this.hitArea.destroy()
-      this.hitArea = undefined
-    }
-  }
-
-  private nodePointerEventsAreDefined() {
+  contains(x: number, y: number) {
     return (
-      this.events.onNodePointerEnter ||
-      this.events.onNodePointerDown ||
-      this.events.onNodeDragStart ||
-      this.events.onNodeDrag ||
-      this.events.onNodeDragEnd ||
-      this.events.onNodeClick ||
-      this.events.onNodeDoubleClick ||
-      this.events.onNodePointerUp ||
-      this.events.onNodePointerLeave
+      x >= this.minX &&
+      x <= this.maxX &&
+      y >= this.minY &&
+      y <= this.maxY &&
+      Math.pow(this.x - x, 2) + Math.pow(this.y - y, 2) <= this.radiusSquared
     )
   }
 
-  private pointerEnter(event: FederatedPointerEvent) {
-    if (this.renderer.interactions.draggedNode === this.nodeComponent) {
-      this.pointerLeftBeforeDragComplete = false
-    }
-
-    if (
-      this.renderer.interactions.hoveredNode ||
-      this.renderer.interactions.draggedNode ||
-      this.renderer.interactions.drag.dragging ||
-      this.renderer.interactions.zoom.zooming
-    ) {
+  pointerEnter(event: FederatedPointerEvent) {
+    if (this.renderer.interactions.draggedNode || this.renderer.interactions.drag.dragging || this.renderer.interactions.zoom.zooming) {
       return
     }
-
-    this.renderer.interactions.hoveredNode = this.nodeComponent
 
     if (
       this.events.onNodePointerDown ||
@@ -124,7 +80,8 @@ export class NodeHitArea {
     }
   }
 
-  private pointerDown(event: FederatedPointerEvent) {
+  pointerDown(event: FederatedPointerEvent) {
+    this.pointerIsDown = true
     const local = this.renderer.containers.root.toLocal(event.global)
 
     if (this.events.onNodeDoubleClick) {
@@ -158,14 +115,15 @@ export class NodeHitArea {
       this.nodeMoveXOffset = local.x - (this.nodeComponent.node!.x ?? 0)
       this.nodeMoveYOffset = local.y - (this.nodeComponent.node!.y ?? 0)
       this.renderer.interactions.draggedNode = this.nodeComponent
-      this.renderer.containers.root.addEventListener('pointermove', this.pointerMove)
       this.renderer.interactions.zoom.pause()
       this.renderer.interactions.drag.pause()
       this.renderer.interactions.decelerate.pause()
     }
   }
 
-  private pointerMove = (event: FederatedPointerEvent) => {
+  pointerMove(event: FederatedPointerEvent) {
+    if (!this.pointerIsDown) return
+
     event.stopPropagation()
 
     const local = this.renderer.containers.root.toLocal(event.global)
@@ -208,11 +166,11 @@ export class NodeHitArea {
   }
 
   pointerUp(event: FederatedPointerEvent) {
+    this.pointerIsDown = false
     const local = this.renderer.containers.root.toLocal(event.global)
 
     if (this.events.onNodeDrag) {
       this.renderer.domElement.style.cursor = 'auto'
-      this.renderer.containers.root.removeEventListener('pointermove', this.pointerMove)
       this.renderer.interactions.zoom.resume()
       this.renderer.interactions.drag.resume()
       this.renderer.interactions.decelerate.resume()
@@ -304,22 +262,9 @@ export class NodeHitArea {
 
     this.isDragging = false
     this.renderer.interactions.draggedNode = undefined
-
-    if (this.pointerLeftBeforeDragComplete) {
-      this.pointerLeave(event)
-    }
   }
 
   pointerLeave(event: FederatedPointerEvent) {
-    if (this.renderer.interactions.hoveredNode !== this.nodeComponent) {
-      return
-    }
-
-    if (this.renderer.interactions.draggedNode === this.nodeComponent) {
-      this.pointerLeftBeforeDragComplete = true
-      return
-    }
-
     if (
       !this.renderer.interactions.drag.dragging &&
       (this.events.onNodePointerDown ||
@@ -347,9 +292,6 @@ export class NodeHitArea {
         shiftKey: event.shiftKey
       })
     }
-
-    this.renderer.interactions.hoveredNode = undefined
-    this.pointerLeftBeforeDragComplete = false
   }
 
   private clearDoubleClick = () => {

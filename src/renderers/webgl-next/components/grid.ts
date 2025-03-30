@@ -1,7 +1,8 @@
 import { BitmapText, Container, Graphics, TextOptions } from 'pixi.js'
-import { Renderer } from '.'
+import { IComponent } from '.'
+import { Renderer } from '..'
 
-export class Grid {
+export class Grid implements IComponent {
   scaleFactor: number
   renderer: Renderer
   container = new Container()
@@ -64,6 +65,10 @@ export class Grid {
         this.renderer.containers.labels.addChild(coordinate)
       }
     }
+  }
+
+  render() {
+    return this
   }
 
   delete() {

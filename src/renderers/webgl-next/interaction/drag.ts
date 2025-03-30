@@ -8,14 +8,11 @@ import { Renderer } from '..'
 export class Drag {
   dragging = false
 
-  private renderer: Renderer
   private paused = false
   private last?: { x: number; y: number }
   private current?: number
 
-  constructor(renderer: Renderer) {
-    this.renderer = renderer
-  }
+  constructor(private renderer: Renderer) {}
 
   down = (event: FederatedPointerEvent) => {
     if (this.renderer.components.events.onViewportDrag === undefined || this.paused) {

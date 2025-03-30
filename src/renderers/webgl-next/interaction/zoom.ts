@@ -8,12 +8,9 @@ import { Renderer } from '..'
 export class Zoom {
   zooming = false
 
-  private renderer: Renderer
   private paused = false
 
-  constructor(renderer: Renderer) {
-    this.renderer = renderer
-  }
+  constructor(private renderer: Renderer) {}
 
   wheel = (event: WheelEvent) => {
     if (this.renderer.components.events.onViewportWheel === undefined) {
@@ -64,6 +61,10 @@ export class Zoom {
     })
 
     return false
+  }
+
+  render() {
+    this.zooming = false
   }
 
   pause() {

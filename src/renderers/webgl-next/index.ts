@@ -13,9 +13,9 @@ import { DEFAULT_VIEWPORT_OPTIONS, ViewportComponent, ViewportOptions } from './
 import { EventsComponent, EventOptions } from './components/eventsComponent'
 import { NodesComponent } from './components/nodesComponent'
 import { EdgesComponent } from './components/edgesComponent'
+import { Debug } from './components/debug'
 import type { Node, Edge, Annotation } from '../../types'
-import { doAllAsync } from './utils'
-import { Debug } from './debug'
+import { doAllAsync, time } from './utils'
 
 // const DYNAMIC_PARTICLE_CONTAINER_PROPERTIES = { position: true, scale: true, rotation: false, color: true }
 
@@ -37,8 +37,6 @@ export class Renderer {
   domElement: HTMLDivElement
   maxZoom: number
   resolution: number
-  renderedNodes = false
-  edges: Edge[] = []
   nextGraph?: {
     nodes: Node[]
     edges: Edge[]
@@ -53,14 +51,14 @@ export class Renderer {
     // nodes: new ParticleContainer({ dynamicProperties: DYNAMIC_PARTICLE_CONTAINER_PROPERTIES, isRenderGroup: true }),
     edges: new Container({ isRenderGroup: true }),
     nodes: new Container({ isRenderGroup: true }),
-    labels: new Container({ isRenderGroup: true }),
-    interaction: new Container()
+    labels: new Container({ isRenderGroup: true })
   }
   components!: {
     viewport: ViewportComponent
     events: EventsComponent
     nodes: NodesComponent
     edges: EdgesComponent
+    debug?: Debug
   }
   textures!: {
     circle: CircleTexture
@@ -76,12 +74,12 @@ export class Renderer {
     zoom: new Zoom(this),
     drag: new Drag(this),
     decelerate: new Decelerate(this),
-    draggedNode: undefined as NodeComponent | undefined,
-    hoveredNode: undefined as NodeComponent | undefined
+    draggedNode: undefined as NodeComponent | undefined
   }
-  debug?: Debug
 
   private cancelImageExport?: () => void
+  private endRenderTime = Date.now()
+  private awaitInit: Promise<void>
 
   constructor(options: RendererOptions) {
     if (!(options.container instanceof HTMLDivElement)) {
@@ -94,17 +92,15 @@ export class Renderer {
     const canvas = document.createElement('canvas')
     canvas.onselectstart = () => false
     this.domElement.appendChild(canvas)
-    // this.containers.labels.cullableChildren = true
-    // this.containers.interaction.cullableChildren = true
 
     this.app = new Application()
-    this.app
+    this.awaitInit = this.app
       .init({
         canvas,
         width: options.width,
         height: options.height,
         resolution: this.resolution,
-        antialias: options.antialias ?? false,
+        antialias: options.antialias ?? true,
         backgroundAlpha: options.alpha ?? 0,
         backgroundColor: options.color ?? '#fff',
         webgl: options.renderer?.type === 'webgl' ? options.renderer.options ?? {} : undefined,
@@ -114,6 +110,9 @@ export class Renderer {
       })
       .then(() => {
         this.app.stage.addChild(this.containers.root)
+        this.containers.root.addChild(this.containers.edges)
+        this.containers.root.addChild(this.containers.nodes)
+        this.containers.root.addChild(this.containers.labels)
         this.textures = {
           circle: new CircleTexture(this.app, 10, this.maxZoom, this.resolution),
           arrow: new ArrowTexture(this.app, 6, 12, this.maxZoom, this.resolution),
@@ -128,7 +127,7 @@ export class Renderer {
         }
 
         if (options.debug !== undefined && options.debug !== false) {
-          this.debug = new Debug(this, options.debug)
+          this.components.debug = new Debug(this, options.debug)
           this.app.ticker.add((ticker) => this.debugRender(ticker.deltaTime))
         } else {
           this.app.ticker.add((ticker) => this.render(ticker.deltaTime))
@@ -136,12 +135,13 @@ export class Renderer {
       })
   }
 
-  update(graph: { nodes: Node[]; edges: Edge[]; viewport: ViewportOptions; events?: EventOptions; annotations?: Annotation[] }) {
+  update = (graph: { nodes: Node[]; edges: Edge[]; viewport: ViewportOptions; events?: EventOptions; annotations?: Annotation[] }) => {
     this.nextGraph = graph
     return this
   }
 
-  delete() {
+  delete = async () => {
+    await this.awaitInit
     this.app.destroy(true, true)
     this.textures.circle.delete()
     this.textures.arrow.delete()
@@ -154,7 +154,7 @@ export class Renderer {
     this.cancelImageExport?.()
   }
 
-  image(onfulfilled: (result: Blob) => void, onrejected: (err: unknown) => void) {
+  image = (onfulfilled: (result: Blob) => void, onrejected: (err: unknown) => void) => {
     this.cancelImageExport = doAllAsync<unknown>(
       [this.assets.fonts.onComplete, this.assets.images.onComplete],
       () => onfulfilled(new Blob()),
@@ -163,61 +163,46 @@ export class Renderer {
   }
 
   private render(dt: number) {
-    const nodesChanged = this.nextGraph !== undefined && this.nextGraph.nodes !== this.components.nodes.nodes
-
     this.components.viewport.render(dt, this.nextGraph?.viewport)
-    this.components.events.render(this.nextGraph?.events)
     this.components.nodes.render(dt, this.nextGraph?.nodes)
-    this.components.edges.render(this.nextGraph?.edges, nodesChanged)
-
+    this.components.edges.render(this.nextGraph?.edges)
+    this.components.events.render(this.nextGraph?.events)
     this.app.render()
 
-    this.renderedNodes = this.nextGraph !== undefined && this.nextGraph.nodes.length > 0
-    this.interactions.zoom.zooming = false
     this.nextGraph = undefined
-    this.interactions.decelerate.render(dt)
-  }
 
-  private endRenderTime?: number
+    this.interactions.decelerate.render(dt)
+    this.interactions.zoom.render()
+  }
 
   private debugRender(dt: number) {
-    if (this.endRenderTime !== undefined) {
-      this.debug!.renderApp?.update(Date.now() - this.endRenderTime, 50)
-    }
-
-    const nodesChanged = this.nextGraph !== undefined && this.nextGraph.nodes !== this.components.nodes.nodes
+    const debug = this.components.debug!
+    debug.renderApp?.update(Date.now() - this.endRenderTime, 50)
 
     this.components.viewport.render(dt, this.nextGraph?.viewport)
+    debug.renderNodes?.update(
+      time(() => this.components.nodes.render(dt, this.nextGraph?.nodes)),
+      50
+    )
+    debug.renderEdges?.update(
+      time(() => this.components.edges.render(this.nextGraph?.edges)),
+      50
+    )
+    debug.renderEvents?.update(
+      time(() => this.components.events.render(this.nextGraph?.events)),
+      50
+    )
+    debug.renderPixi?.update(
+      time(() => this.app.render()),
+      50
+    )
 
-    this.components.events.render(this.nextGraph?.events)
-
-    const nodeRenderDeltaTime = time(() => this.components.nodes.render(dt, this.nextGraph?.nodes))
-    this.debug!.renderNodes?.update(nodeRenderDeltaTime, 50)
-
-    const edgeRenderDeltaTime = time(() => this.components.edges.render(this.nextGraph?.edges, nodesChanged))
-    this.debug!.renderEdges?.update(edgeRenderDeltaTime, 50)
-
-    const pixiRenderDeltaTime = time(() => {
-      // const viewport = this.components.viewport
-      // const bbox = new Rectangle(0 + 200, 0 + 200, viewport.width - 400, viewport.height - 400)
-      // Culler.shared.cull(this.containers.labels, bbox)
-      // Culler.shared.cull(this.containers.interaction, bbox)
-      this.app.render()
-    })
-    this.debug!.renderPixi?.update(pixiRenderDeltaTime, 50)
-
-    this.renderedNodes = this.nextGraph !== undefined && this.nextGraph.nodes.length > 0
-    this.interactions.zoom.zooming = false
     this.nextGraph = undefined
-    this.interactions.decelerate.render(dt)
 
-    this.debug!.stats?.update()
+    this.interactions.decelerate.render(dt)
+    this.interactions.zoom.render()
+
+    debug.render()
     this.endRenderTime = Date.now()
   }
-}
-
-const time = (fn: () => void) => {
-  const t0 = Date.now()
-  fn()
-  return Date.now() - t0
 }

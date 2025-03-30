@@ -6,9 +6,11 @@ export type Dimensions = { width: number; height: number }
 export type Viewport = { x: number; y: number; zoom: number }
 
 // style
-export type FillStyle = { color: string; opacity?: number }
+export type Color = string | number
 
-export type Stroke = { color: string; width: number }
+export type FillStyle = { color: Color; opacity?: number }
+
+export type Stroke = { color: Color; width: number }
 
 export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 
@@ -21,7 +23,7 @@ export type TextHighlightStyle = FillStyle & {
 }
 
 type TextBase = Partial<{
-  color: string
+  color: Color
   stroke: Stroke
   fontSize: number
   fontFamily: string
@@ -57,14 +59,14 @@ export type NodeLabelStyle = TextBase &
   }>
 
 export type NodeStyle = {
-  color?: string
+  color?: Color
   icon?: ImageIcon | TextIcon
   stroke?: Stroke[]
   badge?: {
     position: number
     radius: number
-    color: string
-    stroke?: string
+    color: Color
+    stroke?: Color
     strokeWidth?: number
     icon?: ImageIcon | TextIcon
   }[]
@@ -101,7 +103,7 @@ export type ArrowStyle = 'forward' | 'reverse' | 'both' | 'none'
 
 export type EdgeStyle = {
   width?: number
-  stroke?: string
+  stroke?: Color
   strokeOpacity?: number
   arrow?: ArrowStyle
   label?: EdgeLabelStyle

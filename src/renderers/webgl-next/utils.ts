@@ -17,8 +17,6 @@ export const movePoint = (x: number, y: number, angle: number, distance: number)
 
 export const midPoint = (x0: number, y0: number, x1: number, y1: number): [x: number, y: number] => [(x0 + x1) / 2, (y0 + y1) / 2]
 
-export const length = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0)
-
 export const isASCII = (str: string) => {
   for (const char of str) {
     if (char.codePointAt(0)! > 126) {
@@ -84,3 +82,9 @@ export const doAllAsync = <T>(executors: Executor<T>[], onfulfilled: (result: T[
 export const logUnknownEdgeError = throttle((edge: Edge) => {
   console.error(`Error: Cannot render edge between unknown nodes ${edge.source} and ${edge.target}`)
 }, 10)
+
+export const time = (fn: () => void) => {
+  const t0 = Date.now()
+  fn()
+  return Date.now() - t0
+}

@@ -50,24 +50,18 @@ export const animationFrameLoop = (cb: (time: number) => void) => {
 }
 
 export const throttleAnimationFrame = <T extends unknown[]>(cb: (...args: T) => void) => {
-  let tailArgs: T | undefined
-  let clear = true
+  let _args: T | undefined
 
   return (...args: T) => {
-    if (clear) {
-      clear = false
-      cb(...args)
-
+    if (_args === undefined) {
       requestAnimationFrame(() => {
-        if (tailArgs) {
-          cb(...tailArgs)
-        }
-        tailArgs = undefined
-        clear = true
+        const args = _args!
+        _args = undefined
+        cb(...args)
       })
-    } else {
-      tailArgs = args
     }
+
+    _args = args
   }
 }
 

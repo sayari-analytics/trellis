@@ -2,11 +2,10 @@ import type { IComponent } from '.'
 import type { NodeComponent } from './nodeComponent'
 import type { Renderer } from '../'
 import { LineSegment } from '../objects/lineSegment'
-import { EdgeHitArea } from '../objects/edgeHitArea'
+import { EdgeEventHandler } from '../eventHandlers/edgeEventHandler'
 import { Arrow } from '../objects/arrow'
 import { movePoint } from '../utils'
-import { angle, type Edge } from '../../..'
-import { MIN_EDGES_ZOOM } from '../../../utils/constants'
+import { angle, distanceSquared, type Edge } from '../../..'
 
 const DEFAULT_EDGE_WIDTH = 1
 const DEFAULT_EDGE_COLOR = '#aaa'
@@ -20,7 +19,8 @@ export class EdgeComponent implements IComponent {
   lineSegment: LineSegment
   forwardArrow: Arrow
   reverseArrow: Arrow
-  hitArea: EdgeHitArea
+  eventHandler: EdgeEventHandler
+  renderIdx = -1
 
   private sourceX: number
   private sourceY: number
@@ -34,74 +34,89 @@ export class EdgeComponent implements IComponent {
   ) {
     this.source = source
     this.target = target
-    this.sourceX = source.x
-    this.sourceY = source.y
-    this.targetX = target.x
-    this.targetY = target.y
+    this.sourceX = source.x ?? 0
+    this.sourceY = source.y ?? 0
+    this.targetX = target.x ?? 0
+    this.targetY = target.y ?? 0
     this.lineSegment = new LineSegment(this.renderer.containers.edges)
     this.forwardArrow = new Arrow(this.renderer.containers.edges, this.renderer.textures.arrow)
     this.reverseArrow = new Arrow(this.renderer.containers.edges, this.renderer.textures.arrow)
-    this.hitArea = new EdgeHitArea(this.renderer, this)
+    this.eventHandler = new EdgeEventHandler(this.renderer, this)
   }
 
   render(nextEdge: Edge) {
+    const sourceX = this.source.x ?? 0
+    const sourceY = this.source.y ?? 0
+    const targetX = this.target.x ?? 0
+    const targetY = this.target.y ?? 0
+
     if (
       nextEdge !== this.edge ||
-      this.source.x !== this.sourceX ||
-      this.source.y !== this.sourceY ||
-      this.target.x !== this.targetX ||
-      this.target.y !== this.targetY
+      sourceX !== this.sourceX ||
+      sourceY !== this.sourceY ||
+      targetX !== this.targetX ||
+      targetY !== this.targetY
     ) {
+      if (this.renderer.components.debug) {
+        this.renderer.components.debug.edgeUpdateCount++
+      }
+
       const nextArrow = nextEdge.style?.arrow ?? DEFAULT_ARROW
       const width = nextEdge.style?.width ?? DEFAULT_EDGE_WIDTH
       const color = nextEdge.style?.stroke ?? DEFAULT_EDGE_COLOR
       const opacity = nextEdge.style?.strokeOpacity ?? DEFAULT_EDGE_OPACITY
-      const sourceRadius = this.source.strokes.radius ?? this.source.radius
-      const targetRadius = this.target.strokes.radius ?? this.target.radius
-      const theta = angle(this.source.x, this.source.y, this.target.x, this.target.y)
-      let arrowX0: number | undefined = undefined
-      let arrowY0: number | undefined = undefined
-      let arrowX1: number | undefined = undefined
-      let arrowY1: number | undefined = undefined
-      let x0: number
-      let y0: number
-      let x1: number
-      let y1: number
+      const sourceRadius = this.source.strokes.radius ?? this.source.radius ?? 0
+      const targetRadius = this.target.strokes.radius ?? this.target.radius ?? 0
 
-      // Update Edge Arrows
-      if (nextArrow === 'reverse' || nextArrow == 'both') {
-        ;[x0, y0] = movePoint(this.source.x, this.source.y, theta, -sourceRadius - this.reverseArrow.height)
-        ;[arrowX0, arrowY0] = movePoint(this.source.x, this.source.y, theta, -sourceRadius)
-        this.reverseArrow.update(arrowX0, arrowY0, theta, color, opacity)
+      if (distanceSquared(sourceX, sourceY, targetX, targetY) <= (sourceRadius + targetRadius) ** 2) {
+        // edge is shorter than the source/target node's combined radius, don't render
+        this.forwardArrow.hide()
+        this.reverseArrow.hide()
+        this.lineSegment.hide()
       } else {
-        ;[x0, y0] = movePoint(this.source.x, this.source.y, theta, -sourceRadius)
+        this.forwardArrow.show()
+        this.reverseArrow.show()
+        this.lineSegment.show()
+
+        const theta = angle(sourceX, sourceY, targetX, targetY)
+        let arrowX0: number | undefined = undefined
+        let arrowY0: number | undefined = undefined
+        let arrowX1: number | undefined = undefined
+        let arrowY1: number | undefined = undefined
+        let x0: number
+        let y0: number
+        let x1: number
+        let y1: number
+
+        // Update Edge Arrows
+        if (nextArrow === 'reverse' || nextArrow == 'both') {
+          ;[x0, y0] = movePoint(sourceX, sourceY, theta, -sourceRadius - this.reverseArrow.height)
+          ;[arrowX0, arrowY0] = movePoint(sourceX, sourceY, theta, -sourceRadius)
+          this.reverseArrow.update(arrowX0, arrowY0, theta + Math.PI, color, opacity)
+        } else {
+          ;[x0, y0] = movePoint(sourceX, sourceY, theta, -sourceRadius)
+        }
+
+        if (nextArrow === 'forward' || nextArrow == 'both') {
+          ;[x1, y1] = movePoint(targetX, targetY, theta, targetRadius + this.forwardArrow.height)
+          ;[arrowX1, arrowY1] = movePoint(targetX, targetY, theta, targetRadius)
+          this.forwardArrow.update(arrowX1, arrowY1, theta, color, opacity)
+        } else {
+          ;[x1, y1] = movePoint(targetX, targetY, theta, targetRadius)
+        }
+
+        // Update Edge LineSegment
+        this.lineSegment.update(x0, y0, x1, y1, width, theta, color, opacity)
+
+        // Update Hit Area
+        this.eventHandler.update(arrowX0 ?? x0, arrowY0 ?? y0, arrowX1 ?? x1, arrowY1 ?? y1, width)
       }
 
-      if (nextArrow === 'forward' || nextArrow == 'both') {
-        ;[x1, y1] = movePoint(this.target.x, this.target.y, theta, targetRadius + this.forwardArrow.height)
-        ;[arrowX1, arrowY1] = movePoint(this.target.x, this.target.y, theta, targetRadius)
-        this.forwardArrow.update(arrowX1, arrowY1, theta, color, opacity)
-      } else {
-        ;[x1, y1] = movePoint(this.target.x, this.target.y, theta, targetRadius)
-      }
-
-      // Update Edge LineSegment
-      this.lineSegment.update(x0, y0, x1, y1, width, theta, color, opacity)
-
-      // Update Hit Area
-      this.hitArea.update(arrowX0 ?? x0, arrowY0 ?? y0, arrowX1 ?? x1, arrowY1 ?? y1, nextEdge.style?.width ?? DEFAULT_EDGE_WIDTH, theta)
-    }
-
-    this.sourceX = this.source.x
-    this.sourceY = this.source.y
-    this.targetX = this.target.x
-    this.targetY = this.target.y
-    this.edge = nextEdge
-
-    if (this.shouldCull()) {
-      this.hitArea.unmount()
-    } else {
-      this.hitArea.mount()
+      this.sourceX = sourceX
+      this.sourceY = sourceY
+      this.targetX = targetX
+      this.targetY = targetY
+      this.edge = nextEdge
     }
 
     return this
@@ -111,17 +126,5 @@ export class EdgeComponent implements IComponent {
     this.lineSegment.exit()
     this.forwardArrow.exit()
     this.reverseArrow.exit()
-    this.hitArea.exit()
-  }
-
-  private shouldCull() {
-    const minX = Math.min(this.sourceX, this.targetX)
-    const minY = Math.min(this.sourceY, this.targetY)
-    const maxX = Math.max(this.sourceX, this.targetX)
-    const maxY = Math.max(this.sourceY, this.targetY)
-    const viewport = this.renderer.components.viewport
-
-    // TODO - also calculate whether edge intersects with any of the 4 bbox edges
-    return maxX < viewport.minX || minX > viewport.maxX || maxY < viewport.minY || minY > viewport.maxY || viewport.zoom > MIN_EDGES_ZOOM
   }
 }

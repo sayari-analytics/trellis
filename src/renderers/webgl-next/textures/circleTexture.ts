@@ -22,7 +22,6 @@ export class CircleTexture implements ITexture {
       // scaleMode: 'linear'
       // multisample: MSAA_QUALITY.HIGH,
     })
-    // this.texture.source.updateMipmaps()
 
     app.renderer.render({
       container: graphic,

@@ -12,15 +12,10 @@ export const MIN_TEXTURE_ZOOM = 3
 export const DEFAULT_RESOLUTION = 2
 export const DEFAULT_OPACITY = 1
 
-export const COLORS = {
-  BLACK: '#000000',
-  WHITE: '#FFFFFF'
-}
-
 export const DEFAULT_TEXT_STYLE = {
   margin: 2,
   fontSize: 10,
-  color: COLORS.BLACK,
+  color: 0x000000,
   letterSpacing: 0.5,
   fontName: 'Font',
   fontFamily: 'sans-serif',
@@ -30,14 +25,14 @@ export const DEFAULT_TEXT_STYLE = {
   stroke: undefined
 }
 
-export const DEFAULT_NODE_FILL = '#aaa'
+export const DEFAULT_NODE_FILL = 0xaaaaaa
 
 export const DEFAULT_LABEL_STYLE = {
   defaultTextStyle: { position: 'bottom' as AnchorPosition, align: 'center' as TextAlign }
 }
 
 export const DEFAULT_HIGHLIGHT_STYLE = {
-  color: COLORS.WHITE,
+  color: 0xffffff,
   opacity: DEFAULT_OPACITY,
   padding: [8, 4] as [number, number]
 }

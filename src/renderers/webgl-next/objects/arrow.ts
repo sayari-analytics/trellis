@@ -1,12 +1,15 @@
 import { Container, Sprite } from 'pixi.js'
 import { ArrowTexture } from '../textures/arrowTexture'
 import { HALF_PI } from '../utils'
+import { Color } from '../../..'
 
 export class Arrow {
   height: number
   width: number
 
   private sprite?: Sprite
+  private shouldShow = true
+  private color?: Color
 
   constructor(
     private container: Container,
@@ -16,7 +19,7 @@ export class Arrow {
     this.width = this.arrowTexture.width
   }
 
-  update(x: number, y: number, rotation: number, color: string, opacity: number) {
+  update(x: number, y: number, theta: number, color: Color, opacity: number) {
     if (this.sprite === undefined) {
       this.sprite = new Sprite({
         texture: this.arrowTexture.getTexture(),
@@ -25,18 +28,32 @@ export class Arrow {
         height: this.arrowTexture.height,
         scale: 1 / this.arrowTexture.scaleFactor
       })
-      this.sprite.rotation = rotation + HALF_PI
-      this.sprite.tint = color
-      this.sprite.alpha = opacity
-      this.sprite.x = x
-      this.sprite.y = y
       this.container.addChild(this.sprite)
-    } else {
-      this.sprite.rotation = rotation + HALF_PI
-      this.sprite.tint = color
-      this.sprite.alpha = opacity
-      this.sprite.x = x
-      this.sprite.y = y
+    }
+    this.sprite.rotation = theta + HALF_PI
+    this.sprite.alpha = opacity
+    this.sprite.x = x
+    this.sprite.y = y
+
+    if (color !== this.color) {
+      this.color = color
+      this.sprite.tint = this.color
+    }
+  }
+
+  show() {
+    if (!this.shouldShow && this.sprite) {
+      this.shouldShow = true
+      // this.sprite.visible = true
+      this.sprite.alpha = 1
+    }
+  }
+
+  hide() {
+    if (this.shouldShow && this.sprite) {
+      this.shouldShow = false
+      // this.sprite.visible = false
+      this.sprite.alpha = 0
     }
   }
 
