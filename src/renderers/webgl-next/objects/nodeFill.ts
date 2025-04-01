@@ -1,9 +1,10 @@
 import { Sprite, Container } from 'pixi.js'
+import { IRendererObject } from '.'
 import { CircleTexture } from '../textures/circleTexture'
 import { DEFAULT_NODE_FILL } from '../../../utils/constants'
 import { Color } from '../../../types'
 
-export class NodeFill {
+export class NodeFill implements IRendererObject {
   sprite?: Sprite
 
   private color?: Color
@@ -13,7 +14,7 @@ export class NodeFill {
     private circleTexture: CircleTexture
   ) {}
 
-  update(x: number, y: number, color: Color | undefined, radius: number) {
+  style(color: Color | undefined, radius: number) {
     if (this.sprite === undefined) {
       this.sprite = new Sprite({
         texture: this.circleTexture.getTexture(),
@@ -23,14 +24,23 @@ export class NodeFill {
     }
 
     this.sprite.scale = radius / this.circleTexture.scaleFactor
-    this.sprite.x = x
-    this.sprite.y = y
 
     const _color = color ?? DEFAULT_NODE_FILL
     if (this.color !== _color) {
       this.color = _color
       this.sprite.tint = this.color
     }
+
+    return this
+  }
+
+  position(x: number, y: number) {
+    if (this.sprite) {
+      this.sprite.x = x
+      this.sprite.y = y
+    }
+
+    return this
   }
 
   exit() {

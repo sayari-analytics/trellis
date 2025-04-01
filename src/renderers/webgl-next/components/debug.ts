@@ -102,8 +102,8 @@ export class Debug implements IComponent {
   render() {
     this.stats?.update()
     this.updateViewportPanel?.update(this.viewportChanged ? 1 : 0, 1)
-    this.updateNodeCountPanel?.update(this.nodeUpdateCount, this.renderer.components.nodes.nodes.length)
-    this.updateEdgeCountPanel?.update(this.edgeUpdateCount, this.renderer.components.edges.edges.length)
+    this.updateNodeCountPanel?.update(this.nodeUpdateCount, Math.max(this.renderer.components.nodes.nodes.length, 1))
+    this.updateEdgeCountPanel?.update(this.edgeUpdateCount, Math.max(this.renderer.components.edges.edges.length, 1))
     this.viewportChanged = false
     this.nodeUpdateCount = 0
     this.edgeUpdateCount = 0

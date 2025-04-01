@@ -1,10 +1,13 @@
 import { Container, Sprite, Texture } from 'pixi.js'
+import { IRendererObject } from '.'
 import { ImageTexture } from '../textures/imageTexture'
 import { ImageIcon as _ImageIcon } from '../../../types'
 
-export class ImageIcon {
+export class ImageIcon implements IRendererObject {
   private sprite?: Sprite
   private icon?: _ImageIcon
+  private offsetX?: number
+  private offsetY?: number
   private cancelTextureLoad?: () => void
 
   constructor(
@@ -12,7 +15,7 @@ export class ImageIcon {
     private imageTexture: ImageTexture
   ) {}
 
-  update(x: number, y: number, icon: _ImageIcon) {
+  style(icon: _ImageIcon) {
     if (this.sprite === undefined) {
       this.sprite = new Sprite({
         texture: Texture.EMPTY,
@@ -23,9 +26,6 @@ export class ImageIcon {
       this.cancelTextureLoad = this.imageTexture.getTexture(icon.url, (texture) => {
         this.sprite!.texture = texture
       })
-      this.sprite.scale = (icon.scale ?? 1) * (1 / this.imageTexture.scaleFactor)
-      this.sprite.x = x + (icon.offset?.x ?? 0)
-      this.sprite.y = y + (icon.offset?.y ?? 0)
     } else {
       if (icon.url !== this.icon?.url) {
         this.cancelTextureLoad?.()
@@ -33,12 +33,23 @@ export class ImageIcon {
           if (this.sprite) this.sprite.texture = texture
         })
       }
-      this.sprite.scale = (icon.scale ?? 1) * (1 / this.imageTexture.scaleFactor)
-      this.sprite!.x = x + (icon.offset?.x ?? 0)
-      this.sprite!.y = y + (icon.offset?.y ?? 0)
     }
 
+    this.sprite.scale = (icon.scale ?? 1) * (1 / this.imageTexture.scaleFactor)
+    this.offsetX = icon.offset?.x ?? 0
+    this.offsetY = icon.offset?.y ?? 0
     this.icon = icon
+
+    return this
+  }
+
+  position(x: number, y: number) {
+    if (this.sprite) {
+      this.sprite!.x = x + this.offsetX!
+      this.sprite!.y = y + this.offsetY!
+    }
+
+    return this
   }
 
   exit() {

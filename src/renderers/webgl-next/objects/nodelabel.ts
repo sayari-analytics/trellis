@@ -1,14 +1,19 @@
 import { BitmapText, Container, Text } from 'pixi.js'
+import { IRendererObject } from '.'
 import { isASCII } from '../utils'
-import { NodeLabelStyle } from '../../../types'
+import { LabelPosition, NodeLabelStyle } from '../../..'
 import { DEFAULT_TEXT_STYLE } from '../../../utils/constants'
 
-export class NodeLabel {
+export class NodeLabel implements IRendererObject {
   scaleFactor: number
-  mounted = false
 
   private text?: BitmapText | Text
-  private style?: NodeLabelStyle
+  private labelStyle?: NodeLabelStyle
+  private labelPosition?: LabelPosition
+  private labelMargin?: number
+  private nodeRadius?: number
+  private offsetX?: number
+  private offsetY?: number
 
   constructor(
     private container: Container,
@@ -17,129 +22,115 @@ export class NodeLabel {
     this.scaleFactor = maxZoom
   }
 
-  update(x: number, y: number, label: string, style: NodeLabelStyle | undefined, nodeRadius: number) {
+  style(label: string, labelStyle: NodeLabelStyle | undefined, nodeRadius: number) {
     if (this.text === undefined) {
       this.text = isASCII(label)
         ? new BitmapText({ text: label, scale: 1 / this.scaleFactor })
         : new Text({ text: label, scale: 1 / this.scaleFactor })
-
-      this.setTextStyle(style)
-
-      const [offsetX, offsetY] = this.getTextOffset(
-        style?.position ?? DEFAULT_TEXT_STYLE.position,
-        style?.margin ?? DEFAULT_TEXT_STYLE.margin,
-        nodeRadius
-      )
-      this.text!.x = x + offsetX
-      this.text!.y = y + offsetY
-
-      this.mount()
+      this.container.addChild(this.text)
     } else {
       if (isASCII(label)) {
         if (this.text instanceof Text) {
           this.exit()
           this.text = new BitmapText({ text: label, scale: 1 / this.scaleFactor })
-          this.mount()
+          this.container.addChild(this.text)
         }
       } else if (this.text instanceof BitmapText) {
         this.exit()
         this.text = new Text({ text: label, scale: 1 / this.scaleFactor })
-        this.mount()
+        this.container.addChild(this.text)
+      }
+    }
+
+    if (labelStyle !== this.labelStyle) {
+      this.labelStyle = labelStyle
+      this.text!.style.fill = this.labelStyle?.color ?? DEFAULT_TEXT_STYLE.color
+      this.text!.style.fontSize = (this.labelStyle?.fontSize ?? DEFAULT_TEXT_STYLE.fontSize) * this.scaleFactor
+      this.text!.style.fontFamily = 'sans-serif' // TODO - wait until fontFamily is loaded and use user-supplied font
+      this.text!.style.fontWeight = this.labelStyle?.fontWeight ?? DEFAULT_TEXT_STYLE.fontWeight
+      this.text!.style.letterSpacing = DEFAULT_TEXT_STYLE.letterSpacing
+
+      if (this.labelStyle?.stroke !== undefined) {
+        this.text!.style.stroke = {
+          color: this.labelStyle?.stroke.color,
+          width: this.labelStyle?.stroke.width * this.scaleFactor
+        }
+      } else {
+        this.text!.style.stroke = undefined as any // Pixi typing bug
       }
 
-      if (this.style !== style) {
-        this.setTextStyle(style)
+      switch (this.labelStyle?.position ?? DEFAULT_TEXT_STYLE.position) {
+        case 'bottom': {
+          this.text!.style.align = 'center'
+          this.text!.anchor.set(0.5, 0)
+          break
+        }
+        case 'top': {
+          this.text!.style.align = 'center'
+          this.text!.anchor.set(0.5, 1)
+          break
+        }
+        case 'left': {
+          this.text!.style.align = 'right'
+          this.text!.anchor.set(1, 0.5)
+          break
+        }
+        case 'right': {
+          this.text!.style.align = 'left'
+          this.text!.anchor.set(0, 0.5)
+          break
+        }
       }
-
-      const [offsetX, offsetY] = this.getTextOffset(
-        style?.position ?? DEFAULT_TEXT_STYLE.position,
-        style?.margin ?? DEFAULT_TEXT_STYLE.margin,
-        nodeRadius
-      )
-
-      this.text!.x = x + offsetX
-      this.text!.y = y + offsetY
     }
 
-    this.style = style
+    const labelPosition = labelStyle?.position ?? DEFAULT_TEXT_STYLE.position
+    const labelMargin = labelStyle?.margin ?? DEFAULT_TEXT_STYLE.margin
+    if (labelPosition !== this.labelPosition || labelMargin !== this.labelMargin || nodeRadius !== this.nodeRadius) {
+      this.labelPosition = labelPosition
+      this.labelMargin = labelMargin
+      this.nodeRadius = nodeRadius
+
+      switch (this.labelPosition) {
+        case 'bottom': {
+          this.offsetX = 0
+          this.offsetY = this.nodeRadius + this.labelMargin
+          break
+        }
+        case 'top': {
+          this.offsetX = 0
+          this.offsetY = -this.nodeRadius - this.labelMargin
+          break
+        }
+        case 'left': {
+          this.offsetX = -this.nodeRadius - this.labelMargin
+          this.offsetY = 0
+          break
+        }
+        case 'right': {
+          this.offsetX = this.nodeRadius + this.labelMargin
+          this.offsetY = 0
+          break
+        }
+      }
+    }
+
+    return this
   }
 
-  mount() {
-    if (!this.mounted && this.text !== undefined) {
-      this.container.addChild(this.text)
-      this.mounted = true
+  position(x: number, y: number) {
+    if (this.text) {
+      this.text.x = x + this.offsetX!
+      this.text.y = y + this.offsetY!
     }
-  }
 
-  unmount() {
-    if (this.mounted && this.text !== undefined) {
-      this.container.removeChild(this.text)
-      this.mounted = false
-    }
+    return this
   }
 
   exit() {
     if (this.text) {
-      this.unmount()
+      this.container.removeChild(this.text)
       this.text.destroy()
       this.text = undefined
-    }
-  }
-
-  private setTextStyle(style?: NodeLabelStyle) {
-    this.text!.style.fill = style?.color ?? DEFAULT_TEXT_STYLE.color
-    this.text!.style.fontSize = (style?.fontSize ?? DEFAULT_TEXT_STYLE.fontSize) * this.scaleFactor
-    this.text!.style.fontFamily = 'sans-serif' // TODO - wait until fontFamily is loaded and use user-supplied font
-    this.text!.style.fontWeight = style?.fontWeight ?? DEFAULT_TEXT_STYLE.fontWeight
-    this.text!.style.letterSpacing = DEFAULT_TEXT_STYLE.letterSpacing
-
-    if (style?.stroke !== undefined) {
-      this.text!.style.stroke = {
-        color: style?.stroke.color,
-        width: style?.stroke.width * this.scaleFactor
-      }
-    } else {
-      this.text!.style.stroke = undefined as any // Pixi typing bug
-    }
-
-    switch (style?.position ?? DEFAULT_TEXT_STYLE.position) {
-      case 'bottom': {
-        this.text!.style.align = 'center'
-        this.text!.anchor.set(0.5, 0)
-        break
-      }
-      case 'top': {
-        this.text!.style.align = 'center'
-        this.text!.anchor.set(0.5, 1)
-        break
-      }
-      case 'left': {
-        this.text!.style.align = 'right'
-        this.text!.anchor.set(1, 0.5)
-        break
-      }
-      case 'right': {
-        this.text!.style.align = 'left'
-        this.text!.anchor.set(0, 0.5)
-        break
-      }
-    }
-  }
-
-  private getTextOffset(position: 'bottom' | 'left' | 'top' | 'right', margin: number, nodeRadius: number) {
-    switch (position) {
-      case 'bottom': {
-        return [0, nodeRadius + margin]
-      }
-      case 'top': {
-        return [0, -nodeRadius - margin]
-      }
-      case 'left': {
-        return [-nodeRadius - margin, 0]
-      }
-      case 'right': {
-        return [nodeRadius + margin, 0]
-      }
     }
   }
 }

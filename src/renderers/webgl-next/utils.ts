@@ -10,9 +10,9 @@ export const THREE_HALF_PI = HALF_PI * 3
 
 export const RADIANS_PER_DEGREE = Math.PI / 180
 
-export const movePoint = (x: number, y: number, angle: number, distance: number): [x: number, y: number] => [
-  x + Math.cos(angle) * distance,
-  y + Math.sin(angle) * distance
+export const movePoint = (x: number, y: number, theta: number, distance: number): [x: number, y: number] => [
+  x + Math.cos(theta) * distance,
+  y + Math.sin(theta) * distance
 ]
 
 export const midPoint = (x0: number, y0: number, x1: number, y1: number): [x: number, y: number] => [(x0 + x1) / 2, (y0 + y1) / 2]

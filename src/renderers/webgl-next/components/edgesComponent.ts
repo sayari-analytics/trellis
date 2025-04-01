@@ -1,13 +1,13 @@
 import type { IComponent } from '.'
-import { EdgeComponent } from './edgeComponent'
 import type { Renderer } from '..'
+import { EdgeRenderer } from '../objects/edge'
 import { logUnknownEdgeError } from '../utils'
 import type { Edge } from '../../..'
 
 export class EdgesComponent implements IComponent {
   edges: Edge[] = []
   renderIdx = 0
-  edgeComponents = new Map<Edge, EdgeComponent>()
+  edgeComponents = new Map<Edge, EdgeRenderer>()
 
   constructor(private renderer: Renderer) {}
 
@@ -35,7 +35,7 @@ export class EdgesComponent implements IComponent {
           const edgeComponent = sourceNodeComponent.outEdges.get(targetNodeComponent)
           if (edgeComponent === undefined) {
             // enter
-            const edgeComponent = new EdgeComponent(this.renderer, sourceNodeComponent, targetNodeComponent).render(edge)
+            const edgeComponent = new EdgeRenderer(this.renderer, sourceNodeComponent, targetNodeComponent).style(edge).position()
             this.edgeComponents.set(edge, edgeComponent)
             sourceNodeComponent.outEdges.set(targetNodeComponent, edgeComponent)
             targetNodeComponent.inEdges.set(sourceNodeComponent, edgeComponent)
@@ -43,7 +43,7 @@ export class EdgesComponent implements IComponent {
             // update
             this.edgeComponents.delete(edgeComponent.edge!)
             this.edgeComponents.set(edge, edgeComponent)
-            edgeComponent.render(edge)
+            edgeComponent.style(edge)
             edgeComponent.renderIdx = this.renderIdx
             edgeUpdateCount++
           }
@@ -57,7 +57,7 @@ export class EdgesComponent implements IComponent {
 
           if (edgeComponent && edgeComponent.renderIdx !== this.renderIdx) {
             // exit
-            edgeComponent.delete()
+            edgeComponent.exit()
             this.edgeComponents.delete(edge)
 
             const sourceNodeComponent = this.renderer.components.nodes.nodeComponents.get(edge.source)
@@ -68,8 +68,10 @@ export class EdgesComponent implements IComponent {
               continue
             }
 
-            sourceNodeComponent.outEdges.get(targetNodeComponent)?.delete()
-            targetNodeComponent.inEdges.get(sourceNodeComponent)?.delete()
+            sourceNodeComponent.outEdges.get(targetNodeComponent)?.exit()
+            targetNodeComponent.inEdges.get(sourceNodeComponent)?.exit()
+            sourceNodeComponent.outEdges.delete(targetNodeComponent)
+            targetNodeComponent.inEdges.delete(sourceNodeComponent)
           }
         }
       }
@@ -82,7 +84,7 @@ export class EdgesComponent implements IComponent {
 
   delete() {
     for (const edgeComponent of this.edgeComponents.values()) {
-      edgeComponent.delete()
+      edgeComponent.exit()
     }
   }
 }

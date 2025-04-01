@@ -1,37 +1,52 @@
 import { Sprite, Container, Texture } from 'pixi.js'
-import { HALF_PI } from '../utils'
-import { distance } from '../../../utils/api'
+import { IRendererObject } from '.'
 import { Color } from '../../..'
 
-export class LineSegment {
+export class LineSegment implements IRendererObject {
   private sprite?: Sprite
   private shouldShow = true
+  private width?: number
   private color?: Color
+  private opacity?: number
 
   constructor(private container: Container) {}
 
-  update(x0: number, y0: number, x1: number, y1: number, width: number, theta: number, color: Color, opacity: number) {
+  style(width: number, color: Color, opacity: number) {
     if (this.sprite === undefined) {
       this.sprite = new Sprite({
         texture: Texture.WHITE,
-        anchor: { x: 0.5, y: 0 },
-        width: 1,
-        height: 1
+        anchor: { x: 0.5, y: 0 }
       })
       this.container.addChild(this.sprite)
     }
 
-    this.sprite.scale.x = width
-    this.sprite.scale.y = distance(x0, y0, x1, y1)
-    this.sprite.rotation = theta + HALF_PI
-    this.sprite.alpha = opacity
-    this.sprite.x = x0
-    this.sprite.y = y0
+    if (width !== this.width) {
+      this.width = width
+      this.sprite.scale.x = this.width
+    }
 
-    if (this.color !== color) {
+    if (opacity !== this.opacity) {
+      this.opacity = opacity
+      this.sprite.alpha = opacity
+    }
+
+    if (color !== this.color) {
       this.color = color
       this.sprite.tint = this.color
     }
+
+    return this
+  }
+
+  position(x0: number, y0: number, theta: number, distance: number) {
+    if (this.sprite) {
+      this.sprite.scale.y = distance
+      this.sprite.rotation = theta
+      this.sprite.x = x0
+      this.sprite.y = y0
+    }
+
+    return this
   }
 
   show() {

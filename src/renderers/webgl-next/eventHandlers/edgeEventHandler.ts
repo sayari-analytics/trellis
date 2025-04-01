@@ -1,7 +1,7 @@
 import { FederatedPointerEvent } from 'pixi.js'
 import type { EventHandler } from '.'
 import type { Renderer } from '..'
-import type { EdgeComponent } from '../components/edgeComponent'
+import type { EdgeRenderer } from '../objects/edge'
 import type { EventsComponent } from '../components/eventsComponent'
 import { distanceSquared } from '../../..'
 
@@ -24,12 +24,12 @@ export class EdgeEventHandler implements EventHandler {
 
   constructor(
     private renderer: Renderer,
-    private edgeComponent: EdgeComponent
+    private edgeComponent: EdgeRenderer
   ) {
     this.events = this.renderer.components.events
   }
 
-  update(x0: number, y0: number, x1: number, y1: number, width: number) {
+  update(x0: number, y0: number, x1: number, y1: number, width: number, lengthSquared: number) {
     // compute bounding box with small buffer to account for vertical/horizontal lines
     if (x0 <= x1) {
       this.minX = x0 - MIN_EDGE_HITBOX_WIDTH
@@ -51,7 +51,7 @@ export class EdgeEventHandler implements EventHandler {
     this.y0 = y0
     this.x1 = x1
     this.y1 = y1
-    this.lengthSquared = distanceSquared(x0, y0, x1, y1)
+    this.lengthSquared = lengthSquared
     this.halfWidthSquared = Math.max(width / 2, MIN_EDGE_HITBOX_WIDTH) ** 2
   }
 

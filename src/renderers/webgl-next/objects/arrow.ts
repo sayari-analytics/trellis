@@ -1,15 +1,16 @@
 import { Container, Sprite } from 'pixi.js'
+import { IRendererObject } from '.'
 import { ArrowTexture } from '../textures/arrowTexture'
-import { HALF_PI } from '../utils'
 import { Color } from '../../..'
 
-export class Arrow {
+export class Arrow implements IRendererObject {
   height: number
   width: number
 
   private sprite?: Sprite
   private shouldShow = true
   private color?: Color
+  private opacity?: number
 
   constructor(
     private container: Container,
@@ -19,7 +20,7 @@ export class Arrow {
     this.width = this.arrowTexture.width
   }
 
-  update(x: number, y: number, theta: number, color: Color, opacity: number) {
+  style(color: Color, opacity: number) {
     if (this.sprite === undefined) {
       this.sprite = new Sprite({
         texture: this.arrowTexture.getTexture(),
@@ -30,15 +31,28 @@ export class Arrow {
       })
       this.container.addChild(this.sprite)
     }
-    this.sprite.rotation = theta + HALF_PI
-    this.sprite.alpha = opacity
-    this.sprite.x = x
-    this.sprite.y = y
 
     if (color !== this.color) {
       this.color = color
       this.sprite.tint = this.color
     }
+
+    if (opacity !== this.opacity) {
+      this.opacity = opacity
+      this.sprite.alpha = this.opacity
+    }
+
+    return this
+  }
+
+  position(x: number, y: number, theta: number) {
+    if (this.sprite) {
+      this.sprite.rotation = theta
+      this.sprite.x = x
+      this.sprite.y = y
+    }
+
+    return this
   }
 
   show() {

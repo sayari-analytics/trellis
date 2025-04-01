@@ -1,12 +1,12 @@
 import { IComponent } from '.'
-import { NodeComponent } from './nodeComponent'
 import type { Renderer } from '..'
+import { NodeRenderer } from '../objects/node'
 import type { Node } from '../../..'
 
 export class NodesComponent implements IComponent {
   nodes: Node[] = []
   renderIdx = 0
-  nodeComponents = new Map<string, NodeComponent>()
+  nodeComponents = new Map<string, NodeRenderer>()
   renderedNodes = false
 
   constructor(private renderer: Renderer) {}
@@ -22,10 +22,10 @@ export class NodesComponent implements IComponent {
 
         if (nodeComponent === undefined) {
           // enter
-          this.nodeComponents.set(node.id, new NodeComponent(this.renderer).render(dt, node))
+          this.nodeComponents.set(node.id, new NodeRenderer(this.renderer).style(dt, node).position(dt))
         } else {
           // update
-          nodeComponent.render(dt, node)
+          nodeComponent.style(dt, node).position(dt)
           nodeComponent.renderIdx = this.renderIdx
           edgeUpdateCount++
         }
@@ -38,7 +38,7 @@ export class NodesComponent implements IComponent {
 
           if (nodeComponent && nodeComponent.renderIdx !== this.renderIdx) {
             // exit
-            nodeComponent.delete()
+            nodeComponent.exit()
             this.nodeComponents.delete(nodeComponent.node!.id)
           }
         }
@@ -48,7 +48,7 @@ export class NodesComponent implements IComponent {
       this.renderedNodes = this.nodes.length > 0
     } else {
       for (const nodeComponent of this.nodeComponents.values()) {
-        nodeComponent.render(dt, nodeComponent.node!)
+        nodeComponent.position(dt)
       }
     }
 
@@ -57,7 +57,7 @@ export class NodesComponent implements IComponent {
 
   delete() {
     for (const nodeComponent of this.nodeComponents.values()) {
-      nodeComponent.delete()
+      nodeComponent.exit()
     }
   }
 }

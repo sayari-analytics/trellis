@@ -18,6 +18,8 @@ export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 
 export type AnchorPosition = 'bottom' | 'left' | 'top' | 'right' | 'center'
 
+export type LabelPosition = 'bottom' | 'left' | 'top' | 'right'
+
 export type TextHighlightStyle = FillStyle & {
   padding?: number | [px: number, py: number]
 }
@@ -55,7 +57,7 @@ export type NodeLabelStyle = TextBase &
     letterSpacing: number
     wordWrap: number | false
     highlight: TextHighlightStyle
-    position: 'bottom' | 'left' | 'top' | 'right'
+    position: LabelPosition
   }>
 
 export type NodeStyle = {

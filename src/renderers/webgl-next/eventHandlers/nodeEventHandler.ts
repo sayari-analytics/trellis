@@ -1,7 +1,7 @@
 import { FederatedPointerEvent } from 'pixi.js'
 import type { EventHandler } from '.'
 import type { Renderer } from '..'
-import type { NodeComponent } from '../components/nodeComponent'
+import type { NodeRenderer } from '../objects/node'
 import type { EventsComponent } from '../components/eventsComponent'
 
 export class NodeEventHandler implements EventHandler {
@@ -22,7 +22,7 @@ export class NodeEventHandler implements EventHandler {
 
   constructor(
     private renderer: Renderer,
-    private nodeComponent: NodeComponent
+    private nodeComponent: NodeRenderer
   ) {
     this.events = this.renderer.components.events
   }

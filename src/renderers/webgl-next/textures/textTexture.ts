@@ -1,7 +1,7 @@
 import { Application, Matrix, RenderTexture, Text, Texture } from 'pixi.js'
 import { ITexture } from '.'
 import { DEFAULT_TEXT_STYLE } from '../../../utils/constants'
-import { FontWeight } from '../../..'
+import { Color, FontWeight } from '../../..'
 
 export class TextTexture implements ITexture {
   scaleFactor: number
@@ -17,11 +17,11 @@ export class TextTexture implements ITexture {
 
   getTexture(
     text: string,
-    color: string = DEFAULT_TEXT_STYLE.color,
+    color: Color = DEFAULT_TEXT_STYLE.color,
     fontSize: number = DEFAULT_TEXT_STYLE.fontSize,
     fontFamily: string = DEFAULT_TEXT_STYLE.fontFamily,
     fontWeight: FontWeight = DEFAULT_TEXT_STYLE.fontWeight,
-    strokeColor?: string,
+    strokeColor?: Color,
     strokeWidth?: number
   ) {
     const key = `${text}:${color}:${fontSize}:${fontFamily}:${fontWeight}:${strokeColor ?? ''}:${strokeWidth ?? ''}`
@@ -35,7 +35,7 @@ export class TextTexture implements ITexture {
           fontSize: fontSize * this.scaleFactor,
           fontFamily: 'sans-serif', // TODO - wait until fontFamily is loaded and use user-supplied font
           fontWeight: fontWeight,
-          stroke: { color: strokeColor, width: strokeWidth },
+          stroke: strokeColor && strokeWidth ? { color: strokeColor, width: strokeWidth } : undefined,
           letterSpacing: DEFAULT_TEXT_STYLE.letterSpacing
         }
       })

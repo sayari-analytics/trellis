@@ -1,17 +1,20 @@
 import { Container, Sprite } from 'pixi.js'
+import { IRendererObject } from '.'
 import { TextTexture } from '../textures/textTexture'
 import { TextIcon as _TextIcon } from '../../../types'
 
-export class TextIcon {
+export class TextIcon implements IRendererObject {
   private sprite?: Sprite
   private icon?: _TextIcon
+  private offsetX?: number
+  private offsetY?: number
 
   constructor(
     private container: Container,
     private textTexture: TextTexture
   ) {}
 
-  update(x: number, y: number, icon: _TextIcon) {
+  style(icon: _TextIcon) {
     if (this.sprite === undefined) {
       this.sprite = new Sprite({
         texture: this.textTexture.getTexture(
@@ -26,9 +29,6 @@ export class TextIcon {
         anchor: 0.5
       })
       this.container.addChild(this.sprite)
-      this.sprite.scale = (icon.scale ?? 1) * (1 / this.textTexture.scaleFactor)
-      this.sprite.x = x + (icon.offset?.x ?? 0)
-      this.sprite.y = y + (icon.offset?.y ?? 0)
     } else {
       if (icon.content !== this.icon?.content || icon.style !== this.icon?.style) {
         this.sprite.texture = this.textTexture.getTexture(
@@ -41,12 +41,23 @@ export class TextIcon {
           icon.style?.stroke?.width
         )
       }
-      this.sprite.scale = (icon.scale ?? 1) * (1 / this.textTexture.scaleFactor)
-      this.sprite.x = x + (icon.offset?.x ?? 0)
-      this.sprite.y = y + (icon.offset?.y ?? 0)
     }
 
+    this.sprite.scale = (icon.scale ?? 1) * (1 / this.textTexture.scaleFactor)
+    this.offsetX = icon.offset?.x ?? 0
+    this.offsetY = icon.offset?.y ?? 0
     this.icon = icon
+
+    return this
+  }
+
+  position(x: number, y: number) {
+    if (this.sprite) {
+      this.sprite.x = x + this.offsetX!
+      this.sprite.y = y + this.offsetY!
+    }
+
+    return this
   }
 
   exit() {

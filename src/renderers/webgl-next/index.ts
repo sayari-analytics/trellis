@@ -8,7 +8,7 @@ import { Assets } from './assets'
 import { Zoom } from './interaction/zoom'
 import { Drag } from './interaction/drag'
 import { Decelerate } from './interaction/decelerate'
-import type { NodeComponent } from './components/nodeComponent'
+import type { NodeRenderer } from './objects/node'
 import { DEFAULT_VIEWPORT_OPTIONS, ViewportComponent, ViewportOptions } from './components/viewportComponent'
 import { EventsComponent, EventOptions } from './components/eventsComponent'
 import { NodesComponent } from './components/nodesComponent'
@@ -16,8 +16,6 @@ import { EdgesComponent } from './components/edgesComponent'
 import { Debug } from './components/debug'
 import type { Node, Edge, Annotation } from '../../types'
 import { doAllAsync, time } from './utils'
-
-// const DYNAMIC_PARTICLE_CONTAINER_PROPERTIES = { position: true, scale: true, rotation: false, color: true }
 
 export type RendererOptions = {
   container: HTMLDivElement
@@ -47,8 +45,8 @@ export class Renderer {
   containers = {
     root: new Container(),
     // TODO - convert all node/edge sprites to particles
-    // edges: new ParticleContainer({ dynamicProperties: DYNAMIC_PARTICLE_CONTAINER_PROPERTIES, isRenderGroup: true }),
-    // nodes: new ParticleContainer({ dynamicProperties: DYNAMIC_PARTICLE_CONTAINER_PROPERTIES, isRenderGroup: true }),
+    // edges: new ParticleContainer({ dynamicProperties: { position: true, scale: true, rotation: true, color: true }, isRenderGroup: true }),
+    // nodes: new ParticleContainer({ dynamicProperties: { position: true, scale: true, rotation: false, color: true }, isRenderGroup: true }),
     edges: new Container({ isRenderGroup: true }),
     nodes: new Container({ isRenderGroup: true }),
     labels: new Container({ isRenderGroup: true })
@@ -74,7 +72,7 @@ export class Renderer {
     zoom: new Zoom(this),
     drag: new Drag(this),
     decelerate: new Decelerate(this),
-    draggedNode: undefined as NodeComponent | undefined
+    draggedNode: undefined as NodeRenderer | undefined
   }
 
   private cancelImageExport?: () => void

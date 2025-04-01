@@ -1,16 +1,16 @@
-import { IComponent } from '.'
-import type { EdgeComponent } from './edgeComponent'
+import { IRendererObject } from '.'
+import type { EdgeRenderer } from './edge'
 import { NodeEventHandler } from '../eventHandlers/nodeEventHandler'
-import { NodeStrokes } from '../objects/nodeStrokes'
-import { NodeFill } from '../objects/nodeFill'
-import { TextIcon } from '../objects/textIcon'
-import { ImageIcon } from '../objects/imageIcon'
-import { NodeLabel } from '../objects/nodelabel'
+import { NodeStrokes } from './nodeStrokes'
+import { NodeFill } from './nodeFill'
+import { TextIcon } from './textIcon'
+import { ImageIcon } from './imageIcon'
+import { NodeLabel } from './nodelabel'
 import type { Renderer } from '..'
+import { type Node } from '../../..'
 import { interpolate } from '../../../utils/helpers'
-import type { Node } from '../../..'
 
-export class NodeComponent implements IComponent {
+export class NodeRenderer implements IRendererObject {
   node?: Node
   x?: number
   y?: number
@@ -22,8 +22,8 @@ export class NodeComponent implements IComponent {
   textIcon: TextIcon
   label: NodeLabel
   eventHandler: NodeEventHandler
-  outEdges = new Map<NodeComponent, EdgeComponent>()
-  inEdges = new Map<NodeComponent, EdgeComponent>()
+  outEdges = new Map<NodeRenderer, EdgeRenderer>()
+  inEdges = new Map<NodeRenderer, EdgeRenderer>()
   renderIdx = -1
 
   private interpolateX?: { destination: number; next: (dt: number) => { value: number; done: boolean } }
@@ -39,10 +39,86 @@ export class NodeComponent implements IComponent {
     this.eventHandler = new NodeEventHandler(this.renderer, this)
   }
 
-  render(dt: number, nextNode: Node) {
-    let nextX = nextNode.x ?? 0
-    let nextY = nextNode.y ?? 0
+  style(dt: number, nextNode: Node) {
     let nextRadius = nextNode.radius
+    const animateNodeRadius = this.renderer.components.viewport.animateNodeRadius
+
+    // Calculate next Radius
+    if (this.interpolateRadius === undefined) {
+      // we are not currently interpolating radius
+      if (nextRadius !== this.radius && animateNodeRadius && this.radius !== undefined) {
+        // we have a new radius to interpolate to
+        this.interpolateRadius = { destination: nextRadius, next: interpolate(this.radius, nextRadius, animateNodeRadius) }
+        nextRadius = this.radius
+      }
+    } else {
+      // we are currently interpolating radius
+      if (nextRadius !== this.interpolateRadius.destination) {
+        // we have a new radius to interpolate to
+        if (animateNodeRadius) {
+          this.interpolateRadius = { destination: nextRadius, next: interpolate(this.radius!, nextRadius, animateNodeRadius) }
+          nextRadius = this.radius!
+        }
+      } else {
+        // we should continue the current interpolation
+        const { value, done } = this.interpolateRadius.next(dt)
+        nextRadius = value
+
+        if (done) this.interpolateRadius = undefined
+      }
+    }
+
+    // Style Node
+    if (nextNode !== this.node || nextRadius !== this.radius) {
+      if (this.renderer.components.debug) {
+        this.renderer.components.debug.nodeUpdateCount++
+      }
+
+      this.node = nextNode
+      this.radius = nextRadius
+
+      // Update Node Fill
+      this.fill.style(nextNode.style?.color, this.radius)
+
+      // Update Node Strokes
+      if (nextNode.style?.stroke) {
+        this.strokes.style(nextNode.style.stroke, this.radius)
+      } else {
+        this.strokes.exit()
+      }
+
+      // Update Node Icon
+      if (nextNode.style?.icon) {
+        if (nextNode.style.icon.type === 'imageIcon') {
+          this.textIcon.exit()
+          this.imageIcon.style(nextNode.style.icon)
+        } else {
+          this.imageIcon.exit()
+          this.textIcon.style(nextNode.style.icon)
+        }
+      } else {
+        this.imageIcon.exit()
+        this.textIcon.exit()
+      }
+
+      // Update Node Label
+      if (nextNode.label) {
+        this.label.style(nextNode.label, nextNode.style?.label, this.radius)
+      } else {
+        this.label.exit()
+      }
+    }
+
+    return this
+  }
+
+  position(dt: number) {
+    if (!this.node) {
+      return this
+    }
+
+    let nextX = this.node.x ?? 0
+    let nextY = this.node.y ?? 0
 
     /**
      * interpolate position/radius if:
@@ -51,7 +127,6 @@ export class NodeComponent implements IComponent {
      * - it's not the first time nodes have been rendered
      */
     const animateNodePosition = this.renderer.components.viewport.animateNodePosition
-    const animateNodeRadius = this.renderer.components.viewport.animateNodeRadius
     const renderedNodes = this.renderer.components.nodes.renderedNodes
     const interpolatePosition = animateNodePosition && this.renderer.interactions.draggedNode !== this && renderedNodes
 
@@ -115,90 +190,31 @@ export class NodeComponent implements IComponent {
       }
     }
 
-    // Calculate next Radius
-    if (this.interpolateRadius === undefined) {
-      // we are not currently interpolating radius
-      if (nextRadius !== this.radius && animateNodeRadius && this.radius !== undefined) {
-        // we have a new radius to interpolate to
-        this.interpolateRadius = { destination: nextRadius, next: interpolate(this.radius, nextRadius, animateNodeRadius) }
-        nextRadius = this.radius
-      }
-    } else {
-      // we are currently interpolating radius
-      if (nextRadius !== this.interpolateRadius.destination) {
-        // we have a new radius to interpolate to
-        if (animateNodeRadius) {
-          this.interpolateRadius = { destination: nextRadius, next: interpolate(this.radius!, nextRadius, animateNodeRadius) }
-          nextRadius = this.radius!
-        }
-      } else {
-        // we should continue the current interpolation
-        const { value, done } = this.interpolateRadius.next(dt)
-        nextRadius = value
-
-        if (done) this.interpolateRadius = undefined
-      }
-    }
-
-    // Update Changes
-    if (nextNode !== this.node || nextX !== this.x || nextY !== this.y || nextRadius !== this.radius) {
+    if (nextX !== this.x || nextY !== this.y) {
       if (this.renderer.components.debug) {
         this.renderer.components.debug.nodeUpdateCount++
       }
 
       this.x = nextX
       this.y = nextY
-      this.radius = nextRadius
-      this.node = nextNode
 
-      // Update Node Fill
-      this.fill.update(this.x, this.y, nextNode.style?.color, this.radius)
-
-      // Update Node Strokes
-      if (nextNode.style?.stroke) {
-        this.strokes.update(this.x, this.y, nextNode.style.stroke, this.radius)
-      } else {
-        this.strokes.exit()
-      }
-
-      // Update Node Icon
-      if (nextNode.style?.icon) {
-        if (nextNode.style.icon.type === 'imageIcon') {
-          this.textIcon.exit()
-          this.imageIcon.update(this.x, this.y, nextNode.style.icon)
-        } else {
-          this.imageIcon.exit()
-          this.textIcon.update(this.x, this.y, nextNode.style.icon)
-        }
-      } else {
-        this.imageIcon.exit()
-        this.textIcon.exit()
-      }
-
-      // Update Node Label
-      if (nextNode.label) {
-        this.label.update(this.x, this.y, nextNode.label, nextNode.style?.label, this.radius)
-      } else {
-        this.label.exit()
-      }
-
-      // Update Hit Area
-      this.eventHandler.update(this.x, this.y, this.strokes.radius ?? this.radius)
-
-      // Update Edge Positions
-      for (const edgeComponent of this.outEdges.values()) {
-        edgeComponent.render(edgeComponent.edge!)
-      }
-
-      for (const edgeComponent of this.inEdges.values()) {
-        edgeComponent.render(edgeComponent.edge!)
-      }
+      this.fill.position(this.x, this.y)
+      this.strokes.position(this.x, this.y)
+      this.textIcon.position(this.x, this.y)
+      this.imageIcon.position(this.x, this.y)
+      this.label.position(this.x, this.y)
+      this.eventHandler.update(this.x, this.y, this.strokes.radius ?? this.radius ?? 0)
+      /**
+       * TODO - if an edge's source and target both move, only update position once
+       */
+      for (const edgeComponent of this.outEdges.values()) edgeComponent.position()
+      for (const edgeComponent of this.inEdges.values()) edgeComponent.position()
     }
 
     return this
   }
 
-  delete() {
+  exit() {
     this.fill.exit()
     this.strokes.exit()
     this.imageIcon.exit()

@@ -1,9 +1,10 @@
 import { Container, Sprite } from 'pixi.js'
+import { IRendererObject } from '.'
 import { CircleTexture } from '../textures/circleTexture'
 import type { Stroke } from '../../../types'
 import { NodeFill } from './nodeFill'
 
-export class NodeStrokes {
+export class NodeStrokes implements IRendererObject {
   radius?: number
 
   private sprites: Sprite[] = []
@@ -16,7 +17,7 @@ export class NodeStrokes {
     private nodeFill: NodeFill
   ) {}
 
-  update(x: number, y: number, strokes: Stroke[], nodeRadius: number) {
+  style(strokes: Stroke[], nodeRadius: number) {
     if (strokes !== this.strokes || nodeRadius !== this.nodeRadius) {
       this.radius = nodeRadius
 
@@ -35,8 +36,6 @@ export class NodeStrokes {
 
         circle.scale = this.radius / this.circleTexture.scaleFactor
         circle.tint = strokes[i].color
-        circle.x = x
-        circle.y = y
       }
 
       for (let i = strokes.length; i < this.sprites.length; i++) {
@@ -44,15 +43,21 @@ export class NodeStrokes {
         this.container.removeChild(circle)
         circle.destroy()
       }
-    } else {
-      for (let i = 0; i < this.sprites.length; i++) {
-        this.sprites[i].x = x
-        this.sprites[i].y = y
-      }
     }
 
     this.strokes = strokes
     this.nodeRadius = nodeRadius
+
+    return this
+  }
+
+  position(x: number, y: number) {
+    for (let i = 0; i < this.sprites.length; i++) {
+      this.sprites[i].x = x
+      this.sprites[i].y = y
+    }
+
+    return this
   }
 
   exit() {

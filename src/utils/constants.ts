@@ -25,6 +25,11 @@ export const DEFAULT_TEXT_STYLE = {
   stroke: undefined
 }
 
+export const DEFAULT_EDGE_WIDTH = 1
+export const DEFAULT_EDGE_COLOR = 0xaaaaaa
+export const DEFAULT_EDGE_OPACITY = 1
+export const DEFAULT_ARROW = 'none'
+
 export const DEFAULT_NODE_FILL = 0xaaaaaa
 
 export const DEFAULT_LABEL_STYLE = {
