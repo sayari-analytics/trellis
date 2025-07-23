@@ -1,0 +1,29 @@
+{
+  "name": "@sayari/trellis-quadtree",
+  "version": "0.7.0-rc.17",
+  "description": "Efficient pointerless region quadtree index for simulating large force-directed graphs",
+  "devDependencies": {
+    "@types/tape": "^5.8.1",
+    "tap-spec": "^5.0.0",
+    "tape": "^5.9.0"
+  },
+  "scripts": {
+    "test": "tsx ./tests/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayari-analytics/trellis.git"
+  },
+  "keywords": [
+    "trellis",
+    "quadtree",
+    "network",
+    "simulation"
+  ],
+  "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io, Mikey Gower",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayari-analytics/trellis/issues"
+  },
+  "homepage": "https://github.com/sayari-analytics/trellis#readme"
+}
