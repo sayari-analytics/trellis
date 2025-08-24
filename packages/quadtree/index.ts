@@ -1,11 +1,15 @@
 export class Quadtree {
   // Constants
-  static readonly QUAD_MAX_CAPACITY = 8
-  static readonly QUAD_MAX_DEPTH = 8
-  static readonly QUAD_COUNT = 21_845 // 1 + 4 + ... + 4^8
-  static readonly QUAD_STRIDE = 3 // [firstElementIndex, elementCount, firstChildId]
-  static readonly QUAD_ELEMENTS_LINKED_LIST_STRIDE = 2 // [elementId, nextElementIndex]
-  static readonly QUAD_MASS_STRIDE = 2 // [centerOfMassX, centerOfMassY]
+  private static readonly QUAD_STRIDE = 5
+  private static readonly QUAD_ELEMENTS_STRIDE = 2
+
+  // Quadtree Properties
+  minX: number = 0
+  minY: number = 0
+  maxX: number = 0
+  maxY: number = 0
+  maxCapacity: number
+  maxDepth!: number
 
   // Element Data
   private elements: Float32Array
@@ -15,297 +19,257 @@ export class Quadtree {
   private elementRadiusOffset: number
   private elementCount: number
 
-  // Tree Bounds
-  private minX: number
-  private minY: number
-  private maxX: number
-  private maxY: number
-
   // Tree Data Structures
   private quadBuffer: ArrayBuffer
+  private quadElementsBuffer: ArrayBuffer
+  /**
+   * Uint32Array<[quadElementPtr, firstChildQuadId, _centerOfMassX, _centerOfMassY, aggregateMass]>
+   */
   private quads: Uint32Array
-  private quadsMass: Float32Array
-  private quadElementsLinkedList: Uint32Array
-  private findQueue: number[] = []
-  private subdivisionHeadPtrs = new Uint32Array(5)
+  /**
+   * Uint32Array<[_quadElementPtr, _firstChildQuadId, centerOfMassX, centerOfMassY, _aggregateMass]>
+   */
+  private quadsCenterOfMass: Float32Array
+  /**
+   * Uint32Array<[elementId, nextQuadElementPtr]>
+   */
+  private quadElements: Uint32Array
 
   // Allocators
-  private nextQuadId = 1 // 0 is reserved for the root node
-  private nextElementsLinkedPtr = 1 // 0 is reserved to indicate end-of-list
+  private nextQuadId = 1
+  private nextQuadElementPtr = 1
+  private deallocatedQuadElementHeadPtr = 0 // quadElements free list head
 
   /**
-   * Create a pointerless region Quadtree from the given element circles.
-   * @param elements Float32Array containing each circle element. By default, each element is packed as [x, y, radius].
-   * @param stride Default 3, which assumes datum packing of [x, y, radius].
-   * @param xOffset Default 0, which assumes datum packing of [x, y, radius].
-   * @param yOffset Default 1, which assumes datum packing of [x, y, radius].
-   * @param radiusOffset Default 2, which assumes datum packing of [x, y, radius].
+   * Create a pointerless region Quadtree from the given element circles
+   * @param elements Float32Array containing each circle element. By default, each element is packed as [x, y, radius]
+   * @param stride Default 3, which assumes datum packing of [x, y, radius]
+   * @param xOffset Default 0, which assumes datum packing of [x, y, radius]
+   * @param yOffset Default 1, which assumes datum packing of [x, y, radius]
+   * @param radiusOffset Default 2, which assumes datum packing of [x, y, radius]
+   * @param maxCapacity Default 8
+   * @param maxDepth Default estimated as Math.ceil(Math.log2(bbox side / average radius))
    */
-  constructor(elements: Float32Array, stride = 3, xOffset = 0, yOffset = 1, radiusOffset = 2) {
+  constructor(elements: Float32Array, stride = 3, xOffset = 0, yOffset = 1, radiusOffset = 2, maxCapacity = 8, maxDepth = 7) {
     this.elements = elements
     this.elementStride = stride
     this.elementXOffset = xOffset
     this.elementYOffset = yOffset
     this.elementRadiusOffset = radiusOffset
+    this.maxCapacity = maxCapacity
+    this.maxDepth = maxDepth
     this.elementCount = this.elements.length / this.elementStride
 
     if (this.elements.length % this.elementStride !== 0) {
       throw new Error(`Invalid elements length. Must be a multiple of stride (${this.elementStride}).`)
     }
 
-    const quadsByteLength = Quadtree.QUAD_COUNT * Quadtree.QUAD_STRIDE * Uint32Array.BYTES_PER_ELEMENT
-    const quadsMassByteLength = Quadtree.QUAD_COUNT * Quadtree.QUAD_MASS_STRIDE * Float32Array.BYTES_PER_ELEMENT
-    const quadElementsLinkedListByteLength =
-      (this.elementCount + 1) * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE * Uint32Array.BYTES_PER_ELEMENT
+    // Calculate buffer sizes
+    const estimatedQuadCount = Math.ceil(this.elementCount / this.maxCapacity / 2)
+    const quadBufferDefaultByteLength = estimatedQuadCount * Quadtree.QUAD_STRIDE * Uint32Array.BYTES_PER_ELEMENT
+    const estimatedQuadElementCount = Math.ceil(this.elementCount * 1.1) // Estimate that each quad may be inserted into 1.1 quads on average
+    const quadElementsBufferDefaultByteLength = estimatedQuadElementCount * Quadtree.QUAD_ELEMENTS_STRIDE * Uint32Array.BYTES_PER_ELEMENT
 
-    this.quadBuffer = new ArrayBuffer(quadsByteLength + quadsMassByteLength + quadElementsLinkedListByteLength)
-    this.quads = new Uint32Array(this.quadBuffer, 0, Quadtree.QUAD_COUNT * Quadtree.QUAD_STRIDE)
-    this.quadsMass = new Float32Array(this.quadBuffer, quadsByteLength, Quadtree.QUAD_COUNT * Quadtree.QUAD_MASS_STRIDE)
-    this.quadElementsLinkedList = new Uint32Array(this.quadBuffer, quadsByteLength + quadsMassByteLength)
+    // Create buffers and views
+    this.quadBuffer = this.createResizableBuffer(quadBufferDefaultByteLength, quadBufferDefaultByteLength * 8)
+    this.quadElementsBuffer = this.createResizableBuffer(quadElementsBufferDefaultByteLength, quadElementsBufferDefaultByteLength * 8)
+    this.quads = new Uint32Array(this.quadBuffer)
+    this.quadsCenterOfMass = new Float32Array(this.quadBuffer)
+    this.quadElements = new Uint32Array(this.quadElementsBuffer)
 
+    // Build initial tree
     this.rebuild()
   }
 
   /**
-   * Rebuilds the quadtree index from the existing element data.
-   * Useful after modifying element positions directly in the `elements` array.
+   * Rebuild the quadtree index from the existing element data after modifying element positions
    */
   public rebuild(): void {
+    // Bulk remove all elements from all quads
     this.quads.fill(0)
-    this.quadsMass.fill(0)
-    this.quadElementsLinkedList.fill(0)
+    this.quadElements.fill(0)
     this.nextQuadId = 1
-    this.nextElementsLinkedPtr = 1
+    this.nextQuadElementPtr = 1
+    this.deallocatedQuadElementHeadPtr = 0
 
-    if (this.elementCount === 0) return
-
+    // Calculate bounding box
     this.minX = Infinity
     this.minY = Infinity
     this.maxX = -Infinity
     this.maxY = -Infinity
     for (let i = 0; i < this.elementCount; ++i) {
-      const elementIndex = i * this.elementStride,
-        x = this.elements[elementIndex + this.elementXOffset],
-        y = this.elements[elementIndex + this.elementYOffset],
-        r = this.elements[elementIndex + this.elementRadiusOffset]
+      const elementIndex = i * this.elementStride
+      const x = this.elements[elementIndex + this.elementXOffset]
+      const y = this.elements[elementIndex + this.elementYOffset]
+      const r = this.elements[elementIndex + this.elementRadiusOffset]
       if (x - r < this.minX) this.minX = x - r
       if (y - r < this.minY) this.minY = y - r
       if (x + r > this.maxX) this.maxX = x + r
       if (y + r > this.maxY) this.maxY = y + r
     }
-    if (!isFinite(this.minX)) {
-      this.minX = 0
-      this.minY = 0
-      this.maxX = 0
-      this.maxY = 0
-    }
+    if (!isFinite(this.minX)) this.minX = this.minY = this.maxX = this.maxY = 0
     if (this.minX === this.maxX) this.maxX++
     if (this.minY === this.maxY) this.maxY++
 
     // Insert each element into the quadtree's root quad
     for (let elementId = 0; elementId < this.elementCount; elementId++) {
-      this.insert(elementId, 0, 0, this.minX, this.minY, this.maxX, this.maxY)
+      const elementIndex = elementId * this.elementStride
+      const x = this.elements[elementIndex + this.elementXOffset]
+      const y = this.elements[elementIndex + this.elementYOffset]
+      const r2 = this.elements[elementIndex + this.elementRadiusOffset] ** 2
+      this.insert(elementId, x, y, r2, 0, 0, this.minX, this.minY, this.maxX, this.maxY)
     }
-
-    // After building tree, compute element count and center of mass for each quad
-    this.computeQuadElementCountAndMass(0)
   }
 
   /**
-   * Find all elements that intersect the given query circle (or point).
-   * @param x The x-coordinate of the query circle's center.
-   * @param y The y-coordinate of the query circle's center.
-   * @param radius [optional] The search radius. Defaults to 0 for point queries.
-   * @returns An array of element IDs.
+   * Visit each quad
    */
-  public find(x: number, y: number, radius = 0): number[] {
-    const radiusSquared = radius * radius,
-      results: number[] = [],
-      rootDx = Math.max(this.minX - x, 0, x - this.maxX),
-      rootDy = Math.max(this.minY - y, 0, y - this.maxY)
+  public forEachQuad(cb: (quadId: number) => void, quadId: number = 0): void {
+    const quadPtr = quadId * Quadtree.QUAD_STRIDE
+    const firstChildId = this.quads[quadPtr + 1]
+    cb(quadId)
 
-    if (rootDx * rootDx + rootDy * rootDy > radiusSquared) {
-      return results
+    if (firstChildId > 0) {
+      // If quad is a branch - recurse to child nodes
+      this.forEachQuad(cb, firstChildId)
+      this.forEachQuad(cb, firstChildId + 1)
+      this.forEachQuad(cb, firstChildId + 2)
+      this.forEachQuad(cb, firstChildId + 3)
+      return
     }
-
-    let quadId: number,
-      minX: number,
-      minY: number,
-      maxX: number,
-      maxY: number,
-      quadPtr: number,
-      elementPtr: number,
-      elementLinkedListIndex: number,
-      elementId: number,
-      elementIndex: number,
-      ex: number,
-      ey: number,
-      er: number,
-      edx: number,
-      edy: number,
-      totalRadius: number,
-      firstChildId: number,
-      mx: number,
-      my: number,
-      dx: number,
-      dy: number
-
-    this.findQueue.length = 0 // clear out the queue
-    this.findQueue.push(0, this.minX, this.minY, this.maxX, this.maxY)
-
-    while (this.findQueue.length > 0) {
-      maxY = this.findQueue.pop()!
-      maxX = this.findQueue.pop()!
-      minY = this.findQueue.pop()!
-      minX = this.findQueue.pop()!
-      quadId = this.findQueue.pop()!
-
-      quadPtr = quadId * Quadtree.QUAD_STRIDE
-      elementPtr = this.quads[quadPtr]
-
-      while (elementPtr > 0) {
-        elementLinkedListIndex = elementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE
-        elementId = this.quadElementsLinkedList[elementLinkedListIndex]
-        elementIndex = elementId * this.elementStride
-        ex = this.elements[elementIndex + this.elementXOffset]
-        ey = this.elements[elementIndex + this.elementYOffset]
-        er = this.elements[elementIndex + this.elementRadiusOffset]
-        edx = ex - x
-        edy = ey - y
-        totalRadius = er + radius
-
-        if (edx * edx + edy * edy <= totalRadius * totalRadius) results.push(elementId)
-
-        elementPtr = this.quadElementsLinkedList[elementLinkedListIndex + 1]
-      }
-
-      firstChildId = this.quads[quadPtr + 2]
-      if (firstChildId > 0) {
-        mx = (minX + maxX) / 2
-        my = (minY + maxY) / 2
-
-        // Check NW child
-        dx = Math.max(minX - x, 0, x - mx)
-        dy = Math.max(my - y, 0, y - maxY)
-        if (dx * dx + dy * dy <= radiusSquared) this.findQueue.push(firstChildId, minX, my, mx, maxY)
-
-        // Check NE child
-        dx = Math.max(mx - x, 0, x - maxX)
-        dy = Math.max(my - y, 0, y - maxY)
-        if (dx * dx + dy * dy <= radiusSquared) this.findQueue.push(firstChildId + 1, mx, my, maxX, maxY)
-
-        // Check SW child
-        dx = Math.max(minX - x, 0, x - mx)
-        dy = Math.max(minY - y, 0, y - my)
-        if (dx * dx + dy * dy <= radiusSquared) this.findQueue.push(firstChildId + 2, minX, minY, mx, my)
-
-        // Check SE child
-        dx = Math.max(mx - x, 0, x - maxX)
-        dy = Math.max(minY - y, 0, y - my)
-        if (dx * dx + dy * dy <= radiusSquared) this.findQueue.push(firstChildId + 3, mx, minY, maxX, my)
-      }
-    }
-
-    return results
   }
 
   /**
-   * Finds all unique colliding pairs and invokes a callback for each pair.
+   * Find all unique collision pairs
    * @param cb callback function invoked for each colliding pair
    */
-  public forEachCollision(
-    cb: (id1: number, x1: number, y1: number, r1: number, id2: number, x2: number, y2: number, r2: number) => void,
-    quadId: number = 0,
-    parentElements: number[] = []
-  ): void {
+  public forEachCollision(cb: (id1: number, id2: number) => void): void {
+    this.compareCollisions(cb, 0, new Uint8Array(Math.ceil(this.elementCount / 8)))
+  }
+
+  private compareCollisions(cb: (id1: number, id2: number) => void, quadId: number, traversed: Uint8Array): void {
     const quadPtr = quadId * Quadtree.QUAD_STRIDE
-    let localElements: number[] | undefined
+    const firstChildId = this.quads[quadPtr + 1]
 
-    // Get elements stored locally in current quad
-    let elementPtr = this.quads[quadPtr]
-    if (elementPtr > 0) {
-      localElements = []
-      while (elementPtr > 0) {
-        const elementLinkedListIndex = elementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE
-        localElements.push(this.quadElementsLinkedList[elementLinkedListIndex])
-        elementPtr = this.quadElementsLinkedList[elementLinkedListIndex + 1]
-      }
-    }
-
-    // Check for collisions between local elements and elements in parent quads
-    if (parentElements.length > 0 && localElements !== undefined) {
-      for (const localId of localElements) {
-        for (const parentId of parentElements) {
-          const id1 = localId,
-            id2 = parentId,
-            arrayIndex1 = id1 * this.elementStride,
-            arrayIndex2 = id2 * this.elementStride,
-            x1 = this.elements[arrayIndex1 + this.elementXOffset],
-            y1 = this.elements[arrayIndex1 + this.elementYOffset],
-            r1 = this.elements[arrayIndex1 + this.elementRadiusOffset],
-            x2 = this.elements[arrayIndex2 + this.elementXOffset],
-            y2 = this.elements[arrayIndex2 + this.elementYOffset],
-            r2 = this.elements[arrayIndex2 + this.elementRadiusOffset],
-            dx = x1 - x2,
-            dy = y1 - y2,
-            totalRadius = r1 + r2
-
-          if (dx * dx + dy * dy <= totalRadius * totalRadius) cb(id1, x1, y1, r1, id2, x2, y2, r2)
-        }
-      }
-    }
-
-    // Check for collisions among the local elements
-    if (localElements !== undefined) {
-      for (let i = 0; i < localElements.length; i++) {
-        for (let j = i + 1; j < localElements.length; j++) {
-          const id1 = localElements[i],
-            id2 = localElements[j],
-            arrayIndex1 = id1 * this.elementStride,
-            arrayIndex2 = id2 * this.elementStride,
-            x1 = this.elements[arrayIndex1 + this.elementXOffset],
-            y1 = this.elements[arrayIndex1 + this.elementYOffset],
-            r1 = this.elements[arrayIndex1 + this.elementRadiusOffset],
-            x2 = this.elements[arrayIndex2 + this.elementXOffset],
-            y2 = this.elements[arrayIndex2 + this.elementYOffset],
-            r2 = this.elements[arrayIndex2 + this.elementRadiusOffset],
-            dx = x1 - x2,
-            dy = y1 - y2,
-            totalRadius = r1 + r2
-
-          if (dx * dx + dy * dy <= totalRadius * totalRadius) cb(id1, x1, y1, r1, id2, x2, y2, r2)
-        }
-      }
-    }
-
-    // Recursively check child quads for collisions with this quad's parent and local elements
-    const firstChildId = this.quads[quadPtr + 2]
     if (firstChildId > 0) {
-      for (let i = 0; i < 4; i++) {
-        this.forEachCollision(cb, firstChildId + i, localElements === undefined ? parentElements : parentElements.concat(localElements))
+      // If quad is a branch - recurse to child nodes
+      this.compareCollisions(cb, firstChildId, traversed)
+      this.compareCollisions(cb, firstChildId + 1, traversed)
+      this.compareCollisions(cb, firstChildId + 2, traversed)
+      this.compareCollisions(cb, firstChildId + 3, traversed)
+      return
+    }
+
+    // If quad is a leaf - check all quad elements for collisions
+    let quadElementAPtr = this.quads[quadPtr]
+    while (quadElementAPtr > 0) {
+      const elementAId = this.quadElements[quadElementAPtr]
+      const byteIndexA = Math.floor(elementAId / 8)
+      const bitIndexA = elementAId % 8
+      const maskA = 1 << bitIndexA
+
+      if ((traversed[byteIndexA] & maskA) === 0) {
+        traversed[byteIndexA] |= maskA
+
+        let quadElementBPtr = quadElementAPtr
+        while (quadElementBPtr > 0) {
+          const elementBId = this.quadElements[quadElementBPtr]
+          if (elementAId !== elementBId) {
+            const elementAPtr = elementAId * this.elementStride
+            const elementBPtr = elementBId * this.elementStride
+            const dx = this.elements[elementAPtr + this.elementXOffset] - this.elements[elementBPtr + this.elementXOffset]
+            const dy = this.elements[elementAPtr + this.elementYOffset] - this.elements[elementBPtr + this.elementYOffset]
+            const r = this.elements[elementAPtr + this.elementRadiusOffset] + this.elements[elementBPtr + this.elementRadiusOffset]
+            if (dx * dx + dy * dy <= r * r) {
+              cb(elementAId, elementBId)
+            }
+          }
+          quadElementBPtr = this.quadElements[quadElementBPtr + 1]
+        }
       }
+
+      quadElementAPtr = this.quadElements[quadElementAPtr + 1]
     }
   }
 
-  // /**
-  //  * Compare each element to all other centers of mass, using a Barnes-Hut approximation
-  //  * Close elements are treated as a single body. Distant elements are approximated by their center of mass.
-  //  * @param cb callback function invoked for each element and body
-  //  * @param theta approximation threshold. if quad_width/quad_distance > theta, compare the element to the quad's center of mass instead of its elements.
-  //  */
-  // public forEachBody(
-  //   cb: (
-  //     elementId: number,
-  //     elementX: number,
-  //     elementY: number,
-  //     elementRadius: number,
-  //     bodyX: number,
-  //     bodyY: number,
-  //     count: number,
-  //     distance: number
-  //   ) => void,
-  //   theta: number = 0.9
-  // ): void {}
+  /**
+   * Compare each element to all other centers of mass, using a Barnes-Hut approximation
+   * Elements in nearby quads are treated as separate bodies. Elements in distant quads are approximated by the quad's center of mass.
+   * The theta approximation threshold defines which quads are close vs. distant
+   * @param cb callback function invoked for each element and body
+   * @param theta [default 0.9] approximation threshold. if quad_width/quad_distance < theta, recursively compare the element to the quad's childrens' center of mass
+   */
+  public forEachBody(
+    cb: (elementId: number, bodyX: number, bodyY: number, mass: number, distanceSq: number) => void,
+    theta: number = 0.9
+  ): void {
+    const thetaSq = theta * theta
+
+    for (let elementId = 0; elementId < this.elementCount; elementId++) {
+      const elementIndex = elementId * this.elementStride
+      const x = this.elements[elementIndex + this.elementXOffset]
+      const y = this.elements[elementIndex + this.elementYOffset]
+
+      this.compareBodies(elementId, x, y, 0, this.minX, this.minY, this.maxX, this.maxY, cb, thetaSq)
+    }
+  }
+
+  private compareBodies(
+    elementId: number,
+    x: number,
+    y: number,
+    quadId: number,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+    cb: (elementId: number, bodyX: number, bodyY: number, mass: number, distanceSq: number) => void,
+    thetaSq: number
+  ): void {
+    const quadPtr = quadId * Quadtree.QUAD_STRIDE
+    const mass = this.quads[quadPtr + 4]
+    if (mass === 0) return
+
+    const quadCenterOfMassX = this.quadsCenterOfMass[quadPtr + 2] / mass
+    const quadCenterOfMassY = this.quadsCenterOfMass[quadPtr + 3] / mass
+    const dx = x - quadCenterOfMassX
+    const dy = y - quadCenterOfMassY
+    const distanceSq = dx * dx + dy * dy
+    const width = maxX - minX
+    const firstChildId = this.quads[quadPtr + 1]
+
+    if (firstChildId === 0) {
+      // leaf quad, compute mass comparisons for each quad element
+      let quadElementPtr = this.quads[quadPtr]
+      while (quadElementPtr > 0) {
+        const elementBId = this.quadElements[quadElementPtr]
+
+        if (elementId !== elementBId) {
+          const elementBPtr = elementBId * this.elementStride
+          const bodyX = this.elements[elementBPtr + this.elementXOffset]
+          const bodyY = this.elements[elementBPtr + this.elementYOffset]
+          const distanceSq = (x - bodyX) ** 2 + (y - bodyY) ** 2
+
+          cb(elementId, bodyX, bodyY, 1, distanceSq)
+        }
+        quadElementPtr = this.quadElements[quadElementPtr + 1]
+      }
+      return
+    }
+
+    if (width * width < thetaSq * distanceSq) {
+      // branch quad is sufficiently distant to approximate as a single body
+      return cb(elementId, quadCenterOfMassX, quadCenterOfMassY, mass, distanceSq)
+    }
+
+    // branch quad is sufficiently near, recurse to child quads
+    const mx = (minX + maxX) / 2
+    const my = (minY + maxY) / 2
+    this.compareBodies(elementId, x, y, firstChildId, minX, my, mx, maxY, cb, thetaSq)
+    this.compareBodies(elementId, x, y, firstChildId + 1, mx, my, maxX, maxY, cb, thetaSq)
+    this.compareBodies(elementId, x, y, firstChildId + 2, minX, minY, mx, my, cb, thetaSq)
+    this.compareBodies(elementId, x, y, firstChildId + 3, mx, minY, maxX, my, cb, thetaSq)
+  }
 
   /**
    * Converts the quadtree into a nested object for inspection. This is expensive and intended for testing.
@@ -319,36 +283,35 @@ export class Quadtree {
     maxY: number = this.maxY
   ): MaterializedQuad {
     const quadPtr = quadId * Quadtree.QUAD_STRIDE
-    const quadMassPtr = quadId * Quadtree.QUAD_MASS_STRIDE
 
     const elements: { id: number; x: number; y: number; radius: number }[] = []
-    let elementPtr = this.quads[quadPtr]
-    while (elementPtr > 0) {
-      const id = this.quadElementsLinkedList[elementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE]
-      const index = id * this.elementStride
+    let quadElementPtr = this.quads[quadPtr]
+    while (quadElementPtr > 0) {
+      const elementId = this.quadElements[quadElementPtr]
+      const elementIndex = elementId * this.elementStride
       elements.push({
-        id,
-        x: this.elements[index + this.elementXOffset],
-        y: this.elements[index + this.elementYOffset],
-        radius: this.elements[index + this.elementRadiusOffset]
+        id: elementId,
+        x: this.elements[elementIndex + this.elementXOffset],
+        y: this.elements[elementIndex + this.elementYOffset],
+        radius: this.elements[elementIndex + this.elementRadiusOffset]
       })
-      elementPtr = this.quadElementsLinkedList[elementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE + 1]
+      quadElementPtr = this.quadElements[quadElementPtr + 1]
     }
 
-    const totalMass = this.quads[quadPtr + 1]
+    const mass = this.quads[quadPtr + 4] ?? 0
     const quad: MaterializedQuad = {
       id: quadId,
       minX,
       minY,
       maxX,
       maxY,
-      totalMass,
-      centerOfMassX: totalMass === 0 ? 0 : this.quadsMass[quadMassPtr] / totalMass,
-      centerOfMassY: totalMass === 0 ? 0 : this.quadsMass[quadMassPtr + 1] / totalMass,
+      centerOfMassX: mass > 0 ? this.quadsCenterOfMass[quadPtr + 2] / mass : undefined,
+      centerOfMassY: mass > 0 ? this.quadsCenterOfMass[quadPtr + 3] / mass : undefined,
+      aggregateMass: mass,
       elements
     }
 
-    const firstChildId = this.quads[quadPtr + 2]
+    const firstChildId = this.quads[quadPtr + 1]
     if (firstChildId > 0) {
       const mx = (minX + maxX) / 2
       const my = (minY + maxY) / 2
@@ -362,158 +325,186 @@ export class Quadtree {
     return quad
   }
 
-  private insert(elementId: number, quadId: number, depth: number, minX: number, minY: number, maxX: number, maxY: number): void {
+  private insert(
+    elementId: number,
+    x: number,
+    y: number,
+    r2: number,
+    quadId: number,
+    depth: number,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number
+  ): void {
     const quadPtr = quadId * Quadtree.QUAD_STRIDE
-    const firstChildId = this.quads[quadPtr + 2]
+    const firstChildId = this.quads[quadPtr + 1]
 
-    // check if quad is a branch (has children)
-    if (firstChildId > 0) {
-      const elementIndex = elementId * this.elementStride,
-        x = this.elements[elementIndex + this.elementXOffset],
-        y = this.elements[elementIndex + this.elementYOffset],
-        r = this.elements[elementIndex + this.elementRadiusOffset],
-        childQuad = this.getChildQuadForElement(x, y, r, minX, minY, maxX, maxY)
-
-      if (childQuad !== -1) {
-        const mx = (minX + maxX) / 2,
-          my = (minY + maxY) / 2
-
-        this.insert(
-          elementId,
-          firstChildId + childQuad,
-          depth + 1,
-          childQuad % 2 === 0 ? minX : mx,
-          childQuad < 2 ? my : minY,
-          childQuad % 2 === 0 ? mx : maxX,
-          childQuad < 2 ? maxY : my
-        )
-        return
-      }
-    }
-
-    // quad is a leaf or element doesn't fit into the child. insert element into this quad
-    const firstElementPtr = this.quads[quadPtr],
-      newElementPtr = this.nextElementsLinkedPtr++
-    this.quads[quadPtr] = newElementPtr
-    this.quadElementsLinkedList[newElementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE] = elementId
-    this.quadElementsLinkedList[newElementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE + 1] = firstElementPtr
-    this.quads[quadPtr + 1]++ // Increment LOCAL count
-
-    if (firstChildId === 0 && depth < Quadtree.QUAD_MAX_DEPTH && this.quads[quadPtr + 1] > Quadtree.QUAD_MAX_CAPACITY) {
-      this.subdivide(quadId, minX, minY, maxX, maxY, depth)
-    }
-  }
-
-  private subdivide(quadId: number, minX: number, minY: number, maxX: number, maxY: number, depth: number): void {
-    const quadPtr = quadId * Quadtree.QUAD_STRIDE,
-      firstChildId = this.nextQuadId
-
-    this.quads[quadPtr + 2] = firstChildId // Point parent quad to first NW child
-    this.nextQuadId += 4
-    this.subdivisionHeadPtrs.fill(0)
-    let elementPtr = this.quads[quadPtr]
-    this.quads[quadPtr] = 0 // Detach parent's list
-    this.quads[quadPtr + 1] = 0 // Reset parent's LOCAL count
-
-    // Get new quad for each parent element
-    while (elementPtr > 0) {
-      const elementListPtr = elementPtr * Quadtree.QUAD_ELEMENTS_LINKED_LIST_STRIDE,
-        elementId = this.quadElementsLinkedList[elementListPtr],
-        nextPtr = this.quadElementsLinkedList[elementListPtr + 1],
-        elementIndex = elementId * this.elementStride,
-        x = this.elements[elementIndex + this.elementXOffset],
-        y = this.elements[elementIndex + this.elementYOffset],
-        r = this.elements[elementIndex + this.elementRadiusOffset],
-        listIndex = this.getChildQuadForElement(x, y, r, minX, minY, maxX, maxY) + 1
-
-      this.quadElementsLinkedList[elementListPtr + 1] = this.subdivisionHeadPtrs[listIndex]
-      this.subdivisionHeadPtrs[listIndex] = elementPtr
-      elementPtr = nextPtr
-    }
-
-    // Re-link partitioned lists and set their initial LOCAL counts
-    for (let i = 0; i < 5; i++) {
-      const id = i === 0 ? quadId : firstChildId + (i - 1)
-      const ptr = id * Quadtree.QUAD_STRIDE
-      this.quads[ptr] = this.subdivisionHeadPtrs[i]
-
-      let localCount = 0
-      let p = this.quads[ptr]
-      while (p > 0) {
-        localCount++
-        p = this.quadElementsLinkedList[p * 2 + 1]
-      }
-      this.quads[ptr + 1] = localCount
-    }
-
-    // recursively subdivide each child quad in case they have also exceeded their max capacity
-    const mx = (minX + maxX) / 2,
-      my = (minY + maxY) / 2
-    for (let i = 0; i < 4; i++) {
-      const childId = firstChildId + i
-      const childLocalCount = this.quads[childId * 3 + 1]
-      if (childLocalCount > Quadtree.QUAD_MAX_CAPACITY && depth + 1 < Quadtree.QUAD_MAX_DEPTH) {
-        const cMinX = i % 2 === 0 ? minX : mx,
-          cMaxX = i % 2 === 0 ? mx : maxX
-        const cMinY = i < 2 ? my : minY,
-          cMaxY = i < 2 ? maxY : my
-        this.subdivide(childId, cMinX, cMinY, cMaxX, cMaxY, depth + 1)
-      }
-    }
-  }
-
-  private getChildQuadForElement(
-    ex: number,
-    ey: number,
-    er: number,
-    qMinX: number,
-    qMinY: number,
-    qMaxX: number,
-    qMaxY: number
-  ): -1 | 0 | 1 | 2 | 3 {
-    const mx = (qMinX + qMaxX) / 2,
-      my = (qMinY + qMaxY) / 2,
-      fitsTop = ey - er > my,
-      fitsBottom = ey + er < my,
-      fitsLeft = ex + er < mx,
-      fitsRight = ex - er > mx
-
-    if (fitsLeft) {
-      if (fitsTop) return 0 // NW
-      if (fitsBottom) return 2 // SW
-    } else if (fitsRight) {
-      if (fitsTop) return 1 // NE
-      if (fitsBottom) return 3 // SE
-    }
-
-    return -1 // Overlaps child boundaries. Keep element in parent
-  }
-
-  private computeQuadElementCountAndMass(quadId: number): void {
-    const quadPtr = quadId * Quadtree.QUAD_STRIDE
-    const quadMassPtr = quadId * Quadtree.QUAD_MASS_STRIDE
-    const firstChildId = this.quads[quadPtr + 2]
+    // Update quad's center and aggregate mass if element's center point is within quad bounds
+    this.quadsCenterOfMass[quadPtr + 2] += x
+    this.quadsCenterOfMass[quadPtr + 3] += y
+    this.quads[quadPtr + 4]++
 
     if (firstChildId > 0) {
-      let totalChildCount = 0
-      for (let i = 0; i < 4; i++) {
-        const childId = firstChildId + i
-        this.computeQuadElementCountAndMass(childId)
-        totalChildCount += this.quads[childId * 3 + 1] // Use STRIDE
-        const childMassPtr = childId * Quadtree.QUAD_MASS_STRIDE
-        this.quadsMass[quadMassPtr] += this.quadsMass[childMassPtr]
-        this.quadsMass[quadMassPtr + 1] += this.quadsMass[childMassPtr + 1]
-      }
-      this.quads[quadPtr + 1] += totalChildCount // Add children's aggregate count to parent's local count
+      // Quad is a branch (has child quads) - insert into overlapping quads
+      const mx = (minX + maxX) / 2
+      const my = (minY + maxY) / 2
+
+      // Insert element into all overlapping child quads
+      const westDistanceSquared = (x - Math.max(minX, Math.min(x, mx))) ** 2
+      const eastDistanceSquared = (x - Math.max(mx, Math.min(x, maxX))) ** 2
+      const northDistanceSquared = (y - Math.max(my, Math.min(y, maxY))) ** 2
+      const southDistanceSquared = (y - Math.max(minY, Math.min(y, my))) ** 2
+      if (westDistanceSquared + northDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId, depth + 1, minX, my, mx, maxY) // NW
+      if (eastDistanceSquared + northDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId + 1, depth + 1, mx, my, maxX, maxY) // NE
+      if (westDistanceSquared + southDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId + 2, depth + 1, minX, minY, mx, my) // SW
+      if (eastDistanceSquared + southDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId + 3, depth + 1, mx, minY, maxX, my) // SE
+      return
     }
 
-    let elementPtr = this.quads[quadPtr]
-    while (elementPtr > 0) {
-      const elementId = this.quadElementsLinkedList[elementPtr * 2]
+    // Quad is a leaf (does not have child quads) - append element to quad's linked list
+    const currentHeadPtr = this.quads[quadPtr]
+    const newHeadPtr = this.allocateQuadElement()
+    this.quads[quadPtr] = newHeadPtr
+    this.quadElements[newHeadPtr] = elementId
+    this.quadElements[newHeadPtr + 1] = currentHeadPtr
+
+    // Split quad if over capacity and under max depth
+    if (depth < this.maxDepth) {
+      let localElementCount = 0
+      let nodePtr = newHeadPtr
+      while (nodePtr > 0) {
+        localElementCount++
+        nodePtr = this.quadElements[nodePtr + 1]
+      }
+
+      if (localElementCount > this.maxCapacity) {
+        this.subdivide(quadId, depth, minX, minY, maxX, maxY)
+      }
+    }
+  }
+
+  private subdivide(quadId: number, depth: number, minX: number, minY: number, maxX: number, maxY: number): void {
+    const quadPtr = quadId * Quadtree.QUAD_STRIDE
+    const firstChildId = this.allocateQuadBlock()
+    let quadElementPtr = this.quads[quadPtr]
+    this.quads[quadPtr + 1] = firstChildId // Point parent quad to first NW child
+    this.quads[quadPtr] = 0 // Detach parent quad's element list
+    const mx = (minX + maxX) / 2
+    const my = (minY + maxY) / 2
+    const nextDepth = depth + 1
+
+    // Detatch parent quad elements and reattach to overlapping child quads' element lists
+    while (quadElementPtr > 0) {
+      const elementId = this.quadElements[quadElementPtr]
+      const nextPtr = this.quadElements[quadElementPtr + 1]
       const elementIndex = elementId * this.elementStride
-      this.quadsMass[quadMassPtr] += this.elements[elementIndex + this.elementXOffset]
-      this.quadsMass[quadMassPtr + 1] += this.elements[elementIndex + this.elementYOffset]
-      elementPtr = this.quadElementsLinkedList[elementPtr * 2 + 1]
+      const x = this.elements[elementIndex + this.elementXOffset]
+      const y = this.elements[elementIndex + this.elementYOffset]
+      const r2 = this.elements[elementIndex + this.elementRadiusOffset] ** 2
+
+      // attach element to overlapping child quads
+      const westDistanceSquared = (x - Math.max(minX, Math.min(x, mx))) ** 2
+      const eastDistanceSquared = (x - Math.max(mx, Math.min(x, maxX))) ** 2
+      const northDistanceSquared = (y - Math.max(my, Math.min(y, maxY))) ** 2
+      const southDistanceSquared = (y - Math.max(minY, Math.min(y, my))) ** 2
+      if (westDistanceSquared + northDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId, nextDepth, minX, my, mx, maxY) // NW
+      if (eastDistanceSquared + northDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId + 1, nextDepth, mx, my, maxX, maxY) // NE
+      if (westDistanceSquared + southDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId + 2, nextDepth, minX, minY, mx, my) // SW
+      if (eastDistanceSquared + southDistanceSquared < r2) this.insert(elementId, x, y, r2, firstChildId + 3, nextDepth, mx, minY, maxX, my) // SE
+
+      // Deallocate parent quad element and repeat
+      this.deallocateQuadElement(quadElementPtr)
+      quadElementPtr = nextPtr
+    }
+  }
+
+  /**
+   * Allocate a contiguous block of new 4 quads, resizing the buffer if necessary
+   * @returns The ID of the first quad in the block (the NW child)
+   */
+  private allocateQuadBlock(): number {
+    // Allocate a new quad
+    const quadId = this.nextQuadId
+    this.nextQuadId += 4
+
+    // Resize buffer if there's not space for a new quad
+    const nextQuadPtr = this.nextQuadId * Quadtree.QUAD_STRIDE
+    if (nextQuadPtr > this.quads.length) {
+      const buffer = this.resizeBuffer(
+        this.quadBuffer,
+        Math.max(this.quadBuffer.byteLength, nextQuadPtr * Uint32Array.BYTES_PER_ELEMENT) * 2
+      )
+      if (buffer !== this.quadBuffer) {
+        this.quadBuffer = buffer
+        this.quads = new Uint32Array(this.quadBuffer)
+        this.quadsCenterOfMass = new Float32Array(this.quadBuffer)
+      }
+    }
+
+    return quadId
+  }
+
+  /**
+   * Allocate a new quadElement, resizing the buffer if necessary
+   * @returns The quadElement pointer, used like this.quadElements[elementPtr]
+   */
+  private allocateQuadElement(): number {
+    if (this.deallocatedQuadElementHeadPtr !== 0) {
+      // Re-allocate deallocated quad element from the free-list
+      const quadElementPtr = this.deallocatedQuadElementHeadPtr
+      this.deallocatedQuadElementHeadPtr = this.quadElements[quadElementPtr + 1]
+      return quadElementPtr
+    }
+
+    // Allocate new quadElement
+    const quadElementPtr = this.nextQuadElementPtr
+    this.nextQuadElementPtr += Quadtree.QUAD_ELEMENTS_STRIDE
+
+    // Resize buffer if there's not space for a new quadElement
+    if (this.nextQuadElementPtr > this.quadElements.length) {
+      const buffer = this.resizeBuffer(this.quadElementsBuffer, this.quadElementsBuffer.byteLength * 2)
+      if (buffer !== this.quadElementsBuffer) {
+        this.quadElementsBuffer = buffer
+        this.quadElements = new Uint32Array(this.quadElementsBuffer)
+      }
+    }
+
+    return quadElementPtr
+  }
+
+  /**
+   * Deallocate a quad element from the quadElement free list
+   * Future quad element allocations will reuse deallocated quad elements
+   */
+  private deallocateQuadElement(quadElementPtr: number): void {
+    this.quadElements[quadElementPtr + 1] = this.deallocatedQuadElementHeadPtr
+    this.deallocatedQuadElementHeadPtr = quadElementPtr
+  }
+
+  private createResizableBuffer = (byteLength: number, maxByteLength: number): ArrayBuffer => {
+    return typeof ArrayBuffer.prototype.resize === 'function'
+      ? new ArrayBuffer(byteLength, { maxByteLength })
+      : new ArrayBuffer(maxByteLength)
+  }
+
+  private resizeBuffer = (buffer: ArrayBuffer, byteLength: number): ArrayBuffer => {
+    if ('resizable' in buffer && buffer.resizable) {
+      if (byteLength <= buffer.maxByteLength) {
+        // Buffer can be resized to byteLength - return resized buffer
+        buffer.resize(byteLength)
+        return buffer
+      } else {
+        // Buffer is too small - return new buffer
+        const newBuffer = new ArrayBuffer(byteLength, { maxByteLength: byteLength * 1.5 })
+        new Uint8Array(newBuffer).set(new Uint8Array(buffer).subarray(0, byteLength))
+        return newBuffer
+      }
+    } else {
+      // Buffer cannot be resized - return new buffer
+      const newBuffer = new ArrayBuffer(byteLength)
+      new Uint8Array(newBuffer).set(new Uint8Array(buffer).subarray(0, byteLength))
+      return newBuffer
     }
   }
 }
@@ -526,7 +517,7 @@ export type MaterializedQuad = {
   maxY: number
   centerOfMassX?: number
   centerOfMassY?: number
-  totalMass?: number
+  aggregateMass: number
   elements: { id: number; x: number; y: number; radius: number }[]
   children?: { nw: MaterializedQuad; ne: MaterializedQuad; sw: MaterializedQuad; se: MaterializedQuad }
 }
