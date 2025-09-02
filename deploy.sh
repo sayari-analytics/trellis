@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #########################
-## Validate deployment ##
+## Validate Deployment ##
 #########################
 
 RELEASE=$1
