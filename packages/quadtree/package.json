@@ -9,9 +9,10 @@
     "vite": "^6.3.5"
   },
   "scripts": {
-    "test": "tsx ./tests/quadtree.test.ts | tap-spec",
-    "profile": "tsx ./tests/profile.ts",
-    "dev": "vite serve viz/"
+    "test": "tsx ./tests/index.ts | tap-spec",
+    "perf": "tsx ./perf/index.ts",
+    "perf:browser": "vite serve ./perf/",
+    "viz": "vite serve ./viz/"
   },
   "repository": {
     "type": "git",

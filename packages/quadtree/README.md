@@ -1,10 +1,13 @@
 # Quadtree
 
-A pointerless circle region quadtree for efficient force-directed graph simulations, including collision detection and Barnes-Hut N-body comparisons.
+A linear circle region quadtree for efficient force-directed graph simulations, including collision detection and Barnes-Hut N-body comparisons.
 The Quadtree indexes quads in Typed Arrays, leading to better data locality and increased cache hits.
 This implementation is heavily inspired by [this StackOverflow answer by Dragon Energy](https://stackoverflow.com/a/48330314/2287885).
 
 ## Usage
+TODO
+
+## Performance
 TODO
 
 ## Element
@@ -27,9 +30,6 @@ TODO
 - to save space, quad bounds are only stored for the root quad. all other quads' bounds are computed on the fly when traversing the quadtree
 
 ## Storage
-- quads: stride 3 * bytes per quad 4 = 12 bytes/quad
+- quads: stride 5 * bytes per quad 4 = 40 bytes/quad
 - quadElements: stride 2 * bytes per element 4 = 8 bytes/element
-- total storage when indexing 100k elements: ~21,845 quads * 12 bytes + 100,000 elements * 8 bytes ~= 1,062,140 bytes
-
-## Performance
-TODO
+- total storage when indexing 100k elements with depth = 8: 21,845 quads * 20 bytes + 100,000 elements * 8 bytes = 1,149,520 bytes

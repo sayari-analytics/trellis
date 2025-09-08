@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quadtree Visualization</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      border: 1px solid black;
+      margin-top: 60px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="quadtree-canvas"></canvas>
+  <div style="position: absolute; top: 10px; left: 10px;">
+    <button id="add-5k-btn">Add 5k</button>
+    <button id="add-25k-btn">Add 25k</button>
+    <button id="add-100k-btn">Add 100k</button>
+    <button id="clear-btn">Clear</button>
+    <button id="highlight-collisions-btn">Highlight Collisions</button>
+    <button id="simulate-btn">Simulate Random Body</button>
+  </div>
+  <div id="stats-container" style="position: absolute; top: 10px; right: 10px; font-family: sans-serif; font-size: 12px"></div>
+  <script type="module" src="index.ts"></script>
+</body>
+</html>
