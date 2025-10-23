@@ -1,5 +1,7 @@
 import './zIndex.test'
-import './forEachQuad.test'
 import './insert.test'
 import './merge.test'
 import './quadtree.test'
+import './forEachQuad.test'
+import './forEachCollision.test'
+import './forEachBody.test'

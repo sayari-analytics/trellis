@@ -40,6 +40,7 @@ export class Quadtree {
   private quadElements: Uint32Array
   private traversedElements: Uint8Array
   private childElementPtrs: Uint32Array
+  private collisions!: Set<number>
   private debug = false
 
   // Allocators
@@ -109,10 +110,10 @@ export class Quadtree {
     this.minY = Infinity
     this.maxY = -Infinity
     for (let i = 0; i < this.elementCount; ++i) {
-      const elementIndex = i * this.elementStride
-      const x = this.elements[elementIndex + this.elementXOffset]
-      const y = this.elements[elementIndex + this.elementYOffset]
-      const r = this.elements[elementIndex + this.elementRadiusOffset]
+      const elementPtr = i * this.elementStride
+      const x = this.elements[elementPtr + this.elementXOffset]
+      const y = this.elements[elementPtr + this.elementYOffset]
+      const r = this.elements[elementPtr + this.elementRadiusOffset]
       if (x - r < this.minX) this.minX = x - r
       if (x + r > this.maxX) this.maxX = x + r
       if (y - r < this.minY) this.minY = y - r
@@ -257,11 +258,11 @@ export class Quadtree {
         const mask = 1 << bitIndex
 
         if ((this.traversedElements[byteIndex] & mask) === 0) {
+          this.traversedElements[byteIndex] |= mask
           if (nextChildElementPtr === this.maxCapacity) {
             nextChildElementPtr++
             break childQuadLoop
           }
-          this.traversedElements[byteIndex] |= mask
           this.childElementPtrs[nextChildElementPtr++] = childQuadElementPtr
         }
 
@@ -310,39 +311,20 @@ export class Quadtree {
   }
 
   /**
-   *
-   */
-  public getQuad(quadId: number) {
-    const quadPtr = quadId * Quadtree.QUADS_STRIDE
-    const mass = this.quads[quadPtr + 1]
-    return mass === Quadtree.NULL_POINTER
-      ? { centerOfMassX: undefined, quadsCenterOfMassY: undefined, aggregateMass: 0 }
-      : {
-          centerOfMassX: this.quadsCenterOfMass[quadPtr] / mass,
-          centerOfMassY: this.quadsCenterOfMass[quadPtr + 1] / mass,
-          aggregateMass: mass
-        }
-  }
-
-  /**
-   *
-   */
-  public *getQuadElements(quadId: number) {
-    let quadElementPtr = this.quads[quadId * Quadtree.QUADS_STRIDE]
-
-    if (quadElementPtr !== Quadtree.BRANCH_POINTER) {
-      while (quadElementPtr !== Quadtree.NULL_POINTER) {
-        yield this.quadElements[quadElementPtr]
-        quadElementPtr = this.quadElements[quadElementPtr + 1]
-      }
-    }
-  }
-
-  /**
    * Visit each quad breadth first. Return true from the callback to continue recursing.
    */
   public forEachQuad(
-    cb: (quadId: number, depth: number, minX: number, maxX: number, minY: number, maxY: number) => boolean | number,
+    cb: (
+      quadId: number,
+      depth: number,
+      minX: number,
+      maxX: number,
+      minY: number,
+      maxY: number,
+      mass: number,
+      massX?: number,
+      massY?: number
+    ) => boolean | number,
     quadId = 0,
     depth = 0,
     minX = this.minX,
@@ -350,8 +332,25 @@ export class Quadtree {
     minY = this.minY,
     maxY = this.maxY
   ): void {
-    const recurse = cb(quadId, depth, minX, maxX, minY, maxY)
-    const quadElementPtr = this.quads[quadId * Quadtree.QUADS_STRIDE]
+    const quadPtr = quadId * Quadtree.QUADS_STRIDE
+    const quadElementPtr = this.quads[quadPtr]
+    const mass = this.quads[quadPtr + 1]
+    let recurse: boolean | number
+    if (mass === Quadtree.NULL_POINTER) {
+      recurse = cb(quadId, depth, minX, maxX, minY, maxY, 0, undefined, undefined)
+    } else {
+      recurse = cb(
+        quadId,
+        depth,
+        minX,
+        maxX,
+        minY,
+        maxY,
+        mass,
+        this.quadsCenterOfMass[quadPtr] / mass,
+        this.quadsCenterOfMass[quadPtr + 1] / mass
+      )
+    }
 
     if (quadElementPtr === Quadtree.BRANCH_POINTER) {
       if (typeof recurse === 'number') {
@@ -375,28 +374,51 @@ export class Quadtree {
   }
 
   /**
+   *
+   */
+  public *forEachQuadElement(quadId: number): Generator<number, void, void> {
+    let quadElementPtr = this.quads[quadId * Quadtree.QUADS_STRIDE]
+
+    if (quadElementPtr !== Quadtree.BRANCH_POINTER) {
+      while (quadElementPtr !== Quadtree.NULL_POINTER) {
+        yield this.quadElements[quadElementPtr]
+        quadElementPtr = this.quadElements[quadElementPtr + 1]
+      }
+    }
+  }
+
+  /**
    * Find all unique collision pairs
    * @param cb callback function invoked for each colliding pair
    */
   public forEachCollision(cb: (id1: number, id2: number) => void): void {
     this.traversedElements.fill(0)
-    this.compareCollisions(cb, 0)
+    this.forEachCollisionRecursive(cb, 0, this.minX, this.maxX, this.minY, this.maxY)
   }
 
-  private compareCollisions(cb: (id1: number, id2: number) => void, quadId: number): void {
+  private forEachCollisionRecursive(
+    cb: (id1: number, id2: number) => void,
+    quadId: number,
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number
+  ): void {
     const quadPtr = quadId * Quadtree.QUADS_STRIDE
     let quadElementAPtr = this.quads[quadPtr]
 
     if (quadElementAPtr === Quadtree.BRANCH_POINTER) {
       // quad is a branch - recurse to child quads
-      this.compareCollisions(cb, 4 * quadId + 1)
-      this.compareCollisions(cb, 4 * quadId + 2)
-      this.compareCollisions(cb, 4 * quadId + 3)
-      this.compareCollisions(cb, 4 * quadId + 4)
+      const mx = (minX + maxX) / 2
+      const my = (minY + maxY) / 2
+      this.forEachCollisionRecursive(cb, 4 * quadId + 1, minX, mx, my, maxY)
+      this.forEachCollisionRecursive(cb, 4 * quadId + 2, minX, mx, minY, my)
+      this.forEachCollisionRecursive(cb, 4 * quadId + 3, mx, maxX, my, maxY)
+      this.forEachCollisionRecursive(cb, 4 * quadId + 4, mx, maxX, minY, my)
       return
     }
 
-    // quad is a leaf - check elements for collisions
+    // quad is a leaf - compare elements for collisions
     while (quadElementAPtr !== Quadtree.NULL_POINTER) {
       const elementAId = this.quadElements[quadElementAPtr]
       const byteIndex = Math.floor(elementAId / 8)
@@ -406,24 +428,69 @@ export class Quadtree {
       if ((this.traversedElements[byteIndex] & mask) === 0) {
         this.traversedElements[byteIndex] |= mask
 
-        // let quadElementBPtr = this.quadElements[quadElementAPtr + 1]
-        let quadElementBPtr = this.quads[quadPtr]
-        while (quadElementBPtr !== Quadtree.NULL_POINTER) {
-          const elementBId = this.quadElements[quadElementBPtr]
-          if (elementAId !== elementBId) {
-            const elementAPtr = elementAId * this.elementStride
-            const elementBPtr = elementBId * this.elementStride
-            const dx = this.elements[elementAPtr + this.elementXOffset] - this.elements[elementBPtr + this.elementXOffset]
-            const dy = this.elements[elementAPtr + this.elementYOffset] - this.elements[elementBPtr + this.elementYOffset]
-            const r = this.elements[elementAPtr + this.elementRadiusOffset] + this.elements[elementBPtr + this.elementRadiusOffset]
-            if (dx * dx + dy * dy < r * r) cb(elementAId, elementBId) // TODO - add initial aabb check?
-          }
-
-          quadElementBPtr = this.quadElements[quadElementBPtr + 1]
-        }
+        // compare elementAId against every other element in every overlapping quad
+        const elementPtr = elementAId * this.elementStride
+        const x = this.elements[elementPtr + this.elementXOffset]
+        const y = this.elements[elementPtr + this.elementYOffset]
+        const r = this.elements[elementPtr + this.elementRadiusOffset]
+        this.collisions = new Set()
+        this.compareCollisions(cb, 0, this.minX, this.maxX, this.minY, this.maxY, elementAId, x, y, r)
       }
 
       quadElementAPtr = this.quadElements[quadElementAPtr + 1]
+    }
+  }
+
+  private compareCollisions(
+    cb: (id1: number, id2: number) => void,
+    quadId: number,
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    elementAId: number,
+    x: number,
+    y: number,
+    r: number
+  ): void {
+    const quadPtr = quadId * Quadtree.QUADS_STRIDE
+    let quadElementBPtr = this.quads[quadPtr]
+
+    if (quadElementBPtr === Quadtree.BRANCH_POINTER) {
+      // quad is a branch - recurse to overlapping child quads
+      const mx = (minX + maxX) / 2
+      const my = (minY + maxY) / 2
+      const r2 = r ** 2
+      const westX = Math.max(minX, Math.min(x, mx))
+      const northY = Math.max(my, Math.min(y, maxY))
+      const eastX = Math.max(mx, Math.min(x, maxX))
+      const southY = Math.max(minY, Math.min(y, my))
+
+      if ((x - westX) ** 2 + (y - northY) ** 2 < r2) this.compareCollisions(cb, 4 * quadId + 1, minX, mx, my, maxY, elementAId, x, y, r)
+      if ((x - eastX) ** 2 + (y - northY) ** 2 < r2) this.compareCollisions(cb, 4 * quadId + 2, mx, maxX, my, maxY, elementAId, x, y, r)
+      if ((x - westX) ** 2 + (y - southY) ** 2 < r2) this.compareCollisions(cb, 4 * quadId + 3, minX, mx, minY, my, elementAId, x, y, r)
+      if ((x - eastX) ** 2 + (y - southY) ** 2 < r2) this.compareCollisions(cb, 4 * quadId + 4, mx, maxX, minY, my, elementAId, x, y, r)
+      return
+    }
+
+    // quad is a leaf - check elements for collisions
+    while (quadElementBPtr !== Quadtree.NULL_POINTER) {
+      const elementBId = this.quadElements[quadElementBPtr]
+      const byteIndex = Math.floor(elementBId / 8)
+      const bitIndex = elementBId % 8
+      const mask = 1 << bitIndex
+      if ((this.traversedElements[byteIndex] & mask) === 0 && !this.collisions.has(elementBId)) {
+        const elementBPtr = elementBId * this.elementStride
+        const dx = x - this.elements[elementBPtr + this.elementXOffset]
+        const dy = y - this.elements[elementBPtr + this.elementYOffset]
+        const r2 = r + this.elements[elementBPtr + this.elementRadiusOffset]
+        if (dx ** 2 + dy ** 2 < r2 ** 2) {
+          this.collisions.add(elementBId)
+          cb(elementAId, elementBId)
+        }
+      }
+
+      quadElementBPtr = this.quadElements[quadElementBPtr + 1]
     }
   }
 
@@ -438,9 +505,9 @@ export class Quadtree {
     const thetaSq = theta * theta
 
     for (let elementId = 0; elementId < this.elementCount; elementId++) {
-      const elementIndex = elementId * this.elementStride
-      const x = this.elements[elementIndex + this.elementXOffset]
-      const y = this.elements[elementIndex + this.elementYOffset]
+      const elementPtr = elementId * this.elementStride
+      const x = this.elements[elementPtr + this.elementXOffset]
+      const y = this.elements[elementPtr + this.elementYOffset]
 
       this.compareBodies(cb, elementId, x, y, 0, this.minX, this.maxX, this.minY, this.maxY, thetaSq)
     }
@@ -482,6 +549,7 @@ export class Quadtree {
       }
     } else {
       // quad is a leaf - compute aggregateMass comparisons for each quad element
+      // TODO - evaluate approximating leaf quads as a single body - cb(elementId, quadCenterOfMassX, quadCenterOfMassY, aggregateMass, distance2)
       while (quadElementPtr !== Quadtree.NULL_POINTER) {
         const elementBId = this.quadElements[quadElementPtr]
         if (elementId !== elementBId) {
@@ -494,45 +562,6 @@ export class Quadtree {
       }
     }
   }
-
-  // TODO - evaluate approximating leaf quads as a single body
-  // private compareBodies(
-  //   cb: (elementId: number, x: number, y: number, aggregateMass: number, distance2: number) => void,
-  //   elementId: number,
-  //   x: number,
-  //   y: number,
-  //   quadId: number,
-  //   minX: number,
-  //   maxX: number,
-  //   minY: number,
-  //   maxY: number,
-  //   thetaSq: number
-  // ): void {
-  //   const quadPtr = quadId * Quadtree.QUADS_STRIDE
-  //   const aggregateMass = this.quads[quadPtr + 1]
-  //   if (aggregateMass === 0) return
-  //   const quadCenterOfMassX = this.quadsCenterOfMass[quadPtr] / aggregateMass
-  //   const quadCenterOfMassY = this.quadsCenterOfMass[quadPtr + 1] / aggregateMass
-  //   const distance2 = (x - quadCenterOfMassX) ** 2 + (y - quadCenterOfMassY) ** 2
-
-  //   if (this.quads[quadPtr] === Quadtree.BRANCH_POINTER) {
-  //     if ((maxX - minX) ** 2 < thetaSq * distance2) {
-  //       // quad is a distant branch - approximate as a single body
-  //       cb(elementId, quadCenterOfMassX, quadCenterOfMassY, aggregateMass, distance2)
-  //     } else {
-  //       // quad is a near branch - recurse to child quads
-  //       const mx = (minX + maxX) / 2
-  //       const my = (minY + maxY) / 2
-  //       this.compareBodies(cb, elementId, x, y, 4 * quadId + 1, minX, mx, my, maxY, thetaSq)
-  //       this.compareBodies(cb, elementId, x, y, 4 * quadId + 2, mx, maxX, my, maxY, thetaSq)
-  //       this.compareBodies(cb, elementId, x, y, 4 * quadId + 3, minX, mx, minY, my, thetaSq)
-  //       this.compareBodies(cb, elementId, x, y, 4 * quadId + 4, mx, maxX, minY, my, thetaSq)
-  //     }
-  //   } else {
-  //     // quad is a leaf - also approximate as a single body
-  //     cb(elementId, quadCenterOfMassX, quadCenterOfMassY, aggregateMass, distance2)
-  //   }
-  // }
 
   /**
    * Allocate a new quadElement, resizing the buffer if necessary
@@ -582,30 +611,12 @@ export class Quadtree {
 
   public _debug() {
     this.debug = true
-    this.rebuild()
-    const forEachQuad = (
-      cb: (quadId: number, depth: number, minX: number, maxX: number, minY: number, maxY: number) => boolean | number,
-      quadId = 0,
-      depth = 0,
-      minX = this.minX,
-      maxX = this.maxX,
-      minY = this.minY,
-      maxY = this.maxY
-    ) => {
-      if (cb(quadId, depth, minX, maxX, minY, maxY) && depth < this.maxDepth) {
-        forEachQuad(cb, 4 * quadId + 1, depth + 1, minX, (minX + maxX) / 2, (minY + maxY) / 2, maxY)
-        forEachQuad(cb, 4 * quadId + 2, depth + 1, (minX + maxX) / 2, maxX, (minY + maxY) / 2, maxY)
-        forEachQuad(cb, 4 * quadId + 3, depth + 1, minX, (minX + maxX) / 2, minY, (minY + maxY) / 2)
-        forEachQuad(cb, 4 * quadId + 4, depth + 1, (minX + maxX) / 2, maxX, minY, (minY + maxY) / 2)
-      }
-    }
-
     return {
+      rebuild: this.rebuild.bind(this),
       insert: this.insert.bind(this),
       merge: this.merge.bind(this),
-      forEachQuad: forEachQuad,
-      quadElements: this.quadElements,
-      quads: this.quads
+      quads: this.quads,
+      quadElements: this.quadElements
     }
   }
 }

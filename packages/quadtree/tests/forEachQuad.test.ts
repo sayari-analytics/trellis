@@ -1,21 +1,19 @@
 /* eslint-disable no-console */
 import test from 'tape'
-import { createTreeGrid, generateTypedArray, quadIdToGridCell } from './utils'
+import { createGrid, quadIdToGridCell } from './utils'
 import { Quadtree } from '../'
-
-const _ = null
 
 test('[forEachQuad.test.ts] returns correct quadId and depth', (t) => {
   t.plan(1)
 
   const maxDepth = 3
-  const treeGrid = createTreeGrid<string>(maxDepth)
-  const elements: [x: number, y: number, r: number][] = []
-  for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) elements.push([x, y, 0.1])
-  const quadtree = new Quadtree(generateTypedArray(elements), { maxDepth, maxCapacity: 0 })
+  const treeGrid = createGrid<string>(maxDepth)
+  const elements: number[] = []
+  for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) elements.push(x, y, 0.1)
+  const quadtree = new Quadtree(new Float32Array(elements), { maxDepth, maxCapacity: 0 })
 
   quadtree.forEachQuad((quadId, depth) => {
-    const [row, col] = quadIdToGridCell(quadId, depth)
+    const [row, col] = quadIdToGridCell(quadId)
     treeGrid[depth][row][col] = `${depth}|${quadId}`
     return true
   })
@@ -53,13 +51,13 @@ test('[forEachQuad.test.ts] returns correct quad min/max x/y', (t) => {
   t.plan(1)
 
   const maxDepth = 3
-  const treeGrid = createTreeGrid<string>(maxDepth)
-  const elements: [x: number, y: number, r: number][] = []
-  for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) elements.push([x + 0.5, y + 0.5, 0.5])
-  const quadtree = new Quadtree(generateTypedArray(elements), { maxDepth, maxCapacity: 0 })
+  const treeGrid = createGrid<string>(maxDepth)
+  const elements: number[] = []
+  for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) elements.push(x + 0.5, y + 0.5, 0.5)
+  const quadtree = new Quadtree(new Float32Array(elements), { maxDepth, maxCapacity: 0 })
 
   quadtree.forEachQuad((quadId, depth, minX, maxX, minY, maxY) => {
-    const [row, col] = quadIdToGridCell(quadId, depth)
+    const [row, col] = quadIdToGridCell(quadId)
     treeGrid[depth][row][col] = `${minX.toFixed(1)}..${maxX.toFixed(1)}|${minY.toFixed(1)}..${maxY.toFixed(1)}`
     return true
   })
@@ -97,14 +95,14 @@ test('[forEachQuad.test.ts] only traverses quads that merge does not prune', (t)
   t.plan(1)
 
   const maxDepth = 3
-  const treeGrid = createTreeGrid<number[]>(0)
+  const treeGrid = createGrid<number[]>(0)
   const quadtree = new Quadtree(new Float32Array([...[-1, 1, 0.1], ...[1, 1, 0.1], ...[-1, -1, 0.1], ...[1, -1, 0.1]]), { maxDepth })
 
   quadtree.forEachQuad((quadId, depth) => {
-    const [row, col] = quadIdToGridCell(quadId, depth)
+    const [row, col] = quadIdToGridCell(quadId)
     treeGrid[depth][row][col] = []
 
-    for (const element of quadtree.getQuadElements(quadId)) {
+    for (const element of quadtree.forEachQuadElement(quadId)) {
       treeGrid[depth][row][col].push(element)
     }
 

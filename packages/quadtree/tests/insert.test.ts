@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import test from 'tape'
-import { createTreeGrid, quadIdToGridCell, stringifyTreeGrid, treeGridIsEmpty } from './utils'
+import { createGrid, stringifyGrid, gridIsEmpty, quadtreeToGrid } from './utils'
 import { Quadtree } from '../'
 
 test('[insert.test.ts] creates empty tree grid', (t) => {
@@ -8,7 +8,7 @@ test('[insert.test.ts] creates empty tree grid', (t) => {
 
   const _ = null
   const maxDepth = 4
-  t.deepEquals(createTreeGrid(maxDepth), [
+  t.deepEquals(createGrid(maxDepth), [
     // depth 0 [1x1]
     [[_]],
     // depth 1 [2x2]
@@ -61,28 +61,20 @@ test('[insert.test.ts] inserts elements into correct leaf quads', (t) => {
 
   {
     const maxDepth = 3
-    const treeGrid = createTreeGrid<number[]>(maxDepth)
     const quadtree = new Quadtree(
       new Float32Array([...[-99, 99, 1], ...[99, 99, 1], ...[-99, -99, 1], ...[99, -99, 1], ...[30, 30, 1], ...[-5, 22, 1]]),
       { maxDepth }
     )
-    const { insert, forEachQuad } = quadtree._debug()
+    const { rebuild, insert, quads, quadElements } = quadtree._debug()
+    rebuild()
     insert()
+    const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    forEachQuad((quadId, depth) => {
-      const [row, col] = quadIdToGridCell(quadId, depth)
-      for (const element of quadtree.getQuadElements(quadId)) {
-        treeGrid[depth][row][col] ??= []
-        treeGrid[depth][row][col].push(element)
-      }
-      return true
-    })
-
-    t.true(treeGridIsEmpty(treeGrid, 0), 'tree is empty at depth 0')
-    t.true(treeGridIsEmpty(treeGrid, 1), 'tree is empty at depth 1')
-    t.true(treeGridIsEmpty(treeGrid, 2), 'tree is empty at depth 2')
+    t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+    t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+    t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
     t.equals(
-      stringifyTreeGrid(treeGrid, 3),
+      stringifyGrid(grid, 3),
       `\
 [ 0 ,   ,   ,   ,   ,   ,   , 1 ]
 [   ,   ,   ,   ,   ,   ,   ,   ]
@@ -98,29 +90,21 @@ test('[insert.test.ts] inserts elements into correct leaf quads', (t) => {
 })
 
 test('[insert.test.ts] inserts elements that overlap multiple quads into correct leaf quads', (t) => {
-  t.plan(16)
+  t.plan(28)
 
   {
     const maxDepth = 3
-    const treeGrid = createTreeGrid<number[]>(maxDepth)
     const quadtree = new Quadtree(new Float32Array([...[50, 50, 24], ...[1, 199, 1], ...[199, 199, 1], ...[1, 1, 1]]), { maxDepth })
-    const { insert, forEachQuad } = quadtree._debug()
+    const { rebuild, insert, quads, quadElements } = quadtree._debug()
+    rebuild()
     insert()
+    const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    forEachQuad((quadId, depth) => {
-      const [row, col] = quadIdToGridCell(quadId, depth)
-      for (const element of quadtree.getQuadElements(quadId)) {
-        treeGrid[depth][row][col] ??= []
-        treeGrid[depth][row][col].push(element)
-      }
-      return true
-    })
-
-    t.true(treeGridIsEmpty(treeGrid, 0), 'tree is empty at depth 0')
-    t.true(treeGridIsEmpty(treeGrid, 1), 'tree is empty at depth 1')
-    t.true(treeGridIsEmpty(treeGrid, 2), 'tree is empty at depth 2')
+    t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+    t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+    t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
     t.deepEquals(
-      stringifyTreeGrid(treeGrid, 3),
+      stringifyGrid(grid, 3),
       `\
 [ 1 ,   ,   ,   ,   ,   ,   , 2 ]
 [   ,   ,   ,   ,   ,   ,   ,   ]
@@ -136,30 +120,22 @@ test('[insert.test.ts] inserts elements that overlap multiple quads into correct
 
   {
     const maxDepth = 5
-    const treeGrid = createTreeGrid<number[]>(maxDepth)
     const quadtree = new Quadtree(new Float32Array([...[10, 10, 1], ...[-10, 10, 1], ...[10, -10, 1], ...[-10, -10, 1]]), {
       maxCapacity: 4,
       maxDepth: 5
     })
-    const { insert, forEachQuad } = quadtree._debug()
+    const { rebuild, insert, quads, quadElements } = quadtree._debug()
+    rebuild()
     insert()
+    const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    forEachQuad((quadId, depth) => {
-      const [row, col] = quadIdToGridCell(quadId, depth)
-      for (const element of quadtree.getQuadElements(quadId)) {
-        treeGrid[depth][row][col] ??= []
-        treeGrid[depth][row][col].push(element)
-      }
-      return true
-    })
-
-    t.true(treeGridIsEmpty(treeGrid, 0), 'tree is empty at depth 0')
-    t.true(treeGridIsEmpty(treeGrid, 1), 'tree is empty at depth 1')
-    t.true(treeGridIsEmpty(treeGrid, 2), 'tree is empty at depth 2')
-    t.true(treeGridIsEmpty(treeGrid, 3), 'tree is empty at depth 3')
-    t.true(treeGridIsEmpty(treeGrid, 4), 'tree is empty at depth 4')
+    t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+    t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+    t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
+    t.true(gridIsEmpty(grid, 3), 'tree is empty at depth 3')
+    t.true(gridIsEmpty(grid, 4), 'tree is empty at depth 4')
     t.deepEqual(
-      stringifyTreeGrid(treeGrid, 5),
+      stringifyGrid(grid, 5),
       `\
 [ 1 , 1 , 1 ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   , 0 , 0 , 0 ]
 [ 1 , 1 , 1 ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   , 0 , 0 , 0 ]
@@ -199,30 +175,22 @@ test('[insert.test.ts] inserts elements that overlap multiple quads into correct
 
   {
     const maxDepth = 5
-    const treeGrid = createTreeGrid<number[]>(maxDepth)
     const quadtree = new Quadtree(
       new Float32Array([...[10, 10, 1], ...[10, 9, 1], ...[-10, 10, 1], ...[10, -10, 1], ...[-10, -10, 1], ...[-10, -9, 1]]),
       { maxCapacity: 4, maxDepth: 5 }
     )
-    const { insert, forEachQuad } = quadtree._debug()
+    const { rebuild, insert, quads, quadElements } = quadtree._debug()
+    rebuild()
     insert()
+    const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    forEachQuad((quadId, depth) => {
-      const [row, col] = quadIdToGridCell(quadId, depth)
-      for (const element of quadtree.getQuadElements(quadId)) {
-        treeGrid[depth][row][col] ??= []
-        treeGrid[depth][row][col].push(element)
-      }
-      return true
-    })
-
-    t.true(treeGridIsEmpty(treeGrid, 0), 'tree is empty at depth 0')
-    t.true(treeGridIsEmpty(treeGrid, 1), 'tree is empty at depth 1')
-    t.true(treeGridIsEmpty(treeGrid, 2), 'tree is empty at depth 2')
-    t.true(treeGridIsEmpty(treeGrid, 3), 'tree is empty at depth 3')
-    t.true(treeGridIsEmpty(treeGrid, 4), 'tree is empty at depth 4')
+    t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+    t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+    t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
+    t.true(gridIsEmpty(grid, 3), 'tree is empty at depth 3')
+    t.true(gridIsEmpty(grid, 4), 'tree is empty at depth 4')
     t.deepEqual(
-      stringifyTreeGrid(treeGrid, 5),
+      stringifyGrid(grid, 5),
       `\
 [ 2|  , 2|  , 2|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 0|  , 0|  , 0|  ]
 [ 2|  , 2|  , 2|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|0 , 1|0 , 1|0 ]
@@ -259,34 +227,130 @@ test('[insert.test.ts] inserts elements that overlap multiple quads into correct
       'tree is populated at depth 5'
     )
   }
+
+  {
+    const maxDepth = 5
+    const quadtree = new Quadtree(new Float32Array([0, 0, 1]), { maxDepth: 5 })
+    const { rebuild, insert, quads, quadElements } = quadtree._debug()
+    rebuild()
+    insert()
+    const grid = quadtreeToGrid(quads, quadElements, maxDepth)
+
+    t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+    t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+    t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
+    t.true(gridIsEmpty(grid, 3), 'tree is empty at depth 3')
+    t.true(gridIsEmpty(grid, 4), 'tree is empty at depth 4')
+    t.deepEqual(
+      stringifyGrid(grid, 5),
+      `\
+[   ,   ,   ,   ,   ,   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ]
+[   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ]
+[   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ]
+[   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ]
+[   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ]
+[   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ]
+[   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ]
+[   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ]
+[   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ]
+[   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ]
+[   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ]
+[   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ,   ,   ,   ]
+[   ,   ,   ,   ,   ,   ,   ,   ,   ,   , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ]`,
+      'tree is populated at depth 5'
+    )
+  }
+
+  {
+    const maxDepth = 5
+    const quadtree = new Quadtree(new Float32Array([-1, -1, 2, 1, 1, 2]), { maxDepth: 5 })
+    const { rebuild, insert, quads, quadElements } = quadtree._debug()
+    rebuild()
+    insert()
+    const grid = quadtreeToGrid(quads, quadElements, maxDepth)
+
+    t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+    t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+    t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
+    t.true(gridIsEmpty(grid, 3), 'tree is empty at depth 3')
+    t.true(gridIsEmpty(grid, 4), 'tree is empty at depth 4')
+    t.deepEqual(
+      stringifyGrid(grid, 5),
+      `\
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ,     ,     ,     ,     ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ,     ,     ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ,     ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     ,     ,     ,     ,     ,     ,     ,     ,     , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     ,     ,     ,     ,     ,     ,     , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     ,     ,     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     ,     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  , 1|  , 1|  , 1|  ,     ,     ,     ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 1|0 , 1|0 , 1|0 , 1|0 , 1|  , 1|  ,     ,     ,     ,     ,     ,     ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[ 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[     ,     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[     ,     ,     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]
+[     ,     ,     ,     ,     ,     , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  , 0|  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     ]`,
+      'tree is populated at depth 5'
+    )
+  }
 })
 
 test('[insert.test.ts] doesnt insert into a quad elements that touch but dont overlap with it', (t) => {
   t.plan(4)
 
   const maxDepth = 3
-  const treeGrid = createTreeGrid<number[]>(maxDepth)
   const quadtree = new Quadtree(
     new Float32Array([...[1, 199, 1], ...[199, 199, 1], ...[1, 1, 1], ...[50, 50, 25], ...[37.5, 137.5, 12.5], ...[130, 48, 28]]),
     { maxDepth }
   )
-  const { insert, forEachQuad } = quadtree._debug()
+  const { rebuild, insert, quads, quadElements } = quadtree._debug()
+  rebuild()
   insert()
+  const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-  forEachQuad((quadId, depth) => {
-    const [row, col] = quadIdToGridCell(quadId, depth)
-    for (const element of quadtree.getQuadElements(quadId)) {
-      treeGrid[depth][row][col] ??= []
-      treeGrid[depth][row][col].push(element)
-    }
-    return true
-  })
-
-  t.true(treeGridIsEmpty(treeGrid, 0), 'tree is empty at depth 0')
-  t.true(treeGridIsEmpty(treeGrid, 1), 'tree is empty at depth 1')
-  t.true(treeGridIsEmpty(treeGrid, 2), 'tree is empty at depth 2')
+  t.true(gridIsEmpty(grid, 0), 'tree is empty at depth 0')
+  t.true(gridIsEmpty(grid, 1), 'tree is empty at depth 1')
+  t.true(gridIsEmpty(grid, 2), 'tree is empty at depth 2')
   t.deepEquals(
-    stringifyTreeGrid(treeGrid, 3),
+    stringifyGrid(grid, 3),
     `\
 [ 0 ,   ,   ,   ,   ,   ,   , 1 ]
 [   ,   ,   ,   ,   ,   ,   ,   ]

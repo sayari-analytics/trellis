@@ -1,16 +1,10 @@
 import { Quadtree } from '../'
 
-export const generateTypedArray = (elements: [x: number, y: number, r: number][]): Float32Array => {
-  const typedArray = new Float32Array(elements.length * 3)
-
-  for (let i = 0; i < elements.length; i++) {
-    const elementPtr = i * 3
-    typedArray[elementPtr] = elements[i][0]
-    typedArray[elementPtr + 1] = elements[i][1]
-    typedArray[elementPtr + 2] = elements[i][2]
-  }
-
-  return typedArray
+export const createGrid = <T>(depth: number): (null | T)[][][] => {
+  return new Array(depth + 1).fill(null).map((_, depth) => {
+    const dimension = 2 ** depth
+    return new Array(dimension).fill(null).map(() => new Array(dimension).fill(null))
+  })
 }
 
 export const zIndex = (col: number, row: number): number => {
@@ -45,16 +39,39 @@ export const fromZIndex = (z: number): [row: number, col: number] => {
 
 export const quadIdOffset = (depth: number) => (4 ** depth - 1) / 3
 
-export const createTreeGrid = <T>(depth: number): (null | T)[][][] => {
-  return new Array(depth + 1).fill(null).map((_, depth) => {
-    const dimension = 2 ** depth
-    return new Array(dimension).fill(null).map(() => new Array(dimension).fill(null))
-  })
-}
-
-export const quadIdToGridCell = (quadId: number, depth: number): [row: number, col: number] => {
+export const quadIdToGridCell = (quadId: number): [row: number, col: number] => {
+  const depth = Math.floor(Math.log(3 * quadId + 1) / Math.log(4))
   const offset = quadIdOffset(depth)
   return fromZIndex(quadId - offset)
+}
+
+export const quadtreeToGrid = (quads: Uint32Array, quadElements: Uint32Array, maxDepth: number): (null | number[])[][][] => {
+  const grid = createGrid<number[]>(maxDepth)
+
+  const maxQuadId = quadIdOffset(maxDepth + 1)
+  const QUADS_STRIDE = 2
+  const NULL_POINTER = 0xffffffff
+  const BRANCH_POINTER = 0xfffffffe
+  let quadId = 0
+
+  while (quadId < maxQuadId) {
+    const depth = Math.floor(Math.log(3 * quadId + 1) / Math.log(4))
+    const [row, col] = quadIdToGridCell(quadId)
+    let quadElementPtr = quads[quadId * QUADS_STRIDE]
+
+    if (quadElementPtr !== BRANCH_POINTER && quadElementPtr !== NULL_POINTER) {
+      grid[depth][row][col] = []
+
+      while (quadElementPtr !== NULL_POINTER) {
+        grid[depth][row][col].push(quadElements[quadElementPtr])
+        quadElementPtr = quadElements[quadElementPtr + 1]
+      }
+    }
+
+    quadId++
+  }
+
+  return grid
 }
 
 export type Quad = {
@@ -69,37 +86,7 @@ export type Quad = {
   elements: number[]
 }
 
-export const recordQuadProperties = (quadtree: Quadtree, quads: { [quadId: number]: Quad }) => {
-  return (quadId: number, depth: number, minX: number, maxX: number, minY: number, maxY: number) => {
-    if (quads[quadId] !== undefined) {
-      throw new Error(`forEachQuad emitted quad ${quadId} multiple times`)
-    }
-
-    const { centerOfMassX, centerOfMassY, aggregateMass } = quadtree.getQuad(quadId)
-
-    quads[quadId] = {
-      depth,
-      minX,
-      maxX,
-      minY,
-      maxY,
-      centerOfMassX,
-      centerOfMassY,
-      aggregateMass,
-      elements: []
-    }
-
-    for (const element of quadtree.getQuadElements(quadId)) {
-      quads[quadId].elements.push(element)
-    }
-
-    quads[quadId].elements.sort()
-
-    return true
-  }
-}
-
-export const stringifyTreeGrid = (treeGrid: (number[] | null)[][][], depth: number): string => {
+export const stringifyGrid = (treeGrid: (number[] | null)[][][], depth: number): string => {
   let maxCellElementCount = 0
   for (const row of treeGrid[depth]) {
     for (const cell of row) {
@@ -126,7 +113,7 @@ export const stringifyTreeGrid = (treeGrid: (number[] | null)[][][], depth: numb
     .join('\n')
 }
 
-export const treeGridIsEmpty = (treeGrid: (number[] | null)[][][], depth: number): boolean => {
+export const gridIsEmpty = (treeGrid: (number[] | null)[][][], depth: number): boolean => {
   for (const row of treeGrid[depth]) {
     for (const cell of row) {
       if (cell !== null) {
@@ -163,4 +150,42 @@ export const stringifyQuadElements = (quads: Uint32Array, quadElements: Uint32Ar
       .join(',') +
     '\n'
   )
+}
+
+export const recordQuadProperties = (quadtree: Quadtree, quads: { [quadId: number]: Quad }) => {
+  return (
+    quadId: number,
+    depth: number,
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    mass: number,
+    massX?: number,
+    massY?: number
+  ) => {
+    if (quads[quadId] !== undefined) {
+      throw new Error(`forEachQuad emitted quad ${quadId} multiple times`)
+    }
+
+    quads[quadId] = {
+      depth,
+      minX,
+      maxX,
+      minY,
+      maxY,
+      aggregateMass: mass,
+      centerOfMassX: massX,
+      centerOfMassY: massY,
+      elements: []
+    }
+
+    for (const element of quadtree.forEachQuadElement(quadId)) {
+      quads[quadId].elements.push(element)
+    }
+
+    quads[quadId].elements.sort()
+
+    return true
+  }
 }
