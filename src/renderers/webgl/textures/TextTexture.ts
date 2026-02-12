@@ -3,6 +3,7 @@ import { TextStyle as PixiTextStyle, ITextStyle as IPixiTextStyle, BitmapFont, I
 import { DEFAULT_HIGHLIGHT_STYLE, DEFAULT_TEXT_STYLE, MIN_TEXTURE_ZOOM, DEFAULT_RESOLUTION } from '../../../utils/constants'
 import { isNumber } from '../../../utils/helpers'
 import { equals } from '../../../utils/api'
+import { PointTuple } from '../../../types'
 
 export type TextTextureOptions = {
   defaultTextStyle?: Omit<TextStyle, 'highlight'>
@@ -116,7 +117,7 @@ export default class TextTexture {
     }
   }
 
-  get anchor(): [x: number, y: number] {
+  get anchor(): PointTuple {
     switch (this.position) {
       case 'bottom':
         return [0.5, 0]

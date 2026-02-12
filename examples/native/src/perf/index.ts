@@ -53,13 +53,13 @@ const NODE_HOVER_STYLE: Graph.NodeStyle = {
 
 const EDGE_STYLE: Graph.EdgeStyle = {
   width: 1,
-  stroke: '#aaa',
+  color: '#aaa',
   arrow: 'reverse'
 }
 
 const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
   width: 2,
-  stroke: '#f66',
+  color: '#f66',
   arrow: 'reverse'
 }
 

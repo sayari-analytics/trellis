@@ -26,7 +26,10 @@ const TEXT_ICON: Graph.TextIcon = {
 const NODE_STYLE: Graph.NodeStyle = {
   color: GREEN,
   icon: TEXT_ICON,
-  stroke: [{ width: 2, color: GREEN_LIGHT }],
+  stroke: [
+    { width: 1, color: '#FFF' },
+    { width: 2, color: GREEN_LIGHT }
+  ],
   label: {
     position: 'bottom',
     fontName: 'NodeLabel',
@@ -39,13 +42,39 @@ const NODE_STYLE: Graph.NodeStyle = {
 const NODE_HOVER_STYLE: Graph.NodeStyle = {
   color: DARK_GREEN,
   icon: IMAGE_ICON,
-  stroke: [{ width: 2, color: GREEN_LIGHT }],
+  stroke: [
+    { width: 1, color: '#FFF' },
+    { width: 2, color: GREEN_LIGHT },
+    { width: 1, color: DARK_GREEN }
+  ],
   label: {
     position: 'bottom',
     fontName: 'NodeLabelHover',
     fontFamily: 'Roboto',
     highlight: { color: DARK_GREEN },
     color: '#FFF',
+    margin: 4
+  }
+}
+
+const EDGE_STYLE: Graph.EdgeStyle = {
+  arrow: 'both',
+  label: {
+    fontName: 'EdgeLabel',
+    fontFamily: 'Roboto',
+    fontSize: 10,
+    color: DARK_GREEN,
+    margin: 4
+  }
+}
+const EDGE_HOVER_STYLE: Graph.EdgeStyle = {
+  arrow: 'both',
+  stroke: [{ width: 1, color: DARK_GREEN }],
+  label: {
+    fontName: 'EdgeLabel',
+    fontFamily: 'Roboto',
+    fontSize: 10,
+    color: DARK_GREEN,
     margin: 4
   }
 }
@@ -67,22 +96,13 @@ const data = [
 
 const collide = Collide.Layout()
 
-const edges: Graph.Edge[] = [
+let edges: Graph.Edge[] = [
   {
     id: '0::1',
     source: '0',
     target: '1',
     label: '0 <- EDGE LABEL -> 1',
-    style: {
-      arrow: 'both',
-      label: {
-        fontName: 'EdgeLabel',
-        fontFamily: 'Roboto',
-        fontSize: 10,
-        color: DARK_GREEN,
-        margin: 4
-      }
-    }
+    style: EDGE_STYLE
   }
 ]
 
@@ -119,7 +139,9 @@ const options: Renderer.Options = {
   },
   onNodePointerEnter: (event: Renderer.NodePointerEvent) => {
     // console.log('node pointer enter', `x: ${event.x}, y: ${event.y}`)
-    nodes = nodes.map((node) => (node.id === event.target.id ? { ...node, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node))
+    nodes = nodes.map((node) =>
+      node.id === event.target.id ? { ...node, radius: 15, label: node.label + ' 北京', style: NODE_HOVER_STYLE } : node
+    )
     renderer.update({ nodes, edges, options })
   },
   onNodeDrag: (event: Renderer.NodeDragEvent) => {
@@ -132,8 +154,28 @@ const options: Renderer.Options = {
   onNodePointerLeave: (event: Renderer.NodePointerEvent) => {
     // console.log('node pointer leave', `x: ${event.x}, y: ${event.y}`)
     nodes = nodes.map((node) =>
-      node.id === event.target.id ? { ...node, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
+      node.id === event.target.id ? { ...node, radius: 10, label: node.label?.slice(0, node.label.length - 3), style: NODE_STYLE } : node
     )
+    renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerEnter: (event: Renderer.EdgePointerEvent) => {
+    edges = edges.map((edge) => {
+      if (edge.id === event.target.id) {
+        return { ...edge, style: EDGE_HOVER_STYLE }
+      }
+      return edge
+    })
+
+    renderer.update({ nodes, edges, options })
+  },
+  onEdgePointerLeave: (event: Renderer.EdgePointerEvent) => {
+    edges = edges.map((edge) => {
+      if (edge.id === event.target.id) {
+        return { ...edge, style: EDGE_STYLE }
+      }
+      return edge
+    })
+
     renderer.update({ nodes, edges, options })
   }
 }
