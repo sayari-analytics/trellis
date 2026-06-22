@@ -2,63 +2,76 @@
 
 [![npm version](https://badge.fury.io/js/%40sayari%2Ftrellis.svg)](https://badge.fury.io/js/%40sayari%2Ftrellis)
 
-A highly performant network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases
+A set of small packages for high-performance graph visualization: a WebGL renderer, layout algorithms, controls,
+graph utilities, and a typed-array quadtree used by the force layout.
 
 ## Installation
 
-if using npm
+Install the packages you need:
 
 ```bash
 npm install @sayari/trellis
+npm install @sayari/trellis-force @sayari/trellis-sugiyama @sayari/trellis-hierarchy
+npm install @sayari/trellis-controls @sayari/trellis-utils
 ```
 
-or alternatively import via HTML
+The packages are ESM-first and are intended to be consumed through a modern bundler.
 
-```html
-<script src="https://unpkg.com/@sayari/trellis@{VERSION}/index.umd.js"></script>
+```ts
+import { GraphState, Renderer, DOMInteractionHandler } from '@sayari/trellis'
+import { LayoutSync as ForceLayout } from '@sayari/trellis-force'
+import { Layout as SugiyamaLayout } from '@sayari/trellis-sugiyama'
+import { Layout as HierarchyLayout } from '@sayari/trellis-hierarchy'
+import { Control as ZoomControl } from '@sayari/trellis-controls/zoom'
+import { gridGraph, animate } from '@sayari/trellis-utils'
 ```
+
+## Packages
+
+- `@sayari/trellis` - core WebGL renderer, graph state, camera, paths, and DOM interaction handler.
+- `@sayari/trellis-force` - synchronous and Web Worker force layout.
+- `@sayari/trellis-sugiyama` - layered DAG / sankey-style layout.
+- `@sayari/trellis-hierarchy` - tree layout.
+- `@sayari/trellis-controls` - DOM controls for zoom, selection, and download.
+- `@sayari/trellis-utils` - animation helpers, graph generators, connected components, and packing utilities.
+- `@sayari/trellis-quadtree` - typed-array quadtree used by force simulation and collision detection.
 
 ## Examples
 
-- [Static Graph](https://observablehq.com/@julietadams/trellis-static-graph-example-2?collection=@julietadams/trellis-examples)
-- [Viewport Interactions](https://observablehq.com/@julietadams/trellis-viewport-interaction-example?collection=@julietadams/trellis-examples)
-- [Node Interactions](https://observablehq.com/@julietadams/trellis-node-interaction-example)
-- [Hierarchy Layout](https://observablehq.com/@julietadams/trellis-hierarchy?collection=@julietadams/trellis-examples)
-- [React Bindings](https://codesandbox.io/s/trellis-react-example-84mex?file=/src/Graph.js)
-- [React Selection Multiselect Tool](https://codesandbox.io/s/trellis-react-and-selection-example-68dg5?file=/src/Graph.js)
+The maintained example app lives in `packages/examples`:
 
-## Modules
-
-- renderers
-  - WebGL
-  - png/jpg
-- layout
-  - force
-  - hierarchy
-  - cluster
-  - subgraphs
-- bindings
-  - react
-  - native
+```bash
+npm run examples:dev
+```
 
 ## Philosophy
 
-Trellis decouples graph rendering from graph layout computations, and decouples both from framework-specific bindings. Additionally, the Trellis renderer is mostly stateless, leaving questions of state management to the application and allowing for simple customization of library behavior. This means integrating any of Trellis modules with an existing application should be relatively straightforward. Similar to rendering libraries like React, Trellis focuses on performant rendering and graph-based computations, while remaining agnostic about where and how state is managed. Moreover, by splitting responsibilities into separate modules, if existing modules don't fit your needs, you can always roll your own, while still benefiting from the remaining modules that are helpful.
+Trellis decouples graph rendering from graph layout computations. The renderer is driven by explicit graph state,
+while layouts and controls are separate packages that can be adopted independently. If an existing package does
+not fit your needs, you can bring your own layout or interaction layer while keeping the WebGL renderer and data
+utilities that are useful.
 
 ## See Also
 
-- Sigma js
+- [Sigma.js](https://www.sigmajs.org/)
 
-### Development
+## Development
 
 ```bash
-npm run dev
+npm install
+npm run lint
+npm test
+npm run build
 ```
 
-### Deployment
+## Publishing
 
-All deployments must be run from the master branch with a clean working directory.
+Publish workspace packages with the root publish scripts:
 
 ```bash
-./deploy.sh [prerelease|patch|minor|major]
+npm run pub:dry
+npm run pub:rc
+npm run pub:patch
+npm run pub:minor
+npm run pub:major
 ```

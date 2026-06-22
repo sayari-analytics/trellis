@@ -1,0 +1,52 @@
+{
+  "name": "@sayari/trellis-controls",
+  "version": "0.8.0-rc.1",
+  "sideEffects": false,
+  "description": "Trellis controls",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./zoom": {
+      "types": "./dist/zoom.d.ts",
+      "default": "./dist/zoom.js"
+    },
+    "./selection": {
+      "types": "./dist/selection.d.ts",
+      "default": "./dist/selection.js"
+    },
+    "./download": {
+      "types": "./dist/download.d.ts",
+      "default": "./dist/download.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {},
+  "scripts": {
+    "dev": "vite",
+    "build": "node ../../scripts/build.mjs src/index.ts src/zoom.ts src/selection.ts src/download.ts",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayari-analytics/trellis.git",
+    "directory": "packages/controls"
+  },
+  "keywords": [
+    "trellis"
+  ],
+  "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io, Mikey Gower",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayari-analytics/trellis/issues"
+  },
+  "homepage": "https://github.com/sayari-analytics/trellis#readme"
+}

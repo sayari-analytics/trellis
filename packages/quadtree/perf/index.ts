@@ -1,273 +1,273 @@
 /* eslint-disable no-console */
-import { Quadtree } from '..'
+/**
+ * Quadtree performance suite.
+ *
+ * Each section isolates one cost so we can see where a force-layout tick actually spends time:
+ *   - build / rebuild   : constructing the index (the cost the user suspects dominates)
+ *   - collide           : forEachCollision query (unique overlapping pairs)
+ *   - nbody             : forEachBody Barnes-Hut query at a realistic theta
+ *   - traversal         : forEachQuad / forEachQuadElement
+ *   - tick (end-to-end)  : rebuild + collide + nbody, the real per-tick cost
+ *
+ * Plus three sensitivity sweeps (count, distribution, maxDepth, density) so the numbers describe a curve,
+ * not a single unrepresentative point.
+ *
+ * Run:  npm run perf            (default sizes)
+ *       PERF_1M=1 npm run perf  (also run the 1,000,000-element size — slow)
+ */
+import { Quadtree } from '../src'
+import { bench, generate, perturb, createRng, table, heading, note, Stats, Distribution, ELEMENT_STRIDE, X, Y } from './bench'
 
-const MAX_DEPTH = 7
-const MAX_CAPACITY = 8
-const RUNS = 50
+const DEFAULT_CAPACITY = 8
+const THETA = 1.5
+const SPACING = 1.5
+const RUNS = 10
+const WARMUP = 1
 
-function generateRandomElements(count: number, bounds: number): Float32Array {
-  const elements = new Float32Array(count * 3)
-  for (let i = 0; i < count; i++) {
-    const offset = i * 3
-    elements[offset] = Math.random() * bounds // x
-    elements[offset + 1] = Math.random() * bounds // y
-    elements[offset + 2] = Math.random() * 5 + 1 // radius between 1 and 6
-  }
-  return elements
-}
+const SIZES = [1_000, 10_000, 100_000, ...(process.env.PERF_1M ? [1_000_000] : [])]
 
-function profileCreate(count: number) {
-  const BOUNDS_SIZE = count * 10
-  const durations: number[] = []
+const sizeColumn = { header: 'elements', value: (s: Stats) => Number(s.label).toLocaleString() }
 
-  for (let run = 0; run < RUNS; run++) {
-    const elements = generateRandomElements(count, BOUNDS_SIZE)
-
-    const startTime = performance.now()
-    new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CAPACITY })
-    const duration = performance.now() - startTime
-    durations.push(duration)
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- Quadtree Creation Profile ---\x1b[0m')
-  console.log(`Total Elements Indexed: ${count.toLocaleString()}`)
-  console.log(`Number of Runs:         ${RUNS}`)
-  console.log(`Average Creation Time:  ${averageTime.toFixed(2)} ms`)
-  console.log('--------------------------')
-  return averageTime
-}
-
-function profileRebuild(count: number) {
-  const BOUNDS_SIZE = count * 10
-  const durations: number[] = []
-  const elements = generateRandomElements(count, BOUNDS_SIZE)
-  const quadtree = new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CAPACITY })
-
-  for (let run = 0; run < RUNS; run++) {
-    const startTime = performance.now()
-    quadtree.rebuild()
-    const duration = performance.now() - startTime
-    durations.push(duration)
-
-    // Simulate changes
-    for (let i = 0; i < count; i++) {
-      const elementPtr = i * 3
-      elements[elementPtr] += Math.random() * 2
-      elements[elementPtr + 1] += Math.random() * 2
-    }
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- Rebuild Profile ---\x1b[0m')
-  console.log(`Total Elements Re-indexed: ${count.toLocaleString()}`)
-  console.log(`Number of Runs:            ${RUNS}`)
-  console.log(`Average Rebuild Time:      ${averageTime.toFixed(2)} ms`)
-  console.log('---------------------------')
-  return averageTime
-}
-
-function profileCollide(count: number) {
-  const BOUNDS_SIZE = count * 10
-  const durations: number[] = []
-  let totalCollisionCount = 0
-  const elements = generateRandomElements(count, BOUNDS_SIZE)
-  const quadtree = new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CAPACITY })
-
-  for (let run = 0; run < RUNS; run++) {
-    const startTime = performance.now()
-    quadtree.forEachCollision((id1, id2) => {
-      const element1Index = id1 * 3,
-        element2Index = id2 * 3,
-        x1 = elements[element1Index],
-        y1 = elements[element1Index + 1],
-        r1 = elements[element1Index + 2],
-        x2 = elements[element2Index],
-        y2 = elements[element2Index + 1],
-        r2 = elements[element2Index + 2],
-        dx = x2 - x1,
-        dy = y2 - y1,
-        distSq = dx * dx + dy * dy,
-        totalRadius = r1 + r2,
-        distance = Math.sqrt(distSq),
-        overlap = totalRadius - distance
-
-      // Elements overlap
-      if (distance === 0) {
-        const randomAngle = Math.random() * 2 * Math.PI
-        elements[element1Index] += Math.cos(randomAngle)
-        elements[element1Index + 1] += Math.sin(randomAngle)
-        return
-      }
-
-      // Calculate push-out amount for each circle
-      const pushAmount = overlap * 0.5
-      const pushX = (dx / distance) * pushAmount
-      const pushY = (dy / distance) * pushAmount
-
-      // Reposition elements
-      elements[element1Index] -= pushX
-      elements[element1Index + 1] -= pushY
-
-      elements[element2Index] += pushX
-      elements[element2Index + 1] += pushY
-
-      totalCollisionCount++
+/** Build / rebuild across sizes. rebuild reuses the instance; positions are perturbed (untimed) between runs. */
+const benchBuild = () => {
+  heading('--- Build (full construction: allocate + insert + merge) ---')
+  const buildRows = SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const rng = createRng(count)
+    return bench(`${count}`, () => void new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY }), {
+      runs: RUNS,
+      warmup: WARMUP,
+      setup: (run) => run >= 0 && perturb(elements, rng)
     })
-    const duration = performance.now() - startTime
-    durations.push(duration)
+  })
+  table(buildRows, [sizeColumn])
 
-    // Simulate changes
-    for (let i = 0; i < count; i++) {
-      const elementPtr = i * 3
-      elements[elementPtr] += Math.random() * 2
-      elements[elementPtr + 1] += Math.random() * 2
-    }
-    quadtree.rebuild()
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- Collision Profile ---\x1b[0m')
-  console.log(`Elements Indexed:          ${count.toLocaleString()}`)
-  console.log(`Avg Collision Pairs Found: ${(totalCollisionCount / RUNS).toLocaleString()}`)
-  console.log(`Number of Runs:            ${RUNS}`)
-  console.log(`Average Time:              ${averageTime.toFixed(2)} ms`)
-  console.log('-----------------------------------------')
-  return averageTime
-}
-
-function profileManyBody(count: number, theta: number = 0.9) {
-  const BOUNDS_SIZE = count * 10
-  const durations: number[] = []
-  let totalInteractions = 0
-  const elements = generateRandomElements(count, BOUNDS_SIZE)
-  const quadtree = new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CAPACITY })
-  const forces = new Float32Array(count * 2) // To store [fx, fy] for each element
-
-  for (let run = 0; run < RUNS; run++) {
-    forces.fill(0)
-    const startTime = performance.now()
-    quadtree.forEachBody((elementId, bodyX, bodyY, mass, distanceSq) => {
-      const elementPtr = elementId * 3
-      const x = elements[elementPtr]
-      const y = elements[elementPtr + 1]
-      const dx = bodyX - x
-      const dy = bodyY - y
-      const softeningSq = 10 // A softening factor prevents extreme forces at very small distances
-      const effectiveDistanceSq = distanceSq + softeningSq
-
-      // Calculate force magnitude: F = G * m1 * m2 / r^2
-      const forceMagnitude = mass / effectiveDistanceSq
-      const distance = Math.sqrt(effectiveDistanceSq)
-
-      forces[elementId * 2] += forceMagnitude * (dx / distance)
-      forces[elementId * 2 + 1] += forceMagnitude * (dy / distance)
-
-      totalInteractions++
-    }, theta)
-
-    const duration = performance.now() - startTime
-    durations.push(duration)
-
-    // Simulate changes
-    for (let i = 0; i < count; i++) {
-      const elementPtr = i * 3
-      elements[elementPtr] += Math.random() * 2
-      elements[elementPtr + 1] += Math.random() * 2
-    }
-    quadtree.rebuild()
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- N-Body Simulation Profile ---\x1b[0m')
-  console.log(`Elements Indexed:          ${count.toLocaleString()}`)
-  console.log(`Theta (Approximation):     ${theta}`)
-  console.log(`Avg Interactions Found:    ${(totalInteractions / RUNS).toLocaleString()}`)
-  console.log(`Number of Runs:            ${RUNS}`)
-  console.log(`Average Time:              ${averageTime.toFixed(2)} ms`)
-  console.log('------------------------------------')
-  return averageTime
-}
-
-function profileForEachQuad(count: number) {
-  const BOUNDS_SIZE = count * 10
-  const durations: number[] = []
-
-  for (let run = 0; run < RUNS; run++) {
-    const elements = generateRandomElements(count, BOUNDS_SIZE)
-    const quadtree = new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CAPACITY })
-
-    const startTime = performance.now()
-    quadtree.forEachQuad(() => true)
-    const duration = performance.now() - startTime
-    durations.push(duration)
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- Quadtree forEachQuad Profile ---\x1b[0m')
-  console.log(`Total Elements Indexed: ${count.toLocaleString()}`)
-  console.log(`Number of Runs:         ${RUNS}`)
-  console.log(`Average forEachQuad Time:  ${averageTime.toFixed(2)} ms`)
-  console.log('--------------------------')
-  return averageTime
-}
-
-function profileForEachQuadElement(count: number) {
-  const BOUNDS_SIZE = count * 10
-  const durations: number[] = []
-
-  for (let run = 0; run < RUNS; run++) {
-    const elements = generateRandomElements(count, BOUNDS_SIZE)
-    const quadtree = new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CAPACITY })
-
-    const startTime = performance.now()
-    quadtree.forEachQuad((quadId) => {
-      for (const _el of quadtree.forEachQuadElement(quadId)) {
-        /***/
-      }
-      return true
+  heading('--- Rebuild (reuse instance after position changes) ---')
+  const rebuildRows = SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    const rng = createRng(count)
+    return bench(`${count}`, () => tree.rebuild(), {
+      runs: RUNS,
+      warmup: WARMUP,
+      setup: (run) => run >= 0 && perturb(elements, rng)
     })
-    const duration = performance.now() - startTime
-    durations.push(duration)
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- Quadtree forEachQuadElement Profile ---\x1b[0m')
-  console.log(`Total Elements Indexed: ${count.toLocaleString()}`)
-  console.log(`Number of Runs:         ${RUNS}`)
-  console.log(`Average forEachQuadElement Time:  ${averageTime.toFixed(2)} ms`)
-  console.log('--------------------------')
-  return averageTime
+  })
+  table(rebuildRows, [sizeColumn])
 }
 
-profileCreate(100_000)
-const rebuildTime = profileRebuild(100_000)
-const collisionTime = profileCollide(100_000)
-const nBodyTime = profileManyBody(100_000, 4)
-profileForEachQuad(100_000)
-profileForEachQuadElement(100_000)
+/** Collision query across sizes. The tree is rebuilt in setup (untimed); only the query is measured. */
+const benchCollide = () => {
+  heading('--- Collide (forEachCollision: unique overlapping pairs) ---')
+  const rows = SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    const rng = createRng(count)
+    let pairs = 0
+    return bench(
+      `${count}`,
+      () => {
+        pairs = 0
+        tree.forEachCollision(() => pairs++)
+        return pairs
+      },
+      {
+        runs: RUNS,
+        warmup: WARMUP,
+        metricLabel: 'pairs',
+        setup: (run) => {
+          if (run >= 0) perturb(elements, rng)
+          tree.rebuild()
+        }
+      }
+    )
+  })
+  table(rows, [sizeColumn])
+}
 
-console.log('\n\x1b[1m\x1b[38;5;208m--- Simulation Total Time ---\x1b[0m')
-console.log(`Rebuild:          ${rebuildTime.toFixed(2)} ms`)
-console.log(`Collisions:       ${collisionTime.toFixed(2)} ms`)
-console.log(`Many Bodies:      ${nBodyTime.toFixed(2)} ms`)
-console.log(`Total:            ${(rebuildTime + collisionTime + nBodyTime).toFixed(2)} ms`)
-console.log('------------------------------------')
+/** N-body Barnes-Hut query across sizes at a realistic theta. */
+const benchNBody = () => {
+  heading(`--- N-Body (forEachBody Barnes-Hut, theta=${THETA}) ---`)
+  const rows = SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    const forces = new Float32Array(count * 2)
+    const rng = createRng(count)
+    let interactions = 0
+    return bench(
+      `${count}`,
+      () => {
+        forces.fill(0)
+        interactions = 0
+        tree.forEachBody((id, bx, by, mass, dist2) => {
+          const o = id * ELEMENT_STRIDE
+          const dx = bx - elements[o + X]
+          const dy = by - elements[o + Y]
+          const d2 = dist2 + 10
+          const mag = mass / d2
+          const inv = 1 / Math.sqrt(d2)
+          forces[id * 2] += mag * dx * inv
+          forces[id * 2 + 1] += mag * dy * inv
+          interactions++
+        }, THETA)
+        return interactions
+      },
+      {
+        runs: RUNS,
+        warmup: WARMUP,
+        metricLabel: 'interactions',
+        setup: (run) => {
+          if (run >= 0) perturb(elements, rng)
+          tree.rebuild()
+        }
+      }
+    )
+  })
+  table(rows, [sizeColumn])
+}
+
+/** Traversal primitives. */
+const benchTraversal = () => {
+  heading('--- Traversal (forEachQuad / forEachQuadElement) ---')
+  const rows: Stats[] = []
+  for (const count of SIZES) {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    rows.push(bench(`forEachQuad ${count}`, () => tree.forEachQuad(() => true), { runs: RUNS, warmup: WARMUP }))
+    rows.push(
+      bench(
+        `forEachQuadElement ${count}`,
+        () => {
+          tree.forEachQuad((quadId) => {
+            for (const _ of tree.forEachQuadElement(quadId)) {
+              /* visit */
+            }
+            return true
+          })
+        },
+        { runs: RUNS, warmup: WARMUP }
+      )
+    )
+  }
+  table(rows)
+}
+
+/** End-to-end per-tick cost: rebuild + collide + nbody, the shape a real force layout runs every frame. */
+const benchTick = () => {
+  heading(`--- Tick (rebuild + collide + nbody, theta=${THETA}) — real per-tick cost ---`)
+  const rows = SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    const forces = new Float32Array(count * 2)
+    const rng = createRng(count)
+    return bench(
+      `${count}`,
+      () => {
+        tree.rebuild()
+        tree.forEachCollision(() => {})
+        forces.fill(0)
+        tree.forEachBody((id, bx, by, mass, dist2) => {
+          forces[id * 2] += (mass * (bx - elements[id * ELEMENT_STRIDE + X])) / (dist2 + 10)
+        }, THETA)
+      },
+      { runs: RUNS, warmup: WARMUP, setup: (run) => run >= 0 && perturb(elements, rng) }
+    )
+  })
+  table(rows, [sizeColumn])
+}
+
+/** How collision cost changes across spatial distributions (uniform / gaussian / clustered). */
+const benchDistribution = (count = 100_000) => {
+  heading(`--- Distribution sensitivity (collide, ${count.toLocaleString()} elements) ---`)
+  const distributions: Distribution[] = ['uniform', 'gaussian', 'clustered']
+  const rows = distributions.map((distribution) => {
+    const elements = generate(count, distribution, { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    const rng = createRng(count)
+    let pairs = 0
+    return bench(
+      distribution,
+      () => {
+        pairs = 0
+        tree.forEachCollision(() => pairs++)
+        return pairs
+      },
+      {
+        runs: RUNS,
+        warmup: WARMUP,
+        metricLabel: 'pairs',
+        setup: (run) => {
+          if (run >= 0) perturb(elements, rng)
+          tree.rebuild()
+        }
+      }
+    )
+  })
+  table(rows, [{ header: 'distribution', value: (s) => s.label }])
+}
+
+/** How rebuild + collide cost changes with maxDepth — finds the sweet spot for a given size. */
+const benchDepth = (count = 100_000) => {
+  heading(`--- maxDepth sensitivity (rebuild + collide, ${count.toLocaleString()} elements) ---`)
+  const depths = [5, 6, 7, 8, 9, 10]
+  const rows = depths.map((depth) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const tree = new Quadtree(elements, { maxDepth: depth, maxCapacity: DEFAULT_CAPACITY })
+    const rng = createRng(count)
+    return bench(
+      `depth ${depth}`,
+      () => {
+        tree.rebuild()
+        tree.forEachCollision(() => {})
+      },
+      { runs: RUNS, warmup: WARMUP, setup: (run) => run >= 0 && perturb(elements, rng) }
+    )
+  })
+  table(rows, [{ header: 'maxDepth', value: (s) => s.label.replace('depth ', '') }])
+}
+
+/** How collision cost scales with packing density (spacing) — sparse vs tightly packed. */
+const benchDensity = (count = 100_000) => {
+  heading(`--- Density sensitivity (collide, ${count.toLocaleString()} elements) ---`)
+  note('spacing = neighbour distance in mean-diameters; smaller => more overlap/collisions')
+  const spacings = [0.75, 1, 1.5, 3, 6]
+  const rows = spacings.map((spacing) => {
+    const elements = generate(count, 'gaussian', { spacing })
+    const tree = new Quadtree(elements, { maxCapacity: DEFAULT_CAPACITY })
+    const rng = createRng(count)
+    let pairs = 0
+    return bench(
+      `spacing ${spacing}`,
+      () => {
+        pairs = 0
+        tree.forEachCollision(() => pairs++)
+        return pairs
+      },
+      {
+        runs: RUNS,
+        warmup: WARMUP,
+        metricLabel: 'pairs',
+        setup: (run) => {
+          if (run >= 0) perturb(elements, rng, spacing * 2)
+          tree.rebuild()
+        }
+      }
+    )
+  })
+  table(rows, [{ header: 'spacing', value: (s) => s.label.replace('spacing ', '') }])
+}
+
+heading('============ QUADTREE PERFORMANCE SUITE ============')
+note(
+  `maxDepth=adaptive (1k=${Quadtree.adaptiveDepth(1_000)} 10k=${Quadtree.adaptiveDepth(10_000)} 100k=${Quadtree.adaptiveDepth(100_000)}) ` +
+    `maxCapacity=${DEFAULT_CAPACITY} theta=${THETA} spacing=${SPACING} runs=${RUNS} (warmup ${WARMUP})`
+)
+
+benchBuild()
+benchCollide()
+benchNBody()
+benchTraversal()
+benchTick()
+benchDistribution()
+benchDepth()
+benchDensity()

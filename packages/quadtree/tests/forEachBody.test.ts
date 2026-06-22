@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import test from 'tape'
-import { Quadtree } from '../'
+import { Quadtree } from '../src'
 import { Quad, recordQuadProperties } from './utils'
 
 test('[forEachBody.test.ts] forEachBody iterates over all bodies', (t) => {

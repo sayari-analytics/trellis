@@ -1,0 +1,40 @@
+{
+  "name": "@sayari/trellis",
+  "version": "0.8.0-rc.1",
+  "sideEffects": false,
+  "description": "A highly performant network visualization library with a simple, declarative API, plugable renderers, and bindings for different frameworks and use cases",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {},
+  "scripts": {
+    "dev": "vite",
+    "build": "node ../../scripts/build.mjs src/index.ts",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayari-analytics/trellis.git",
+    "directory": "packages/trellis"
+  },
+  "keywords": [
+    "trellis"
+  ],
+  "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io, Mikey Gower",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayari-analytics/trellis/issues"
+  },
+  "homepage": "https://github.com/sayari-analytics/trellis#readme"
+}

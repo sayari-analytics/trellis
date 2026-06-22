@@ -1,9 +1,9 @@
-import { Quadtree } from '../'
+import { Quadtree } from '../src'
 import { Quad, recordQuadProperties } from '../tests/utils'
 
-const RADIUS = 2
-const MAX_DEPTH = 7
-const MAX_CAPACITY = 4
+const RADIUS = 1
+const MAX_DEPTH = 8
+const MAX_CAPACITY = 6
 
 /**
  * create canvas
@@ -28,12 +28,12 @@ let quadtree = new Quadtree(elements, { maxDepth: MAX_DEPTH, maxCapacity: MAX_CA
 /**
  * dom elements
  */
-;(document.getElementById('add-5k-btn') as HTMLButtonElement).addEventListener('click', () => addElements(5000))
-;(document.getElementById('add-25k-btn') as HTMLButtonElement).addEventListener('click', () => addElements(25000))
-;(document.getElementById('add-100k-btn') as HTMLButtonElement).addEventListener('click', () => addElements(100000))
-;(document.getElementById('clear-btn') as HTMLButtonElement).addEventListener('click', clearButtonClick)
-;(document.getElementById('highlight-collisions-btn') as HTMLButtonElement).addEventListener('click', highlightCollisionsButtonClick)
-;(document.getElementById('simulate-btn') as HTMLButtonElement).addEventListener('click', simulateRandomBodyButtonClick)
+document.getElementById('add-5k-btn')!.addEventListener('click', () => addElements(5_000))
+document.getElementById('add-25k-btn')!.addEventListener('click', () => addElements(25_000))
+document.getElementById('add-100k-btn')!.addEventListener('click', () => addElements(100_000))
+document.getElementById('clear-btn')!.addEventListener('click', clearButtonClick)
+document.getElementById('highlight-collisions-btn')!.addEventListener('click', highlightCollisionsButtonClick)
+document.getElementById('simulate-btn')!.addEventListener('click', simulateRandomBodyButtonClick)
 const statsContainer = document.getElementById('stats-container') as HTMLDivElement
 
 /**
@@ -88,12 +88,18 @@ function clearButtonClick() {
 /**
  * update elements
  */
+
 function addElements(count: number) {
   const newElements = new Float32Array(elements.length + count * 3)
+  const centerX = canvas.width / dpr / 2
+  const stdDevX = canvas.width / dpr / 6
+  const centerY = canvas.height / dpr / 2
+  const stdDevY = canvas.height / dpr / 6
   newElements.set(elements)
+
   for (let i = 0; i < count; i++) {
-    const x = Math.random() * (canvas.width / dpr)
-    const y = Math.random() * (canvas.height / dpr)
+    const x = Math.sqrt(-2.0 * Math.log(Math.random())) * Math.cos(2.0 * Math.PI * Math.random()) * stdDevX + centerX
+    const y = Math.sqrt(-2.0 * Math.log(Math.random())) * Math.cos(2.0 * Math.PI * Math.random()) * stdDevY + centerY
     newElements.set([x, y, RADIUS], elements.length + i * 3)
   }
   elements = newElements

@@ -1,0 +1,59 @@
+{
+  "name": "@sayari/trellis-utils",
+  "version": "0.8.0-rc.1",
+  "sideEffects": false,
+  "description": "Trellis utils: animation interpolators and graph generators",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./animate": {
+      "types": "./dist/animate.d.ts",
+      "default": "./dist/animate.js"
+    },
+    "./generators": {
+      "types": "./dist/generators.d.ts",
+      "default": "./dist/generators.js"
+    },
+    "./components": {
+      "types": "./dist/components.d.ts",
+      "default": "./dist/components.js"
+    },
+    "./packing": {
+      "types": "./dist/packing.d.ts",
+      "default": "./dist/packing.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@sayari/trellis": "0.8.0-rc.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "dev": "vite",
+    "build": "node ../../scripts/build.mjs src/index.ts src/animate.ts src/generators.ts src/components.ts src/packing.ts",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayari-analytics/trellis.git",
+    "directory": "packages/utils"
+  },
+  "keywords": [
+    "trellis"
+  ],
+  "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io, Mikey Gower",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayari-analytics/trellis/issues"
+  },
+  "homepage": "https://github.com/sayari-analytics/trellis#readme"
+}

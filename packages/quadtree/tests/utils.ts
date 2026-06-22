@@ -1,4 +1,4 @@
-import { Quadtree } from '../'
+import { Quadtree } from '../src'
 
 export const createGrid = <T>(depth: number): (null | T)[][][] => {
   return new Array(depth + 1).fill(null).map((_, depth) => {
@@ -49,7 +49,6 @@ export const quadtreeToGrid = (quads: Uint32Array, quadElements: Uint32Array, ma
   const grid = createGrid<number[]>(maxDepth)
 
   const maxQuadId = quadIdOffset(maxDepth + 1)
-  const QUADS_STRIDE = 2
   const NULL_POINTER = 0xffffffff
   const BRANCH_POINTER = 0xfffffffe
   let quadId = 0
@@ -57,13 +56,13 @@ export const quadtreeToGrid = (quads: Uint32Array, quadElements: Uint32Array, ma
   while (quadId < maxQuadId) {
     const depth = Math.floor(Math.log(3 * quadId + 1) / Math.log(4))
     const [row, col] = quadIdToGridCell(quadId)
-    let quadElementPtr = quads[quadId * QUADS_STRIDE]
+    let quadElementPtr = quads[quadId]
 
     if (quadElementPtr !== BRANCH_POINTER && quadElementPtr !== NULL_POINTER) {
-      grid[depth][row][col] = []
+      const cell: number[] = (grid[depth][row][col] = [])
 
       while (quadElementPtr !== NULL_POINTER) {
-        grid[depth][row][col].push(quadElements[quadElementPtr])
+        cell.push(quadElements[quadElementPtr])
         quadElementPtr = quadElements[quadElementPtr + 1]
       }
     }

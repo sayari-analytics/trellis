@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import test from 'tape'
-import { Quadtree } from '..'
+import { Quadtree } from '../src'
 import { gridIsEmpty, quadtreeToGrid, stringifyGrid } from './utils'
 
 test('[forEachCollision.test.ts] forEachCollision finds all colliding pairs', (t) => {

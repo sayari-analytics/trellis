@@ -1,1 +1,6 @@
 dist/
+
+# scratch / experiment variants (underscore-prefixed) and perf/viz harnesses — not shipped
+**/_*.ts
+packages/*/perf/
+packages/quadtree/viz/

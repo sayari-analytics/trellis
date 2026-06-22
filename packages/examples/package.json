@@ -1,0 +1,36 @@
+{
+  "name": "@sayari/trellis-examples",
+  "version": "0.8.0-rc.1",
+  "description": "Vite-powered example app demonstrating usage of @sayari/trellis",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@sayari/trellis": "0.8.0-rc.1",
+    "@sayari/trellis-hierarchy": "0.8.0-rc.1",
+    "@sayari/trellis-sugiyama": "0.8.0-rc.1",
+    "@sayari/trellis-force": "0.8.0-rc.1",
+    "@sayari/trellis-controls": "0.8.0-rc.1",
+    "@sayari/trellis-utils": "0.8.0-rc.1",
+    "d3-force": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/d3-force": "^3.0.7",
+    "typescript": "^5.2.2",
+    "vite": "^6.3.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayari-analytics/trellis.git"
+  },
+  "author": "James Conkling <james.lane.conkling@gmail.com> jameslaneconkling.github.io, Mikey Gower",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayari-analytics/trellis/issues"
+  },
+  "homepage": "https://github.com/sayari-analytics/trellis#readme"
+}

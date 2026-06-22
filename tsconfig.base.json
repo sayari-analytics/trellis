@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "//": "Shared compiler options for building the publishable packages. Each package's tsconfig.build.json extends this and sets outDir/rootDir/include. tsc here emits ONLY declarations (+ maps); esbuild emits the JS (see scripts/build.mjs). Consumers are assumed to use a bundler (moduleResolution: Bundler), consistent with the worker loading contract.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "types": [],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "emitDeclarationOnly": true,
+    "noEmitOnError": true
+  }
+}

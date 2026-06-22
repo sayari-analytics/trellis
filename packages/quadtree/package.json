@@ -1,16 +1,34 @@
 {
   "name": "@sayari/trellis-quadtree",
-  "version": "0.7.0-rc.17",
+  "version": "0.8.0-rc.1",
   "description": "Efficient pointerless region quadtree index for simulating large force-directed graphs",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
+    "@types/d3-quadtree": "^3.0.6",
     "@types/tape": "^5.8.1",
     "d3-force": "^3.0.0",
     "d3-quadtree": "^3.0.1",
     "tap-spec": "^2.2.2",
     "tape": "^5.9.0",
+    "tsx": "^4.22.4",
     "vite": "^6.3.5"
   },
   "scripts": {
+    "build": "node ../../scripts/build.mjs src/index.ts",
+    "clean": "rm -rf dist",
     "test": "tsx ./tests/index.ts | tap-spec",
     "perf": "tsx ./perf/index.ts",
     "perf:d3": "tsx ./perf/d3.ts",
@@ -19,7 +37,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sayari-analytics/trellis.git"
+    "url": "git+https://github.com/sayari-analytics/trellis.git",
+    "directory": "packages/quadtree"
   },
   "keywords": [
     "trellis",

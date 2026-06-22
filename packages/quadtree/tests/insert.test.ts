@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import test from 'tape'
 import { createGrid, stringifyGrid, gridIsEmpty, quadtreeToGrid } from './utils'
-import { Quadtree } from '../'
+import { Quadtree } from '../src'
 
 test('[insert.test.ts] creates empty tree grid', (t) => {
   t.plan(1)

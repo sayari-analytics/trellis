@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import test from 'tape'
 import { createGrid, quadIdToGridCell } from './utils'
-import { Quadtree } from '../'
+import { Quadtree } from '../src'
 
 test('[forEachQuad.test.ts] returns correct quadId and depth', (t) => {
   t.plan(1)
@@ -100,10 +100,10 @@ test('[forEachQuad.test.ts] only traverses quads that merge does not prune', (t)
 
   quadtree.forEachQuad((quadId, depth) => {
     const [row, col] = quadIdToGridCell(quadId)
-    treeGrid[depth][row][col] = []
+    const cell: number[] = (treeGrid[depth][row][col] = [])
 
     for (const element of quadtree.forEachQuadElement(quadId)) {
-      treeGrid[depth][row][col].push(element)
+      cell.push(element)
     }
 
     return true

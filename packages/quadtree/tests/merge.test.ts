@@ -1,7 +1,6 @@
-/* eslint-disable no-console */
 import test from 'tape'
 import { stringifyGrid, gridIsEmpty, quadtreeToGrid } from './utils'
-import { Quadtree } from '../'
+import { Quadtree } from '../src'
 
 test('[merge.test.ts] merges elements that overlap multiple quads into correct parent quads', (t) => {
   t.plan(16)
@@ -18,7 +17,6 @@ test('[merge.test.ts] merges elements that overlap multiple quads into correct p
     insert()
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after insert: tree is empty at depth 0')
     t.true(gridIsEmpty(grid, 1), 'after insert: tree is empty at depth 1')
     t.true(gridIsEmpty(grid, 2), 'after insert: tree is empty at depth 2')
@@ -47,7 +45,6 @@ test('[merge.test.ts] merges elements that overlap multiple quads into correct p
     for (let quadId = firstQuadId; quadId < lastQuadId; quadId++) merge(quadId, depth)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after tier 3 merge: tree is empty at depth 0')
     t.true(gridIsEmpty(grid, 1), 'after tier 3 merge: tree is empty at depth 1')
     t.deepEquals(
@@ -72,7 +69,6 @@ test('[merge.test.ts] merges elements that overlap multiple quads into correct p
     for (let quadId = firstQuadId; quadId < lastQuadId; quadId++) merge(quadId, depth)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after tier 2 merge: tree is empty at depth 0')
     t.deepEquals(
       stringifyGrid(grid, 1),
@@ -92,7 +88,6 @@ test('[merge.test.ts] merges elements that overlap multiple quads into correct p
     merge(0, 0)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.deepEquals(stringifyGrid(grid, 0), '[ 1|2|0|3 ]')
     t.true(gridIsEmpty(grid, 1), 'after tier 1 merge: tree is empty at depth 1')
     t.true(gridIsEmpty(grid, 2), 'after tier 1 merge: tree is empty at depth 2')
@@ -129,7 +124,6 @@ test('[merge.test.ts] doesnt merge elements into parent quads when quad capacity
     insert()
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, 5))
     t.true(gridIsEmpty(grid, 0), 'after insert: tree is empty at depth 0')
     t.true(gridIsEmpty(grid, 1), 'after insert: tree is empty at depth 1')
     t.true(gridIsEmpty(grid, 2), 'after insert: tree is empty at depth 2')
@@ -183,7 +177,6 @@ test('[merge.test.ts] doesnt merge elements into parent quads when quad capacity
     for (let quadId = firstQuadId; quadId < lastQuadId; quadId++) merge(quadId, depth)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after tier 5 merge: tree is empty at depth 0')
     t.true(gridIsEmpty(grid, 1), 'after tier 5 merge: tree is empty at depth 1')
     t.true(gridIsEmpty(grid, 2), 'after tier 5 merge: tree is empty at depth 2')
@@ -222,7 +215,6 @@ test('[merge.test.ts] doesnt merge elements into parent quads when quad capacity
     for (let quadId = firstQuadId; quadId < lastQuadId; quadId++) merge(quadId, depth)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after tier 4 merge: tree is empty at depth 0')
     t.true(gridIsEmpty(grid, 1), 'after tier 4 merge: tree is empty at depth 1')
     t.true(gridIsEmpty(grid, 2), 'after tier 4 merge: tree is empty at depth 2')
@@ -253,7 +245,6 @@ test('[merge.test.ts] doesnt merge elements into parent quads when quad capacity
     for (let quadId = firstQuadId; quadId < lastQuadId; quadId++) merge(quadId, depth)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after tier 3 merge: tree is empty at depth 0')
     t.true(gridIsEmpty(grid, 1), 'after tier 3 merge: tree is empty at depth 1')
     t.deepEquals(
@@ -292,7 +283,6 @@ test('[merge.test.ts] doesnt merge elements into parent quads when quad capacity
     for (let quadId = firstQuadId; quadId < lastQuadId; quadId++) merge(quadId, depth)
     const grid = quadtreeToGrid(quads, quadElements, maxDepth)
 
-    // console.log(stringifyQuadElements(quads, quadElements, depth))
     t.true(gridIsEmpty(grid, 0), 'after tier 2 merge: tree is empty at depth 0')
     t.deepEquals(
       stringifyGrid(grid, 1),

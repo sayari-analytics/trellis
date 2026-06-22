@@ -1,123 +1,104 @@
 /* eslint-disable no-console */
+/**
+ * d3-force / d3-quadtree baseline, using the SAME seeded data, density, sizes and theta as perf/index.ts
+ * so the numbers are directly comparable. d3 operates on object arrays, so we adapt our Float32Array.
+ *
+ * Run:  npm run perf:d3
+ */
 import { quadtree } from 'd3-quadtree'
 import { forceCollide, forceManyBody } from 'd3-force'
+import { bench, generate, perturb, createRng, table, heading, note, Stats, ELEMENT_STRIDE, X, Y, R } from './bench'
 
-type Element = { x: number; y: number; r: number; vx: number; vy: number }
+type Node = { index: number; x: number; y: number; vx: number; vy: number; r: number }
 
-const RUNS = 10
+const THETA = 0.9
+const SPACING = 1.5
+const RUNS = 25
+const WARMUP = 3
+const SIZES = [1_000, 10_000, 100_000, ...(process.env.PERF_1M ? [1_000_000] : [])]
 
-function generateRandomElements(count: number, bounds: number): Element[] {
-  const elements = new Array<Element>(count)
-  for (let i = 0; i < count; i++) {
-    elements[i] = { x: Math.random() * bounds, y: Math.random() * bounds, r: Math.random() * 5 + 1, vx: 0, vy: 0 }
+const sizeColumn = { header: 'elements', value: (s: Stats) => Number(s.label).toLocaleString() }
+
+/** Convert our packed Float32Array into the object array d3 expects (sharing the same coordinates). */
+const toNodes = (elements: Float32Array): Node[] => {
+  const nodes: Node[] = new Array(elements.length / ELEMENT_STRIDE)
+  for (let i = 0; i < nodes.length; i++) {
+    const o = i * ELEMENT_STRIDE
+    nodes[i] = { index: i, x: elements[o + X], y: elements[o + Y], vx: 0, vy: 0, r: elements[o + R] }
   }
-  return elements
+  return nodes
 }
 
-// https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use
-const a = 1664525
-const c = 1013904223
-const m = 4294967296 // 2^32
+/** Copy perturbed coordinates from the Float32Array back into the d3 node objects. */
+const syncNodes = (elements: Float32Array, nodes: Node[]): void => {
+  for (let i = 0; i < nodes.length; i++) {
+    const o = i * ELEMENT_STRIDE
+    nodes[i].x = elements[o + X]
+    nodes[i].y = elements[o + Y]
+    nodes[i].vx = 0
+    nodes[i].vy = 0
+  }
+}
 
-function lcg() {
+// LCG for d3's required random source
+const lcg = () => {
   let s = 1
-  return () => (s = (a * s + c) % m) / m
+  return () => (s = (1664525 * s + 1013904223) % 4294967296) / 4294967296
 }
 
-function profileCreate(count: number) {
-  const BOUNDS_SIZE = count * 1.5
-  const durations: number[] = []
+heading('============ D3 BASELINE (same data/density as perf/index.ts) ============')
+note(`theta=${THETA} spacing=${SPACING} runs=${RUNS} (warmup ${WARMUP})`)
 
-  for (let run = 0; run < RUNS; run++) {
-    const elements = generateRandomElements(count, BOUNDS_SIZE)
-
-    const startTime = performance.now()
-    quadtree(
-      elements,
-      (d) => d.x,
-      (d) => d.y
+heading('--- d3-quadtree build ---')
+table(
+  SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const nodes = toNodes(elements)
+    const rng = createRng(count)
+    return bench(
+      `${count}`,
+      () =>
+        void quadtree(
+          nodes,
+          (d) => d.x,
+          (d) => d.y
+        ),
+      { runs: RUNS, warmup: WARMUP, setup: (run) => run >= 0 && (perturb(elements, rng), syncNodes(elements, nodes)) }
     )
-    const duration = performance.now() - startTime
-    durations.push(duration)
-  }
+  }),
+  [sizeColumn]
+)
 
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
+heading('--- d3 forceCollide (one pass) ---')
+table(
+  SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const nodes = toNodes(elements)
+    const collide = forceCollide<Node>((d) => d.r)
+    collide.initialize(nodes, lcg())
+    const rng = createRng(count)
+    return bench(`${count}`, () => collide(1), {
+      runs: RUNS,
+      warmup: WARMUP,
+      setup: (run) => run >= 0 && (perturb(elements, rng), syncNodes(elements, nodes))
+    })
+  }),
+  [sizeColumn]
+)
 
-  console.log('\n\x1b[1m\x1b[38;5;208m--- D3 Quadtree Creation Profile ---\x1b[0m')
-  console.log(`Total Elements Indexed: ${count.toLocaleString()}`)
-  console.log(`Number of Runs:         ${RUNS}`)
-  console.log(`Average Creation Time:  ${averageTime.toFixed(2)} ms`)
-  console.log('--------------------------')
-  return averageTime
-}
-
-function profileCollide(count: number) {
-  const BOUNDS_SIZE = count * 1.5
-  const durations: number[] = []
-
-  for (let run = 0; run < RUNS; run++) {
-    const elements = generateRandomElements(count, BOUNDS_SIZE)
-    const collide = forceCollide<Element>((element) => element.r)
-    collide.initialize(elements, lcg())
-
-    const startTime = performance.now()
-    collide(1)
-    const duration = performance.now() - startTime
-    durations.push(duration)
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- D3 Collision Profile ---\x1b[0m')
-  console.log(`Elements Indexed:          ${count.toLocaleString()}`)
-  // console.log(`Avg Collision Pairs Found: ${(totalCollisionCount / RUNS).toLocaleString()}`)
-  console.log(`Number of Runs:            ${RUNS}`)
-  console.log(`Average Time:              ${averageTime.toFixed(2)} ms`)
-  console.log('-----------------------------------------')
-  return averageTime
-}
-
-function profileNBody(count: number, theta: number = 0.9) {
-  const BOUNDS_SIZE = count * 1.5
-  const durations: number[] = []
-
-  for (let run = 0; run < RUNS; run++) {
-    const elements = generateRandomElements(count, BOUNDS_SIZE)
-    const manyBody = forceManyBody<Element>()
-    manyBody.initialize(elements, lcg())
-    manyBody.theta(theta)
-
-    const startTime = performance.now()
-    manyBody(1)
-    const duration = performance.now() - startTime
-    durations.push(duration)
-  }
-
-  // Calculate the average time
-  const totalTime = durations.reduce((sum, time) => sum + time, 0)
-  const averageTime = totalTime / RUNS
-
-  console.log('\n\x1b[1m\x1b[38;5;208m--- N-Body Simulation Profile ---\x1b[0m')
-  console.log(`Elements Indexed:          ${count.toLocaleString()}`)
-  console.log(`Theta (Approximation):     ${theta}`)
-  // console.log(`Avg Interactions Found:    ${(totalInteractions / RUNS).toLocaleString()}`)
-  console.log(`Number of Runs:            ${RUNS}`)
-  console.log(`Average Time:              ${averageTime.toFixed(2)} ms`)
-  console.log('------------------------------------')
-  return averageTime
-}
-
-const createTime = profileCreate(100_000)
-const collisionTime = profileCollide(100_000)
-const nBodyTime = profileNBody(100_000, 4)
-
-console.log('\n\x1b[1m\x1b[38;5;208m--- Simulation Total Time ---\x1b[0m')
-console.log(`Rebuild:          ${createTime.toFixed(2)} ms`)
-console.log(`Collisions:       ${collisionTime.toFixed(2)} ms`)
-console.log(`Many Bodies:      ${nBodyTime.toFixed(2)} ms`)
-console.log(`Total:            ${(createTime + collisionTime + nBodyTime).toFixed(2)} ms`)
-console.log('------------------------------------')
+heading(`--- d3 forceManyBody (one pass, theta=${THETA}) ---`)
+table(
+  SIZES.map((count) => {
+    const elements = generate(count, 'gaussian', { spacing: SPACING })
+    const nodes = toNodes(elements)
+    const manyBody = forceManyBody<Node>().theta(THETA)
+    manyBody.initialize(nodes, lcg())
+    const rng = createRng(count)
+    return bench(`${count}`, () => manyBody(1), {
+      runs: RUNS,
+      warmup: WARMUP,
+      setup: (run) => run >= 0 && (perturb(elements, rng), syncNodes(elements, nodes))
+    })
+  }),
+  [sizeColumn]
+)
