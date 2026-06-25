@@ -4,7 +4,7 @@ import type { Id, Node, Edge } from '@sayari/trellis'
  * Graph -> layered-DAG adapters for the sankey layout. Unlike the hierarchy layout (which treats the
  * graph as undirected and builds a rooted spanning tree), the sankey layout is directed: flow runs from
  * `edge.source` -> `edge.target`. These helpers build a directed adjacency index, break cycles into a set
- * of "back edges", assign each node to a layer (column) via longest-path layering, order the nodes within
+ * of "back edges", assign each node to a layer via longest-path layering, order the nodes within
  * each layer to minimize crossings (barycenter heuristic), and finally assign radius-aware coordinates.
  */
 
@@ -12,8 +12,8 @@ type DirectedPath<N extends Node, E extends Edge> = { edge: E; node: N }
 
 type DirectedIndex<N extends Node, E extends Edge> = Record<Id, { node: N; outgoing: DirectedPath<N, E>[]; incoming: DirectedPath<N, E>[] }>
 
-export type Align = 'left' | 'right' | 'justify'
-// TODO: support 'center' alignment (d3-sankey's nodeCenter) for sourceless/sinkless nodes.
+export type LayerAlignment = 'min' | 'max' | 'justify'
+// TODO: support a centered alignment (d3-sankey's nodeCenter) for sourceless/sinkless nodes.
 
 export const createDirectedIndex = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[] }): DirectedIndex<N, E> => {
   const index: DirectedIndex<N, E> = {}
@@ -73,7 +73,7 @@ export const assignLayers = <N extends Node, E extends Edge>(
   index: DirectedIndex<N, E>,
   nodes: N[],
   backEdges: Set<Id>,
-  align: Align
+  layerAlignment: LayerAlignment
 ): { layer: Map<Id, number>; maxLayer: number } => {
   const acyclic = (paths: DirectedPath<N, E>[]) => paths.filter(({ edge }) => !backEdges.has(edge.id))
 
@@ -94,7 +94,7 @@ export const assignLayers = <N extends Node, E extends Edge>(
 
   const maxLayer = nodes.reduce((max, node) => Math.max(max, fromSource.get(node.id)!), 0)
 
-  if (align === 'left') {
+  if (layerAlignment === 'min') {
     return { layer: fromSource, maxLayer }
   }
 
@@ -114,7 +114,7 @@ export const assignLayers = <N extends Node, E extends Edge>(
 
   const layer = new Map<Id, number>()
   for (const node of nodes) {
-    if (align === 'right') {
+    if (layerAlignment === 'max') {
       layer.set(node.id, maxLayer - toSink.get(node.id)!)
     } else {
       layer.set(node.id, acyclic(index[node.id].outgoing).length === 0 ? maxLayer : fromSource.get(node.id)!)
@@ -282,8 +282,8 @@ const ALIGNMENT_ITERATIONS = 16
  * for circles, value-scaled height for a sankey. The layout reads geometry only through this accessor — it
  * never touches `radius`/`width` directly, so the same code serves circle and rectangle nodes. Virtual nodes
  * are points (extent 0).
- * - depth (along the flow): columns are spaced by the largest half-extent on either side of the gap plus
- *   `columnGap`.
+ * - depth (along the flow): layers are spaced by the largest half-extent on either side of the gap plus
+ *   `layerGap`.
  * - breadth (across the flow): a naive per-layer stack would put each vertex at a different absolute breadth
  *   in every layer, so lanes and (especially) long-edge routes zigzag. Instead, after an initial stack we run
  *   an alignment pass: repeatedly pull each vertex toward the breadth of its neighbors in the adjacent layer,
@@ -291,7 +291,7 @@ const ALIGNMENT_ITERATIONS = 16
  *   routes long edges down a consistent track, so their control points form a smooth curve rather than a saw.
  * Coordinates are anchor-agnostic; index.ts maps them onto world x/y and recenters.
  *
- * TODO (along-flow extent): column spacing currently reuses the across-flow half-extent, which is exact for
+ * TODO (along-flow extent): layer spacing currently reuses the across-flow half-extent, which is exact for
  * circles (width == height) but not for rectangle nodes whose along-flow size differs. When rect nodes
  * land, add a second `nodeDepth` accessor for the along-flow extent rather than reusing `nodeBreadth`.
  */
@@ -299,7 +299,7 @@ export const assignCoordinates = <N extends Node, E extends Edge>(
   index: DirectedIndex<N, E>,
   graph: LayeredGraph<E>,
   nodeBreadth: (node: N) => number,
-  columnGap: number,
+  layerGap: number,
   rowGap: number
 ): Map<string, { depth: number; breadth: number; extent: number }> => {
   const { slots, neighbors, layerOfVertex } = graph
@@ -312,13 +312,13 @@ export const assignCoordinates = <N extends Node, E extends Edge>(
   const half = new Map<string, number>()
   for (const layer of slots) for (const key of layer) half.set(key, extentOf(key) / 2)
 
-  // depth (along the flow): one value per layer, spaced by the largest half-extent on each side + columnGap
+  // depth (along the flow): one value per layer, spaced by the largest half-extent on each side + layerGap
   const depthAt: number[] = []
   let depth = 0
   let prevMaxHalf = 0
   slots.forEach((layer, l) => {
     const maxHalf = layer.reduce<number>((max, key) => Math.max(max, half.get(key)!), 0)
-    if (l > 0) depth += prevMaxHalf + columnGap + maxHalf
+    if (l > 0) depth += prevMaxHalf + layerGap + maxHalf
     depthAt[l] = depth
     prevMaxHalf = maxHalf
   })

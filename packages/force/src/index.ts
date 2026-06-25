@@ -124,26 +124,22 @@ export const createForceLayout = (state: GraphState, options: Options = {}): For
   }
 }
 
-export const Layout = createForceLayout
+export const layout = <N extends ForceNode, E extends ForceEdge>(nodes: N[], edges: E[], options: Options = {}) => {
+  const mutate = options.mutate ?? false
+  const ticks = options.ticks ?? 300
+  const state = new GraphState({ nodeStyles: [{ fillColor: 0 }], edgeStyles: [{ fillColor: 0 }] })
 
-/** Compatibility helper for object graphs. */
-export const LayoutSync = (options?: Options) => {
-  const mutate = options?.mutate ?? false
-  const ticks = options?.ticks ?? 300
+  state.addNodes(
+    nodes.map((node) => ({ id: node.id, x: node.fx ?? node.x ?? NaN, y: node.fy ?? node.y ?? NaN, radius: node.radius, style: 0 }))
+  )
+  state.addEdges(edges.map((edge, i) => ({ id: i, source: edge.source, target: edge.target, width: 1, style: 0 })))
+  createForceLayout(state, options).run(ticks)
 
-  return <N extends ForceNode, E extends ForceEdge>(graph: { nodes: N[]; edges: E[] }) => {
-    const state = new GraphState({ nodeStyles: [{ fillColor: 0 }], edgeStyles: [{ fillColor: 0 }] })
-    state.addNodes(
-      graph.nodes.map((node) => ({ id: node.id, x: node.fx ?? node.x ?? NaN, y: node.fy ?? node.y ?? NaN, radius: node.radius, style: 0 }))
-    )
-    state.addEdges(graph.edges.map((edge, i) => ({ id: i, source: edge.source, target: edge.target, width: 1, style: 0 })))
-    createForceLayout(state, options).run(ticks)
-
-    const outputNodes = mutate ? graph.nodes : graph.nodes.map((node) => ({ ...node }))
-    for (let i = 0; i < outputNodes.length; i++) {
-      outputNodes[i].x = state.nodePositions[i * 2]
-      outputNodes[i].y = state.nodePositions[i * 2 + 1]
-    }
-    return { nodes: outputNodes, edges: graph.edges }
+  const outputNodes = mutate ? nodes : nodes.map((node) => ({ ...node }))
+  for (let i = 0; i < outputNodes.length; i++) {
+    outputNodes[i].x = state.nodePositions[i * 2]
+    outputNodes[i].y = state.nodePositions[i * 2 + 1]
   }
+
+  return { nodes: outputNodes, edges }
 }
