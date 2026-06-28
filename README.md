@@ -19,9 +19,9 @@ The packages are ESM-first and are intended to be consumed through a modern bund
 
 ```ts
 import { GraphState, Renderer, DOMInteractionHandler } from '@sayari/trellis'
-import { LayoutSync as ForceLayout } from '@sayari/trellis-force'
-import { Layout as SugiyamaLayout } from '@sayari/trellis-sugiyama'
-import { Layout as HierarchyLayout } from '@sayari/trellis-hierarchy'
+import { layout as forceLayout } from '@sayari/trellis-force'
+import { layout as sugiyamaLayout } from '@sayari/trellis-sugiyama'
+import { layout as hierarchyLayout } from '@sayari/trellis-hierarchy'
 import { Control as ZoomControl } from '@sayari/trellis-controls/zoom'
 import { gridGraph, animate } from '@sayari/trellis-utils'
 ```

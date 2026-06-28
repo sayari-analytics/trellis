@@ -6,6 +6,16 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@sayari/trellis": ["../trellis/src/index.ts"],
+      "@sayari/trellis-controls/*": ["../controls/src/*.ts"],
+      "@sayari/trellis-force": ["../force/src/index.ts"],
+      "@sayari/trellis-hierarchy": ["../hierarchy/src/index.ts"],
+      "@sayari/trellis-quadtree": ["../quadtree/src/index.ts"],
+      "@sayari/trellis-sugiyama": ["../sugiyama/src/index.ts"],
+      "@sayari/trellis-utils": ["../utils/src/index.ts"]
+    },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

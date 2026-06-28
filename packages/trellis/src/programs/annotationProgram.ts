@@ -1,5 +1,5 @@
 import { createProgram, Program } from '.'
-import { red, green, blue, alpha } from '../textures'
+import { red, green, blue } from '../textures'
 import { CAMERA_BLOCK } from '../camera'
 import type { Annotation } from '../state'
 
@@ -14,12 +14,12 @@ export type AnnotationProgram = Program & {
 const INSTANCE_BYTES = 32
 const FLOATS_PER_INSTANCE = INSTANCE_BYTES / 4
 
-// hex color (0xRRGGBB / 0xAARRGGBB) -> packed 0xRRGGBBAA uint, mirroring the texture-table channel helpers
-const packRGBA = (hex: number): number =>
+// RGB color + explicit opacity -> packed 0xRRGGBBAA uint.
+const packRGBA = (hex: number, opacity: number): number =>
   ((Math.round(red(hex) * 255) << 24) |
     (Math.round(green(hex) * 255) << 16) |
     (Math.round(blue(hex) * 255) << 8) |
-    Math.round(alpha(hex) * 255)) >>>
+    Math.round(opacity * 255)) >>>
   0
 
 // unit quad in [-1, 1] — the shape's bounding box (scaled to half-size + AA pad), shared by every instance
@@ -163,8 +163,8 @@ export const createAnnotationProgram = (gl: WebGL2RenderingContext): AnnotationP
           u32[o + 7] = 1
         }
         f32[o + 4] = a.style.strokeWidth ?? 0
-        u32[o + 5] = a.style.fillColor === undefined ? 0 : packRGBA(a.style.fillColor)
-        u32[o + 6] = a.style.strokeColor === undefined ? 0 : packRGBA(a.style.strokeColor)
+        u32[o + 5] = a.style.fillColor === undefined ? 0 : packRGBA(a.style.fillColor, a.style.fillColorOpacity ?? 1)
+        u32[o + 6] = a.style.strokeColor === undefined ? 0 : packRGBA(a.style.strokeColor, a.style.strokeColorOpacity ?? 1)
       }
       gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer)
       gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW)

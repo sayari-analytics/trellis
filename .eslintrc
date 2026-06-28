@@ -14,9 +14,10 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "local-rules"],
   "rules": {
     "prettier/prettier": ["error"],
+    "local-rules/multiline-assignment-ternary": "error",
     "no-console": [
       "error",
       {

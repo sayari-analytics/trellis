@@ -4,6 +4,8 @@
 export type { Options, ExportOptions } from './renderer'
 export type {
   Id,
+  NodeRef,
+  EdgeRef,
   Node,
   NodeStyle,
   NodeLabelStyle,
@@ -12,6 +14,8 @@ export type {
   EdgeStyle,
   EdgeLabelStyle,
   GraphStateOptions,
+  Graph,
+  LayoutResult,
   Annotation,
   CircleAnnotation,
   RectangleAnnotation,
@@ -24,7 +28,7 @@ export type { PathPoint, PathSegment } from './path'
 /**
  * API
  */
-export { GraphState } from './state'
+export { GraphState, DIRTY_NODE_STYLE_TABLE } from './state'
 
 // edge path builders: construct the `Edge.path` shapes (smooth curves / orthogonal elbows). routeOrthogonal
 // is the batch variant that separates overlapping orthogonal runs onto parallel tracks.

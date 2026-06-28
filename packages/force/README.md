@@ -8,13 +8,13 @@ The layout mutates `GraphState.nodePositions` directly and reads `nodeRadii` and
 
 ```ts
 import { GraphState } from '@sayari/trellis'
-import { Layout as ForceLayout } from '@sayari/trellis-force'
+import { layout } from '@sayari/trellis-force'
 
 const state = new GraphState({ nodeStyles, edgeStyles })
 state.addNodes(nodes)
 state.addEdges(edges)
 
-const force = ForceLayout(state, {
+const tick = layout(state, {
   ticks: 300,
   collidePadding: 8,
   params: {
@@ -23,15 +23,13 @@ const force = ForceLayout(state, {
   }
 })
 
-force.run()
+tick()
 ```
 
 For incremental or live layouts:
 
 ```ts
-force.tick()
-force.start()
-force.stop()
+tick({ ticks: 1 })
 ```
 
 Each main-thread tick marks the changed Trellis node slots dirty so the renderer uploads the shared positions on the next frame.
@@ -53,9 +51,6 @@ const state = new GraphState({
 On the main thread, pass the shared views to your worker and mark positions dirty when the worker reports progress:
 
 ```ts
-import { Layout as ForceLayout } from '@sayari/trellis-force'
-
-const force = ForceLayout(state)
 const worker = new Worker(new URL('./force.worker.ts', import.meta.url), { type: 'module' })
 
 worker.onmessage = ({ data }) => {
@@ -66,9 +61,13 @@ worker.onmessage = ({ data }) => {
 }
 
 worker.postMessage({
-  views: force.views(),
   ticks: 300,
-  params: {
+  config: {
+    nodePositions: state.nodePositions,
+    nodeRadii: state.nodeRadii,
+    edgeEndpoints: state.edgeEndpoints,
+    nodeCount: state.nodeSlotCount,
+    edgeCount: state.edgeSlotCount,
     chargeStrength: -400,
     linkDistance: 140
   }
@@ -78,16 +77,15 @@ worker.postMessage({
 In the app-owned worker, import the same simulation class the main-thread layout uses:
 
 ```ts
-import { Simulation, ForceGraphViews, SimulationOptions } from '@sayari/trellis-force'
+import { Simulation, SimulationConfig } from '@sayari/trellis-force'
 
 type Request = {
-  views: ForceGraphViews
   ticks: number
-  params?: SimulationOptions
+  config: SimulationConfig
 }
 
 self.onmessage = ({ data }: MessageEvent<Request>) => {
-  const simulation = new Simulation(data.views, data.params)
+  const simulation = new Simulation(data.config)
   for (let i = 0; i < data.ticks; i++) {
     simulation.tick()
     if (i % 5 === 4) self.postMessage(i / data.ticks)

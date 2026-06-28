@@ -28,6 +28,7 @@ export type ForceGraphViews = {
   velocities?: Float32Array
   fixed?: Uint8Array
 }
+export type SimulationConfig = ForceGraphViews & SimulationOptions
 
 /**
  * Deterministic, Float32 force simulation over Trellis' GraphState columns.
@@ -89,32 +90,33 @@ export class Simulation {
   private activeCount = 0
   private seed = 1
 
-  constructor(views: ForceGraphViews, options?: SimulationOptions) {
+  constructor(config: SimulationConfig) {
     const S = Simulation
-    this.nodePositions = views.nodePositions
-    this.nodeRadii = views.nodeRadii
-    this.edgeEndpoints = views.edgeEndpoints
-    this.nodeCount = views.nodeCount
-    this.edgeCount = views.edgeCount
-    this.velocities = views.velocities ?? new Float32Array(this.nodeCount * S.POSITION_STRIDE)
-    this.fixed = views.fixed ?? new Uint8Array(this.nodeCount)
+    this.nodePositions = config.nodePositions
+    this.nodeRadii = config.nodeRadii
+    this.edgeEndpoints = config.edgeEndpoints
+    this.nodeCount = config.nodeCount
+    this.edgeCount = config.edgeCount
+    this.velocities = config.velocities ?? new Float32Array(this.nodeCount * S.POSITION_STRIDE)
+    this.fixed = config.fixed ?? new Uint8Array(this.nodeCount)
 
-    this.alphaMin = options?.alphaMin ?? 0.001
-    this.alphaDecay = options?.alphaDecay ?? 1 - Math.pow(this.alphaMin, 1 / 300)
-    this.alphaTarget = options?.alphaTarget ?? 0
-    this.velocityDecay = options?.velocityDecay ?? 0.6
-    this.chargeStrength = options?.chargeStrength ?? -600
-    this.theta = options?.theta ?? 0.9
-    this.distanceMin2 = options?.distanceMin2 ?? 1
-    this.distanceMax = options?.distanceMax ?? Infinity
-    this.linkDistance = options?.linkDistance ?? 180
-    this.linkIterations = options?.linkIterations ?? 1
-    this.collideStrength = options?.collideStrength ?? 1
-    this.centerX = options?.centerX ?? 0
-    this.centerY = options?.centerY ?? 0
-    this.centerStrength = options?.centerStrength ?? 1
-    this.gravityStrength = options?.gravityStrength ?? 0.1
-    this.collidePadding = options?.collidePadding ?? 0
+    this.alphaMin = 0.001
+    this.alphaDecay = 1 - Math.pow(this.alphaMin, 1 / 300)
+    this.alphaTarget = 0
+    this.velocityDecay = 0.6
+    this.chargeStrength = -600
+    this.theta = 0.9
+    this.distanceMin2 = 1
+    this.distanceMax = Infinity
+    this.linkDistance = 180
+    this.linkIterations = 1
+    this.collideStrength = 1
+    this.centerX = 0
+    this.centerY = 0
+    this.centerStrength = 1
+    this.gravityStrength = 0.1
+    this.collidePadding = 0
+    this.configure(config)
 
     this.initPositions()
     this.edgeStrength = new Float32Array(this.edgeCount)
@@ -123,6 +125,25 @@ export class Simulation {
     this.treeElements = new Float32Array(this.nodeCount * S.TREE_STRIDE)
     this.activeSlots = new Uint32Array(this.nodeCount)
     this.initEdges()
+  }
+
+  configure(options: SimulationOptions = {}): void {
+    if (options.alphaMin !== undefined) this.alphaMin = options.alphaMin
+    this.alphaDecay = options.alphaDecay ?? (options.alphaMin === undefined ? this.alphaDecay : 1 - Math.pow(this.alphaMin, 1 / 300))
+    if (options.alphaTarget !== undefined) this.alphaTarget = options.alphaTarget
+    if (options.velocityDecay !== undefined) this.velocityDecay = options.velocityDecay
+    if (options.chargeStrength !== undefined) this.chargeStrength = options.chargeStrength
+    if (options.theta !== undefined) this.theta = options.theta
+    if (options.distanceMin2 !== undefined) this.distanceMin2 = options.distanceMin2
+    if (options.distanceMax !== undefined) this.distanceMax = options.distanceMax
+    if (options.linkDistance !== undefined) this.linkDistance = options.linkDistance
+    if (options.linkIterations !== undefined) this.linkIterations = options.linkIterations
+    if (options.collideStrength !== undefined) this.collideStrength = options.collideStrength
+    if (options.centerX !== undefined) this.centerX = options.centerX
+    if (options.centerY !== undefined) this.centerY = options.centerY
+    if (options.centerStrength !== undefined) this.centerStrength = options.centerStrength
+    if (options.gravityStrength !== undefined) this.gravityStrength = options.gravityStrength
+    if (options.collidePadding !== undefined) this.collidePadding = options.collidePadding
   }
 
   tick(count = 1): void {

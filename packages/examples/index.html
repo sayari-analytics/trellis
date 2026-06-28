@@ -13,9 +13,24 @@
       canvas {
         display: block;
       }
+      .page-link {
+        position: fixed;
+        right: 16px;
+        top: 16px;
+        z-index: 20;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #6f42c1;
+        font: 13px system-ui, sans-serif;
+        text-decoration: none;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+      }
     </style>
   </head>
   <body>
+    <a class="page-link" href="/supply-chain.html">Supply chain example</a>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

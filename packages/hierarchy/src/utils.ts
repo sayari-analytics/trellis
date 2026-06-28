@@ -18,17 +18,18 @@ export type HierarchyData<N extends Node, E extends Edge> = ({ root: true; node:
 }
 
 const createNodeIndex = <N extends Node>(nodes: N[], lookup: Record<Id, N> = {}) => {
-  nodes.forEach((node) => {
+  for (const node of nodes) {
     lookup[node.id] = node
-  })
+  }
 
   return lookup
 }
 
 export const createGraphIndex = <N extends Node, E extends Edge>(graph: { nodes: N[]; edges: E[] }) => {
   const nodes = createNodeIndex(graph.nodes)
+  const index: GraphIndex<N, E> = {}
 
-  return graph.edges.reduce<GraphIndex<N, E>>((index, edge) => {
+  for (const edge of graph.edges) {
     if (nodes[edge.source] !== undefined && nodes[edge.target] !== undefined) {
       if (index[edge.source] === undefined) {
         index[edge.source] = { node: nodes[edge.source], paths: [] }
@@ -40,9 +41,9 @@ export const createGraphIndex = <N extends Node, E extends Edge>(graph: { nodes:
       }
       index[edge.target].paths.push({ edge, node: nodes[edge.source] })
     }
+  }
 
-    return index
-  }, {})
+  return index
 }
 
 // breadth-first spanning tree: places each node at its shortest-hop depth from the root (wide, shallow)
@@ -52,8 +53,8 @@ const graphToBFSHierarchy = <N extends Node, E extends Edge>(index: GraphIndex<N
   const queue: [Id, HierarchyData<N, E>[]][] = [[rootId, children]]
   const visited = new Set<Id>([rootId])
 
-  while (queue.length > 0) {
-    const [id, children] = queue.shift()!
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    const [id, children] = queue[cursor]
     for (const { node, edge } of index[id].paths) {
       if (!visited.has(node.id)) {
         visited.add(node.id)

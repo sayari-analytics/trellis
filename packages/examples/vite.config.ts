@@ -3,6 +3,14 @@ import path from 'path'
 
 // In dev, resolve workspace packages directly to source.
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        supplyChain: path.resolve(__dirname, 'supply-chain.html')
+      }
+    }
+  },
   resolve: {
     alias: {
       '@sayari/trellis-controls/zoom': path.resolve(__dirname, '../controls/src/zoom.ts'),

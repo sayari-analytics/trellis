@@ -16,6 +16,7 @@ import {
   type NodeStyle,
   type EdgeStyle
 } from './state'
+import type { PathPoint, PathSegment } from './path'
 import {
   type TextureTable,
   type TextureData,
@@ -71,6 +72,7 @@ export type ExportOptions = {
 const OPAQUE_WHITE: readonly [number, number, number, number] = [1, 1, 1, 1]
 const EMPTY_F32 = new Float32Array(0) // sentinels for "no instances" uploads
 const EMPTY_U16 = new Uint16Array(0)
+const EMPTY_U32 = new Uint32Array(0)
 
 // export background -> normalized RGBA clear color
 const resolveBackground = (background: number | 'transparent' | undefined): readonly [number, number, number, number] => {
@@ -94,6 +96,89 @@ const isPrintableAscii = (text: string): boolean => {
     if (code < 0x20 || code > 0x7e) return false
   }
   return true
+}
+
+const distance = (a: PathPoint, b: PathPoint) => Math.hypot(b.x - a.x, b.y - a.y)
+const lerpPoint = (a: PathPoint, b: PathPoint, t: number): PathPoint => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })
+const arrowLength = (width: number) => Math.max(width * 1.6, 1.5) * 2.2
+
+const quadPoint = (segment: Extract<PathSegment, { type: 'quad' }>, t: number): PathPoint => {
+  const ab = lerpPoint(segment.from, segment.control, t)
+  const bc = lerpPoint(segment.control, segment.to, t)
+  return lerpPoint(ab, bc, t)
+}
+
+const segmentLength = (segment: PathSegment) => {
+  if (segment.type === 'line') return distance(segment.from, segment.to)
+  let length = 0
+  let previous = segment.from
+  for (let i = 1; i <= 16; i++) {
+    const point = quadPoint(segment, i / 16)
+    length += distance(previous, point)
+    previous = point
+  }
+  return length
+}
+
+const segmentStart = (segment: PathSegment) => segment.from
+const segmentEnd = (segment: PathSegment) => segment.to
+
+const splitQuad = (segment: Extract<PathSegment, { type: 'quad' }>, t: number) => {
+  const fromControl = lerpPoint(segment.from, segment.control, t)
+  const controlTo = lerpPoint(segment.control, segment.to, t)
+  const point = lerpPoint(fromControl, controlTo, t)
+  return {
+    left: { type: 'quad' as const, from: segment.from, control: fromControl, to: point },
+    right: { type: 'quad' as const, from: point, control: controlTo, to: segment.to }
+  }
+}
+
+const trimSegmentStart = (segment: PathSegment, amount: number): PathSegment | undefined => {
+  const length = segmentLength(segment)
+  if (amount <= 0) return segment
+  if (amount >= length) return undefined
+  const t = amount / length
+  if (segment.type === 'line') return { ...segment, from: lerpPoint(segment.from, segment.to, t) }
+  return splitQuad(segment, t).right
+}
+
+const trimSegmentEnd = (segment: PathSegment, amount: number): PathSegment | undefined => {
+  const length = segmentLength(segment)
+  if (amount <= 0) return segment
+  if (amount >= length) return undefined
+  const t = 1 - amount / length
+  if (segment.type === 'line') return { ...segment, to: lerpPoint(segment.from, segment.to, t) }
+  return splitQuad(segment, t).left
+}
+
+const trimPathEnds = (path: PathSegment[], sourceTrim: number, targetTrim: number): PathSegment[] => {
+  const trimmed = path.map((segment) => ({ ...segment }))
+  while (sourceTrim > 0 && trimmed.length > 0) {
+    const segment = trimmed[0]
+    const length = segmentLength(segment)
+    const next = trimSegmentStart(segment, sourceTrim)
+    if (next === undefined) {
+      trimmed.shift()
+      sourceTrim -= length
+    } else {
+      trimmed[0] = next
+      break
+    }
+  }
+  while (targetTrim > 0 && trimmed.length > 0) {
+    const index = trimmed.length - 1
+    const segment = trimmed[index]
+    const length = segmentLength(segment)
+    const next = trimSegmentEnd(segment, targetTrim)
+    if (next === undefined) {
+      trimmed.pop()
+      targetTrim -= length
+    } else {
+      trimmed[index] = next
+      break
+    }
+  }
+  return trimmed
 }
 
 export class Renderer {
@@ -143,7 +228,7 @@ export class Renderer {
     this.pixelRatio = options.pixelRatio ?? 2
 
     // cast: getContext's overloads don't resolve to WebGL2 on the HTMLCanvasElement | OffscreenCanvas union
-    const gl = options.canvas.getContext('webgl2', { antialias: false }) as WebGL2RenderingContext | null
+    const gl = options.canvas.getContext('webgl2', { antialias: false, alpha: false }) as WebGL2RenderingContext | null
     if (gl === null) throw new Error('WebGL2 is not supported in this environment')
     this.gl = gl
 
@@ -326,8 +411,8 @@ export class Renderer {
         const style = resolve(styleTable[pointer])
         // Rasterize above zoom-1 size; the label program scales the box back down.
         const scale = this.pixelRatio * LABEL_RASTER_OVERSAMPLE
-        const stroke = { width: style.strokeWidth * scale, color: style.strokeColor }
-        const rect = atlas.getRect(text, style.fontSize * scale, style.color, FALLBACK_FONT, stroke)
+        const stroke = { width: style.strokeWidth * scale, color: style.strokeColor, opacity: style.strokeColorOpacity }
+        const rect = atlas.getRect(text, style.fontSize * scale, style.color, style.colorOpacity, FALLBACK_FONT, stroke)
         if (rect === null) continue
         const o = ri * 4
         rasterU32[o] = i // element
@@ -467,6 +552,7 @@ export class Renderer {
       this.edgeProgram.setWidths(state.edgeWidths.subarray(0, edgeCount))
       this.edgeProgram.setStyles(state.edgeStylePointers.subarray(0, edgeCount))
       this.segmentEdgeProgram.setSegments(EMPTY_F32, EMPTY_F32, EMPTY_U16)
+      this.arrowProgram.setPathArrows(EMPTY_F32, EMPTY_U32, EMPTY_F32, EMPTY_U16)
       return
     }
 
@@ -476,15 +562,55 @@ export class Renderer {
     this.edgeProgram.setWidths(state.edgeWidths.subarray(0, edgeCount))
     this.edgeProgram.setStyles(state.edgeStylePointers.subarray(0, edgeCount))
 
-    const geometry = new Float32Array(segmentCount * 7)
+    const geometry = new Float32Array(segmentCount * 9)
     const widths = new Float32Array(segmentCount)
     const styles = new Uint16Array(segmentCount)
+    const arrowGeometry = new Float32Array(shaped.length * 8)
+    const arrowNodes = new Uint32Array(shaped.length * 2)
+    const arrowWidths = new Float32Array(shaped.length)
+    const arrowStyles = new Uint16Array(shaped.length)
     let s = 0
+    let a = 0
     for (const slot of shaped) {
       const width = state.edgeWidths[slot]
       const style = state.edgeStylePointers[slot]
-      for (const seg of edgePath[slot]!) {
-        const o = s * 7
+      const path = edgePath[slot]!
+      const sourceSlot = state.edgeEndpoints[slot * 2]
+      const targetSlot = state.edgeEndpoints[slot * 2 + 1]
+      const first = path[0]
+      const last = path[path.length - 1]
+      const arrow = state.edgeStyleDefs[style]?.arrow ?? 'none'
+      const trimSource =
+        arrow === 'reverse' || arrow === 'both'
+          ? arrowLength(width) + state.nodeRadii[sourceSlot] + (state.nodeStyleDefs[state.nodeStylePointers[sourceSlot]]?.strokeWidth ?? 0)
+          : 0
+      const trimTarget =
+        arrow === 'forward' || arrow === 'both'
+          ? arrowLength(width) + state.nodeRadii[targetSlot] + (state.nodeStyleDefs[state.nodeStylePointers[targetSlot]]?.strokeWidth ?? 0)
+          : 0
+      const visiblePath = trimPathEnds(path, trimSource, trimTarget)
+      const sourceTail = visiblePath[0] === undefined ? segmentEnd(first) : segmentStart(visiblePath[0])
+      // prettier-ignore
+      const targetTail = visiblePath[visiblePath.length - 1] === undefined
+        ? segmentStart(last)
+        : segmentEnd(visiblePath[visiblePath.length - 1])
+      const ao = a * 8
+      arrowGeometry[ao] = first.from.x
+      arrowGeometry[ao + 1] = first.from.y
+      arrowGeometry[ao + 2] = sourceTail.x
+      arrowGeometry[ao + 3] = sourceTail.y
+      arrowGeometry[ao + 4] = last.to.x
+      arrowGeometry[ao + 5] = last.to.y
+      arrowGeometry[ao + 6] = targetTail.x
+      arrowGeometry[ao + 7] = targetTail.y
+      arrowNodes[a * 2] = sourceSlot
+      arrowNodes[a * 2 + 1] = targetSlot
+      arrowWidths[a] = width
+      arrowStyles[a] = style
+      a += 1
+      for (let i = 0; i < visiblePath.length; i++) {
+        const seg = visiblePath[i]
+        const o = s * 9
         geometry[o] = seg.from.x
         geometry[o + 1] = seg.from.y
         if (seg.type === 'quad') {
@@ -498,12 +624,15 @@ export class Renderer {
         }
         geometry[o + 4] = seg.to.x
         geometry[o + 5] = seg.to.y
+        geometry[o + 7] = i === 0 ? 1 : 0
+        geometry[o + 8] = i === visiblePath.length - 1 ? 1 : 0
         widths[s] = width
         styles[s] = style
         s += 1
       }
     }
-    this.segmentEdgeProgram.setSegments(geometry, widths, styles)
+    this.segmentEdgeProgram.setSegments(geometry.subarray(0, s * 9), widths.subarray(0, s), styles.subarray(0, s))
+    this.arrowProgram.setPathArrows(arrowGeometry, arrowNodes, arrowWidths, arrowStyles)
   }
 
   private draw(width: number, height: number, clear: readonly [number, number, number, number]) {
@@ -525,7 +654,7 @@ export class Renderer {
     this.iconStyleTexture.bind()
     this.edgeAnchorTexture.bind()
 
-    // Draw order: edges, node bodies, arrows, icons, labels.
+    // Draw order: edges/arrows, node bodies, icons, labels. Node bodies draw over any arrow overlap.
     // Node bodies write depth so nearer bodies can occlude lower icons.
     // this.gridProgram.render()
     gl.disable(gl.DEPTH_TEST)
@@ -533,6 +662,7 @@ export class Renderer {
     this.annotationProgram.render()
     this.edgeProgram.render()
     this.segmentEdgeProgram.render()
+    this.arrowProgram.render()
 
     gl.enable(gl.DEPTH_TEST)
     gl.depthFunc(gl.LESS)
@@ -541,7 +671,6 @@ export class Renderer {
 
     gl.disable(gl.DEPTH_TEST)
     gl.depthMask(false)
-    this.arrowProgram.render()
 
     // LEQUAL lets an icon draw over its own node while nearer node bodies occlude it.
     gl.enable(gl.DEPTH_TEST)

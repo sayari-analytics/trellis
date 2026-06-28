@@ -46,13 +46,17 @@ uniform bool u_rotate;     // edge labels: anchor.z is the edge angle (radians);
 out vec2 v_uv;
 out vec3 v_color;
 out vec3 v_strokeColor;
+out float v_colorOpacity;
+out float v_strokeColorOpacity;
 out float v_outlineThreshold; // SDF value at the outer edge of the stroke (== u_sdfEdge when no stroke)
 void main() {
   vec4 s0 = labelStyle(a_style, 0); // color.rgb, fontSize (CSS px)
-  vec4 s1 = labelStyle(a_style, 1); // positionCode, margin (CSS px)
+  vec4 s1 = labelStyle(a_style, 1); // positionCode, margin (CSS px), color opacity, stroke opacity
   vec4 s2 = labelStyle(a_style, 2); // strokeColor.rgb, strokeWidth (CSS px)
+  vec4 s3 = labelStyle(a_style, 3); // angle radians
   float fontSize = s0.a;
   int posCode = int(s1.x + 0.5);
+  int anchorCode = int(s3.y + 0.5);
   float margin = s1.y;
   float strokeWidth = s2.a;
 
@@ -65,13 +69,17 @@ void main() {
   vec2 dir = vec2(0.0);
   if (posCode == 1) { dir = vec2(0.0, 1.0); offY += 0.5 * u_lineEm; }       // top
   else if (posCode == 2) { dir = vec2(0.0, -1.0); offY -= 0.5 * u_lineEm; } // bottom
-  else if (posCode == 3) { dir = vec2(-1.0, 0.0); offX -= 0.5 * a_lenEm; }  // left
-  else if (posCode == 4) { dir = vec2(1.0, 0.0); offX += 0.5 * a_lenEm; }   // right
+  else if (posCode == 3) { dir = vec2(-1.0, 0.0); }                         // left
+  else if (posCode == 4) { dir = vec2(1.0, 0.0); }                          // right
+
+  if (anchorCode == 1) offX += 0.5 * a_lenEm;      // start: left text edge at the positioned anchor
+  else if (anchorCode == 2) offX -= 0.5 * a_lenEm; // end: right text edge at the positioned anchor
 
   vec2 cornerEm = (a_corner - 0.5) * u_glyphBoxEm;
   vec2 emDevice = (vec2(offX, offY) + cornerEm) * fontSize * u_pixelRatio * u_zoom;
-  if (u_rotate) {
-    float c = cos(anchor.z), s = sin(anchor.z);
+  float angle = u_rotate ? anchor.z : s3.x;
+  if (angle != 0.0) {
+    float c = cos(angle), s = sin(angle);
     emDevice = vec2(emDevice.x * c - emDevice.y * s, emDevice.x * s + emDevice.y * c);
   }
   vec2 dirDevice = dir * (radiusPx + margin * u_pixelRatio * u_zoom);
@@ -86,6 +94,8 @@ ${depth ? '  gl_Position.z = nodeDepth(int(a_element)) * gl_Position.w; // occlu
   v_uv = (vec2(float(col), float(row)) + vec2(a_corner.x, 1.0 - a_corner.y)) * cell;
   v_color = s0.rgb;
   v_strokeColor = s2.rgb;
+  v_colorOpacity = s1.z;
+  v_strokeColorOpacity = s1.w;
   // Stroke outer edge sits at a lower SDF value.
   v_outlineThreshold = u_sdfEdge - (strokeWidth / fontSize) * u_sdfRange;
 }`
@@ -95,6 +105,8 @@ precision highp float;
 in vec2 v_uv;
 in vec3 v_color;
 in vec3 v_strokeColor;
+in float v_colorOpacity;
+in float v_strokeColorOpacity;
 in float v_outlineThreshold;
 uniform sampler2D u_glyphAtlas;
 uniform float u_sdfEdge;
@@ -106,7 +118,8 @@ void main() {
   float alpha = smoothstep(v_outlineThreshold - aa, v_outlineThreshold + aa, dist);
   if (alpha <= 0.003) discard;
   vec3 color = v_outlineThreshold < u_sdfEdge ? mix(v_strokeColor, v_color, fill) : v_color;
-  outColor = vec4(color, alpha);
+  float opacity = v_outlineThreshold < u_sdfEdge ? mix(v_strokeColorOpacity, v_colorOpacity, fill) : v_colorOpacity;
+  outColor = vec4(color, alpha * opacity);
 }`
 
 export const createGlyphProgram = (gl: WebGL2RenderingContext, options: GlyphProgramOptions): GlyphProgram => {

@@ -8,28 +8,36 @@ export type Node = {
   label?: string
   style: number // NodeStyle index ptr
 }
-// colors are hex numbers: 0xRRGGBB (opaque) or 0xAARRGGBB for partial transparency (e.g. 0x80aaaaaa)
+// Style colors are RGB hex numbers: 0xRRGGBB. Use the matching optional opacity field for transparency.
 export type NodeStyle = {
   fillColor: number
+  fillColorOpacity?: number
   strokeWidth?: number
   strokeColor?: number
+  strokeColorOpacity?: number
   label?: NodeLabelStyle
   icon?: NodeIcon
 }
 export type NodeLabelStyle = {
   fontSize: number
   textColor: number
+  textColorOpacity?: number
   textPosition?: 'bottom' | 'left' | 'top' | 'right'
+  textAnchor?: 'start' | 'middle' | 'end'
+  textAngle?: number // radians; rotates around textAnchor at the textPosition placement point
   textOutlineWidth?: number
   textOutlineColor?: number
+  textOutlineColorOpacity?: number
 }
 export type NodeIcon = {
   type: 'textIcon'
   content: string
   fontSize: number
   color: number
+  colorOpacity?: number
   strokeWidth?: number
   strokeColor?: number
+  strokeColorOpacity?: number
 }
 
 export type Edge = {
@@ -45,15 +53,18 @@ export type Edge = {
   path?: PathSegment[]
 }
 export type EdgeStyle = {
-  fillColor: number // 0xRRGGBB opaque, or 0xAARRGGBB for partial transparency
+  fillColor: number
+  fillColorOpacity?: number
   arrow?: 'forward' | 'reverse' | 'both' | 'none'
   label?: EdgeLabelStyle
 }
 export type EdgeLabelStyle = {
   fontSize: number
   textColor: number
+  textColorOpacity?: number
   textOutlineWidth?: number
   textOutlineColor?: number
+  textOutlineColorOpacity?: number
 }
 
 /**
@@ -64,8 +75,10 @@ export type EdgeLabelStyle = {
  * A future 'text' annotation type will extend this union.
  */
 export type AnnotationStyle = {
-  fillColor?: number // 0xRRGGBB / 0xAARRGGBB; omitted => no fill
+  fillColor?: number // 0xRRGGBB; omitted => no fill
+  fillColorOpacity?: number
   strokeColor?: number // omitted => no stroke
+  strokeColorOpacity?: number
   strokeWidth?: number // world units; defaults to 0
 }
 export type CircleAnnotation = {
@@ -98,6 +111,11 @@ export type Annotation = CircleAnnotation | RectangleAnnotation
  * node positions.
  */
 export type Bounds = { minX: number; minY: number; maxX: number; maxY: number }
+export type Graph = { nodes: Node[]; edges: Edge[] }
+export type LayoutResult<Metrics = unknown> = {
+  done: boolean
+  metrics?: Metrics
+}
 
 export type GraphStateOptions = {
   minZoom?: number
@@ -108,6 +126,13 @@ export type GraphStateOptions = {
 }
 
 export type Id = string | number
+export type NodeRef = number & { readonly __nodeRef: unique symbol }
+export type EdgeRef = number & { readonly __edgeRef: unique symbol }
+type NodePositionUpdate = { id: Id; x: number; y: number } | { node: NodeRef; x: number; y: number }
+type EdgePathUpdate = { id: Id; path?: PathSegment[] } | { edge: EdgeRef; path?: PathSegment[] }
+type EdgeWidthUpdate = { id: Id; width: number } | { edge: EdgeRef; width: number }
+type EdgeStyleUpdate = { id: Id; style: number } | { edge: EdgeRef; style: number }
+type EdgeLabelUpdate = { id: Id; label: string } | { edge: EdgeRef; label: string }
 
 /**
  * Dirty bitmask consumed by the renderer. Two kinds:
@@ -198,6 +223,72 @@ export class GraphState {
     this.nodeStyleDefs = [...options.nodeStyles]
     this.edgeStyleDefs = [...options.edgeStyles]
     this.dirty[0] |= DIRTY_NODE_STYLE_TABLE | DIRTY_EDGE_STYLE_TABLE
+  }
+
+  *nodes(): IterableIterator<NodeRef> {
+    for (let slot = 0; slot < this.nodeSlotCount; slot++) {
+      if (this.nodeIdToSlot.get(this.nodeIds[slot]) === slot) yield slot as NodeRef
+    }
+  }
+
+  *edges(): IterableIterator<EdgeRef> {
+    for (let slot = 0; slot < this.edgeSlotCount; slot++) {
+      if (this.edgeIdToSlot.get(this.edgeIds[slot]) === slot) yield slot as EdgeRef
+    }
+  }
+
+  *incidentEdges(node: NodeRef): IterableIterator<EdgeRef> {
+    for (const edge of this.nodeEdges[node] ?? []) {
+      if (this.edgeIdToSlot.get(this.edgeIds[edge]) === edge) yield edge as EdgeRef
+    }
+  }
+
+  nodeId(node: NodeRef): Id {
+    return this.nodeIds[node]
+  }
+
+  nodeX(node: NodeRef) {
+    return this.nodePositions[node * 2]
+  }
+
+  nodeY(node: NodeRef) {
+    return this.nodePositions[node * 2 + 1]
+  }
+
+  nodeRadius(node: NodeRef) {
+    return this.nodeRadii[node]
+  }
+
+  nodeStyle(node: NodeRef) {
+    return this.nodeStylePointers[node]
+  }
+
+  nodeLabel(node: NodeRef) {
+    return this.nodeLabels[node]
+  }
+
+  edgeId(edge: EdgeRef): Id {
+    return this.edgeIds[edge]
+  }
+
+  edgeSource(edge: EdgeRef): NodeRef {
+    return this.edgeEndpoints[edge * 2] as NodeRef
+  }
+
+  edgeTarget(edge: EdgeRef): NodeRef {
+    return this.edgeEndpoints[edge * 2 + 1] as NodeRef
+  }
+
+  edgeWidth(edge: EdgeRef) {
+    return this.edgeWidths[edge]
+  }
+
+  edgeStyle(edge: EdgeRef) {
+    return this.edgeStylePointers[edge]
+  }
+
+  edgeLabel(edge: EdgeRef) {
+    return this.edgeLabels[edge]
   }
 
   clone(): GraphState {
@@ -365,12 +456,12 @@ export class GraphState {
     this.dirty[0] |= DIRTY_NODE_POSITIONS | DIRTY_NODE_RADII | DIRTY_NODE_LABELS
   }
 
-  updateNodePositions(positions: Iterable<{ id: Id; x: number; y: number }>) {
-    for (const { id, x, y } of positions) {
-      const slot = this.nodeIdToSlot.get(id)
+  updateNodePositions(positions: Iterable<NodePositionUpdate>) {
+    for (const update of positions) {
+      const slot = 'node' in update ? update.node : this.nodeIdToSlot.get(update.id)
       if (slot === undefined) continue
-      this.nodePositions[slot * 2] = x
-      this.nodePositions[slot * 2 + 1] = y
+      this.nodePositions[slot * 2] = update.x
+      this.nodePositions[slot * 2 + 1] = update.y
       this.dirtyNodePositions.add(slot)
     }
     this.dirty[0] |= DIRTY_NODE_POSITIONS
@@ -399,7 +490,7 @@ export class GraphState {
       const slot = this.nodeIdToSlot.get(id)
       if (slot !== undefined) this.nodeStylePointers[slot] = style
     }
-    this.dirty[0] |= DIRTY_NODE_STYLES
+    this.dirty[0] |= DIRTY_NODE_STYLES | DIRTY_NODE_LABELS
   }
 
   updateNodeLabels(labels: Iterable<{ id: Id; label: string }>) {
@@ -438,10 +529,10 @@ export class GraphState {
   }
 
   // set or clear the explicit shape for edges (pass undefined / [] to make an edge a straight line again)
-  updateEdgePaths(updates: Iterable<{ id: Id; path?: PathSegment[] }>) {
-    for (const { id, path } of updates) {
-      const slot = this.edgeIdToSlot.get(id)
-      if (slot !== undefined) this.edgePath[slot] = path
+  updateEdgePaths(updates: Iterable<EdgePathUpdate>) {
+    for (const update of updates) {
+      const slot = 'edge' in update ? update.edge : this.edgeIdToSlot.get(update.id)
+      if (slot !== undefined) this.edgePath[slot] = update.path
     }
     this.dirty[0] |= DIRTY_EDGE_PATH
   }
@@ -453,26 +544,26 @@ export class GraphState {
     }
   }
 
-  updateEdgeWidths(widths: Iterable<{ id: Id; width: number }>) {
-    for (const { id, width } of widths) {
-      const slot = this.edgeIdToSlot.get(id)
-      if (slot !== undefined) this.edgeWidths[slot] = width
+  updateEdgeWidths(widths: Iterable<EdgeWidthUpdate>) {
+    for (const update of widths) {
+      const slot = 'edge' in update ? update.edge : this.edgeIdToSlot.get(update.id)
+      if (slot !== undefined) this.edgeWidths[slot] = update.width
     }
     this.dirty[0] |= DIRTY_EDGE_WIDTHS
   }
 
-  updateEdgeStyles(styles: Iterable<{ id: Id; style: number }>) {
-    for (const { id, style } of styles) {
-      const slot = this.edgeIdToSlot.get(id)
-      if (slot !== undefined) this.edgeStylePointers[slot] = style
+  updateEdgeStyles(styles: Iterable<EdgeStyleUpdate>) {
+    for (const update of styles) {
+      const slot = 'edge' in update ? update.edge : this.edgeIdToSlot.get(update.id)
+      if (slot !== undefined) this.edgeStylePointers[slot] = update.style
     }
-    this.dirty[0] |= DIRTY_EDGE_STYLES
+    this.dirty[0] |= DIRTY_EDGE_STYLES | DIRTY_EDGE_LABELS
   }
 
-  updateEdgeLabels(labels: Iterable<{ id: Id; label: string }>) {
-    for (const { id, label } of labels) {
-      const slot = this.edgeIdToSlot.get(id)
-      if (slot !== undefined) this.edgeLabels[slot] = label
+  updateEdgeLabels(labels: Iterable<EdgeLabelUpdate>) {
+    for (const update of labels) {
+      const slot = 'edge' in update ? update.edge : this.edgeIdToSlot.get(update.id)
+      if (slot !== undefined) this.edgeLabels[slot] = update.label
     }
     this.dirty[0] |= DIRTY_EDGE_LABELS
   }

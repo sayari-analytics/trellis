@@ -21,8 +21,8 @@ export type TextureData<T> = { set: (data: T) => void; bind: () => void; destroy
 export type TextureTable<T> = TextureData<(T | undefined)[]> // an indexed palette: one row per element of T (undefined rows pack the default — tombstoned style slots)
 export type TextureAtlas = { bind: () => void; destroy: () => void } // a packed image, sampled by UV (no uniform set)
 
-// rgb come from the low 24 bits (0xRRGGBB). alpha comes from the high byte of an 8-digit 0xAARRGGBB;
-// a bare 0xRRGGBB (<= 0xffffff, high byte zero) is treated as fully opaque rather than transparent.
+// Style colors use the low 24 bits as RGB (0xRRGGBB). `alpha` remains for non-style packed colors such
+// as export backgrounds, where callers may pass 0xAARRGGBB.
 export const red = (hex: number) => ((hex >> 16) & 0xff) / 255
 export const green = (hex: number) => ((hex >> 8) & 0xff) / 255
 export const blue = (hex: number) => (hex & 0xff) / 255

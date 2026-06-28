@@ -39,7 +39,9 @@ uniform bool u_rotate; // edge labels: anchor.z is the edge angle (radians); rot
 out vec2 v_uv;
 void main() {
   vec4 s1 = labelStyle(a_style, 1); // positionCode, margin (CSS px)
+  vec4 s3 = labelStyle(a_style, 3); // angle radians
   int posCode = int(s1.x + 0.5);
+  int anchorCode = int(s3.y + 0.5);
   float margin = s1.y;
 
   vec3 anchor = anchorPosition(int(a_element)); // xy world; z = 0 (node positions) or angle (edge anchors)
@@ -53,12 +55,19 @@ void main() {
   else if (posCode == 4) dir = vec2(1.0, 0.0);  // right
 
   vec2 cornerCentered = (a_corner - 0.5) * boxPx;
-  vec2 push = dir * (radiusPx + margin * u_pixelRatio * u_zoom) + dir * 0.5 * boxPx;
-  vec2 offset = cornerCentered + push;
-  if (u_rotate) {
-    float c = cos(anchor.z), s = sin(anchor.z);
-    offset = vec2(offset.x * c - offset.y * s, offset.x * s + offset.y * c);
+  vec2 anchorPush = dir * (radiusPx + margin * u_pixelRatio * u_zoom);
+  vec2 textAnchor = vec2(0.0);
+  if (anchorCode == 1) textAnchor.x += 0.5 * boxPx.x;      // start: left text edge
+  else if (anchorCode == 2) textAnchor.x -= 0.5 * boxPx.x; // end: right text edge
+  if (posCode == 1) textAnchor.y += 0.5 * boxPx.y;         // top: bottom text edge
+  else if (posCode == 2) textAnchor.y -= 0.5 * boxPx.y;    // bottom: top text edge
+  vec2 boxOffset = cornerCentered + textAnchor;
+  float angle = u_rotate ? anchor.z : s3.x;
+  if (angle != 0.0) {
+    float c = cos(angle), s = sin(angle);
+    boxOffset = vec2(boxOffset.x * c - boxOffset.y * s, boxOffset.x * s + boxOffset.y * c);
   }
+  vec2 offset = anchorPush + boxOffset;
   vec4 clip = worldToClip(anchor.xy);
   clip.xy += offset * (2.0 / u_resolution);
   gl_Position = clip;

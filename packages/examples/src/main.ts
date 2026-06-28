@@ -29,9 +29,9 @@ import {
   egoForestGraph,
   treeGraph
 } from '@sayari/trellis-utils'
-import { Layout as SugiyamaLayout } from '@sayari/trellis-sugiyama'
-import { Layout as HierarchyLayout } from '@sayari/trellis-hierarchy'
-import { Layout as ForceLayout } from '@sayari/trellis-force'
+import { layout as sugiyamaLayout, type BreadthAlignment } from '@sayari/trellis-sugiyama'
+import { layout as hierarchyLayout } from '@sayari/trellis-hierarchy'
+import { layout as forceLayout } from '@sayari/trellis-force'
 import { forceSimulation, forceManyBody, forceLink, forceCollide, forceCenter, forceX, forceY } from 'd3-force'
 import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force'
 import { Control as ZoomControl, clampZoom } from '@sayari/trellis-controls/zoom'
@@ -89,14 +89,14 @@ const nodeStyles: NodeStyle[] = [
   ...BRANCH_COLORS.map((c): NodeStyle => ({ fillColor: c.fill, strokeWidth: 3, strokeColor: c.stroke, label: nodeLabel }))
 ]
 
-// base edge styles (grid + hover), then one lane-line style per branch color (no arrowheads — git lines)
+// base edge styles (grid + hover), then one lane-line style per branch color
 const EDGE_STYLE = 0
 const EDGE_HOVER_STYLE = 1
 const BRANCH_EDGE_STYLE_OFFSET = 2
 const edgeStyles: EdgeStyle[] = [
   { fillColor: 0xaaaaaa, label: edgeLabel, arrow },
   { fillColor: 0xff6666, label: edgeLabel, arrow }, // hover
-  ...BRANCH_COLORS.map((c): EdgeStyle => ({ fillColor: c.fill }))
+  ...BRANCH_COLORS.map((c): EdgeStyle => ({ fillColor: c.fill, arrow }))
 ]
 
 // Switching layout or size regenerates a graph and positions it. 'none' keeps native positions.
@@ -112,8 +112,6 @@ const COUNTS: Record<LayoutKind, Record<SizeKind, number>> = {
   hierarchy: { S: 200, M: 1_000, L: 3_000 }
 }
 
-const sugiyama = SugiyamaLayout()
-const hierarchy = HierarchyLayout()
 const forceOptions = {
   ticks: 300,
   collidePadding: 8,
@@ -261,7 +259,7 @@ const generate = (layout: LayoutKind, size: SizeKind): { nodes: Node[]; edges: E
     for (const node of graph.nodes) node.label = `${Math.round(node.x)}|${Math.round(node.y)}`
     return graph
   }
-  if (layout === 'sugiyama') return gitGraph(count) // DAG with branch-colored lanes (pairs with the sugiyama layout)
+  if (layout === 'sugiyama') return gitGraph(count) // DAG with branch-colored lanes
   if (layout === 'hierarchy') {
     return treeGraph({ size: count, maxChildren: 4, seed: 42, radius: 14, nodeStyle: NODE_STYLE, edgeStyle: EDGE_STYLE })
   }
@@ -318,6 +316,20 @@ const setGraph = (newNodes: Node[], newEdges: Edge[]) => {
 
 type Position = { id: Id; x: number; y: number }
 
+const createLayoutGraphState = (inputNodes: Node[] = nodes, inputEdges: Edge[] = edges) => {
+  const graphState = new GraphState({ minZoom: state.minZoom, maxZoom: state.maxZoom, nodeStyles, edgeStyles })
+  graphState.addNodes(inputNodes.map((node) => ({ ...node })))
+  graphState.addEdges(inputEdges.map((edge) => ({ ...edge })))
+  return graphState
+}
+
+const graphStatePositions = (graphState: GraphState): Position[] =>
+  [...graphState.nodes()].map((node) => ({
+    id: graphState.nodeId(node),
+    x: graphState.nodeX(node),
+    y: graphState.nodeY(node)
+  }))
+
 // Rebuild sugiyama edge paths from current node positions.
 const shapeEdges = () => {
   if (edgesShaped && currentEdges === 'orthogonal') {
@@ -346,13 +358,9 @@ type RelayoutOptions = {
 
 const forceTargets = (anchor?: Id | 'centroid'): Position[] => {
   const starts = nodes.map((node) => ({ id: node.id, x: node.x, y: node.y }))
-  const layoutState = state.clone()
-  ForceLayout(layoutState, forceOptions).run()
-  const byId = new Map<Id, Position>()
-  for (let slot = 0; slot < layoutState.nodeSlotCount; slot++) {
-    const id = layoutState.nodeIds[slot]
-    byId.set(id, { id, x: layoutState.nodePositions[slot * 2], y: layoutState.nodePositions[slot * 2 + 1] })
-  }
+  const graphState = createLayoutGraphState()
+  forceLayout(graphState, forceOptions)()
+  const byId = new Map<Id, Position>(graphStatePositions(graphState).map((position) => [position.id, position]))
 
   let targets = nodes.map((node) => byId.get(node.id) ?? { id: node.id, x: node.x, y: node.y })
   if (anchor === undefined) return targets
@@ -416,32 +424,35 @@ const applyLayout = (layout: LayoutKind, withAnimation: boolean, options: Relayo
     for (let i = 0; i < 300; i++) simulation.tick()
     targets = d3nodes.map((d) => ({ id: d.id, x: d.x ?? 0, y: d.y ?? 0 }))
   } else if (layout === 'sugiyama') {
-    // sugiyama (DAG). On a cyclic / non-DAG graph it may fail; fall back to the current positions.
     try {
-      const { nodes: positioned } = sugiyama({
-        nodes,
-        edges,
-        options: {
-          anchor: 'top',
-          nodeSize: [64, 56],
-          // Capture routing waypoints; shapeEdges rebuilds paths from live node positions.
-          applyEdge: (edge, edgeLayout) => {
-            if (edgeLayout.controlPoints.length > 0)
-              edgeWaypoints.set(
-                edge.id,
-                edgeLayout.controlPoints.map((p) => ({ x: p.x, y: p.y }))
-              )
-            return edge
-          }
+      const graphState = createLayoutGraphState()
+      sugiyamaLayout(graphState, {
+        orientation: 'top',
+        layerGap: 64,
+        rowGap: 56,
+        breadthAlignment: currentBreadthAlignment,
+        route:
+          currentEdges === 'straight'
+            ? { type: 'straight' }
+            : currentEdges === 'orthogonal'
+            ? { type: 'orthogonal', mode: 'bus' }
+            : { type: 'spline' },
+        decorateEdge: (edge, edgeLayout) => {
+          if (edgeLayout.points.length > 2)
+            edgeWaypoints.set(
+              edge.id,
+              edgeLayout.points.slice(1, -1).map((p) => ({ x: p.x, y: p.y }))
+            )
+          return undefined
         }
-      })
-      const byId = new Map(positioned.map((p) => [p.id, p]))
+      })()
+      const byId = new Map(graphStatePositions(graphState).map((p) => [p.id, p]))
       targets = nodes.map((n) => {
         const p = byId.get(n.id)
         return { id: n.id, x: p?.x ?? n.x, y: p?.y ?? n.y }
       })
     } catch (error) {
-      console.warn('sugiyama layout failed (likely a non-DAG); keeping current positions', error) // eslint-disable-line no-console
+      console.warn(`${layout} layout failed (likely a non-DAG); keeping current positions`, error) // eslint-disable-line no-console
       edgeWaypoints = new Map()
       targets = nodes.map((n) => ({ id: n.id, x: n.x, y: n.y }))
     }
@@ -450,16 +461,15 @@ const applyLayout = (layout: LayoutKind, withAnimation: boolean, options: Relayo
     if (root === undefined) {
       targets = []
     } else {
-      const { nodes: positioned } = hierarchy(root.id, {
-        nodes,
-        edges,
-        options: {
-          anchor: 'top',
-          nodeSize: [80, 140],
-          alignment: 'mid'
-        }
-      })
-      const byId = new Map(positioned.map((p) => [p.id, p]))
+      const graphState = createLayoutGraphState()
+      hierarchyLayout(graphState, {
+        rootId: root.id,
+        orientation: 'top',
+        siblingGap: 80,
+        levelGap: 140,
+        alignment: 'mid'
+      })()
+      const byId = new Map(graphStatePositions(graphState).map((p) => [p.id, p]))
       targets = nodes.map((n) => {
         const p = byId.get(n.id)
         return { id: n.id, x: p?.x ?? n.x, y: p?.y ?? n.y }
@@ -604,6 +614,7 @@ type EdgeKind = 'curved' | 'orthogonal' | 'straight'
 let currentSize: SizeKind = 'M'
 let currentLayout: LayoutKind = 'force'
 let currentEdges: EdgeKind = 'curved'
+let currentBreadthAlignment: BreadthAlignment = 'center'
 
 const navbar = document.createElement('div')
 navbar.className = 'navbar'
@@ -682,6 +693,19 @@ buildGroup<EdgeKind>(
     currentEdges = value
     edgesShaped = currentLayout === 'sugiyama' && currentEdges !== 'straight'
     shapeEdges()
+  },
+  () => currentLayout === 'sugiyama'
+)
+buildGroup<BreadthAlignment>(
+  'Align',
+  [
+    ['min', 'Min'],
+    ['center', 'Center'],
+    ['max', 'Max']
+  ],
+  () => currentBreadthAlignment,
+  (value) => {
+    currentBreadthAlignment = value
   },
   () => currentLayout === 'sugiyama'
 )
@@ -798,7 +822,7 @@ const interaction = new DOMInteractionHandler({
         y: (minY + maxY) / 2,
         width: maxX - minX,
         height: maxY - minY,
-        style: { fillColor: 0x18ffa500, strokeColor: ORANGE, strokeWidth: selectionStrokeWidth() }
+        style: { fillColor: 0xffa500, fillColorOpacity: 0.094, strokeColor: ORANGE, strokeWidth: selectionStrokeWidth() }
       }
     ])
   },

@@ -17,18 +17,23 @@ const GAP = LABEL_RASTER_OVERSAMPLE // gap between cells so mip levels (down to 
 
 type AtlasRect = { x: number; y: number; w: number; h: number } // device px within the atlas
 
-type LabelStroke = { width: number; color: number } // device-px outline baked into the raster
+type LabelStroke = { width: number; color: number; opacity: number } // device-px outline baked into the raster
 
 export type LabelAtlas = TextureAtlas & {
   size: number
   // rasterize (or look up) a string at a device-px font size + color (with an optional baked outline);
   // returns its atlas rect, or null if the atlas is full. `font` is a CSS font suffix (e.g. "sans-serif").
-  getRect: (text: string, fontSizePx: number, color: number, font: string, stroke: LabelStroke) => AtlasRect | null
+  getRect: (text: string, fontSizePx: number, color: number, opacity: number, font: string, stroke: LabelStroke) => AtlasRect | null
   reset: () => void // clear the packer + canvas (called before a full repack)
   upload: () => void // push the canvas to the GPU texture if it changed since the last upload
 }
 
-const cssColor = (hex: number) => `#${(hex & 0xffffff).toString(16).padStart(6, '0')}`
+const cssColor = (hex: number, opacity: number) => {
+  const r = (hex >> 16) & 0xff
+  const g = (hex >> 8) & 0xff
+  const b = hex & 0xff
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
+}
 
 export const createLabelAtlas = (gl: WebGL2RenderingContext): LabelAtlas => {
   const { canvas, ctx } = createRaster2D(LABEL_ATLAS_SIZE, LABEL_ATLAS_SIZE)
@@ -55,8 +60,15 @@ export const createLabelAtlas = (gl: WebGL2RenderingContext): LabelAtlas => {
     dirty = true
   }
 
-  const getRect = (text: string, fontSizePx: number, color: number, font: string, stroke: LabelStroke): AtlasRect | null => {
-    const key = `${fontSizePx}|${color}|${font}|${stroke.width}|${stroke.color}|${text}`
+  const getRect = (
+    text: string,
+    fontSizePx: number,
+    color: number,
+    opacity: number,
+    font: string,
+    stroke: LabelStroke
+  ): AtlasRect | null => {
+    const key = `${fontSizePx}|${color}|${opacity}|${font}|${stroke.width}|${stroke.color}|${stroke.opacity}|${text}`
     const cached = cache.get(key)
     if (cached !== undefined) return cached
 
@@ -82,12 +94,12 @@ export const createLabelAtlas = (gl: WebGL2RenderingContext): LabelAtlas => {
     const ty = shelfY + pad
     if (stroke.width > 0) {
       ctx.lineWidth = stroke.width
-      ctx.strokeStyle = cssColor(stroke.color)
+      ctx.strokeStyle = cssColor(stroke.color, stroke.opacity)
       ctx.lineJoin = 'round' // round joins keep the outline smooth at sharp corners
       ctx.miterLimit = 2
       ctx.strokeText(text, tx, ty)
     }
-    ctx.fillStyle = cssColor(color)
+    ctx.fillStyle = cssColor(color, opacity)
     ctx.fillText(text, tx, ty)
     penX += w + GAP
     shelfH = Math.max(shelfH, h)

@@ -1,4 +1,4 @@
-import type { Id, Node, Edge } from '@sayari/trellis'
+import type { GraphState, Id, Node, Edge, LayoutResult } from '@sayari/trellis'
 import { HierarchyNode } from './hierarchy'
 import { hierarchyToGraph, createGraphIndex, graphToHierarchy, HierarchyData } from './utils'
 import tree from './tree'
@@ -12,9 +12,9 @@ import tree from './tree'
  * position. The tree is offset so the root stays at its current world position.
  */
 
-type CompareFn<N extends Node, E extends Edge> = (a: HierarchyNode<HierarchyData<N, E>>, b: HierarchyNode<HierarchyData<N, E>>) => number
+type CompareFn = (a: HierarchyNode<HierarchyData<Node, Edge>>, b: HierarchyNode<HierarchyData<Node, Edge>>) => number
 
-export type Options<N extends Node, E extends Edge> = {
+export type Options = {
   rootId: Id // node to use as the root of the spanning tree
 } & Partial<{
   x: number // additional x offset applied on top of the root's current position
@@ -25,82 +25,111 @@ export type Options<N extends Node, E extends Edge> = {
   size: [number, number] // scale the whole tree to fit this [width, height] (overrides siblingGap/levelGap)
   siblingGap: number // spacing between adjacent sibling/subtree nodes along the breadth axis
   levelGap: number // spacing between parent/child levels along the growth axis
-  separation: CompareFn<N, E> // spacing between adjacent subtrees
-  sort: CompareFn<N, E> | CompareFn<N, E>[] // child ordering
+  separation: CompareFn // spacing between adjacent subtrees
+  sort: CompareFn | CompareFn[] // child ordering
 }>
 
 const DEFAULT_SIBLING_GAP = 120
 const DEFAULT_LEVEL_GAP = 240
 
-export const layout = <N extends Node, E extends Edge>(nodes: N[], edges: E[], options: Options<N, E>): { nodes: N[]; edges: E[] } => {
-  const graph = { nodes, edges }
-  const index = createGraphIndex(graph)
+export const layout = (graphState: GraphState, options: Options) => {
+  let done = false
 
-  if (index[options.rootId] === undefined) {
-    return { nodes: graph.nodes, edges: graph.edges }
-  }
+  return (): LayoutResult => {
+    if (done) return { done }
 
-  const hierarchy = graphToHierarchy(index, options.rootId, options.bfs)
+    const nodes: Node[] = []
+    const edges: Edge[] = []
 
-  if (Array.isArray(options.sort)) {
-    options.sort.forEach((sort) => {
-      hierarchy.sort(sort)
-    })
-  } else if (options.sort !== undefined) {
-    hierarchy.sort(options.sort)
-  }
+    for (const node of graphState.nodes()) {
+      nodes.push({
+        id: graphState.nodeId(node),
+        x: graphState.nodeX(node),
+        y: graphState.nodeY(node),
+        radius: graphState.nodeRadius(node),
+        label: graphState.nodeLabel(node),
+        style: graphState.nodeStyle(node)
+      })
+    }
+    for (const edge of graphState.edges()) {
+      edges.push({
+        id: graphState.edgeId(edge),
+        source: graphState.nodeId(graphState.edgeSource(edge)),
+        target: graphState.nodeId(graphState.edgeTarget(edge)),
+        width: graphState.edgeWidth(edge),
+        label: graphState.edgeLabel(edge),
+        style: graphState.edgeStyle(edge),
+        path: graphState.edgePath[edge]
+      })
+    }
 
-  const layout = tree<HierarchyData<N, E>>()
-  const nodeSize: [number, number] = [options.siblingGap ?? DEFAULT_SIBLING_GAP, options.levelGap ?? DEFAULT_LEVEL_GAP]
+    const index = createGraphIndex({ nodes, edges })
+    if (index[options.rootId] === undefined) {
+      done = true
+      return { done }
+    }
 
-  if (options.size !== undefined) {
-    layout.size(options.size)
-  } else {
-    layout.nodeSize(nodeSize)
-  }
+    const hierarchy = graphToHierarchy(index, options.rootId, options.bfs)
 
-  if (options.separation !== undefined) {
-    layout.separation(options.separation)
-  }
+    if (Array.isArray(options.sort)) {
+      for (const sort of options.sort) hierarchy.sort(sort)
+    } else if (options.sort !== undefined) {
+      hierarchy.sort(options.sort)
+    }
 
-  if (options.alignment !== undefined) {
-    layout.alignment(options.alignment)
-  }
+    const layout = tree<HierarchyData<Node, Edge>>()
+    const nodeSize: [number, number] = [options.siblingGap ?? DEFAULT_SIBLING_GAP, options.levelGap ?? DEFAULT_LEVEL_GAP]
 
-  const positionedDataById = hierarchyToGraph(layout(hierarchy))
+    if (options.size !== undefined) {
+      layout.size(options.size)
+    } else {
+      layout.nodeSize(nodeSize)
+    }
 
-  const width = options.size?.[0] ?? hierarchy.height * nodeSize[1]
-  const height = options.size?.[1] ?? hierarchy.height * nodeSize[0]
+    if (options.separation !== undefined) {
+      layout.separation(options.separation)
+    }
 
-  const xOffset = (options.x ?? 0) + index[options.rootId].node.x
-  const yOffset = (options.y ?? 0) - index[options.rootId].node.y
+    if (options.alignment !== undefined) {
+      layout.alignment(options.alignment)
+    }
 
-  return {
-    edges: graph.edges,
-    nodes: graph.nodes.map((node) => {
+    const positionedDataById = hierarchyToGraph(layout(hierarchy))
+
+    const width = options.size?.[0] ?? hierarchy.height * nodeSize[1]
+    const height = options.size?.[1] ?? hierarchy.height * nodeSize[0]
+
+    const xOffset = (options.x ?? 0) + index[options.rootId].node.x
+    const yOffset = (options.y ?? 0) - index[options.rootId].node.y
+
+    const positions: { id: Id; x: number; y: number }[] = []
+    for (const node of nodes) {
       const position = positionedDataById[node.id]
-
-      if (position === undefined) {
-        return node
-      }
-
+      if (position === undefined) continue
       const x = position.x + xOffset
       const y = position.y - yOffset
-
       switch (options.orientation) {
         case 'left':
           // rotate tree 90 degrees by replacing x and y
-          return { ...node, y: x, x: y }
+          positions.push({ id: node.id, x: y, y: x })
+          break
         case 'right':
           // rotate tree 90 degrees and flip on x axis by offsetting with tree width
-          return { ...node, y: x, x: width - y }
+          positions.push({ id: node.id, x: width - y, y: x })
+          break
         case 'bottom':
           // root at the bottom, tree grows up (+y is up in the trellis renderer)
-          return { ...node, x, y }
+          positions.push({ id: node.id, x, y })
+          break
         default:
           // default to top: root at the top, tree grows down (flip on y axis)
-          return { ...node, x, y: height - y }
+          positions.push({ id: node.id, x, y: height - y })
+          break
       }
-    })
+    }
+
+    graphState.updateNodePositions(positions)
+    done = true
+    return { done }
   }
 }

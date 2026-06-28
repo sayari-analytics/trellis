@@ -6,11 +6,12 @@ import { NODE_STYLE_POINTER_GLSL, NODE_OUTER_RADIUS_GLSL } from '../textures/poi
 import { CAMERA_BLOCK } from '../camera'
 
 /**
- * Edge arrowheads share the edge program's endpoint, width, and style buffers.
- * render() draws target-end heads, then source-end heads.
+ * Edge arrowheads share the edge program's endpoint, width, and style buffers for straight edges, and can
+ * additionally receive explicit path endpoint/tangent geometry for routed edges.
  */
 export type ArrowProgram = Program & {
   setCount: (edgeCount: number) => void
+  setPathArrows: (geometry: Float32Array, nodes: Uint32Array, widths: Float32Array, styles: Uint16Array) => void
 }
 
 type ArrowProgramOptions = {
@@ -18,6 +19,8 @@ type ArrowProgramOptions = {
   widthBuffer: WebGLBuffer
   styleBuffer: WebGLBuffer
 }
+
+const FLOATS_PER_PATH_ARROW = 8
 
 const VERTEX_SHADER = /* glsl */ `#version 300 es
 ${CAMERA_BLOCK}
@@ -32,6 +35,11 @@ in uint a_source; // source node index (per instance)
 in uint a_target; // target node index (per instance)
 in float a_width; // edge width, world units (per instance) — sizes the head
 in uint a_style;  // edge style pointer (per instance)
+in vec2 a_sourceHead;
+in vec2 a_sourceTail;
+in vec2 a_targetHead;
+in vec2 a_targetTail;
+in float a_pathArrow;
 uniform bool u_headAtTarget; // this pass draws the head at the target (else the source) end
 out vec4 v_color;
 void main() {
@@ -42,8 +50,13 @@ void main() {
   vec2 sp = nodePosition(int(a_source));
   vec2 tp = nodePosition(int(a_target));
   uint headIndex = u_headAtTarget ? a_target : a_source;
-  vec2 head = u_headAtTarget ? tp : sp;       // the node the arrow points at
-  vec2 tail = u_headAtTarget ? sp : tp;       // the node the edge comes from
+  vec2 nodeHead = u_headAtTarget ? tp : sp;
+  vec2 nodeTail = u_headAtTarget ? sp : tp;
+  vec2 pathHead = u_headAtTarget ? a_targetHead : a_sourceHead;
+  vec2 pathTail = u_headAtTarget ? a_targetTail : a_sourceTail;
+  bool pathArrow = a_pathArrow > 0.5;
+  vec2 head = pathArrow ? pathHead : nodeHead;       // the node the arrow points at
+  vec2 tail = pathArrow ? pathTail : nodeTail;       // the edge tangent before the head
 
   vec2 d = head - tail;
   float len = length(d);
@@ -79,13 +92,33 @@ export const createArrowProgram = (gl: WebGL2RenderingContext, options: ArrowPro
 
   const vao = gl.createVertexArray()
   if (vao === null) throw new Error('Failed to create vertex array')
+  const pathGeometryBuffer = gl.createBuffer()
+  const pathNodeBuffer = gl.createBuffer()
+  const pathWidthBuffer = gl.createBuffer()
+  const pathStyleBuffer = gl.createBuffer()
+  const pathFlagBuffer = gl.createBuffer()
+  if (
+    pathGeometryBuffer === null ||
+    pathNodeBuffer === null ||
+    pathWidthBuffer === null ||
+    pathStyleBuffer === null ||
+    pathFlagBuffer === null
+  )
+    throw new Error('Failed to create buffer')
 
   const sourceLocation = gl.getAttribLocation(program, 'a_source')
   const targetLocation = gl.getAttribLocation(program, 'a_target')
   const widthLocation = gl.getAttribLocation(program, 'a_width')
   const styleLocation = gl.getAttribLocation(program, 'a_style')
+  const sourceHeadLocation = gl.getAttribLocation(program, 'a_sourceHead')
+  const sourceTailLocation = gl.getAttribLocation(program, 'a_sourceTail')
+  const targetHeadLocation = gl.getAttribLocation(program, 'a_targetHead')
+  const targetTailLocation = gl.getAttribLocation(program, 'a_targetTail')
+  const pathArrowLocation = gl.getAttribLocation(program, 'a_pathArrow')
+  const float = Float32Array.BYTES_PER_ELEMENT
   const uint = Uint32Array.BYTES_PER_ELEMENT
   const edgeStride = 2 * uint // [src, dst]
+  const pathGeometryStride = FLOATS_PER_PATH_ARROW * float
 
   gl.bindVertexArray(vao)
 
@@ -107,6 +140,60 @@ export const createArrowProgram = (gl: WebGL2RenderingContext, options: ArrowPro
   gl.vertexAttribIPointer(styleLocation, 1, gl.UNSIGNED_SHORT, 0, 0)
   gl.vertexAttribDivisor(styleLocation, 1)
 
+  gl.disableVertexAttribArray(sourceHeadLocation)
+  gl.vertexAttrib2f(sourceHeadLocation, 0, 0)
+  gl.disableVertexAttribArray(sourceTailLocation)
+  gl.vertexAttrib2f(sourceTailLocation, 0, 0)
+  gl.disableVertexAttribArray(targetHeadLocation)
+  gl.vertexAttrib2f(targetHeadLocation, 0, 0)
+  gl.disableVertexAttribArray(targetTailLocation)
+  gl.vertexAttrib2f(targetTailLocation, 0, 0)
+  gl.disableVertexAttribArray(pathArrowLocation)
+  gl.vertexAttrib1f(pathArrowLocation, 0)
+
+  gl.bindVertexArray(null)
+
+  const pathVao = gl.createVertexArray()
+  if (pathVao === null) throw new Error('Failed to create vertex array')
+  gl.bindVertexArray(pathVao)
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, pathGeometryBuffer)
+  gl.enableVertexAttribArray(sourceHeadLocation)
+  gl.vertexAttribPointer(sourceHeadLocation, 2, gl.FLOAT, false, pathGeometryStride, 0)
+  gl.vertexAttribDivisor(sourceHeadLocation, 1)
+  gl.enableVertexAttribArray(sourceTailLocation)
+  gl.vertexAttribPointer(sourceTailLocation, 2, gl.FLOAT, false, pathGeometryStride, 2 * float)
+  gl.vertexAttribDivisor(sourceTailLocation, 1)
+  gl.enableVertexAttribArray(targetHeadLocation)
+  gl.vertexAttribPointer(targetHeadLocation, 2, gl.FLOAT, false, pathGeometryStride, 4 * float)
+  gl.vertexAttribDivisor(targetHeadLocation, 1)
+  gl.enableVertexAttribArray(targetTailLocation)
+  gl.vertexAttribPointer(targetTailLocation, 2, gl.FLOAT, false, pathGeometryStride, 6 * float)
+  gl.vertexAttribDivisor(targetTailLocation, 1)
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, pathNodeBuffer)
+  gl.enableVertexAttribArray(sourceLocation)
+  gl.vertexAttribIPointer(sourceLocation, 1, gl.UNSIGNED_INT, edgeStride, 0)
+  gl.vertexAttribDivisor(sourceLocation, 1)
+  gl.enableVertexAttribArray(targetLocation)
+  gl.vertexAttribIPointer(targetLocation, 1, gl.UNSIGNED_INT, edgeStride, uint)
+  gl.vertexAttribDivisor(targetLocation, 1)
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, pathWidthBuffer)
+  gl.enableVertexAttribArray(widthLocation)
+  gl.vertexAttribPointer(widthLocation, 1, gl.FLOAT, false, 0, 0)
+  gl.vertexAttribDivisor(widthLocation, 1)
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, pathStyleBuffer)
+  gl.enableVertexAttribArray(styleLocation)
+  gl.vertexAttribIPointer(styleLocation, 1, gl.UNSIGNED_SHORT, 0, 0)
+  gl.vertexAttribDivisor(styleLocation, 1)
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, pathFlagBuffer)
+  gl.enableVertexAttribArray(pathArrowLocation)
+  gl.vertexAttribPointer(pathArrowLocation, 1, gl.FLOAT, false, 0, 0)
+  gl.vertexAttribDivisor(pathArrowLocation, 1)
+
   gl.bindVertexArray(null)
 
   gl.useProgram(program)
@@ -118,25 +205,55 @@ export const createArrowProgram = (gl: WebGL2RenderingContext, options: ArrowPro
   const headAtTargetLocation = gl.getUniformLocation(program, 'u_headAtTarget')
 
   let instanceCount = 0
+  let pathInstanceCount = 0
 
   return {
     setCount: (edgeCount) => {
       instanceCount = edgeCount
     },
+    setPathArrows: (geometry, nodes, widths, styles) => {
+      pathInstanceCount = widths.length
+      if (pathInstanceCount === 0) return
+      gl.bindBuffer(gl.ARRAY_BUFFER, pathGeometryBuffer)
+      gl.bufferData(gl.ARRAY_BUFFER, geometry, gl.DYNAMIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, pathNodeBuffer)
+      gl.bufferData(gl.ARRAY_BUFFER, nodes, gl.DYNAMIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, pathWidthBuffer)
+      gl.bufferData(gl.ARRAY_BUFFER, widths, gl.DYNAMIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, pathStyleBuffer)
+      gl.bufferData(gl.ARRAY_BUFFER, styles, gl.DYNAMIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, pathFlagBuffer)
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pathInstanceCount).fill(1), gl.DYNAMIC_DRAW)
+    },
     render: () => {
-      if (instanceCount === 0) return
+      if (instanceCount === 0 && pathInstanceCount === 0) return
       gl.enable(gl.BLEND)
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
       gl.useProgram(program)
-      gl.bindVertexArray(vao)
-      gl.uniform1i(headAtTargetLocation, 1)
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, instanceCount)
-      gl.uniform1i(headAtTargetLocation, 0)
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, instanceCount)
+      if (instanceCount > 0) {
+        gl.bindVertexArray(vao)
+        gl.uniform1i(headAtTargetLocation, 1)
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, instanceCount)
+        gl.uniform1i(headAtTargetLocation, 0)
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, instanceCount)
+      }
+      if (pathInstanceCount > 0) {
+        gl.bindVertexArray(pathVao)
+        gl.uniform1i(headAtTargetLocation, 1)
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, pathInstanceCount)
+        gl.uniform1i(headAtTargetLocation, 0)
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, pathInstanceCount)
+      }
       gl.bindVertexArray(null)
     },
     destroy: () => {
+      gl.deleteBuffer(pathGeometryBuffer)
+      gl.deleteBuffer(pathNodeBuffer)
+      gl.deleteBuffer(pathWidthBuffer)
+      gl.deleteBuffer(pathStyleBuffer)
+      gl.deleteBuffer(pathFlagBuffer)
       gl.deleteVertexArray(vao)
+      gl.deleteVertexArray(pathVao)
       gl.deleteProgram(program)
     }
   }
